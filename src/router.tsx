@@ -1,6 +1,12 @@
 import { createRouter as createTanStackRouter } from '@tanstack/react-router'
 import type { QueryClient } from '@tanstack/react-query'
+import type { Session } from '@supabase/supabase-js'
 import { routeTree } from './routeTree.gen'
+
+export interface RouterContext {
+  queryClient: QueryClient
+  session: Session | null
+}
 
 export function getRouter(queryClient: QueryClient) {
   return createTanStackRouter({
@@ -8,7 +14,7 @@ export function getRouter(queryClient: QueryClient) {
     scrollRestoration: true,
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,
-    context: { queryClient },
+    context: { queryClient, session: null },
   })
 }
 
