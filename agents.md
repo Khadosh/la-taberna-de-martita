@@ -170,21 +170,11 @@ No guardar en DB los datos de la API, solo referencias por `index` string.
 ## 🔭 Decisiones arquitectónicas clave
 
 - **SPA sin SSR** — app 100% autenticada, sin páginas públicas. SSR agrega complejidad innecesaria.
-- **Supabase Auth** maneja sesiones. El rol DM/Player se guarda en `user_metadata` o en una tabla `profiles` con FK a `auth.users`.
+- **Supabase Auth** maneja sesiones. El rol DM/Player se guarda en `user_metadata` o en una tabla `profiles` with FK a `auth.users`.
 - **Drizzle solo para schema y migraciones** — runtime usa Supabase client con tipos generados (`supabase gen types typescript`).
 - **sheet_json como JSONB** evita over-engineering de schema para un MVP. Si el modelo crece, migrar a columnas explícitas.
 - **API de D&D es read-only y pública** — no necesita proxy propio a menos que haya problemas de CORS en producción.
 - **Dados en cliente** — la lógica de `rollDice` es pura, no necesita ir al servidor.
-
----
-
-## ⚠️ Gotchas conocidos
-
-- Supabase tiene **dos URLs de conexión**: usar el **pooler** en `DATABASE_URL` para queries de runtime, la **direct** en `DIRECT_DATABASE_URL` solo para `drizzle-kit push` / `migrate`. Mezclarlas rompe cosas.
-- `dnd5eapi.co` sirve imágenes desde rutas relativas (`/api/images/...`). Prefijar con `https://www.dnd5eapi.co`.
-- TanStack Form v1 tiene API distinta a v0 — no mezclar documentación.
-- corepack en Node 24 tiene bug de verificación de firma con pnpm. Fix: `npm install -g pnpm --force`.
-- El build strip devtools automáticamente (`@tanstack/devtools-vite`) — no condicionar manualmente con `import.meta.env.DEV`.
 
 ---
 
@@ -211,24 +201,10 @@ Usamos [Conventional Commits](https://www.conventionalcommits.org/).
 
 ---
 
-## 🗺 Roadmap / próximos pasos
+## 🗺 Roadmap
 
-- [x] Scaffold SPA (Vite + TanStack Router file-based)
-- [x] Instalar dependencias: TanStack Query/Form, Supabase, Sentry, Drizzle dev
-- [x] `.env` con Supabase URL + anon key
-- [x] `src/lib/supabase.ts` — cliente singleton
-- [x] QueryClient cableado en `main.tsx` + context en router
-- [ ] Configurar Supabase Auth (email/password, magic link)
-- [ ] Tabla `profiles` + RLS básico
-- [ ] Schema Drizzle + primera migración (`drizzle-kit push`)
-- [ ] Auth flow: login, registro, redirect post-login
-- [ ] Rutas protegidas (guard con sesión Supabase)
-- [ ] Wrapper dnd5eapi + primeras queries con TanStack Query
-- [ ] Wizard de creación de personaje (pasos 1–5)
-- [ ] Hoja de personaje (vista + edición)
-- [ ] Notas de sesión
-- [ ] Integrar módulo de dados existente
-- [ ] Hechizos en personaje (paso 6 del wizard)
-- [ ] Sentry configurado y probado
+El seguimiento de tareas y próximos pasos se encuentra en [roadmap.md](file:///Users/joaquinnader/Documents/web/personales/dungeonsanddragons/tavern-app/roadmap.md).
+
+---
 
 *Última actualización: scaffold inicial completado + reglas de commit y changelog*
