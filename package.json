@@ -12,7 +12,8 @@
     "test": "vitest run",
     "prepare": "husky",
     "changelog": "changelogen --output CHANGELOG.md",
-    "changelog:preview": "changelogen"
+    "changelog:preview": "changelogen",
+    "db:types": "supabase gen types typescript --project-id qakjuxhgkxzzynllsotm > src/lib/database.types.ts"
   },
   "dependencies": {
     "@sentry/react": "^10.52.0",
