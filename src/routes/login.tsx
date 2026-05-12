@@ -14,7 +14,7 @@ export const Route = createFileRoute('/login')({
 
 function LoginPage() {
   const navigate = useNavigate()
-  const [mode, setMode] = useState<'login' | 'register'>('login')
+  const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login')
   const [error, setError] = useState<string | null>(null)
   const [emailSent, setEmailSent] = useState(false)
 
@@ -29,7 +29,7 @@ function LoginPage() {
         } else {
           navigate({ to: '/' })
         }
-      } else {
+      } else if (mode === 'register') {
         const { data, error } = await supabase.auth.signUp(value)
         if (error) {
           setError(error.message)
@@ -38,21 +38,40 @@ function LoginPage() {
         } else {
           setEmailSent(true)
         }
+      } else {
+        const { error } = await supabase.auth.resetPasswordForEmail(value.email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        })
+        if (error) {
+          setError(error.message)
+        } else {
+          setEmailSent(true)
+        }
       }
     },
   })
+
+  const switchMode = (next: typeof mode) => {
+    setMode(next)
+    setError(null)
+    setEmailSent(false)
+  }
 
   if (emailSent) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-stone-950">
         <div className="w-full max-w-sm space-y-4 p-8 text-center">
           <h1 className="text-3xl font-bold text-amber-200">The Tavern</h1>
-          <p className="text-stone-300">Check your email for a confirmation link to complete your registration.</p>
+          <p className="text-stone-300">
+            {mode === 'forgot'
+              ? 'Revisá tu email para recuperar tu contraseña.'
+              : 'Revisá tu email para confirmar tu cuenta.'}
+          </p>
           <button
-            onClick={() => { setEmailSent(false); setMode('login') }}
+            onClick={() => switchMode('login')}
             className="text-sm text-stone-400 hover:text-stone-200 transition-colors"
           >
-            Back to sign in
+            Volver al inicio de sesión
           </button>
         </div>
       </div>
@@ -79,18 +98,20 @@ function LoginPage() {
               />
             )}
           </form.Field>
-          <form.Field name="password">
-            {(field) => (
-              <input
-                type="password"
-                placeholder="Password"
-                autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                value={field.state.value}
-                onChange={(e) => field.handleChange(e.target.value)}
-                className="w-full px-4 py-2 rounded-lg bg-stone-800 text-stone-100 border border-stone-700 focus:outline-none focus:border-amber-500"
-              />
-            )}
-          </form.Field>
+          {mode !== 'forgot' && (
+            <form.Field name="password">
+              {(field) => (
+                <input
+                  type="password"
+                  placeholder="Password"
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg bg-stone-800 text-stone-100 border border-stone-700 focus:outline-none focus:border-amber-500"
+                />
+              )}
+            </form.Field>
+          )}
           {error && <p className="text-red-400 text-sm">{error}</p>}
           <form.Subscribe selector={(s) => s.isSubmitting}>
             {(isSubmitting) => (
@@ -99,19 +120,34 @@ function LoginPage() {
                 disabled={isSubmitting}
                 className="w-full py-2 bg-amber-700 hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition-colors"
               >
-                {isSubmitting
-                  ? '...'
-                  : mode === 'login' ? 'Enter the Tavern' : 'Create Account'}
+                {isSubmitting ? '...' : mode === 'login' ? 'Entrar' : mode === 'register' ? 'Crear cuenta' : 'Enviar email'}
               </button>
             )}
           </form.Subscribe>
         </form>
-        <button
-          onClick={() => { setMode(m => m === 'login' ? 'register' : 'login'); setError(null) }}
-          className="w-full text-sm text-center text-stone-400 hover:text-stone-200 transition-colors"
-        >
-          {mode === 'login' ? "Don't have an account? Register" : 'Already have an account? Sign in'}
-        </button>
+
+        <div className="space-y-2 text-center">
+          {mode === 'login' && (
+            <>
+              <button onClick={() => switchMode('register')} className="block w-full text-sm text-stone-400 hover:text-stone-200 transition-colors">
+                ¿No tenés cuenta? Registrate
+              </button>
+              <button onClick={() => switchMode('forgot')} className="block w-full text-sm text-stone-500 hover:text-stone-300 transition-colors">
+                Olvidé mi contraseña
+              </button>
+            </>
+          )}
+          {mode === 'register' && (
+            <button onClick={() => switchMode('login')} className="block w-full text-sm text-stone-400 hover:text-stone-200 transition-colors">
+              ¿Ya tenés cuenta? Iniciá sesión
+            </button>
+          )}
+          {mode === 'forgot' && (
+            <button onClick={() => switchMode('login')} className="block w-full text-sm text-stone-400 hover:text-stone-200 transition-colors">
+              Volver al inicio de sesión
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )
