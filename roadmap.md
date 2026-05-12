@@ -13,7 +13,7 @@
 - [x] QueryClient cableado en `main.tsx` + context en router
 - [ ] Configurar Supabase Auth (email/password, magic link)
 - [ ] Tabla `profiles` + RLS básico
-- [ ] Schema Drizzle + primera migración (`drizzle-kit push`)
+- [x] Schema Drizzle + primera migración (`drizzle-kit push`)
 - [ ] Auth flow: login, registro, redirect post-login
 - [ ] Rutas protegidas (guard con sesión Supabase)
 - [ ] Wrapper dnd5eapi + primeras queries con TanStack Query
@@ -26,4 +26,4 @@
 
 ---
 
-*Última actualización: scaffold inicial completado + reglas de commit y changelog*
+*Última actualización: Schema Drizzle definido*
