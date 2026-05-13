@@ -74,6 +74,11 @@ export function abilityModifier(score: number): string {
   return mod >= 0 ? `+${mod}` : `${mod}`
 }
 
+export function modifierColor(score: number): string {
+  const mod = Math.floor((score - 10) / 2)
+  return mod > 0 ? 'text-green-400' : mod < 0 ? 'text-red-400' : 'text-stone-400'
+}
+
 export const ABILITY_LABELS: Record<string, string> = {
   str: 'STR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'WIS', cha: 'CHA',
 }

@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import type { Session } from '@supabase/supabase-js'
 import { useState } from 'react'
 import { supabase } from '../../../lib/supabase'
-import { dndApi, dndKeys, abilityModifier, ABILITY_LABELS, ABILITY_FULL } from '../../../lib/dnd-api'
+import { dndApi, dndKeys, abilityModifier, modifierColor, ABILITY_LABELS, ABILITY_FULL } from '../../../lib/dnd-api'
 import type { SpellDetail } from '../../../lib/dnd-api'
 
 export const Route = createFileRoute('/_authenticated/characters/$characterId')({
@@ -13,7 +14,11 @@ const STAT_KEYS = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const
 
 function CharacterSheet() {
   const { characterId } = Route.useParams()
+  const { session } = Route.useRouteContext() as { session: Session }
+  const queryClient = useQueryClient()
   const [spellModal, setSpellModal] = useState<SpellDetail | null>(null)
+  const [assigningCampaign, setAssigningCampaign] = useState(false)
+  const [selectedCampaignId, setSelectedCampaignId] = useState('')
 
   const { data: character, isLoading } = useQuery({
     queryKey: ['character', characterId],
@@ -23,6 +28,27 @@ function CharacterSheet() {
       return data
     },
   })
+
+  const { data: userCampaigns = [] } = useQuery({
+    queryKey: ['campaigns', 'all', session.user.id],
+    queryFn: async () => {
+      const [gm, player] = await Promise.all([
+        supabase.from('campaigns').select('id, name').eq('dm_id', session.user.id),
+        supabase.from('campaign_players').select('campaigns(id, name)').eq('user_id', session.user.id),
+      ])
+      const gmList = gm.data ?? []
+      const playerList = (player.data ?? []).flatMap(r => r.campaigns ? [r.campaigns as { id: string; name: string }] : [])
+      const seen = new Set<string>()
+      return [...gmList, ...playerList].filter(c => seen.has(c.id) ? false : (seen.add(c.id), true))
+    },
+    enabled: !!character && character.user_id === session.user.id,
+  })
+
+  const assignToCampaign = async () => {
+    await supabase.from('characters').update({ campaign_id: selectedCampaignId || null }).eq('id', characterId)
+    await queryClient.invalidateQueries({ queryKey: ['character', characterId] })
+    setAssigningCampaign(false)
+  }
 
   const { data: raceDetail } = useQuery({
     queryKey: dndKeys.race(character?.race ?? ''),
@@ -62,7 +88,32 @@ function CharacterSheet() {
       <header className="border-b border-stone-800 px-8 py-4 flex items-center gap-4">
         <Link to="/" className="text-stone-400 hover:text-stone-200 transition-colors text-sm">← Dashboard</Link>
         <h1 className="text-xl font-bold text-amber-200 flex-1">{character.name}</h1>
-        <div className="text-sm text-stone-400 capitalize">{character.race} · {character.class} · Nv. {character.level}</div>
+        <div className="flex items-center gap-3">
+          <div className="text-sm text-stone-400 capitalize">{character.race} · {character.class} · Nv. {character.level}</div>
+          {character.user_id === session.user.id && (
+            assigningCampaign ? (
+              <div className="flex items-center gap-2">
+                <select
+                  value={selectedCampaignId}
+                  onChange={e => setSelectedCampaignId(e.target.value)}
+                  className="px-3 py-1 text-sm rounded-lg bg-stone-800 border border-stone-700 focus:outline-none focus:border-amber-500"
+                >
+                  <option value="">Sin campaña</option>
+                  {userCampaigns.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+                <button onClick={assignToCampaign} className="px-3 py-1 text-sm bg-amber-700 hover:bg-amber-600 rounded-lg transition-colors">Guardar</button>
+                <button onClick={() => setAssigningCampaign(false)} className="text-stone-500 hover:text-stone-300 text-sm">✕</button>
+              </div>
+            ) : (
+              <button
+                onClick={() => { setAssigningCampaign(true); setSelectedCampaignId(character.campaign_id ?? '') }}
+                className="text-xs px-3 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-400 transition-colors"
+              >
+                {character.campaign_id ? '✎ Campaña' : '+ Asignar campaña'}
+              </button>
+            )
+          )}
+        </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-8 py-10 space-y-8">
@@ -75,7 +126,7 @@ function CharacterSheet() {
               <div key={k} className="bg-stone-900 border border-stone-800 rounded-xl p-3 text-center">
                 <p className="text-xs text-stone-500 mb-1">{ABILITY_LABELS[k]}</p>
                 <p className="text-2xl font-bold">{stats[k] ?? '—'}</p>
-                <p className="text-sm text-amber-400 font-mono">{stats[k] ? abilityModifier(stats[k]) : ''}</p>
+                <p className={`text-sm font-mono ${stats[k] ? modifierColor(stats[k]) : 'text-stone-400'}`}>{stats[k] ? abilityModifier(stats[k]) : ''}</p>
                 <p className="text-xs text-stone-600 mt-1">{ABILITY_FULL[k]}</p>
               </div>
             ))}

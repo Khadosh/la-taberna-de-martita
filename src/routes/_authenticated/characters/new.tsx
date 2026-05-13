@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
 import { useState } from 'react'
 import { supabase } from '../../../lib/supabase'
-import { dndApi, dndKeys, rollStat, abilityModifier, ABILITY_LABELS, ABILITY_FULL } from '../../../lib/dnd-api'
+import { dndApi, dndKeys, rollStat, abilityModifier, modifierColor, ABILITY_LABELS, ABILITY_FULL } from '../../../lib/dnd-api'
 import type { SpellDetail } from '../../../lib/dnd-api'
 
 export const Route = createFileRoute('/_authenticated/characters/new')({
@@ -22,6 +22,7 @@ interface Draft {
   skillProficiencies: string[]
   spells: string[]
   backstory: string
+  campaignId: string
 }
 
 const EMPTY_STATS: Stats = { str: 0, dex: 0, con: 0, int: 0, wis: 0, cha: 0 }
@@ -43,7 +44,7 @@ function NewCharacter() {
     name: '', raceIndex: '', classIndex: '', level: 1,
     rolledValues: rollAll(),
     stats: EMPTY_STATS,
-    skillProficiencies: [], spells: [], backstory: '',
+    skillProficiencies: [], spells: [], backstory: '', campaignId: '',
   })
 
   const patch = (update: Partial<Draft>) => setDraft(d => ({ ...d, ...update }))
@@ -60,6 +61,20 @@ function NewCharacter() {
     queryFn: () => dndApi.klass(draft.classIndex),
     enabled: !!draft.classIndex,
   })
+  const { data: userCampaigns = [] } = useQuery({
+    queryKey: ['campaigns', 'all', session.user.id],
+    queryFn: async () => {
+      const [gm, player] = await Promise.all([
+        supabase.from('campaigns').select('id, name').eq('dm_id', session.user.id),
+        supabase.from('campaign_players').select('campaigns(id, name)').eq('user_id', session.user.id),
+      ])
+      const gmList = gm.data ?? []
+      const playerList = (player.data ?? []).flatMap(r => r.campaigns ? [r.campaigns as { id: string; name: string }] : [])
+      const seen = new Set<string>()
+      return [...gmList, ...playerList].filter(c => seen.has(c.id) ? false : (seen.add(c.id), true))
+    },
+  })
+
   const { data: classSpells } = useQuery({
     queryKey: dndKeys.classSpells(draft.classIndex),
     queryFn: () => dndApi.classSpells(draft.classIndex),
@@ -103,6 +118,7 @@ function NewCharacter() {
       level: draft.level,
       stats: totalStats,
       backstory: draft.backstory || null,
+      campaign_id: draft.campaignId || null,
       sheet_json: {
         base_stats: draft.stats,
         racial_bonuses: racialBonuses,
@@ -238,7 +254,7 @@ function NewCharacter() {
                   {draft.stats[key] > 0 && (
                     <div className="text-right w-16">
                       <p className="text-sm font-mono">{draft.stats[key] + (racialBonuses[key] ?? 0)}</p>
-                      <p className="text-xs text-amber-300">{abilityModifier(draft.stats[key] + (racialBonuses[key] ?? 0))}</p>
+                      <p className={`text-xs ${modifierColor(draft.stats[key] + (racialBonuses[key] ?? 0))}`}>{abilityModifier(draft.stats[key] + (racialBonuses[key] ?? 0))}</p>
                     </div>
                   )}
                 </div>
@@ -353,6 +369,19 @@ function NewCharacter() {
               rows={8}
               className="w-full px-4 py-3 rounded-lg bg-stone-800 border border-stone-700 focus:outline-none focus:border-amber-500 resize-none text-sm"
             />
+
+            {/* Campaign association */}
+            <div className="space-y-1">
+              <label className="text-sm text-stone-400">Asociar a campaña <span className="text-stone-600">(opcional)</span></label>
+              <select
+                value={draft.campaignId}
+                onChange={e => patch({ campaignId: e.target.value })}
+                className="w-full px-4 py-2 rounded-lg bg-stone-800 border border-stone-700 focus:outline-none focus:border-amber-500 text-sm"
+              >
+                <option value="">Sin campaña por ahora</option>
+                {userCampaigns.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
 
             {/* Summary */}
             <div className="p-4 rounded-lg bg-stone-900 border border-stone-800 space-y-2 text-sm">

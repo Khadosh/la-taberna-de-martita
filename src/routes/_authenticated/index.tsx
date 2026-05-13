@@ -4,7 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import type { Tables } from '../../lib/database.types'
-import { abilityModifier, ABILITY_LABELS } from '../../lib/dnd-api'
+import { abilityModifier, modifierColor, ABILITY_LABELS } from '../../lib/dnd-api'
 import { CLASS_ICONS, CLASS_COLORS } from '../../lib/class-meta'
 
 export const Route = createFileRoute('/_authenticated/')({
@@ -136,7 +136,7 @@ function CharacterCard({ character }: { character: Tables<'characters'> }) {
             <div key={k} className="text-center">
               <p className="text-xs text-stone-500">{ABILITY_LABELS[k]}</p>
               <p className="text-sm font-mono font-bold">{stats[k] ?? '—'}</p>
-              <p className="text-xs text-amber-400">{stats[k] ? abilityModifier(stats[k]) : ''}</p>
+              <p className={`text-xs ${stats[k] ? modifierColor(stats[k]) : 'text-stone-400'}`}>{stats[k] ? abilityModifier(stats[k]) : ''}</p>
             </div>
           ))}
         </div>
