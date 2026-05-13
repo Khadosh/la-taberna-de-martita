@@ -6,6 +6,8 @@ import { supabase } from '../../../lib/supabase'
 import { dndApi, dndKeys, rollStat, abilityModifier, modifierColor, ABILITY_LABELS, ABILITY_FULL } from '../../../lib/dnd-api'
 import type { SpellDetail } from '../../../lib/dnd-api'
 import { CLASS_ICONS } from '../../../lib/class-meta'
+import { BACKGROUNDS, ABILITY_LABELS_ES } from '../../../lib/dnd-backgrounds'
+import type { StatKey } from '../../../lib/dnd-backgrounds'
 
 export const Route = createFileRoute('/_authenticated/characters/new')({
   component: NewCharacter,
@@ -21,6 +23,9 @@ interface Draft {
   level: number
   rolledValues: number[]
   stats: Stats
+  backgroundKey: string
+  bgBonus2: StatKey | ''
+  bgBonus1: StatKey | ''
   skillProficiencies: string[]
   spells: string[]
   backstory: string
@@ -47,6 +52,7 @@ function NewCharacter() {
     name: '', raceIndex: '', classIndex: '', subclassIndex: '', level: 1,
     rolledValues: rollAll(),
     stats: EMPTY_STATS,
+    backgroundKey: '', bgBonus2: '', bgBonus1: '',
     skillProficiencies: [], spells: [], backstory: '', campaignId: '',
   })
 
@@ -89,19 +95,18 @@ function NewCharacter() {
     enabled: !!draft.classIndex && !!classDetail?.spellcasting,
   })
 
-  const racialBonuses = raceDetail?.ability_bonuses.reduce<Partial<Stats>>((acc, b) => {
-    const key = b.ability_score.index as keyof Stats
-    if (key in EMPTY_STATS) acc[key] = (acc[key] ?? 0) + b.bonus
-    return acc
-  }, {}) ?? {}
+  const selectedBg = draft.backgroundKey ? BACKGROUNDS[draft.backgroundKey] : null
+  const backgroundBonuses: Partial<Stats> = selectedBg && draft.bgBonus2 && draft.bgBonus1
+    ? { [draft.bgBonus2]: 2, [draft.bgBonus1]: 1 }
+    : {}
 
   const totalStats = STAT_KEYS.reduce<Stats>((acc, k) => {
-    acc[k] = (draft.stats[k] || 0) + (racialBonuses[k] ?? 0)
+    acc[k] = (draft.stats[k] || 0) + (backgroundBonuses[k] ?? 0)
     return acc
   }, { ...EMPTY_STATS })
 
   const isCaster = !!classDetail?.spellcasting
-  const totalSteps = isCaster ? 5 : 4
+  const totalSteps = isCaster ? 6 : 5
 
   const canProceed = () => {
     if (step === 1) return draft.name.trim() && draft.raceIndex && draft.classIndex
@@ -113,6 +118,9 @@ function NewCharacter() {
       return unassigned.length === 0 && new Set(Object.values(draft.stats)).size === 6
     }
     if (step === 3) {
+      return !!(draft.backgroundKey && draft.bgBonus2 && draft.bgBonus1 && draft.bgBonus2 !== draft.bgBonus1)
+    }
+    if (step === 4) {
       const choices = classDetail?.proficiency_choices[0]
       return !choices || draft.skillProficiencies.length === choices.choose
     }
@@ -132,7 +140,9 @@ function NewCharacter() {
       campaign_id: draft.campaignId || null,
       sheet_json: {
         base_stats: draft.stats,
-        racial_bonuses: racialBonuses,
+        background: draft.backgroundKey || null,
+        background_bonuses: backgroundBonuses,
+        background_skills: selectedBg?.skills ?? [],
         skill_proficiencies: draft.skillProficiencies,
         weapon_proficiencies: classDetail?.proficiencies.map(p => p.index) ?? [],
         spells: draft.spells,
@@ -234,7 +244,7 @@ function NewCharacter() {
                 />
               </div>
 
-              {/* Subclass selector — only when class is selected and has subclasses */}
+              {/* Subclass selector */}
               {classSubclasses && classSubclasses.results.length > 0 && (
                 <div className="space-y-1.5">
                   <label className="text-xs text-stone-500 font-display tracking-widest uppercase">Subclase</label>
@@ -265,20 +275,10 @@ function NewCharacter() {
                       </div>
                     </div>
                   )}
-                  {raceDetail?.ability_bonuses && raceDetail.ability_bonuses.length > 0 && (
-                    <div>
-                      <p className="text-xs text-stone-600 font-display tracking-widest uppercase mb-1.5">Bonificaciones raciales</p>
-                      <div className="flex gap-2 flex-wrap">
-                        {raceDetail.ability_bonuses.map(b => (
-                          <span key={b.ability_score.index} className="text-xs text-amber-400/80 border border-amber-900/40 px-2 py-0.5 font-serif">
-                            +{b.bonus} {b.ability_score.name}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {raceDetail?.ability_bonuses.length === 0 && (
-                    <p className="text-xs text-stone-600 font-serif italic">Esta raza no tiene bonificadores fijos.</p>
+                  {raceDetail && (
+                    <p className="text-xs text-stone-600 font-serif italic">
+                      Los bonificadores de atributo vienen del trasfondo, no de la raza (reglas 2024).
+                    </p>
                   )}
                 </div>
               )}
@@ -367,8 +367,8 @@ function NewCharacter() {
                       </select>
                       {draft.stats[key] > 0 && (
                         <div className="text-right w-12 shrink-0">
-                          <p className="text-sm font-mono text-stone-200">{draft.stats[key] + (racialBonuses[key] ?? 0)}</p>
-                          <p className={`text-xs font-mono ${modifierColor(draft.stats[key] + (racialBonuses[key] ?? 0))}`}>{abilityModifier(draft.stats[key] + (racialBonuses[key] ?? 0))}</p>
+                          <p className="text-sm font-mono text-stone-200">{draft.stats[key]}</p>
+                          <p className={`text-xs font-mono ${modifierColor(draft.stats[key])}`}>{abilityModifier(draft.stats[key])}</p>
                         </div>
                       )}
                     </div>
@@ -384,7 +384,7 @@ function NewCharacter() {
                 {/* Manual number inputs */}
                 <div className="grid grid-cols-2 gap-2.5">
                   {STAT_KEYS.map(key => {
-                    const total = (draft.stats[key] || 0) + (racialBonuses[key] ?? 0)
+                    const total = draft.stats[key] || 0
                     return (
                       <div key={key} style={cardStyle} className="flex items-center gap-3 p-3">
                         <div className="w-12 shrink-0">
@@ -416,14 +416,109 @@ function NewCharacter() {
               </>
             )}
 
-            {Object.keys(racialBonuses).length > 0 && (
-              <p className="text-xs text-stone-600 font-serif italic">Los valores muestran los bonificadores raciales incluidos.</p>
+            <p className="text-xs text-stone-600 font-serif italic">Los bonificadores +2/+1 del trasfondo se asignan en el siguiente paso.</p>
+          </div>
+        )}
+
+        {/* Step 3: Background */}
+        {step === 3 && (
+          <div className="space-y-6">
+            <StepTitle>Trasfondo</StepTitle>
+            <p className="text-sm text-stone-500 font-serif italic">
+              El trasfondo define quién eras antes de aventurarte. Cada trasfondo otorga +2 y +1 a dos de sus tres características predefinidas.
+            </p>
+
+            {/* Background grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-72 overflow-y-auto pr-1">
+              {Object.entries(BACKGROUNDS).map(([key, bg]) => {
+                const isSelected = draft.backgroundKey === key
+                return (
+                  <button
+                    key={key}
+                    onClick={() => patch({ backgroundKey: key, bgBonus2: '', bgBonus1: '' })}
+                    className={`text-left p-3 border transition-colors ${
+                      isSelected
+                        ? 'border-amber-700/80 text-amber-100'
+                        : 'border-stone-700/50 text-stone-400 hover:border-amber-800/50 hover:text-stone-200'
+                    }`}
+                    style={isSelected ? { background: 'rgba(120,60,10,0.3)', border: '1px solid rgba(180,100,20,0.5)' } : cardStyle}
+                  >
+                    <p className="text-sm font-serif font-semibold leading-tight">{bg.name}</p>
+                    <p className="text-[11px] text-stone-500 mt-0.5 font-display tracking-wider">
+                      {bg.abilities.map(a => ABILITY_LABELS_ES[a]).join(' · ')}
+                    </p>
+                    <p className="text-[11px] text-stone-600 font-serif italic mt-1 leading-snug line-clamp-2">{bg.desc}</p>
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* ASI assignment */}
+            {selectedBg && (
+              <div style={cardStyle} className="p-4 space-y-4">
+                <div>
+                  <p className="text-xs text-stone-400 font-display tracking-widest uppercase mb-1">{selectedBg.name}</p>
+                  <p className="text-[11px] text-stone-600 font-serif">Pericias: {selectedBg.skills.join(', ')} · Herramienta: {selectedBg.tool}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-stone-500 font-display tracking-widest uppercase">+2 a...</label>
+                    <select
+                      value={draft.bgBonus2}
+                      onChange={e => {
+                        const val = e.target.value as StatKey | ''
+                        patch({
+                          bgBonus2: val,
+                          bgBonus1: draft.bgBonus1 === val ? '' : draft.bgBonus1,
+                        })
+                      }}
+                      style={inputStyle}
+                      className="w-full px-3 py-2 text-stone-100 font-serif text-sm focus:outline-none"
+                    >
+                      <option value="">Elegir...</option>
+                      {selectedBg.abilities.map(a => (
+                        <option key={a} value={a}>{ABILITY_LABELS_ES[a]}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs text-stone-500 font-display tracking-widest uppercase">+1 a...</label>
+                    <select
+                      value={draft.bgBonus1}
+                      onChange={e => patch({ bgBonus1: e.target.value as StatKey | '' })}
+                      style={inputStyle}
+                      className="w-full px-3 py-2 text-stone-100 font-serif text-sm focus:outline-none"
+                    >
+                      <option value="">Elegir...</option>
+                      {selectedBg.abilities.filter(a => a !== draft.bgBonus2).map(a => (
+                        <option key={a} value={a}>{ABILITY_LABELS_ES[a]}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Bonus preview */}
+                {draft.bgBonus2 && draft.bgBonus1 && (
+                  <div className="flex gap-2 flex-wrap pt-2 border-t border-stone-800">
+                    <span className="text-xs text-amber-400/90 border border-amber-900/50 px-2 py-0.5 font-serif">
+                      +2 {ABILITY_LABELS_ES[draft.bgBonus2]}
+                    </span>
+                    <span className="text-xs text-amber-400/60 border border-amber-900/30 px-2 py-0.5 font-serif">
+                      +1 {ABILITY_LABELS_ES[draft.bgBonus1]}
+                    </span>
+                    <span className="text-xs text-stone-700 font-serif italic ml-auto">
+                      El tercer atributo ({ABILITY_LABELS_ES[selectedBg.abilities.find(a => a !== draft.bgBonus2 && a !== draft.bgBonus1)!]}) no recibe bono
+                    </span>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         )}
 
-        {/* Step 3: Proficiencies */}
-        {step === 3 && classDetail && (
+        {/* Step 4: Proficiencies */}
+        {step === 4 && classDetail && (
           <div className="space-y-6">
             <StepTitle>Pericias</StepTitle>
 
@@ -440,10 +535,23 @@ function NewCharacter() {
               </div>
             )}
 
+            {selectedBg && selectedBg.skills.length > 0 && (
+              <div style={cardStyle} className="p-4 space-y-2">
+                <p className="text-xs text-stone-500 font-display tracking-widest uppercase">Pericias de trasfondo ({selectedBg.name})</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedBg.skills.map(s => (
+                    <span key={s} className="px-2 py-0.5 text-xs font-serif text-amber-400/70 border border-amber-900/30">
+                      {s}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {classDetail.proficiency_choices.map((choice, ci) => (
               <div key={ci} className="space-y-3">
                 <p className="text-sm text-stone-300 font-serif">
-                  Elegí {choice.choose} pericias:{' '}
+                  Elegí {choice.choose} pericias adicionales:{' '}
                   <span className={`font-mono ${draft.skillProficiencies.length >= choice.choose ? 'text-amber-400' : 'text-stone-500'}`}>
                     {draft.skillProficiencies.length}/{choice.choose}
                   </span>
@@ -482,8 +590,8 @@ function NewCharacter() {
           </div>
         )}
 
-        {/* Step 4: Spells (only for casters) */}
-        {step === 4 && isCaster && classSpells && (
+        {/* Step 5: Spells (only for casters) */}
+        {step === 5 && isCaster && classSpells && (
           <div className="space-y-6">
             <StepTitle>Hechizos iniciales</StepTitle>
             <p className="text-sm text-stone-500 font-serif italic">
@@ -541,15 +649,28 @@ function NewCharacter() {
               </select>
             </div>
 
-            <div style={cardStyle} className="p-4 space-y-2 text-sm">
+            <div style={cardStyle} className="p-4 space-y-3 text-sm">
               <p className="text-xs text-stone-500 font-display tracking-widest uppercase mb-3">Resumen</p>
               <div className="flex items-center gap-3 mb-2">
                 <span className="text-2xl">{classIcon}</span>
                 <div>
                   <p className="text-stone-200 font-serif font-semibold">{draft.name}</p>
                   <p className="text-stone-500 text-xs font-serif capitalize">{raceDetail?.name} · {classDetail?.name} · Nivel {draft.level}</p>
+                  {selectedBg && (
+                    <p className="text-stone-600 text-xs font-serif">Trasfondo: {selectedBg.name}</p>
+                  )}
                 </div>
               </div>
+
+              {/* Background bonuses summary */}
+              {selectedBg && draft.bgBonus2 && draft.bgBonus1 && (
+                <div className="flex gap-2 flex-wrap pb-2">
+                  <span className="text-xs text-amber-400/80 border border-amber-900/40 px-2 py-0.5 font-serif">
+                    {selectedBg.name}: +2 {ABILITY_LABELS_ES[draft.bgBonus2]} · +1 {ABILITY_LABELS_ES[draft.bgBonus1]}
+                  </span>
+                </div>
+              )}
+
               <div className="grid grid-cols-6 gap-1 pt-2 border-t border-stone-800">
                 {STAT_KEYS.map(k => (
                   <div key={k} className="text-center">

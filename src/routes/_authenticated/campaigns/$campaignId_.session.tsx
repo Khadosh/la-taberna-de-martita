@@ -769,15 +769,12 @@ function DmSession() {
                         )}
                         <div className="space-y-1.5">
                           {npcFormItems.map(item => (
-                            <div key={item.id} className="flex items-center gap-2">
-                              <input value={item.name} onChange={e => updateLootItem(item.id, { name: e.target.value })}
-                                placeholder="Nombre del objeto"
-                                className="flex-1 px-2 py-1 bg-stone-900 border border-stone-700 text-stone-300 text-xs font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500" />
-                              <span className="text-xs text-stone-600 shrink-0">×</span>
-                              <input type="number" min={1} value={item.qty} onChange={e => updateLootItem(item.id, { qty: parseInt(e.target.value) || 1 })}
-                                className="w-14 px-2 py-1 bg-stone-900 border border-stone-700 text-stone-300 text-xs font-mono text-center focus:outline-none focus:border-stone-500" />
-                              <button onClick={() => removeLootItem(item.id)} className="text-stone-700 hover:text-red-500 transition-colors text-xs shrink-0">✕</button>
-                            </div>
+                            <NpcLootItemRow
+                              key={item.id}
+                              item={item}
+                              onUpdate={patch => updateLootItem(item.id, patch)}
+                              onRemove={() => removeLootItem(item.id)}
+                            />
                           ))}
                         </div>
                       </div>
@@ -821,6 +818,26 @@ function DmSession() {
           </div>
         </main>
       </div>
+    </div>
+  )
+}
+
+// ── NpcLootItemRow ────────────────────────────────────────────────────────────
+
+function NpcLootItemRow({ item, onUpdate, onRemove }: {
+  item: NpcItem
+  onUpdate: (patch: Partial<NpcItem>) => void
+  onRemove: () => void
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <input value={item.name} onChange={e => onUpdate({ name: e.target.value })}
+        placeholder="Nombre del objeto"
+        className="flex-1 px-2 py-1 bg-stone-900 border border-stone-700 text-stone-300 text-xs font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500" />
+      <span className="text-xs text-stone-600 shrink-0">×</span>
+      <input type="number" min={1} value={item.qty} onChange={e => onUpdate({ qty: parseInt(e.target.value) || 1 })}
+        className="w-14 px-2 py-1 bg-stone-900 border border-stone-700 text-stone-300 text-xs font-mono text-center focus:outline-none focus:border-stone-500" />
+      <button onClick={onRemove} className="text-stone-700 hover:text-red-500 transition-colors text-xs shrink-0">✕</button>
     </div>
   )
 }
