@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { CLASS_ICONS } from '../../../lib/class-meta'
 import { CONDITIONS, getSpellSlots } from '../../../lib/dnd-constants'
+import { dndApi, dndKeys, type MonsterSummary } from '../../../lib/dnd-api'
 
 export const Route = createFileRoute('/_authenticated/campaigns/$campaignId_/session')({
   component: DmSession,
@@ -36,6 +37,8 @@ type Npc = {
   currentHp: number
   maxHp: number
   initiative: number
+  ac?: number
+  cr?: number
 }
 
 type Combatant =
@@ -61,6 +64,12 @@ function DmSession() {
   const [combatants, setCombatants] = useState<Combatant[]>([])
   const [currentTurn, setCurrentTurn] = useState(0)
   const [npcInput, setNpcInput] = useState('')
+
+  // Bestiary picker
+  const [showBestiary, setShowBestiary] = useState(false)
+  const [bestiarySearch, setBestiarySearch] = useState('')
+  const [bestiaryQty, setBestiaryQty] = useState(1)
+  const [addingMonster, setAddingMonster] = useState(false)
 
   // Notes state
   const [noteTitle, setNoteTitle] = useState('')
@@ -116,6 +125,18 @@ function DmSession() {
       setNoteBody(latestNote.body)
     }
   }, [latestNote])
+
+  const { data: monsterList = [] } = useQuery({
+    queryKey: dndKeys.monsters,
+    queryFn: async () => (await dndApi.monsters()).results,
+    staleTime: Infinity,
+  })
+
+  const filteredMonsters = useMemo(() => {
+    const q = bestiarySearch.trim().toLowerCase()
+    if (!q) return []
+    return monsterList.filter(m => m.name.toLowerCase().includes(q)).slice(0, 10)
+  }, [monsterList, bestiarySearch])
 
   // ── Realtime ──────────────────────────────────────────────────────────────
 
@@ -211,6 +232,37 @@ function DmSession() {
       setCurrentTurn(t => Math.min(t, Math.max(0, newLen - 1)))
       return next
     })
+  }
+
+  const addNpcFromMonster = async (summary: MonsterSummary, count: number) => {
+    setAddingMonster(true)
+    try {
+      const monster = await dndApi.monster(summary.index)
+      const dexMod = Math.floor(((monster.dexterity ?? 10) - 10) / 2)
+      const ac = monster.armor_class[0]?.value
+      const newCombatants: Combatant[] = Array.from({ length: count }, (_, i) => {
+        const npc: Npc = {
+          id: crypto.randomUUID(),
+          name: count > 1 ? `${monster.name} ${i + 1}` : monster.name,
+          currentHp: monster.hit_points,
+          maxHp: monster.hit_points,
+          initiative: Math.ceil(Math.random() * 20) + dexMod,
+          ac,
+          cr: monster.challenge_rating,
+        }
+        return { kind: 'npc' as const, npc }
+      })
+      setCombatants(prev => {
+        const list = [...prev, ...newCombatants]
+        list.sort((a, b) => getInitiative(b) - getInitiative(a))
+        return list
+      })
+      setShowBestiary(false)
+      setBestiarySearch('')
+      setBestiaryQty(1)
+    } finally {
+      setAddingMonster(false)
+    }
   }
 
   const setPlayerInitiative = (characterId: string, init: number) => {
@@ -507,7 +559,7 @@ function DmSession() {
                         hp={npc.currentHp} maxHp={npc.maxHp} hpPct={hpPct} hpColor={hpColor}
                         onHpChange={v => updateNpc(npc.id, { currentHp: v })}
                         onRemove={() => removeNpc(npc.id)}
-                        tag={<span className="text-xs text-stone-600 font-serif">NPC</span>}
+                        tag={<span className="text-xs text-stone-600 font-serif">NPC{npc.ac != null ? ` · CA ${npc.ac}` : ''}{npc.cr != null ? ` · CR ${npc.cr}` : ''}</span>}
                         editingHpId={editingNpcHp}
                         setEditingHpId={setEditingNpcHp}
                         editingInitId={editingNpcInit}
@@ -519,19 +571,74 @@ function DmSession() {
                 })}
 
                 {/* Add NPC */}
-                <div className="mt-4 flex items-center gap-2 border-t border-stone-800 pt-4">
-                  <input
-                    ref={npcInputRef}
-                    value={npcInput}
-                    onChange={e => setNpcInput(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && npcInput.trim() && addNpc()}
-                    placeholder='Goblin Guardián 18  ←  nombre [hp opcional]'
-                    className="flex-1 px-3 py-2 bg-stone-900 border border-stone-700 text-stone-300 text-sm font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500"
-                  />
-                  <button onClick={addNpc} disabled={!npcInput.trim()}
-                    className="px-4 py-2 bg-stone-800 hover:bg-stone-700 disabled:opacity-30 text-stone-300 font-serif text-sm transition-colors">
-                    + NPC
-                  </button>
+                <div className="mt-4 border-t border-stone-800 pt-4 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={npcInputRef}
+                      value={npcInput}
+                      onChange={e => setNpcInput(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && npcInput.trim() && addNpc()}
+                      placeholder='Nombre [hp]  ej: Goblin 7'
+                      className="flex-1 px-3 py-2 bg-stone-900 border border-stone-700 text-stone-300 text-sm font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500"
+                    />
+                    <button onClick={addNpc} disabled={!npcInput.trim()}
+                      className="px-3 py-2 bg-stone-800 hover:bg-stone-700 disabled:opacity-30 text-stone-300 font-serif text-sm transition-colors">
+                      + NPC
+                    </button>
+                    <button
+                      onClick={() => { setShowBestiary(b => !b); setBestiarySearch('') }}
+                      className={`px-3 py-2 font-serif text-sm transition-colors border ${showBestiary ? 'border-amber-700 bg-amber-950/40 text-amber-300' : 'border-stone-700 bg-stone-900 text-stone-400 hover:border-stone-500 hover:text-stone-200'}`}
+                    >
+                      ⚔ Bestiario
+                    </button>
+                  </div>
+
+                  {showBestiary && (
+                    <div className="bg-stone-950 border border-stone-700 p-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <input
+                          autoFocus
+                          value={bestiarySearch}
+                          onChange={e => setBestiarySearch(e.target.value)}
+                          placeholder="Buscar monstruo..."
+                          className="flex-1 px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-300 text-sm font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500"
+                        />
+                        <div className="flex items-center gap-1 shrink-0">
+                          <span className="text-xs text-stone-500 font-serif">×</span>
+                          <input
+                            type="number" min={1} max={10} value={bestiaryQty}
+                            onChange={e => setBestiaryQty(Math.max(1, Math.min(10, parseInt(e.target.value) || 1)))}
+                            className="w-12 px-2 py-1.5 bg-stone-900 border border-stone-700 text-stone-300 text-sm font-mono text-center focus:outline-none focus:border-stone-500"
+                          />
+                        </div>
+                      </div>
+
+                      {bestiarySearch.trim().length === 0 && (
+                        <p className="text-xs text-stone-600 font-serif italic px-1">Escribí el nombre del monstruo para buscar.</p>
+                      )}
+
+                      {filteredMonsters.length > 0 && (
+                        <ul className="max-h-44 overflow-y-auto divide-y divide-stone-800">
+                          {filteredMonsters.map(m => (
+                            <li key={m.index}>
+                              <button
+                                disabled={addingMonster}
+                                onClick={() => addNpcFromMonster(m, bestiaryQty)}
+                                className="w-full text-left px-3 py-2 text-sm text-stone-300 hover:bg-stone-800 disabled:opacity-40 font-serif transition-colors flex items-center justify-between"
+                              >
+                                <span>{m.name}{bestiaryQty > 1 ? ` ×${bestiaryQty}` : ''}</span>
+                                {addingMonster && <span className="text-xs text-stone-600">...</span>}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+
+                      {bestiarySearch.trim().length > 0 && filteredMonsters.length === 0 && (
+                        <p className="text-xs text-stone-600 font-serif italic px-1">Sin resultados.</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
