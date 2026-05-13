@@ -43,20 +43,30 @@ function Dashboard() {
   })
 
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-100">
-      <header className="border-b border-stone-800 px-8 py-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-amber-200">The Tavern</h1>
-        <div className="flex items-center gap-4">
-          <div className="flex gap-2">
-            <Link to="/characters/new" className="px-4 py-1.5 bg-stone-700 hover:bg-stone-600 text-white text-sm rounded-lg transition-colors">
-              + Personaje
-            </Link>
-            <Link to="/campaigns/new" className="px-4 py-1.5 bg-amber-700 hover:bg-amber-600 text-white text-sm rounded-lg transition-colors">
-              + Campaña
-            </Link>
+    <div className="min-h-screen bg-stone-tavern text-stone-100">
+
+      {/* Header */}
+      <header className="border-b border-stone-800/80 px-8 py-4 flex items-center justify-between" style={headerStyle}>
+        <div className="flex items-center gap-3">
+          <span className="text-lg leading-none">🔥</span>
+          <div>
+            <h1 className="font-display text-amber-200/90 text-base leading-tight tracking-wide">La Taberna</h1>
+            <p className="font-display text-amber-800/70 text-[0.6rem] tracking-[0.3em] uppercase leading-none">de Martita</p>
           </div>
-          <button onClick={() => supabase.auth.signOut()} className="text-sm text-stone-400 hover:text-stone-200 transition-colors">
-            Sign out
+        </div>
+        <div className="flex items-center gap-3">
+          <Link to="/characters/new"
+            className="px-4 py-1.5 text-sm font-serif border border-stone-700 hover:border-stone-500 text-stone-300 hover:text-stone-100 transition-colors">
+            + Personaje
+          </Link>
+          <Link to="/campaigns/new"
+            className="px-4 py-1.5 text-sm font-serif border border-amber-800/60 hover:border-amber-600 text-amber-400/80 hover:text-amber-300 transition-colors">
+            + Campaña
+          </Link>
+          <div className="w-px h-5 bg-stone-800" />
+          <button onClick={() => supabase.auth.signOut()}
+            className="text-xs text-stone-600 hover:text-stone-400 transition-colors font-serif italic">
+            Cerrar sesión
           </button>
         </div>
       </header>
@@ -64,15 +74,15 @@ function Dashboard() {
       <main className="max-w-5xl mx-auto px-8 py-10 space-y-12">
 
         {/* Characters */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-stone-200">Tus personajes</h2>
+        <section className="space-y-5">
+          <SectionHeader label="Tus personajes" />
           {loadingChars ? (
-            <p className="text-stone-500 text-sm">Cargando...</p>
+            <p className="text-stone-600 text-sm font-serif italic">Consultando los pergaminos...</p>
           ) : characters.length === 0 ? (
-            <p className="text-stone-500 text-sm">
-              No tenés personajes.{' '}
-              <Link to="/characters/new" className="text-amber-400 hover:text-amber-300">Crear uno</Link>
-            </p>
+            <EmptyState>
+              Todavía no tenés personajes.{' '}
+              <Link to="/characters/new" className="text-amber-500/80 hover:text-amber-400 underline underline-offset-2">Crear uno</Link>
+            </EmptyState>
           ) : (
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {characters.map(c => <CharacterCard key={c.id} character={c} />)}
@@ -81,36 +91,57 @@ function Dashboard() {
         </section>
 
         {/* GM campaigns */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-stone-200">Tus campañas (GM)</h2>
+        <section className="space-y-5">
+          <SectionHeader label="Campañas · Game Master" />
           {loadingGm ? (
-            <p className="text-stone-500 text-sm">Cargando...</p>
+            <p className="text-stone-600 text-sm font-serif italic">Cargando...</p>
           ) : gmCampaigns.length === 0 ? (
-            <p className="text-stone-500 text-sm">No tenés campañas activas como GM.</p>
+            <EmptyState>No dirigís ninguna campaña.{' '}
+              <Link to="/campaigns/new" className="text-amber-500/80 hover:text-amber-400 underline underline-offset-2">Crear una</Link>
+            </EmptyState>
           ) : (
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               {gmCampaigns.map(c => <CampaignCard key={c.id} campaign={c} role="gm" />)}
             </ul>
           )}
         </section>
 
         {/* Player campaigns */}
-        <section className="space-y-4">
-          <h2 className="text-lg font-semibold text-stone-200">Campañas como jugador</h2>
+        <section className="space-y-5">
+          <SectionHeader label="Campañas · Jugador" />
           {loadingPlayer ? (
-            <p className="text-stone-500 text-sm">Cargando...</p>
+            <p className="text-stone-600 text-sm font-serif italic">Cargando...</p>
           ) : playerCampaigns.length === 0 ? (
-            <p className="text-stone-500 text-sm">No estás en ninguna campaña como jugador.</p>
+            <EmptyState>No estás en ninguna campaña como jugador.</EmptyState>
           ) : (
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               {playerCampaigns.map(({ campaigns: c, joined_at }) =>
                 c ? <CampaignCard key={c.id} campaign={c} role="player" joinedAt={joined_at ?? undefined} /> : null
               )}
             </ul>
           )}
         </section>
+
       </main>
     </div>
+  )
+}
+
+// ── Sub-components ────────────────────────────────────────────────────────────
+
+function SectionHeader({ label }: { label: string }) {
+  return (
+    <div className="flex items-center gap-4">
+      <div className="h-px flex-1 bg-stone-800" />
+      <p className="text-xs font-display tracking-widest text-stone-500 uppercase whitespace-nowrap">{label}</p>
+      <div className="h-px flex-1 bg-stone-800" />
+    </div>
+  )
+}
+
+function EmptyState({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-stone-600 text-sm font-serif italic px-1">{children}</p>
   )
 }
 
@@ -118,28 +149,40 @@ function CharacterCard({ character }: { character: Tables<'characters'> }) {
   const stats = character.stats as Record<string, number>
   const borderColor = CLASS_COLORS[character.class] ?? 'border-stone-700'
   const icon = CLASS_ICONS[character.class] ?? '🎲'
+  const hpPct = character.current_hp != null
+    ? Math.max(0, Math.min(100, (character.current_hp / Math.max(1, character.current_hp)) * 100))
+    : 100
 
   return (
-    <li className={`bg-stone-900 border-l-4 ${borderColor} border border-stone-800 rounded-xl overflow-hidden`}>
-      <Link to="/characters/$characterId" params={{ characterId: character.id }} className="block p-4 hover:bg-stone-800/50 transition-colors">
+    <li className={`border-l-2 ${borderColor} overflow-hidden`} style={cardStyle}>
+      <Link to="/characters/$characterId" params={{ characterId: character.id }} className="block p-4 hover:bg-white/[0.02] transition-colors">
         <div className="flex items-start justify-between mb-3">
           <div>
-            <p className="font-semibold text-stone-100">{character.name}</p>
-            <p className="text-xs text-stone-400 mt-0.5 capitalize">
+            <p className="font-semibold text-stone-100 text-sm leading-tight">{character.name}</p>
+            <p className="text-xs text-stone-500 mt-0.5 capitalize font-serif">
               {character.race} · {character.class} · Nv. {character.level}
             </p>
           </div>
-          <span className="text-2xl">{icon}</span>
+          <span className="text-xl leading-none mt-0.5">{icon}</span>
         </div>
         <div className="grid grid-cols-6 gap-1">
           {(['str', 'dex', 'con', 'int', 'wis', 'cha'] as const).map(k => (
             <div key={k} className="text-center">
-              <p className="text-xs text-stone-500">{ABILITY_LABELS[k]}</p>
-              <p className="text-sm font-mono font-bold">{stats[k] ?? '—'}</p>
-              <p className={`text-xs ${stats[k] ? modifierColor(stats[k]) : 'text-stone-400'}`}>{stats[k] ? abilityModifier(stats[k]) : ''}</p>
+              <p className="text-[10px] text-stone-600 uppercase tracking-wider">{ABILITY_LABELS[k]}</p>
+              <p className="text-sm font-mono font-bold text-stone-200">{stats[k] ?? '—'}</p>
+              <p className={`text-[10px] ${stats[k] ? modifierColor(stats[k]) : 'text-stone-600'}`}>{stats[k] ? abilityModifier(stats[k]) : ''}</p>
             </div>
           ))}
         </div>
+        {/* HP mini bar */}
+        {character.current_hp != null && (
+          <div className="mt-3 h-0.5 bg-stone-800 overflow-hidden">
+            <div
+              className={`h-full transition-all ${hpPct > 50 ? 'bg-green-800' : hpPct > 25 ? 'bg-amber-700' : 'bg-red-800'}`}
+              style={{ width: `${hpPct}%` }}
+            />
+          </div>
+        )}
       </Link>
     </li>
   )
@@ -156,22 +199,35 @@ function CampaignCard({ campaign, role, joinedAt }: { campaign: Tables<'campaign
   }
 
   return (
-    <li className="bg-stone-900 border border-stone-800 rounded-xl overflow-hidden">
-      <Link to="/campaigns/$campaignId" params={{ campaignId: campaign.id }} className="flex items-center justify-between px-5 py-4 hover:bg-stone-800/50 transition-colors">
+    <li style={cardStyle} className="overflow-hidden">
+      <Link to="/campaigns/$campaignId" params={{ campaignId: campaign.id }}
+        className="flex items-center justify-between px-5 py-3.5 hover:bg-white/[0.02] transition-colors">
         <div>
-          <p className="font-medium text-stone-100">{campaign.name}</p>
-          {joinedAt && <p className="text-xs text-stone-500 mt-0.5">Unido el {new Date(joinedAt).toLocaleDateString()}</p>}
-          {role === 'gm' && <p className="text-xs text-amber-600 mt-0.5">Game Master</p>}
+          <p className="text-sm font-medium text-stone-200">{campaign.name}</p>
+          <div className="flex items-center gap-2 mt-0.5">
+            {role === 'gm' && <span className="text-[10px] text-amber-700 font-display tracking-wider uppercase">Game Master</span>}
+            {joinedAt && <span className="text-[10px] text-stone-600 font-serif">Unido el {new Date(joinedAt).toLocaleDateString()}</span>}
+          </div>
         </div>
         {role === 'gm' && (
           <button
             onClick={copyInviteLink}
-            className="text-xs px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 transition-colors min-w-[100px] text-center"
-          >
+            className="text-xs px-3 py-1.5 border border-stone-800 hover:border-stone-600 text-stone-500 hover:text-stone-300 transition-colors font-serif min-w-[96px] text-center">
             {copied ? '¡Copiado!' : 'Copiar invite'}
           </button>
         )}
       </Link>
     </li>
   )
+}
+
+// ── Styles ────────────────────────────────────────────────────────────────────
+
+const headerStyle: React.CSSProperties = {
+  background: 'linear-gradient(180deg, #100c08 0%, #0c0a08 100%)',
+}
+
+const cardStyle: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.025)',
+  border: '1px solid rgba(255,255,255,0.06)',
 }
