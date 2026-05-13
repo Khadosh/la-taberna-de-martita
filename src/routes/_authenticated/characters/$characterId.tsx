@@ -118,6 +118,16 @@ function CharacterSheet() {
     enabled: !!character && character.user_id === session.user.id,
   })
 
+  const { data: campaign } = useQuery({
+    queryKey: ['campaign', character?.campaign_id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('campaigns').select('dm_id').eq('id', character!.campaign_id!).single()
+      if (error) throw error
+      return data
+    },
+    enabled: !!character?.campaign_id,
+  })
+
   const { data: raceDetail } = useQuery({
     queryKey: dndKeys.race(character?.race ?? ''),
     queryFn: () => dndApi.race(character!.race),
@@ -347,6 +357,7 @@ function CharacterSheet() {
   // ── Derived values ────────────────────────────────────────────────────────
 
   const isOwner = character.user_id === session.user.id
+  const isGm = campaign?.dm_id === session.user.id
   const stats = character.stats as Record<string, number>
   const sheet = character.sheet_json as SheetJson
   const hitDie = sheet.hit_die ?? classDetail?.hit_die ?? 8
@@ -560,20 +571,23 @@ function CharacterSheet() {
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1">
-                  {editingXp && isOwner ? (
+                  {editingXp && isGm ? (
                     <input autoFocus value={xpInput} onChange={e => setXpInput(e.target.value)}
                       onBlur={saveXp} onKeyDown={e => e.key === 'Enter' && saveXp()}
                       className="w-20 text-sm font-mono border-b border-stone-600 bg-transparent focus:outline-none" />
                   ) : (
-                    <button onClick={() => { if (isOwner) { setEditingXp(true); setXpInput(String(xp)) } }}
-                      className="text-sm font-mono text-stone-700 hover:text-amber-800 transition-colors">
+                    <button onClick={() => { if (isGm) { setEditingXp(true); setXpInput(String(xp)) } }}
+                      className={`text-sm font-mono text-stone-700 transition-colors ${isGm ? 'hover:text-amber-800 cursor-pointer' : 'cursor-default'}`}>
                       {xp.toLocaleString()} XP
                     </button>
                   )}
                 </div>
                 {xpForNext && <span className="text-xs text-stone-400 font-serif">→ {xpForNext.toLocaleString()}</span>}
               </div>
-              {canLevelUp && isOwner && (
+              {!isGm && character.campaign_id && (
+                <p className="text-[10px] text-stone-500 font-serif italic">Solo el GM puede otorgar XP</p>
+              )}
+              {canLevelUp && isGm && (
                 <button onClick={levelUp}
                   className="w-full text-xs py-1 bg-amber-800 hover:bg-amber-700 text-amber-100 font-serif transition-colors animate-pulse">
                   ⬆ Subir al nivel {level + 1}
