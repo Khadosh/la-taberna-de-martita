@@ -53,8 +53,11 @@ function CharacterSheet() {
   }
 
   const assignToCampaign = async () => {
+    const prevCampaignId = character?.campaign_id
     await supabase.from('characters').update({ campaign_id: selectedCampaignId || null }).eq('id', characterId)
     await queryClient.invalidateQueries({ queryKey: ['character', characterId] })
+    if (selectedCampaignId) queryClient.invalidateQueries({ queryKey: ['campaign-characters', selectedCampaignId] })
+    if (prevCampaignId) queryClient.invalidateQueries({ queryKey: ['campaign-characters', prevCampaignId] })
     setAssigningCampaign(false)
   }
 
