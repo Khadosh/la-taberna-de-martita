@@ -76,15 +76,58 @@ export type Database = {
           },
         ]
       }
+      character_inventory: {
+        Row: {
+          character_id: string
+          created_at: string | null
+          id: string
+          name: string
+          notes: string | null
+          quantity: number
+          weight_lbs: number
+        }
+        Insert: {
+          character_id: string
+          created_at?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          quantity?: number
+          weight_lbs?: number
+        }
+        Update: {
+          character_id?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          quantity?: number
+          weight_lbs?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "character_inventory_character_id_fkey"
+            columns: ["character_id"]
+            isOneToOne: false
+            referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       characters: {
         Row: {
+          armor_class: number | null
           backstory: string | null
           campaign_id: string | null
           class: string
+          conditions: string[]
           created_at: string | null
+          current_hp: number | null
+          experience_points: number
           id: string
           level: number
           name: string
+          portrait_url: string | null
           race: string
           sheet_json: Json
           stats: Json
@@ -92,13 +135,18 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          armor_class?: number | null
           backstory?: string | null
           campaign_id?: string | null
           class: string
+          conditions?: string[]
           created_at?: string | null
+          current_hp?: number | null
+          experience_points?: number
           id?: string
           level?: number
           name: string
+          portrait_url?: string | null
           race: string
           sheet_json: Json
           stats: Json
@@ -106,13 +154,18 @@ export type Database = {
           user_id: string
         }
         Update: {
+          armor_class?: number | null
           backstory?: string | null
           campaign_id?: string | null
           class?: string
+          conditions?: string[]
           created_at?: string | null
+          current_hp?: number | null
+          experience_points?: number
           id?: string
           level?: number
           name?: string
+          portrait_url?: string | null
           race?: string
           sheet_json?: Json
           stats?: Json

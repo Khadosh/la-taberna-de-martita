@@ -46,6 +46,28 @@ export interface SpellDetail {
   duration: string
 }
 
+export interface TraitDetail {
+  index: string
+  name: string
+  desc: string[]
+}
+
+export interface SkillDetail {
+  index: string
+  name: string
+  desc: string[]
+  ability_score: ApiRef
+}
+
+export interface EquipmentItem {
+  index: string
+  name: string
+  weight: number
+  cost: { quantity: number; unit: string }
+  equipment_category: ApiRef
+  desc?: string[]
+}
+
 export const dndApi = {
   races: () => get<{ results: ApiRef[] }>('/races'),
   race: (i: string) => get<RaceDetail>(`/races/${i}`),
@@ -53,6 +75,10 @@ export const dndApi = {
   klass: (i: string) => get<ClassDetail>(`/classes/${i}`),
   classSpells: (i: string) => get<{ results: ApiRef[] }>(`/classes/${i}/spells`),
   spell: (i: string) => get<SpellDetail>(`/spells/${i}`),
+  trait: (i: string) => get<TraitDetail>(`/traits/${i}`),
+  skill: (i: string) => get<SkillDetail>(`/skills/${i}`),
+  equipment: () => get<{ count: number; results: ApiRef[] }>('/equipment'),
+  equipmentDetail: (i: string) => get<EquipmentItem>(`/equipment/${i}`),
 }
 
 export const dndKeys = {
@@ -62,6 +88,9 @@ export const dndKeys = {
   klass: (i: string) => ['dnd', 'classes', i] as const,
   classSpells: (i: string) => ['dnd', 'classes', i, 'spells'] as const,
   spell: (i: string) => ['dnd', 'spells', i] as const,
+  trait: (i: string) => ['dnd', 'traits', i] as const,
+  skill: (i: string) => ['dnd', 'skills', i] as const,
+  equipment: ['dnd', 'equipment'] as const,
 }
 
 export function rollStat(): number {
