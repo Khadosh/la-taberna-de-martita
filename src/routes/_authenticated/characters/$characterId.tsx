@@ -28,6 +28,7 @@ type SheetJson = {
   death_saves?: { successes: number; failures: number }
   hit_dice_used?: number
   subclass?: string
+  equipped_items?: string[]
 }
 
 type InfoModal =
@@ -195,6 +196,15 @@ function CharacterSheet() {
   const patchCharacter = async (patch: Database['public']['Tables']['characters']['Update']) => {
     await supabase.from('characters').update(patch).eq('id', characterId)
     queryClient.invalidateQueries({ queryKey: ['character', characterId] })
+  }
+
+  const toggleEquip = async (itemId: string) => {
+    const current = sheet.equipped_items ?? []
+    await patchSheet({
+      equipped_items: current.includes(itemId)
+        ? current.filter(id => id !== itemId)
+        : [...current, itemId],
+    })
   }
 
   const patchSheet = async (sheetPatch: Partial<SheetJson>) => {
@@ -369,15 +379,19 @@ function CharacterSheet() {
   const isGm = campaign?.dm_id === session.user.id
   const stats = character.stats as Record<string, number>
   const sheet = character.sheet_json as SheetJson
+  const equippedItemIds = new Set(sheet.equipped_items ?? [])
+  const equippedItems = inventory.filter(item => equippedItemIds.has(item.id))
+  const level = character.level
   const hitDie = sheet.hit_die ?? classDetail?.hit_die ?? 8
   const conMod = Math.floor(((stats.con ?? 10) - 10) / 2)
   const dexMod = Math.floor(((stats.dex ?? 10) - 10) / 2)
+  const profBonus = Math.ceil(level / 4) + 1
+  const passivePerception = 10 + Math.floor(((stats.wis ?? 10) - 10) / 2)
   const maxHp = hitDie + conMod
   const currentHp = character.current_hp ?? maxHp
   const ac = character.armor_class ?? (10 + dexMod)
   const xp = character.experience_points ?? 0
   const conditions: string[] = (character.conditions as string[]) ?? []
-  const level = character.level
   const xpForCurrent = XP_THRESHOLDS[level - 1] ?? 0
   const xpForNext = XP_THRESHOLDS[level] ?? null
   const xpPct = xpForNext ? Math.min(((xp - xpForCurrent) / (xpForNext - xpForCurrent)) * 100, 100) : 100
@@ -514,6 +528,20 @@ function CharacterSheet() {
           </div>
         </div>
 
+        {/* Quick stats strip */}
+        <div className="border-t border-stone-500/40 px-4 sm:px-6 py-2 flex flex-wrap items-center gap-x-5 gap-y-1.5" style={{ background: 'rgba(180,145,80,0.1)' }}>
+          <QuickPill label="Velocidad" value={`${raceDetail?.speed ?? 30} ft`} />
+          <QuickPill label="Iniciativa" value={dexMod >= 0 ? `+${dexMod}` : String(dexMod)} />
+          <QuickPill label="Perc. pasiva" value={String(passivePerception)} />
+          <QuickPill label="Comp." value={`+${profBonus}`} />
+          {raceDetail?.ability_bonuses.filter(b => b.bonus !== 0).map(b => (
+            <QuickPill key={b.ability_score.index} label={ABILITY_LABELS[b.ability_score.index]} value={`+${b.bonus}`} variant="racial" />
+          ))}
+          {classDetail?.saving_throws.map(st => (
+            <QuickPill key={st.index} label={`Sal. ${ABILITY_LABELS[st.index]}`} value="✓" variant="save" />
+          ))}
+        </div>
+
         {/* Combat state */}
         <SheetRow className="border-t-0">
           {/* HP */}
@@ -637,6 +665,34 @@ function CharacterSheet() {
                   {!isStable && !isDead && <p className="text-xs text-stone-500 font-serif italic">Inconsciente</p>}
                 </div>
               </div>
+            </div>
+          </SheetRow>
+        )}
+
+        {/* Racial traits */}
+        {raceDetail && (
+          <SheetRow className="border-t border-stone-600">
+            <div className="flex-1 p-4 space-y-3">
+              <SheetLabel>Rasgos raciales · <span className="capitalize">{character.race}</span></SheetLabel>
+              {raceDetail.ability_bonuses.filter(b => b.bonus !== 0).length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {raceDetail.ability_bonuses.filter(b => b.bonus !== 0).map(b => (
+                    <span key={b.ability_score.index} className="px-2 py-0.5 text-xs border border-amber-600/60 text-amber-900 font-serif font-semibold" style={{ background: 'rgba(200,140,40,0.13)' }}>
+                      {ABILITY_LABELS[b.ability_score.index]} +{b.bonus}
+                    </span>
+                  ))}
+                  <span className="px-2 py-0.5 text-xs border border-stone-400 text-stone-500 font-serif">{raceDetail.speed} ft</span>
+                </div>
+              )}
+              {raceDetail.traits.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {raceDetail.traits.map(t => (
+                    <TraitBadge key={t.index} index={t.index} name={t.name}
+                      isResistance={t.index.includes('resistance') || t.index.includes('immunity') || t.index.includes('resilience')}
+                      onInfo={data => setModal({ kind: 'trait', data })} />
+                  ))}
+                </div>
+              )}
             </div>
           </SheetRow>
         )}
@@ -809,20 +865,6 @@ function CharacterSheet() {
           </SheetRow>
         )}
 
-        {/* Racial traits */}
-        {raceDetail && raceDetail.traits.length > 0 && (
-          <SheetRow className="border-t border-stone-600">
-            <div className="flex-1 p-4">
-              <SheetLabel>Rasgos raciales</SheetLabel>
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {raceDetail.traits.map(t => (
-                  <TraitBadge key={t.index} index={t.index} name={t.name} onInfo={data => setModal({ kind: 'trait', data })} />
-                ))}
-              </div>
-            </div>
-          </SheetRow>
-        )}
-
         {/* Class features + subclass */}
         <SheetRow className="border-t border-stone-600">
           <div className="flex-1 p-4">
@@ -866,6 +908,25 @@ function CharacterSheet() {
               <div className={`h-full transition-all ${weightColor}`} style={{ width: `${weightPct}%` }} />
             </div>
 
+            {/* Equipped items */}
+            {equippedItems.length > 0 && (
+              <div className="mb-4 pb-3 border-b border-stone-400/50">
+                <p className="text-[10px] text-stone-500 uppercase tracking-widest font-serif mb-2">Equipado</p>
+                <div className="flex flex-wrap gap-2">
+                  {equippedItems.map(item => (
+                    <div key={item.id} className="flex items-center gap-1.5 px-2.5 py-1 border border-amber-700/60 text-xs font-serif text-amber-900" style={{ background: 'rgba(200,140,40,0.13)' }}>
+                      <span className="text-stone-500">⚔</span>
+                      <span>{item.name}</span>
+                      {item.notes && <span className="text-stone-500 italic">· {item.notes}</span>}
+                      {isOwner && (
+                        <button onClick={() => toggleEquip(item.id)} className="text-stone-400 hover:text-stone-600 ml-0.5 leading-none" title="Desequipar">✕</button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {inventory.length > 0 && (
               <table className="w-full text-sm font-serif mb-3">
                 <thead>
@@ -874,22 +935,30 @@ function CharacterSheet() {
                     <th className="text-center py-1 font-normal w-12">Cant.</th>
                     <th className="text-center py-1 font-normal w-16">Peso</th>
                     <th className="text-center py-1 font-normal w-16">Total</th>
-                    {isOwner && <th className="w-8" />}
+                    {isOwner && <th className="w-12" />}
                   </tr>
                 </thead>
                 <tbody>
                   {inventory.map(item => (
-                    <tr key={item.id} className="border-b border-stone-200/80 hover:bg-amber-100/40 group">
+                    <tr key={item.id} className={`border-b border-stone-200/80 hover:bg-amber-100/40 group ${equippedItemIds.has(item.id) ? 'bg-amber-50/60' : ''}`}>
                       <td className="py-1.5 text-stone-700">
                         {item.name}
                         {item.notes && <span className="ml-1 text-xs text-stone-400 italic">· {item.notes}</span>}
+                        {equippedItemIds.has(item.id) && <span className="ml-1.5 text-[10px] text-amber-700 border border-amber-600/50 px-1 font-serif">equipado</span>}
                       </td>
                       <td className="text-center text-stone-600">{item.quantity}</td>
                       <td className="text-center text-stone-500">{Number(item.weight_lbs)} lb</td>
                       <td className="text-center text-stone-600 font-medium">{(Number(item.weight_lbs) * item.quantity).toFixed(1)} lb</td>
                       {isOwner && (
                         <td className="text-center">
-                          <button onClick={() => removeInventoryItem(item.id)} className="text-stone-300 hover:text-red-700 opacity-0 group-hover:opacity-100 transition-all text-xs">✕</button>
+                          <div className="flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
+                            <button onClick={() => toggleEquip(item.id)}
+                              className={`text-xs transition-colors ${equippedItemIds.has(item.id) ? 'text-amber-700 hover:text-amber-900' : 'text-stone-400 hover:text-amber-700'}`}
+                              title={equippedItemIds.has(item.id) ? 'Desequipar' : 'Equipar'}>
+                              ⚔
+                            </button>
+                            <button onClick={() => removeInventoryItem(item.id)} className="text-stone-300 hover:text-red-700 text-xs">✕</button>
+                          </div>
                         </td>
                       )}
                     </tr>
@@ -1070,12 +1139,14 @@ function SpellBadge({ index, onInfo }: { index: string; onInfo: (s: SpellDetail)
   )
 }
 
-function TraitBadge({ index, name, onInfo }: { index: string; name: string; onInfo: (t: TraitDetail) => void }) {
+function TraitBadge({ index, name, isResistance, onInfo }: { index: string; name: string; isResistance?: boolean; onInfo: (t: TraitDetail) => void }) {
   const { data: trait } = useQuery({ queryKey: dndKeys.trait(index), queryFn: () => dndApi.trait(index) })
   return (
-    <div className="flex items-center gap-1 border border-stone-400 px-2 py-0.5" style={{ background: 'rgba(200,170,110,0.15)' }}>
-      <span className="text-xs text-stone-600 font-serif">{name}</span>
-      {trait && <button onClick={() => onInfo(trait)} className="text-stone-400 hover:text-amber-700 text-xs ml-0.5">ℹ</button>}
+    <div className={`flex items-center gap-1 border px-2 py-0.5 ${isResistance ? 'border-blue-500/50' : 'border-stone-400'}`}
+      style={{ background: isResistance ? 'rgba(59,130,246,0.08)' : 'rgba(200,170,110,0.15)' }}>
+      {isResistance && <span className="text-blue-500 text-[10px]">🛡</span>}
+      <span className={`text-xs font-serif ${isResistance ? 'text-blue-800' : 'text-stone-600'}`}>{name}</span>
+      {trait && <button onClick={() => onInfo(trait)} className={`text-xs ml-0.5 ${isResistance ? 'text-blue-400 hover:text-blue-700' : 'text-stone-400 hover:text-amber-700'}`}>ℹ</button>}
     </div>
   )
 }
@@ -1092,6 +1163,20 @@ function FeatureBadge({ index, name, onInfo }: { index: string; name: string; on
       {feature && feature.desc.length > 0 && (
         <button onClick={() => onInfo(feature)} className="text-stone-400 hover:text-amber-700 text-xs ml-0.5">ℹ</button>
       )}
+    </div>
+  )
+}
+
+function QuickPill({ label, value, variant }: { label: string; value: string; variant?: 'racial' | 'save' }) {
+  const cls = variant === 'racial'
+    ? 'border-amber-600/70 text-amber-900 bg-amber-50/60'
+    : variant === 'save'
+    ? 'border-green-600/60 text-green-900 bg-green-50/50'
+    : 'border-stone-400/70 text-stone-700'
+  return (
+    <div className="flex items-center gap-1.5 text-xs font-serif">
+      <span className="text-stone-400">{label}</span>
+      <span className={`px-1.5 py-px border font-mono ${cls}`}>{value}</span>
     </div>
   )
 }
