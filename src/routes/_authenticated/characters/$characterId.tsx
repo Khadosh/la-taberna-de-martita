@@ -169,6 +169,15 @@ function CharacterSheet() {
     [equipmentList, equipSearch]
   )
 
+  const classFeatures = useMemo(() => {
+    if (!classLevels || !character) return []
+    const seen = new Set<string>()
+    return classLevels
+      .filter(l => l.level <= character.level)
+      .flatMap(l => l.features)
+      .filter(f => seen.has(f.index) ? false : (seen.add(f.index), true))
+  }, [classLevels, character])
+
   // ── Realtime ──────────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -392,16 +401,6 @@ function CharacterSheet() {
 
   // Hit dice
   const hitDiceAvailable = level - (sheet.hit_dice_used ?? 0)
-
-  // Class features unlocked at current level (deduplicated)
-  const classFeatures = useMemo(() => {
-    if (!classLevels) return []
-    const seen = new Set<string>()
-    return classLevels
-      .filter(l => l.level <= level)
-      .flatMap(l => l.features)
-      .filter(f => seen.has(f.index) ? false : (seen.add(f.index), true))
-  }, [classLevels, level])
 
   return (
     <div className="min-h-screen text-stone-900" style={parchmentStyle}>
