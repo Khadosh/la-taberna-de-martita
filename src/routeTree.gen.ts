@@ -15,7 +15,9 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
 import { Route as AuthenticatedJoinCampaignIdRouteImport } from './routes/_authenticated/join/$campaignId'
 import { Route as AuthenticatedCharactersNewRouteImport } from './routes/_authenticated/characters/new'
+import { Route as AuthenticatedCharactersCharacterIdRouteImport } from './routes/_authenticated/characters/$characterId'
 import { Route as AuthenticatedCampaignsNewRouteImport } from './routes/_authenticated/campaigns/new'
+import { Route as AuthenticatedCampaignsCampaignIdRouteImport } from './routes/_authenticated/campaigns/$campaignId'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -48,10 +50,22 @@ const AuthenticatedCharactersNewRoute =
     path: '/characters/new',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedCharactersCharacterIdRoute =
+  AuthenticatedCharactersCharacterIdRouteImport.update({
+    id: '/characters/$characterId',
+    path: '/characters/$characterId',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedCampaignsNewRoute =
   AuthenticatedCampaignsNewRouteImport.update({
     id: '/campaigns/new',
     path: '/campaigns/new',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
+const AuthenticatedCampaignsCampaignIdRoute =
+  AuthenticatedCampaignsCampaignIdRouteImport.update({
+    id: '/campaigns/$campaignId',
+    path: '/campaigns/$campaignId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
 
@@ -59,7 +73,9 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/campaigns/$campaignId': typeof AuthenticatedCampaignsCampaignIdRoute
   '/campaigns/new': typeof AuthenticatedCampaignsNewRoute
+  '/characters/$characterId': typeof AuthenticatedCharactersCharacterIdRoute
   '/characters/new': typeof AuthenticatedCharactersNewRoute
   '/join/$campaignId': typeof AuthenticatedJoinCampaignIdRoute
 }
@@ -67,7 +83,9 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/': typeof AuthenticatedIndexRoute
+  '/campaigns/$campaignId': typeof AuthenticatedCampaignsCampaignIdRoute
   '/campaigns/new': typeof AuthenticatedCampaignsNewRoute
+  '/characters/$characterId': typeof AuthenticatedCharactersCharacterIdRoute
   '/characters/new': typeof AuthenticatedCharactersNewRoute
   '/join/$campaignId': typeof AuthenticatedJoinCampaignIdRoute
 }
@@ -77,7 +95,9 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/campaigns/$campaignId': typeof AuthenticatedCampaignsCampaignIdRoute
   '/_authenticated/campaigns/new': typeof AuthenticatedCampaignsNewRoute
+  '/_authenticated/characters/$characterId': typeof AuthenticatedCharactersCharacterIdRoute
   '/_authenticated/characters/new': typeof AuthenticatedCharactersNewRoute
   '/_authenticated/join/$campaignId': typeof AuthenticatedJoinCampaignIdRoute
 }
@@ -87,7 +107,9 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/reset-password'
+    | '/campaigns/$campaignId'
     | '/campaigns/new'
+    | '/characters/$characterId'
     | '/characters/new'
     | '/join/$campaignId'
   fileRoutesByTo: FileRoutesByTo
@@ -95,7 +117,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/'
+    | '/campaigns/$campaignId'
     | '/campaigns/new'
+    | '/characters/$characterId'
     | '/characters/new'
     | '/join/$campaignId'
   id:
@@ -104,7 +128,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/_authenticated/'
+    | '/_authenticated/campaigns/$campaignId'
     | '/_authenticated/campaigns/new'
+    | '/_authenticated/characters/$characterId'
     | '/_authenticated/characters/new'
     | '/_authenticated/join/$campaignId'
   fileRoutesById: FileRoutesById
@@ -159,6 +185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCharactersNewRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/characters/$characterId': {
+      id: '/_authenticated/characters/$characterId'
+      path: '/characters/$characterId'
+      fullPath: '/characters/$characterId'
+      preLoaderRoute: typeof AuthenticatedCharactersCharacterIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/campaigns/new': {
       id: '/_authenticated/campaigns/new'
       path: '/campaigns/new'
@@ -166,19 +199,31 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCampaignsNewRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/campaigns/$campaignId': {
+      id: '/_authenticated/campaigns/$campaignId'
+      path: '/campaigns/$campaignId'
+      fullPath: '/campaigns/$campaignId'
+      preLoaderRoute: typeof AuthenticatedCampaignsCampaignIdRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
   }
 }
 
 interface AuthenticatedRouteChildren {
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedCampaignsCampaignIdRoute: typeof AuthenticatedCampaignsCampaignIdRoute
   AuthenticatedCampaignsNewRoute: typeof AuthenticatedCampaignsNewRoute
+  AuthenticatedCharactersCharacterIdRoute: typeof AuthenticatedCharactersCharacterIdRoute
   AuthenticatedCharactersNewRoute: typeof AuthenticatedCharactersNewRoute
   AuthenticatedJoinCampaignIdRoute: typeof AuthenticatedJoinCampaignIdRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedCampaignsCampaignIdRoute: AuthenticatedCampaignsCampaignIdRoute,
   AuthenticatedCampaignsNewRoute: AuthenticatedCampaignsNewRoute,
+  AuthenticatedCharactersCharacterIdRoute:
+    AuthenticatedCharactersCharacterIdRoute,
   AuthenticatedCharactersNewRoute: AuthenticatedCharactersNewRoute,
   AuthenticatedJoinCampaignIdRoute: AuthenticatedJoinCampaignIdRoute,
 }

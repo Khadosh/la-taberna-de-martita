@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { dndApi, dndKeys, rollStat, abilityModifier, ABILITY_LABELS, ABILITY_FULL } from '../../../lib/dnd-api'
+import type { SpellDetail } from '../../../lib/dnd-api'
 
 export const Route = createFileRoute('/_authenticated/characters/new')({
   component: NewCharacter,
@@ -37,6 +38,7 @@ function NewCharacter() {
 
   const [step, setStep] = useState(1)
   const [error, setError] = useState<string | null>(null)
+  const [spellModal, setSpellModal] = useState<SpellDetail | null>(null)
   const [draft, setDraft] = useState<Draft>({
     name: '', raceIndex: '', classIndex: '', level: 1,
     rolledValues: rollAll(),
@@ -319,21 +321,21 @@ function NewCharacter() {
               {classSpells.results.map(s => {
                 const selected = draft.spells.includes(s.index)
                 return (
-                  <button
-                    key={s.index}
-                    onClick={() => patch({
-                      spells: selected
-                        ? draft.spells.filter(i => i !== s.index)
-                        : [...draft.spells, s.index],
-                    })}
-                    className={`px-3 py-2 rounded-lg text-sm text-left transition-colors border ${
-                      selected
-                        ? 'bg-amber-800 border-amber-600 text-amber-100'
-                        : 'bg-stone-900 border-stone-700 text-stone-300 hover:border-amber-700'
-                    }`}
-                  >
-                    {s.name}
-                  </button>
+                  <div key={s.index} className={`flex items-center rounded-lg border transition-colors ${
+                    selected ? 'bg-amber-800 border-amber-600' : 'bg-stone-900 border-stone-700 hover:border-amber-700'
+                  }`}>
+                    <button
+                      onClick={() => patch({
+                        spells: selected
+                          ? draft.spells.filter(i => i !== s.index)
+                          : [...draft.spells, s.index],
+                      })}
+                      className="flex-1 px-3 py-2 text-sm text-left"
+                    >
+                      <span className={selected ? 'text-amber-100' : 'text-stone-300'}>{s.name}</span>
+                    </button>
+                    <SpellInfoButton index={s.index} onInfo={setSpellModal} />
+                  </div>
                 )
               })}
             </div>
@@ -390,6 +392,46 @@ function NewCharacter() {
           )}
         </div>
       </div>
+
+      {/* Spell info modal */}
+      {spellModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setSpellModal(null)}>
+          <div className="bg-stone-900 border border-stone-700 rounded-2xl max-w-md w-full p-6 space-y-3" onClick={e => e.stopPropagation()}>
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="font-bold text-amber-200">{spellModal.name}</h3>
+                <p className="text-xs text-stone-400 mt-0.5">
+                  Nv. {spellModal.level} · {spellModal.school.name} · {spellModal.casting_time}
+                </p>
+              </div>
+              <button onClick={() => setSpellModal(null)} className="text-stone-500 hover:text-stone-300 text-lg leading-none">✕</button>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs text-stone-400">
+              <span>Alcance: {spellModal.range}</span>
+              <span>Duración: {spellModal.duration}</span>
+              <span>Componentes: {spellModal.components.join(', ')}</span>
+            </div>
+            <p className="text-sm text-stone-300 leading-relaxed max-h-48 overflow-y-auto">{spellModal.desc[0]}</p>
+          </div>
+        </div>
+      )}
     </div>
+  )
+}
+
+function SpellInfoButton({ index, onInfo }: { index: string; onInfo: (s: SpellDetail) => void }) {
+  const { data: spell } = useQuery({
+    queryKey: dndKeys.spell(index),
+    queryFn: () => dndApi.spell(index),
+  })
+  if (!spell) return null
+  return (
+    <button
+      onClick={e => { e.stopPropagation(); onInfo(spell) }}
+      className="px-2 py-2 text-stone-500 hover:text-amber-400 transition-colors text-xs"
+      title="Ver descripción"
+    >
+      ℹ
+    </button>
   )
 }
