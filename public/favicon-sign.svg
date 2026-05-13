@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Dark background -->
+  <rect width="32" height="32" rx="6" fill="#0f0804"/>
+
+  <!-- Top bracket bar -->
+  <rect x="4" y="4" width="24" height="3" rx="1.5" fill="#7B3808"/>
+
+  <!-- Hooks -->
+  <circle cx="10" cy="5.5" r="1.2" fill="#a04a10"/>
+  <circle cx="22" cy="5.5" r="1.2" fill="#a04a10"/>
+
+  <!-- Chains -->
+  <line x1="10" y1="6.5" x2="10" y2="10.5" stroke="#5a2805" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="22" y1="6.5" x2="22" y2="10.5" stroke="#5a2805" stroke-width="1.5" stroke-linecap="round"/>
+
+  <!-- Sign board -->
+  <rect x="5" y="10.5" width="22" height="17" rx="2.5" fill="#7B3808"/>
+  <!-- Sign face -->
+  <rect x="6.5" y="12" width="19" height="14" rx="2" fill="#4a1e03"/>
+
+  <!-- Beer mug body -->
+  <rect x="10" y="14" width="8" height="9" rx="1.2" fill="#d97706"/>
+  <!-- Handle -->
+  <path d="M18 15.5 Q22.5 15.5 22.5 18.5 Q22.5 21.5 18 21.5"
+        stroke="#d97706" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+  <!-- Beer fill (slightly darker amber inside mug) -->
+  <rect x="10.8" y="15.5" width="6.4" height="7" rx="0.8" fill="#b45309"/>
+
+  <!-- Foam -->
+  <ellipse cx="14" cy="14" rx="4.2" ry="2" fill="#fde68a"/>
+  <circle cx="11" cy="12.8" r="2" fill="#fde68a"/>
+  <circle cx="14" cy="12.2" r="2.2" fill="#fde68a"/>
+  <circle cx="17" cy="12.8" r="2" fill="#fde68a"/>
+
+  <!-- Mug highlight -->
+  <rect x="11.2" y="16" width="1.4" height="7" rx="0.7" fill="rgba(255,255,255,0.18)"/>
+</svg>
