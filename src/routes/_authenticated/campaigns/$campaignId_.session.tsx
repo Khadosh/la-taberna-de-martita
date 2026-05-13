@@ -52,6 +52,9 @@ function DmSession() {
   const queryClient = useQueryClient()
   const npcInputRef = useRef<HTMLInputElement>(null)
   const notesTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  // Optimistic HP: local overrides server value, synced after debounce
+  const [localHp, setLocalHp] = useState<Record<string, number>>({})
+  const hpTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
 
   // Combat state (local — ephemeral per session)
   const [combatActive, setCombatActive] = useState(false)
@@ -129,6 +132,17 @@ function DmSession() {
   const patchCharacter = async (id: string, patch: Record<string, unknown>) => {
     await supabase.from('characters').update(patch as never).eq('id', id)
     queryClient.invalidateQueries({ queryKey: ['campaign-characters', campaignId] })
+  }
+
+  const adjustCharacterHp = (id: string, _serverHp: number, maxHp: number, newHp: number) => {
+    const clamped = Math.max(0, Math.min(maxHp, newHp))
+    setLocalHp(prev => ({ ...prev, [id]: clamped }))
+    if (hpTimers.current[id]) clearTimeout(hpTimers.current[id])
+    hpTimers.current[id] = setTimeout(async () => {
+      await supabase.from('characters').update({ current_hp: clamped } as never).eq('id', id)
+      queryClient.invalidateQueries({ queryKey: ['campaign-characters', campaignId] })
+      setLocalHp(prev => { const n = { ...prev }; delete n[id]; return n })
+    }, 600)
   }
 
   // ── Combat ───────────────────────────────────────────────────────────────
@@ -264,7 +278,8 @@ function DmSession() {
             )}
             {characters.map(c => {
               const maxHp = maxHpFor(c)
-              const curHp = currentHpFor(c)
+              const serverHp = currentHpFor(c)
+              const curHp = localHp[c.id] ?? serverHp
               const ac = acFor(c)
               const hpPct = Math.max(0, Math.min((curHp / maxHp) * 100, 100))
               const hpColor = hpPct > 50 ? 'bg-green-700' : hpPct > 25 ? 'bg-amber-600' : 'bg-red-700'
@@ -287,10 +302,10 @@ function DmSession() {
                       <div className={`h-full rounded-full transition-all ${hpColor}`} style={{ width: `${hpPct}%` }} />
                     </div>
                     <div className="flex items-center gap-1">
-                      <button onClick={() => patchCharacter(c.id, { current_hp: Math.max(0, curHp - 1) })}
+                      <button onClick={() => adjustCharacterHp(c.id, serverHp, maxHp, curHp - 1)}
                         className="w-5 h-5 text-xs border border-stone-700 text-stone-400 hover:bg-stone-800 rounded leading-none">−</button>
                       {editingHp === c.id ? (
-                        <input autoFocus defaultValue={curHp} onBlur={e => { patchCharacter(c.id, { current_hp: parseInt(e.target.value) || 0 }); setEditingHp(null) }}
+                        <input autoFocus defaultValue={curHp} onBlur={e => { adjustCharacterHp(c.id, serverHp, maxHp, parseInt(e.target.value) || 0); setEditingHp(null) }}
                           onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur() }}
                           className="w-10 text-center text-sm font-mono bg-transparent border-b border-stone-500 focus:outline-none text-amber-300" />
                       ) : (
@@ -298,10 +313,10 @@ function DmSession() {
                           {curHp}
                         </button>
                       )}
-                      <button onClick={() => patchCharacter(c.id, { current_hp: Math.min(maxHp, curHp + 1) })}
+                      <button onClick={() => adjustCharacterHp(c.id, serverHp, maxHp, curHp + 1)}
                         className="w-5 h-5 text-xs border border-stone-700 text-stone-400 hover:bg-stone-800 rounded leading-none">+</button>
                       <span className="text-xs text-stone-600 ml-1">/ {maxHp}</span>
-                      <button onClick={() => patchCharacter(c.id, { current_hp: maxHp })}
+                      <button onClick={() => adjustCharacterHp(c.id, serverHp, maxHp, maxHp)}
                         className="ml-auto text-xs text-stone-600 hover:text-green-500 transition-colors" title="Curar completo">✦</button>
                     </div>
                   </div>
@@ -370,7 +385,8 @@ function DmSession() {
                     const c = characters.find(x => x.id === combatant.characterId)
                     if (!c) return null
                     const maxHp = maxHpFor(c)
-                    const curHp = currentHpFor(c)
+                    const serverHp = currentHpFor(c)
+                    const curHp = localHp[c.id] ?? serverHp
                     const hpPct = Math.max(0, Math.min((curHp / maxHp) * 100, 100))
                     const hpColor = hpPct > 50 ? 'bg-green-700' : hpPct > 25 ? 'bg-amber-600' : 'bg-red-700'
                     return (
@@ -382,7 +398,7 @@ function DmSession() {
                         initiative={combatant.initiative}
                         onInitiativeChange={v => setPlayerInitiative(c.id, v)}
                         hp={curHp} maxHp={maxHp} hpPct={hpPct} hpColor={hpColor}
-                        onHpChange={v => patchCharacter(c.id, { current_hp: v })}
+                        onHpChange={v => adjustCharacterHp(c.id, serverHp, maxHp, v)}
                         tag={<span className="text-xs text-stone-500 font-serif">Jugador</span>}
                       />
                     )
