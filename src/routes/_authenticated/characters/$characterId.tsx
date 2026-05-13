@@ -29,6 +29,7 @@ type SheetJson = {
   hit_dice_used?: number
   subclass?: string
   equipped_items?: string[]
+  currency?: { gold: number; silver: number; copper: number }
 }
 
 type InfoModal =
@@ -68,6 +69,10 @@ function CharacterSheet() {
   const [xpInput, setXpInput] = useState('')
   const [editingXp, setEditingXp] = useState(false)
   const [showConditionPicker, setShowConditionPicker] = useState(false)
+
+  // Currency editing
+  const [editingCoin, setEditingCoin] = useState<'gold' | 'silver' | 'copper' | null>(null)
+  const [coinInput, setCoinInput] = useState('')
 
   // Rest panel
   const [showRestPanel, setShowRestPanel] = useState(false)
@@ -402,6 +407,11 @@ function CharacterSheet() {
   const totalWeight = inventory.reduce((s, i) => s + Number(i.weight_lbs) * i.quantity, 0)
   const weightPct = Math.min((totalWeight / carryCapacity) * 100, 100)
   const weightColor = weightPct > 80 ? 'bg-red-700' : weightPct > 50 ? 'bg-amber-600' : 'bg-green-700'
+
+  const currency = sheet.currency ?? { gold: 0, silver: 0, copper: 0 }
+
+  const patchCurrency = (patch: Partial<typeof currency>) =>
+    patchSheet({ currency: { ...currency, ...patch } })
 
   // Spell slots
   const maxSlots = getSpellSlots(character.class, level)
@@ -904,6 +914,43 @@ function CharacterSheet() {
               <div className="flex-1" />
               <span className="text-xs font-serif text-stone-500">{totalWeight.toFixed(1)} / {carryCapacity} lb</span>
             </div>
+            {/* Currency */}
+            <div className="flex gap-2 mb-4">
+              {([
+                { key: 'gold',   label: 'PO', color: 'text-amber-700',  border: 'border-amber-600/50', bg: 'rgba(200,140,20,0.12)' },
+                { key: 'silver', label: 'PP', color: 'text-stone-500',  border: 'border-stone-400/60', bg: 'rgba(180,180,180,0.10)' },
+                { key: 'copper', label: 'PC', color: 'text-orange-700', border: 'border-orange-700/40', bg: 'rgba(180,100,40,0.10)' },
+              ] as const).map(({ key, label, color, border, bg }) => (
+                <div key={key} className={`flex-1 border ${border} px-2 py-1.5 text-center`} style={{ background: bg }}>
+                  <p className={`text-[10px] font-display tracking-widest uppercase ${color} mb-0.5`}>{label}</p>
+                  {isOwner && editingCoin === key ? (
+                    <input
+                      type="number" min={0}
+                      value={coinInput}
+                      onChange={e => setCoinInput(e.target.value)}
+                      onBlur={() => {
+                        patchCurrency({ [key]: Math.max(0, parseInt(coinInput) || 0) })
+                        setEditingCoin(null)
+                      }}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') { patchCurrency({ [key]: Math.max(0, parseInt(coinInput) || 0) }); setEditingCoin(null) }
+                        if (e.key === 'Escape') setEditingCoin(null)
+                      }}
+                      autoFocus
+                      className="w-full text-center text-sm font-mono font-bold text-stone-800 bg-white/60 border border-stone-400 focus:outline-none py-0.5"
+                    />
+                  ) : (
+                    <p
+                      className={`text-sm font-mono font-bold text-stone-700 ${isOwner ? 'cursor-pointer hover:text-stone-900' : ''}`}
+                      onClick={() => { if (isOwner) { setCoinInput(String(currency[key])); setEditingCoin(key) } }}
+                    >
+                      {currency[key]}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+
             <div className="h-2 border border-stone-400 overflow-hidden mb-4" style={{ background: 'rgba(200,170,110,0.2)' }}>
               <div className={`h-full transition-all ${weightColor}`} style={{ width: `${weightPct}%` }} />
             </div>
