@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
 import { useState } from 'react'
@@ -16,9 +16,11 @@ function CharacterSheet() {
   const { characterId } = Route.useParams()
   const { session } = Route.useRouteContext() as { session: Session }
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
   const [spellModal, setSpellModal] = useState<SpellDetail | null>(null)
   const [assigningCampaign, setAssigningCampaign] = useState(false)
   const [selectedCampaignId, setSelectedCampaignId] = useState('')
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   const { data: character, isLoading } = useQuery({
     queryKey: ['character', characterId],
@@ -43,6 +45,12 @@ function CharacterSheet() {
     },
     enabled: !!character && character.user_id === session.user.id,
   })
+
+  const deleteCharacter = async () => {
+    await supabase.from('characters').delete().eq('id', characterId)
+    await queryClient.invalidateQueries({ queryKey: ['characters'] })
+    navigate({ to: '/' })
+  }
 
   const assignToCampaign = async () => {
     await supabase.from('characters').update({ campaign_id: selectedCampaignId || null }).eq('id', characterId)
@@ -204,6 +212,29 @@ function CharacterSheet() {
                 <span key={t.index} className="px-2 py-1 text-xs rounded bg-stone-800 border border-stone-700 text-stone-300">{t.name}</span>
               ))}
             </div>
+          </section>
+        )}
+        {/* Delete */}
+        {character.user_id === session.user.id && !character.campaign_id && (
+          <section className="pt-4 border-t border-stone-800">
+            {confirmDelete ? (
+              <div className="flex items-center gap-3">
+                <p className="text-sm text-stone-400 flex-1">¿Seguro? Esta acción no se puede deshacer.</p>
+                <button onClick={() => setConfirmDelete(false)} className="px-3 py-1.5 text-sm rounded-lg border border-stone-700 text-stone-400 hover:bg-stone-800 transition-colors">
+                  Cancelar
+                </button>
+                <button onClick={deleteCharacter} className="px-3 py-1.5 text-sm rounded-lg bg-red-900 hover:bg-red-800 text-red-200 transition-colors">
+                  Eliminar
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="text-sm text-stone-600 hover:text-red-400 transition-colors"
+              >
+                Eliminar personaje
+              </button>
+            )}
           </section>
         )}
       </main>
