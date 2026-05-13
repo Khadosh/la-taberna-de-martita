@@ -153,11 +153,11 @@ function NewCharacter() {
           <span className="text-lg leading-none">🔥</span>
           <div className="hidden sm:block">
             <h1 className="font-display text-amber-200/90 text-base leading-tight tracking-wide">La Taberna</h1>
-            <p className="font-display text-amber-800/70 text-[0.6rem] tracking-[0.3em] uppercase leading-none">de Martita</p>
+            <p className="font-display text-amber-500/80 text-[0.6rem] tracking-[0.3em] uppercase leading-none">de Martita</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <p className="font-display text-amber-700/60 text-xs tracking-widest uppercase hidden sm:block">Nuevo personaje</p>
+          <p className="font-display text-amber-500/70 text-xs tracking-widest uppercase hidden sm:block">Nuevo personaje</p>
           <span className="text-xs text-stone-600 font-serif">Paso {step} de {totalSteps}</span>
         </div>
       </header>

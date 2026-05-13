@@ -41,12 +41,12 @@ function ResetPasswordPage() {
                   <h1 className="font-display text-amber-200 leading-tight" style={{ fontSize: '1.6rem', letterSpacing: '0.05em' }}>
                     La Taberna
                   </h1>
-                  <p className="font-display text-amber-700/80 text-xs tracking-[0.35em] uppercase">de Martita</p>
+                  <p className="font-display text-amber-500/90 text-xs tracking-[0.35em] uppercase">de Martita</p>
                 </div>
-                <div className="flex items-center gap-3 text-amber-900/50">
-                  <div className="flex-1 h-px bg-amber-900/40" />
+                <div className="flex items-center gap-3 text-amber-600/60">
+                  <div className="flex-1 h-px bg-amber-700/40" />
                   <span className="text-xs">✦</span>
-                  <div className="flex-1 h-px bg-amber-900/40" />
+                  <div className="flex-1 h-px bg-amber-700/40" />
                 </div>
                 <p className="text-stone-400 text-sm font-serif">Contraseña actualizada, viajero.</p>
                 <button
@@ -76,14 +76,14 @@ function ResetPasswordPage() {
                 <h1 className="font-display text-amber-200 leading-tight" style={{ fontSize: '1.6rem', letterSpacing: '0.05em' }}>
                   La Taberna
                 </h1>
-                <p className="font-display text-amber-700/80 text-xs tracking-[0.35em] uppercase">de Martita</p>
+                <p className="font-display text-amber-500/90 text-xs tracking-[0.35em] uppercase">de Martita</p>
                 <p className="text-stone-600 text-xs font-serif italic pt-1">Elegí una nueva contraseña</p>
               </div>
 
-              <div className="flex items-center gap-3 text-amber-900/50">
-                <div className="flex-1 h-px bg-amber-900/40" />
+              <div className="flex items-center gap-3 text-amber-600/60">
+                <div className="flex-1 h-px bg-amber-700/40" />
                 <span className="text-xs">✦</span>
-                <div className="flex-1 h-px bg-amber-900/40" />
+                <div className="flex-1 h-px bg-amber-700/40" />
               </div>
 
               <form onSubmit={(e) => { e.preventDefault(); form.handleSubmit() }} className="space-y-3">

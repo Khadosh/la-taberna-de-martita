@@ -61,7 +61,7 @@ function LoginPage() {
                 <h1 className="font-display text-amber-200 leading-tight" style={{ fontSize: '1.6rem', letterSpacing: '0.05em' }}>
                   La Taberna
                 </h1>
-                <p className="font-display text-amber-700/80 text-xs tracking-[0.35em] uppercase">
+                <p className="font-display text-amber-500/90 text-xs tracking-[0.35em] uppercase">
                   de Martita
                 </p>
                 <p className="text-stone-600 text-xs font-serif italic pt-1">
@@ -74,10 +74,10 @@ function LoginPage() {
               </div>
 
               {/* Divider */}
-              <div className="flex items-center gap-3 text-amber-900/50">
-                <div className="flex-1 h-px bg-amber-900/40" />
+              <div className="flex items-center gap-3 text-amber-600/60">
+                <div className="flex-1 h-px bg-amber-700/40" />
                 <span className="text-xs">✦</span>
-                <div className="flex-1 h-px bg-amber-900/40" />
+                <div className="flex-1 h-px bg-amber-700/40" />
               </div>
 
               {/* Email sent state */}

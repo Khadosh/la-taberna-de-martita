@@ -51,7 +51,7 @@ function Dashboard() {
           <span className="text-lg leading-none">🔥</span>
           <div className="hidden sm:block">
             <h1 className="font-display text-amber-200/90 text-base leading-tight tracking-wide">La Taberna</h1>
-            <p className="font-display text-amber-800/70 text-[0.6rem] tracking-[0.3em] uppercase leading-none">de Martita</p>
+            <p className="font-display text-amber-500/80 text-[0.6rem] tracking-[0.3em] uppercase leading-none">de Martita</p>
           </div>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
@@ -205,7 +205,7 @@ function CampaignCard({ campaign, role, joinedAt }: { campaign: Tables<'campaign
         <div>
           <p className="text-sm font-medium text-stone-200">{campaign.name}</p>
           <div className="flex items-center gap-2 mt-0.5">
-            {role === 'gm' && <span className="text-[10px] text-amber-700 font-display tracking-wider uppercase">Game Master</span>}
+            {role === 'gm' && <span className="text-[10px] text-amber-500 font-display tracking-wider uppercase">Game Master</span>}
             {joinedAt && <span className="text-[10px] text-stone-600 font-serif">Unido el {new Date(joinedAt).toLocaleDateString()}</span>}
           </div>
         </div>
