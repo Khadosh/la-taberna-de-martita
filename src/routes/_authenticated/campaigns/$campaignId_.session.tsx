@@ -31,6 +31,8 @@ type Character = {
   }
 }
 
+type NpcItem = { id: string; name: string; qty: number }
+
 type Npc = {
   id: string
   name: string
@@ -39,6 +41,10 @@ type Npc = {
   initiative: number
   ac?: number
   cr?: number
+  attackBonus?: number
+  damage?: string
+  npcType?: string
+  loot?: NpcItem[]
 }
 
 type Combatant =
@@ -70,6 +76,19 @@ function DmSession() {
   const [bestiarySearch, setBestiarySearch] = useState('')
   const [bestiaryQty, setBestiaryQty] = useState(1)
   const [addingMonster, setAddingMonster] = useState(false)
+
+  // Custom NPC form
+  const [showNpcForm, setShowNpcForm] = useState(false)
+  const [npcFormName, setNpcFormName] = useState('')
+  const [npcFormHp, setNpcFormHp] = useState(10)
+  const [npcFormAc, setNpcFormAc] = useState(10)
+  const [npcFormAttack, setNpcFormAttack] = useState(0)
+  const [npcFormDamage, setNpcFormDamage] = useState('')
+  const [npcFormType, setNpcFormType] = useState('humanoide')
+  const [npcFormItems, setNpcFormItems] = useState<NpcItem[]>([])
+
+  // Loot display
+  const [lootOpenFor, setLootOpenFor] = useState<string | null>(null)
 
   // Notes state
   const [noteTitle, setNoteTitle] = useState('')
@@ -264,6 +283,39 @@ function DmSession() {
       setAddingMonster(false)
     }
   }
+
+  const createCustomNpc = () => {
+    if (!npcFormName.trim() || npcFormHp < 1) return
+    const npc: Npc = {
+      id: crypto.randomUUID(),
+      name: npcFormName.trim(),
+      currentHp: npcFormHp,
+      maxHp: npcFormHp,
+      initiative: Math.ceil(Math.random() * 20),
+      ac: npcFormAc,
+      attackBonus: npcFormAttack,
+      damage: npcFormDamage.trim() || undefined,
+      npcType: npcFormType,
+      loot: npcFormItems.filter(i => i.name.trim()),
+    }
+    setCombatants(prev => {
+      const list = [...prev, { kind: 'npc' as const, npc }]
+      list.sort((a, b) => getInitiative(b) - getInitiative(a))
+      return list
+    })
+    setShowNpcForm(false)
+    setNpcFormName(''); setNpcFormHp(10); setNpcFormAc(10)
+    setNpcFormAttack(0); setNpcFormDamage(''); setNpcFormType('humanoide'); setNpcFormItems([])
+  }
+
+  const addLootItem = () =>
+    setNpcFormItems(prev => [...prev, { id: crypto.randomUUID(), name: '', qty: 1 }])
+
+  const updateLootItem = (id: string, patch: Partial<NpcItem>) =>
+    setNpcFormItems(prev => prev.map(i => i.id === id ? { ...i, ...patch } : i))
+
+  const removeLootItem = (id: string) =>
+    setNpcFormItems(prev => prev.filter(i => i.id !== id))
 
   const setPlayerInitiative = (characterId: string, init: number) => {
     setCombatants(prev => {
@@ -559,7 +611,11 @@ function DmSession() {
                         hp={npc.currentHp} maxHp={npc.maxHp} hpPct={hpPct} hpColor={hpColor}
                         onHpChange={v => updateNpc(npc.id, { currentHp: v })}
                         onRemove={() => removeNpc(npc.id)}
-                        tag={<span className="text-xs text-stone-600 font-serif">NPC{npc.ac != null ? ` · CA ${npc.ac}` : ''}{npc.cr != null ? ` · CR ${npc.cr}` : ''}</span>}
+                        tag={<span className="text-xs text-stone-600 font-serif capitalize">{npc.npcType ?? 'NPC'}{npc.cr != null ? ` · CR ${npc.cr}` : ''}</span>}
+                        npcStats={npc.ac != null || npc.attackBonus != null || npc.damage ? { ac: npc.ac, attackBonus: npc.attackBonus, damage: npc.damage } : undefined}
+                        loot={npc.loot}
+                        lootOpen={lootOpenFor === npc.id}
+                        onToggleLoot={() => setLootOpenFor(lootOpenFor === npc.id ? null : npc.id)}
                         editingHpId={editingNpcHp}
                         setEditingHpId={setEditingNpcHp}
                         editingInitId={editingNpcInit}
@@ -586,10 +642,16 @@ function DmSession() {
                       + NPC
                     </button>
                     <button
-                      onClick={() => { setShowBestiary(b => !b); setBestiarySearch('') }}
+                      onClick={() => { setShowBestiary(b => !b); setBestiarySearch(''); if (showNpcForm) setShowNpcForm(false) }}
                       className={`px-3 py-2 font-serif text-sm transition-colors border ${showBestiary ? 'border-amber-700 bg-amber-950/40 text-amber-300' : 'border-stone-700 bg-stone-900 text-stone-400 hover:border-stone-500 hover:text-stone-200'}`}
                     >
                       ⚔ Bestiario
+                    </button>
+                    <button
+                      onClick={() => { setShowNpcForm(b => !b); if (showBestiary) setShowBestiary(false) }}
+                      className={`px-3 py-2 font-serif text-sm transition-colors border ${showNpcForm ? 'border-amber-700 bg-amber-950/40 text-amber-300' : 'border-stone-700 bg-stone-900 text-stone-400 hover:border-stone-500 hover:text-stone-200'}`}
+                    >
+                      ✏ Personalizado
                     </button>
                   </div>
 
@@ -639,6 +701,99 @@ function DmSession() {
                       )}
                     </div>
                   )}
+
+                  {showNpcForm && (
+                    <div className="bg-stone-950 border border-stone-700 p-4 space-y-4">
+                      <p className="text-xs tracking-widest text-stone-500 uppercase font-serif">Crear NPC personalizado</p>
+
+                      {/* Row 1: name */}
+                      <div>
+                        <label className="block text-xs text-stone-600 font-serif mb-1">Nombre *</label>
+                        <input autoFocus value={npcFormName} onChange={e => setNpcFormName(e.target.value)}
+                          placeholder="Ej: Capitán Grigor"
+                          className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500" />
+                      </div>
+
+                      {/* Row 2: HP / CA / Tipo */}
+                      <div className="grid grid-cols-3 gap-2">
+                        <div>
+                          <label className="block text-xs text-stone-600 font-serif mb-1">HP máx *</label>
+                          <input type="number" min={1} value={npcFormHp} onChange={e => setNpcFormHp(parseInt(e.target.value) || 1)}
+                            className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-mono text-center focus:outline-none focus:border-stone-500" />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-stone-600 font-serif mb-1">CA</label>
+                          <input type="number" min={1} value={npcFormAc} onChange={e => setNpcFormAc(parseInt(e.target.value) || 10)}
+                            className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-mono text-center focus:outline-none focus:border-stone-500" />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-stone-600 font-serif mb-1">Tipo</label>
+                          <input list="npc-types" value={npcFormType} onChange={e => setNpcFormType(e.target.value)}
+                            className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-serif focus:outline-none focus:border-stone-500" />
+                          <datalist id="npc-types">
+                            {['humanoide', 'bestia', 'muerto viviente', 'construcción', 'dragón', 'elemental', 'hada', 'engendro', 'gigante', 'infernal', 'planta'].map(t => (
+                              <option key={t} value={t} />
+                            ))}
+                          </datalist>
+                        </div>
+                      </div>
+
+                      {/* Row 3: GACO / Daño */}
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="block text-xs text-stone-600 font-serif mb-1">Bono de ataque (GACO)</label>
+                          <div className="flex items-center">
+                            <span className="px-2 py-1.5 bg-stone-800 border border-r-0 border-stone-700 text-stone-500 text-sm font-mono">+</span>
+                            <input type="number" value={npcFormAttack} onChange={e => setNpcFormAttack(parseInt(e.target.value) || 0)}
+                              className="flex-1 px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-mono focus:outline-none focus:border-stone-500" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs text-stone-600 font-serif mb-1">Daño</label>
+                          <input value={npcFormDamage} onChange={e => setNpcFormDamage(e.target.value)}
+                            placeholder="ej: 1d8+3 cortante"
+                            className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-mono placeholder-stone-700 focus:outline-none focus:border-stone-500" />
+                        </div>
+                      </div>
+
+                      {/* Loot */}
+                      <div>
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-xs text-stone-600 font-serif">Objetos (botín)</label>
+                          <button onClick={addLootItem} className="text-xs px-2 py-0.5 border border-stone-700 text-stone-500 hover:border-stone-500 hover:text-stone-300 font-serif transition-colors">
+                            + Agregar
+                          </button>
+                        </div>
+                        {npcFormItems.length === 0 && (
+                          <p className="text-xs text-stone-700 font-serif italic">Sin objetos. El botín aparece cuando el NPC muere.</p>
+                        )}
+                        <div className="space-y-1.5">
+                          {npcFormItems.map(item => (
+                            <div key={item.id} className="flex items-center gap-2">
+                              <input value={item.name} onChange={e => updateLootItem(item.id, { name: e.target.value })}
+                                placeholder="Nombre del objeto"
+                                className="flex-1 px-2 py-1 bg-stone-900 border border-stone-700 text-stone-300 text-xs font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500" />
+                              <span className="text-xs text-stone-600 shrink-0">×</span>
+                              <input type="number" min={1} value={item.qty} onChange={e => updateLootItem(item.id, { qty: parseInt(e.target.value) || 1 })}
+                                className="w-14 px-2 py-1 bg-stone-900 border border-stone-700 text-stone-300 text-xs font-mono text-center focus:outline-none focus:border-stone-500" />
+                              <button onClick={() => removeLootItem(item.id)} className="text-stone-700 hover:text-red-500 transition-colors text-xs shrink-0">✕</button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex items-center justify-between pt-1 border-t border-stone-800">
+                        <button onClick={() => setShowNpcForm(false)} className="text-xs text-stone-600 hover:text-stone-400 font-serif transition-colors">
+                          Cancelar
+                        </button>
+                        <button onClick={createCustomNpc} disabled={!npcFormName.trim() || npcFormHp < 1}
+                          className="px-4 py-1.5 bg-amber-800 hover:bg-amber-700 disabled:opacity-30 text-amber-100 font-serif text-sm transition-colors">
+                          Agregar al combate
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -676,6 +831,7 @@ function CombatantRow({
   isActive, icon, name, initiative, onInitiativeChange,
   hp, maxHp, hpPct, hpColor, onHpChange, onRemove, tag,
   editingHpId, setEditingHpId, editingInitId, setEditingInitId, entityId,
+  npcStats, loot, lootOpen, onToggleLoot,
 }: {
   isActive: boolean
   icon: string
@@ -694,6 +850,10 @@ function CombatantRow({
   editingInitId?: string | null
   setEditingInitId?: (id: string | null) => void
   entityId?: string
+  npcStats?: { ac?: number; attackBonus?: number; damage?: string }
+  loot?: NpcItem[]
+  lootOpen?: boolean
+  onToggleLoot?: () => void
 }) {
   const [localEditHp, setLocalEditHp] = useState(false)
   const [localEditInit, setLocalEditInit] = useState(false)
@@ -705,66 +865,106 @@ function CombatantRow({
   const stopEditInit = () => entityId && setEditingInitId ? setEditingInitId(null) : setLocalEditInit(false)
 
   return (
-    <div className={`flex items-center gap-3 px-4 py-3 rounded-lg border transition-all ${
+    <div className={`rounded-lg border transition-all overflow-hidden ${
       isActive
-        ? 'border-amber-700 bg-amber-950/40 shadow-sm shadow-amber-900/30'
-        : 'border-stone-800 bg-stone-900/30'
+        ? 'border-amber-700 shadow-sm shadow-amber-900/30'
+        : 'border-stone-800'
     }`}>
-      {/* Active indicator */}
-      <div className="w-3 shrink-0 text-center">
-        {isActive && <span className="text-amber-400 text-xs">→</span>}
-      </div>
+      {/* Main row */}
+      <div className={`flex items-center gap-3 px-4 py-3 ${isActive ? 'bg-amber-950/40' : 'bg-stone-900/30'}`}>
+        {/* Active indicator */}
+        <div className="w-3 shrink-0 text-center">
+          {isActive && <span className="text-amber-400 text-xs">→</span>}
+        </div>
 
-      {/* Initiative */}
-      <div className="w-8 shrink-0 text-center">
-        {isEditingInit ? (
-          <input autoFocus defaultValue={initiative}
-            onBlur={e => { onInitiativeChange(parseInt(e.target.value) || 0); stopEditInit() }}
-            onKeyDown={e => e.key === 'Enter' && e.currentTarget.blur()}
-            className="w-8 text-center text-sm font-mono bg-transparent border-b border-stone-600 focus:outline-none text-stone-300"
-          />
-        ) : (
-          <button onClick={startEditInit} className="text-sm font-mono text-stone-400 hover:text-stone-200 transition-colors w-full">
-            {initiative}
-          </button>
+        {/* Initiative */}
+        <div className="w-8 shrink-0 text-center">
+          {isEditingInit ? (
+            <input autoFocus defaultValue={initiative}
+              onBlur={e => { onInitiativeChange(parseInt(e.target.value) || 0); stopEditInit() }}
+              onKeyDown={e => e.key === 'Enter' && e.currentTarget.blur()}
+              className="w-8 text-center text-sm font-mono bg-transparent border-b border-stone-600 focus:outline-none text-stone-300"
+            />
+          ) : (
+            <button onClick={startEditInit} className="text-sm font-mono text-stone-400 hover:text-stone-200 transition-colors w-full">
+              {initiative}
+            </button>
+          )}
+        </div>
+
+        {/* Icon + name */}
+        <span className="text-base shrink-0">{icon}</span>
+        <div className="w-32 shrink-0">
+          <p className="text-sm font-semibold text-stone-200 truncate">{name}</p>
+          <div className="mt-0.5">{tag}</div>
+        </div>
+
+        {/* HP bar */}
+        <div className="flex-1">
+          <div className="h-1.5 bg-stone-800 rounded-full overflow-hidden mb-1">
+            <div className={`h-full rounded-full transition-all ${hpColor}`} style={{ width: `${hpPct}%` }} />
+          </div>
+          <div className="flex items-center gap-1">
+            <button onClick={() => onHpChange(Math.max(0, hp - 1))} className="w-5 h-5 text-xs border border-stone-700 text-stone-500 hover:bg-stone-800 rounded leading-none">−</button>
+            <button onClick={() => onHpChange(Math.max(0, hp - 5))} className="w-6 h-4 text-xs border border-stone-700 text-stone-500 hover:bg-stone-800 rounded leading-none font-mono">-5</button>
+            {isEditingHp ? (
+              <input autoFocus defaultValue={hp}
+                onBlur={e => { onHpChange(parseInt(e.target.value) || 0); stopEditHp() }}
+                onKeyDown={e => e.key === 'Enter' && e.currentTarget.blur()}
+                className="w-10 text-center text-sm font-mono bg-transparent border-b border-stone-500 focus:outline-none text-amber-300"
+              />
+            ) : (
+              <button onClick={startEditHp} className="text-sm font-mono text-amber-300 hover:text-amber-100 min-w-[2.5rem] text-center">
+                {hp === 0 ? <span className="text-red-500">💀</span> : hp}
+              </button>
+            )}
+            <button onClick={() => onHpChange(Math.min(maxHp, hp + 1))} className="w-5 h-5 text-xs border border-stone-700 text-stone-500 hover:bg-stone-800 rounded leading-none">+</button>
+            <button onClick={() => onHpChange(Math.min(maxHp, hp + 5))} className="w-6 h-4 text-xs border border-stone-700 text-stone-500 hover:bg-stone-800 rounded leading-none font-mono">+5</button>
+            <span className="text-xs text-stone-700 ml-1">/ {maxHp}</span>
+          </div>
+        </div>
+
+        {/* Remove NPC */}
+        {onRemove && (
+          <button onClick={onRemove} className="text-stone-700 hover:text-red-500 transition-colors text-sm shrink-0">✕</button>
         )}
       </div>
 
-      {/* Icon + name */}
-      <span className="text-base shrink-0">{icon}</span>
-      <div className="w-32 shrink-0">
-        <p className="text-sm font-semibold text-stone-200 truncate">{name}</p>
-        <div className="mt-0.5">{tag}</div>
-      </div>
-
-      {/* HP bar */}
-      <div className="flex-1">
-        <div className="h-1.5 bg-stone-800 rounded-full overflow-hidden mb-1">
-          <div className={`h-full rounded-full transition-all ${hpColor}`} style={{ width: `${hpPct}%` }} />
-        </div>
-        <div className="flex items-center gap-1">
-          <button onClick={() => onHpChange(Math.max(0, hp - 1))} className="w-5 h-5 text-xs border border-stone-700 text-stone-500 hover:bg-stone-800 rounded leading-none">−</button>
-          <button onClick={() => onHpChange(Math.max(0, hp - 5))} className="w-6 h-4 text-xs border border-stone-700 text-stone-500 hover:bg-stone-800 rounded leading-none font-mono">-5</button>
-          {isEditingHp ? (
-            <input autoFocus defaultValue={hp}
-              onBlur={e => { onHpChange(parseInt(e.target.value) || 0); stopEditHp() }}
-              onKeyDown={e => e.key === 'Enter' && e.currentTarget.blur()}
-              className="w-10 text-center text-sm font-mono bg-transparent border-b border-stone-500 focus:outline-none text-amber-300"
-            />
-          ) : (
-            <button onClick={startEditHp} className="text-sm font-mono text-amber-300 hover:text-amber-100 min-w-[2.5rem] text-center">
-              {hp === 0 ? <span className="text-red-500">💀</span> : hp}
+      {/* NPC stats bar */}
+      {npcStats && (
+        <div className={`px-4 py-1.5 flex items-center gap-4 text-xs font-mono border-t ${isActive ? 'border-amber-800/40 bg-amber-950/20' : 'border-stone-800 bg-stone-900/20'}`}>
+          {npcStats.ac != null && (
+            <span className="text-stone-500">CA <span className="text-stone-300">{npcStats.ac}</span></span>
+          )}
+          {npcStats.attackBonus != null && (
+            <span className="text-stone-500">Ataque <span className="text-stone-300">+{npcStats.attackBonus}</span></span>
+          )}
+          {npcStats.damage && (
+            <span className="text-stone-500">Daño <span className="text-amber-400">{npcStats.damage}</span></span>
+          )}
+          {loot && loot.length > 0 && hp === 0 && (
+            <button onClick={onToggleLoot}
+              className="ml-auto text-xs px-2 py-0.5 border border-amber-800 text-amber-500 hover:bg-amber-950/40 font-serif transition-colors">
+              💰 Botín {lootOpen ? '▲' : '▼'}
             </button>
           )}
-          <button onClick={() => onHpChange(Math.min(maxHp, hp + 1))} className="w-5 h-5 text-xs border border-stone-700 text-stone-500 hover:bg-stone-800 rounded leading-none">+</button>
-          <button onClick={() => onHpChange(Math.min(maxHp, hp + 5))} className="w-6 h-4 text-xs border border-stone-700 text-stone-500 hover:bg-stone-800 rounded leading-none font-mono">+5</button>
-          <span className="text-xs text-stone-700 ml-1">/ {maxHp}</span>
         </div>
-      </div>
+      )}
 
-      {/* Remove NPC */}
-      {onRemove && (
-        <button onClick={onRemove} className="text-stone-700 hover:text-red-500 transition-colors text-sm shrink-0">✕</button>
+      {/* Loot panel */}
+      {lootOpen && loot && loot.length > 0 && (
+        <div className={`px-4 py-2 border-t ${isActive ? 'border-amber-800/40 bg-amber-950/30' : 'border-stone-800 bg-stone-950/60'}`}>
+          <p className="text-[10px] text-stone-500 uppercase tracking-widest font-serif mb-1.5">Botín</p>
+          <ul className="space-y-0.5">
+            {loot.map(item => (
+              <li key={item.id} className="text-xs font-serif text-stone-300 flex items-center gap-2">
+                <span className="text-stone-600">·</span>
+                {item.name}
+                {item.qty > 1 && <span className="text-stone-500">×{item.qty}</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   )
