@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { CLASS_ICONS } from '../../../lib/class-meta'
+import { CONDITIONS, getSpellSlots } from '../../../lib/dnd-constants'
 
 export const Route = createFileRoute('/_authenticated/campaigns/$campaignId_/session')({
   component: DmSession,
@@ -21,7 +22,12 @@ type Character = {
   current_hp: number | null
   armor_class: number | null
   conditions: string[]
-  sheet_json: { hit_die?: number; saving_throws?: string[] }
+  sheet_json: {
+    hit_die?: number
+    saving_throws?: string[]
+    spell_slots_used?: Record<string, number>
+    death_saves?: { successes: number; failures: number }
+  }
 }
 
 type Npc = {
@@ -37,12 +43,6 @@ type Combatant =
   | { kind: 'npc'; npc: Npc }
 
 const getInitiative = (c: Combatant) => c.kind === 'player' ? c.initiative : c.npc.initiative
-
-const CONDITIONS = [
-  'Cegado', 'Hechizado', 'Ensordecido', 'Asustado', 'Agarrado',
-  'Incapacitado', 'Invisible', 'Paralizado', 'Petrificado',
-  'Envenenado', 'Derribado', 'Restringido', 'Aturdido', 'Inconsciente',
-]
 
 // ── Component ────────────────────────────────────────────────────────────────
 
@@ -73,6 +73,7 @@ function DmSession() {
   const [editingNpcHp, setEditingNpcHp] = useState<string | null>(null)
   const [editingNpcInit, setEditingNpcInit] = useState<string | null>(null)
   const [conditionPickerFor, setConditionPickerFor] = useState<string | null>(null)
+  const [showLongRestConfirm, setShowLongRestConfirm] = useState(false)
 
   // ── Queries ──────────────────────────────────────────────────────────────
 
@@ -92,7 +93,6 @@ function DmSession() {
       if (error) throw error
       return data as unknown as Character[]
     },
-    refetchInterval: 5000,
   })
 
   const { data: latestNote } = useQuery({
@@ -116,6 +116,18 @@ function DmSession() {
       setNoteBody(latestNote.body)
     }
   }, [latestNote])
+
+  // ── Realtime ──────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`session-characters-${campaignId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'characters', filter: `campaign_id=eq.${campaignId}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ['campaign-characters', campaignId] })
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [campaignId, queryClient])
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -211,6 +223,22 @@ function DmSession() {
     })
   }
 
+  // ── Party long rest ───────────────────────────────────────────────────────
+
+  const partyLongRest = async () => {
+    await Promise.all(
+      characters.map(c => {
+        const maxHp = maxHpFor(c)
+        return supabase.from('characters').update({
+          current_hp: maxHp,
+          sheet_json: { ...c.sheet_json, spell_slots_used: {}, death_saves: undefined, hit_dice_used: 0 } as never,
+        }).eq('id', c.id)
+      })
+    )
+    queryClient.invalidateQueries({ queryKey: ['campaign-characters', campaignId] })
+    setShowLongRestConfirm(false)
+  }
+
   // ── Notes auto-save ──────────────────────────────────────────────────────
 
   const saveNote = useCallback(async (title: string, body: string, id: string | null) => {
@@ -252,15 +280,29 @@ function DmSession() {
         <div className="w-px h-4 bg-stone-700" />
         <span className="text-stone-300 font-serif text-sm">Pantalla del DM</span>
         <div className="flex-1" />
-        {combatActive ? (
-          <button onClick={endCombat} className="text-xs px-3 py-1.5 border border-stone-600 text-stone-400 hover:border-red-700 hover:text-red-400 font-serif transition-colors">
-            Fin de combate
-          </button>
+        {showLongRestConfirm ? (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-stone-400 font-serif">¿Descanso largo para todo el grupo?</span>
+            <button onClick={partyLongRest} className="text-xs px-3 py-1.5 bg-amber-800 hover:bg-amber-700 text-amber-100 font-serif transition-colors">Confirmar</button>
+            <button onClick={() => setShowLongRestConfirm(false)} className="text-xs text-stone-500 hover:text-stone-300">✕</button>
+          </div>
         ) : (
-          <button onClick={startCombat} disabled={characters.length === 0}
-            className="text-xs px-4 py-1.5 bg-amber-800 hover:bg-amber-700 disabled:opacity-40 text-amber-100 font-serif transition-colors">
-            ⚔ Iniciar combate
-          </button>
+          <>
+            <button onClick={() => setShowLongRestConfirm(true)} disabled={characters.length === 0}
+              className="text-xs px-3 py-1.5 border border-stone-700 text-stone-400 hover:border-amber-700 hover:text-amber-400 disabled:opacity-40 font-serif transition-colors">
+              ☀ Descanso largo
+            </button>
+            {combatActive ? (
+              <button onClick={endCombat} className="text-xs px-3 py-1.5 border border-stone-600 text-stone-400 hover:border-red-700 hover:text-red-400 font-serif transition-colors">
+                Fin de combate
+              </button>
+            ) : (
+              <button onClick={startCombat} disabled={characters.length === 0}
+                className="text-xs px-4 py-1.5 bg-amber-800 hover:bg-amber-700 disabled:opacity-40 text-amber-100 font-serif transition-colors">
+                ⚔ Iniciar combate
+              </button>
+            )}
+          </>
         )}
       </header>
 
@@ -346,6 +388,54 @@ function DmSession() {
                       )}
                     </div>
                   </div>
+
+                  {/* Death saves when HP = 0 */}
+                  {curHp === 0 && (() => {
+                    const ds = c.sheet_json.death_saves ?? { successes: 0, failures: 0 }
+                    return (
+                      <div className="flex items-center gap-3 pt-1 border-t border-stone-800">
+                        <span className="text-xs text-stone-600 font-serif">Muerte:</span>
+                        <div className="flex gap-1">
+                          {[0,1,2].map(i => (
+                            <div key={i} className={`w-3 h-3 rounded-full border ${i < ds.successes ? 'bg-green-600 border-green-500' : 'border-stone-700'}`} />
+                          ))}
+                        </div>
+                        <span className="text-stone-700 text-xs">/</span>
+                        <div className="flex gap-1">
+                          {[0,1,2].map(i => (
+                            <div key={i} className={`w-3 h-3 rounded-full border ${i < ds.failures ? 'bg-red-700 border-red-600' : 'border-stone-700'}`} />
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })()}
+
+                  {/* Spell slots */}
+                  {(() => {
+                    const slots = getSpellSlots(c.class, c.level)
+                    const used = c.sheet_json.spell_slots_used ?? {}
+                    if (!slots.some(s => s > 0)) return null
+                    return (
+                      <div className="pt-1 border-t border-stone-800 space-y-0.5">
+                        {slots.map((max, idx) => {
+                          if (max === 0) return null
+                          const lvl = idx + 1
+                          const u = used[String(lvl)] ?? 0
+                          const available = max - u
+                          return (
+                            <div key={lvl} className="flex items-center gap-1.5">
+                              <span className="text-xs text-stone-700 w-4">{lvl}</span>
+                              <div className="flex gap-0.5">
+                                {Array.from({ length: max }, (_, i) => (
+                                  <div key={i} className={`w-2 h-2 rounded-full ${i < available ? 'bg-amber-600' : 'bg-stone-800 border border-stone-700'}`} />
+                                ))}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  })()}
                 </div>
               )
             })}

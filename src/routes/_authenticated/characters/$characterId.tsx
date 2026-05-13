@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
-import { useRef, useState, useMemo } from 'react'
+import { useRef, useState, useMemo, useEffect } from 'react'
 import { supabase } from '../../../lib/supabase'
 import type { Database } from '../../../lib/database.types'
 import {
@@ -10,6 +10,7 @@ import {
   ABILITY_LABELS, ABILITY_FULL,
 } from '../../../lib/dnd-api'
 import type { SpellDetail, TraitDetail, SkillDetail } from '../../../lib/dnd-api'
+import { CONDITIONS, XP_THRESHOLDS, getSpellSlots, isWarlock } from '../../../lib/dnd-constants'
 
 export const Route = createFileRoute('/_authenticated/characters/$characterId')({
   component: CharacterSheet,
@@ -17,15 +18,16 @@ export const Route = createFileRoute('/_authenticated/characters/$characterId')(
 
 const STAT_KEYS = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const
 
-const XP_THRESHOLDS = [0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000,
-  85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000]
-
-const CONDITIONS_ES = [
-  'Cegado', 'Hechizado', 'Ensordecido', 'Asustado', 'Agarrado',
-  'Incapacitado', 'Invisible', 'Paralizado', 'Petrificado',
-  'Envenenado', 'Derribado', 'Restringido', 'Aturdido', 'Inconsciente',
-  'Agotamiento I', 'Agotamiento II', 'Agotamiento III',
-]
+type SheetJson = {
+  skill_proficiencies?: string[]
+  weapon_proficiencies?: string[]
+  spells?: string[]
+  saving_throws?: string[]
+  hit_die?: number
+  spell_slots_used?: Record<string, number>
+  death_saves?: { successes: number; failures: number }
+  hit_dice_used?: number
+}
 
 type InfoModal =
   | { kind: 'spell'; data: SpellDetail }
@@ -63,6 +65,14 @@ function CharacterSheet() {
   const [xpInput, setXpInput] = useState('')
   const [editingXp, setEditingXp] = useState(false)
   const [showConditionPicker, setShowConditionPicker] = useState(false)
+
+  // Rest panel
+  const [showRestPanel, setShowRestPanel] = useState(false)
+  const [shortRestHd, setShortRestHd] = useState(1)
+  const [shortRestHpInput, setShortRestHpInput] = useState('')
+  const [showLongRestConfirm, setShowLongRestConfirm] = useState(false)
+
+  // ── Queries ───────────────────────────────────────────────────────────────
 
   const { data: character, isLoading } = useQuery({
     queryKey: ['character', characterId],
@@ -125,10 +135,29 @@ function CharacterSheet() {
     [equipmentList, equipSearch]
   )
 
-  // ── Mutations ────────────────────────────────────────────────────────────
+  // ── Realtime ──────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    const channel = supabase
+      .channel(`character-${characterId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'characters', filter: `id=eq.${characterId}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ['character', characterId] })
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [characterId, queryClient])
+
+  // ── Mutations ─────────────────────────────────────────────────────────────
 
   const patchCharacter = async (patch: Database['public']['Tables']['characters']['Update']) => {
     await supabase.from('characters').update(patch).eq('id', characterId)
+    queryClient.invalidateQueries({ queryKey: ['character', characterId] })
+  }
+
+  const patchSheet = async (sheetPatch: Partial<SheetJson>) => {
+    if (!character) return
+    const current = character.sheet_json as SheetJson
+    await supabase.from('characters').update({ sheet_json: { ...current, ...sheetPatch } as never }).eq('id', characterId)
     queryClient.invalidateQueries({ queryKey: ['character', characterId] })
   }
 
@@ -179,6 +208,51 @@ function CharacterSheet() {
     const current: string[] = (character.conditions as string[]) ?? []
     const next = current.includes(cond) ? current.filter(c => c !== cond) : [...current, cond]
     await patchCharacter({ conditions: next })
+  }
+
+  const toggleSlot = async (level: number, slotIndex: number) => {
+    if (!character) return
+    const sheet = character.sheet_json as SheetJson
+    const slotsUsed = sheet.spell_slots_used ?? {}
+    const used = slotsUsed[String(level)] ?? 0
+    const available = maxSlots[level - 1] - used
+    const newUsed = slotIndex < available ? used + 1 : Math.max(0, used - 1)
+    await patchSheet({ spell_slots_used: { ...slotsUsed, [String(level)]: newUsed } })
+  }
+
+  const toggleDeathSave = async (kind: 'successes' | 'failures', i: number) => {
+    if (!character) return
+    const sheet = character.sheet_json as SheetJson
+    const current = sheet.death_saves ?? { successes: 0, failures: 0 }
+    const next = i < current[kind] ? i : Math.min(i + 1, 3)
+    await patchSheet({ death_saves: { ...current, [kind]: next } })
+  }
+
+  const shortRest = async () => {
+    if (!character) return
+    const sheet = character.sheet_json as SheetJson
+    const hpGained = parseInt(shortRestHpInput) || 0
+    const newHp = Math.min(maxHp, currentHp + hpGained)
+    const slotsUpdate = isWarlock(character.class) ? { spell_slots_used: {} } : {}
+    await patchSheet({
+      hit_dice_used: (sheet.hit_dice_used ?? 0) + shortRestHd,
+      ...slotsUpdate,
+    })
+    await patchCharacter({ current_hp: newHp })
+    setShowRestPanel(false)
+    setShortRestHd(1)
+    setShortRestHpInput('')
+  }
+
+  const longRest = async () => {
+    if (!character) return
+    const sheet = character.sheet_json as SheetJson
+    await supabase.from('characters').update({
+      current_hp: maxHp,
+      sheet_json: { ...sheet, spell_slots_used: {}, death_saves: undefined, hit_dice_used: 0 } as never,
+    }).eq('id', characterId)
+    queryClient.invalidateQueries({ queryKey: ['character', characterId] })
+    setShowLongRestConfirm(false)
   }
 
   const handlePortraitUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -232,7 +306,7 @@ function CharacterSheet() {
     setShowEquipDropdown(false)
   }
 
-  // ── Derived values ───────────────────────────────────────────────────────
+  // ── Loading states ────────────────────────────────────────────────────────
 
   if (isLoading) return (
     <div className="min-h-screen flex items-center justify-center" style={parchmentStyle}>
@@ -246,15 +320,11 @@ function CharacterSheet() {
     </div>
   )
 
+  // ── Derived values ────────────────────────────────────────────────────────
+
   const isOwner = character.user_id === session.user.id
   const stats = character.stats as Record<string, number>
-  const sheet = character.sheet_json as {
-    skill_proficiencies?: string[]
-    weapon_proficiencies?: string[]
-    spells?: string[]
-    saving_throws?: string[]
-    hit_die?: number
-  }
+  const sheet = character.sheet_json as SheetJson
   const hitDie = sheet.hit_die ?? classDetail?.hit_die ?? 8
   const conMod = Math.floor(((stats.con ?? 10) - 10) / 2)
   const dexMod = Math.floor(((stats.dex ?? 10) - 10) / 2)
@@ -263,7 +333,6 @@ function CharacterSheet() {
   const ac = character.armor_class ?? (10 + dexMod)
   const xp = character.experience_points ?? 0
   const conditions: string[] = (character.conditions as string[]) ?? []
-
   const level = character.level
   const xpForCurrent = XP_THRESHOLDS[level - 1] ?? 0
   const xpForNext = XP_THRESHOLDS[level] ?? null
@@ -271,16 +340,28 @@ function CharacterSheet() {
   const canLevelUp = xpForNext !== null && xp >= xpForNext && level < 20
   const hpPct = Math.max(0, Math.min((currentHp / maxHp) * 100, 100))
   const hpColor = hpPct > 50 ? 'bg-green-700' : hpPct > 25 ? 'bg-amber-600' : 'bg-red-700'
-
   const carryCapacity = (stats.str ?? 10) * 15
   const totalWeight = inventory.reduce((s, i) => s + Number(i.weight_lbs) * i.quantity, 0)
   const weightPct = Math.min((totalWeight / carryCapacity) * 100, 100)
   const weightColor = weightPct > 80 ? 'bg-red-700' : weightPct > 50 ? 'bg-amber-600' : 'bg-green-700'
 
+  // Spell slots
+  const maxSlots = getSpellSlots(character.class, level)
+  const slotsUsed = sheet.spell_slots_used ?? {}
+  const isSpellcaster = maxSlots.some(s => s > 0)
+
+  // Death saves
+  const deathSaves = sheet.death_saves ?? { successes: 0, failures: 0 }
+  const isDead = currentHp === 0 && deathSaves.failures >= 3
+  const isStable = currentHp === 0 && deathSaves.successes >= 3
+
+  // Hit dice
+  const hitDiceAvailable = level - (sheet.hit_dice_used ?? 0)
+
   return (
     <div className="min-h-screen text-stone-900" style={parchmentStyle}>
 
-      {/* Dark header bar */}
+      {/* Header */}
       <header className="border-b-2 border-stone-800 bg-stone-900 px-8 py-3 flex items-center gap-4">
         <Link to="/" className="text-amber-400 hover:text-amber-200 transition-colors text-sm font-serif">← La Taberna</Link>
         <div className="w-px h-4 bg-stone-700" />
@@ -320,7 +401,6 @@ function CharacterSheet() {
 
         {/* Portrait + Stats */}
         <SheetRow>
-          {/* Portrait */}
           <div className="w-1/3 border-r border-stone-600 p-4 flex flex-col gap-3">
             <SheetLabel>Retrato</SheetLabel>
             <div className="relative group aspect-square bg-stone-300/50 border border-stone-500 overflow-hidden flex items-center justify-center">
@@ -355,7 +435,6 @@ function CharacterSheet() {
             )}
           </div>
 
-          {/* Ability scores */}
           <div className="flex-1 p-4">
             <SheetLabel>Características</SheetLabel>
             <div className="grid grid-cols-3 gap-2 mt-3">
@@ -403,7 +482,7 @@ function CharacterSheet() {
                   ) : (
                     <button onClick={() => { setEditingHp(true); setHpInput(String(currentHp)) }}
                       className="text-lg font-bold font-mono text-stone-800 px-1 hover:text-amber-800 transition-colors min-w-[2rem]">
-                      {currentHp}
+                      {currentHp === 0 ? <span className="text-red-700">0</span> : currentHp}
                     </button>
                   )}
                   {isOwner && <button onClick={() => adjustHp(1)} className="w-6 h-6 text-sm border border-stone-500 text-stone-600 hover:bg-stone-200/50 leading-none font-mono">+</button>}
@@ -463,40 +542,132 @@ function CharacterSheet() {
           </div>
         </SheetRow>
 
-        {/* Conditions */}
-        {(conditions.length > 0 || isOwner) && (
-          <SheetRow className="border-t border-stone-600">
+        {/* Death saves — only when at 0 HP */}
+        {currentHp === 0 && (
+          <SheetRow className="border-t border-stone-600 bg-red-950/20">
             <div className="flex-1 p-4">
-              <SheetLabel>Condiciones activas</SheetLabel>
-              <div className="flex flex-wrap gap-1.5 mt-3">
-                {conditions.map(c => (
-                  <span key={c} className="flex items-center gap-1 px-2 py-0.5 text-xs border border-red-700 bg-red-100/60 text-red-800 font-serif">
-                    {c}
-                    {isOwner && <button onClick={() => toggleCondition(c)} className="text-red-600 hover:text-red-900 ml-0.5">✕</button>}
-                  </span>
-                ))}
-                {isOwner && (
-                  <div className="relative">
-                    <button onClick={() => setShowConditionPicker(v => !v)}
-                      className="px-2 py-0.5 text-xs border border-stone-400 text-stone-500 hover:border-amber-700 hover:text-amber-800 font-serif transition-colors">
-                      + condición
-                    </button>
-                    {showConditionPicker && (
-                      <div className="absolute left-0 top-7 z-20 w-48 border border-stone-500 bg-amber-50 shadow-lg max-h-52 overflow-y-auto">
-                        {CONDITIONS_ES.filter(c => !conditions.includes(c)).map(c => (
-                          <button key={c} onClick={() => { toggleCondition(c); setShowConditionPicker(false) }}
-                            className="block w-full text-left px-3 py-1.5 text-xs font-serif text-stone-700 hover:bg-amber-200 transition-colors">
-                            {c}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+              <SheetLabel>Tiradas de Muerte</SheetLabel>
+              <div className="mt-3 flex items-start gap-8">
+                <div>
+                  <p className="text-xs text-stone-500 font-serif mb-2">Éxitos</p>
+                  <div className="flex gap-2">
+                    {[0, 1, 2].map(i => (
+                      <button key={i}
+                        onClick={() => isOwner && toggleDeathSave('successes', i)}
+                        className={`w-7 h-7 border-2 rounded-full transition-colors ${i < deathSaves.successes ? 'bg-green-600 border-green-500' : 'bg-transparent border-stone-500 hover:border-green-700'}`}
+                      />
+                    ))}
                   </div>
-                )}
+                </div>
+                <div>
+                  <p className="text-xs text-stone-500 font-serif mb-2">Fallos</p>
+                  <div className="flex gap-2">
+                    {[0, 1, 2].map(i => (
+                      <button key={i}
+                        onClick={() => isOwner && toggleDeathSave('failures', i)}
+                        className={`w-7 h-7 border-2 rounded-full transition-colors ${i < deathSaves.failures ? 'bg-red-700 border-red-600' : 'bg-transparent border-stone-500 hover:border-red-700'}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div className="self-end pb-0.5">
+                  {isStable && <p className="text-sm text-green-700 font-serif">✓ Estable</p>}
+                  {isDead && <p className="text-sm text-red-700 font-serif">✕ Muerto</p>}
+                  {!isStable && !isDead && <p className="text-xs text-stone-500 font-serif italic">Inconsciente</p>}
+                </div>
               </div>
             </div>
           </SheetRow>
         )}
+
+        {/* Conditions + Descanso */}
+        <SheetRow className="border-t border-stone-600">
+          <div className="flex-1 p-4 space-y-3">
+            {/* Conditions */}
+            {(conditions.length > 0 || isOwner) && (
+              <div>
+                <SheetLabel>Condiciones activas</SheetLabel>
+                <div className="flex flex-wrap gap-1.5 mt-3">
+                  {conditions.map(c => (
+                    <span key={c} className="flex items-center gap-1 px-2 py-0.5 text-xs border border-red-700 bg-red-100/60 text-red-800 font-serif">
+                      {c}
+                      {isOwner && <button onClick={() => toggleCondition(c)} className="text-red-600 hover:text-red-900 ml-0.5">✕</button>}
+                    </span>
+                  ))}
+                  {isOwner && (
+                    <div className="relative">
+                      <button onClick={() => setShowConditionPicker(v => !v)}
+                        className="px-2 py-0.5 text-xs border border-stone-400 text-stone-500 hover:border-amber-700 hover:text-amber-800 font-serif transition-colors">
+                        + condición
+                      </button>
+                      {showConditionPicker && (
+                        <div className="absolute left-0 top-7 z-20 w-48 border border-stone-500 bg-amber-50 shadow-lg max-h-52 overflow-y-auto">
+                          {CONDITIONS.filter(c => !conditions.includes(c)).map(c => (
+                            <button key={c} onClick={() => { toggleCondition(c); setShowConditionPicker(false) }}
+                              className="block w-full text-left px-3 py-1.5 text-xs font-serif text-stone-700 hover:bg-amber-200 transition-colors">
+                              {c}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Descanso */}
+            {isOwner && (
+              <div>
+                <SheetLabel>Descanso</SheetLabel>
+                <div className="mt-3">
+                  {showLongRestConfirm ? (
+                    <div className="flex items-center gap-3">
+                      <p className="text-xs text-stone-500 font-serif italic flex-1">¿Descanso largo? Se recuperan todos los PV, conjuros y dados de golpe.</p>
+                      <button onClick={longRest} className="px-3 py-1 text-xs bg-amber-800 hover:bg-amber-700 text-amber-100 font-serif">Confirmar</button>
+                      <button onClick={() => setShowLongRestConfirm(false)} className="text-xs text-stone-500 font-serif">✕</button>
+                    </div>
+                  ) : showRestPanel ? (
+                    <div className="border border-stone-400 p-3 space-y-2" style={{ background: 'rgba(200,170,110,0.2)' }}>
+                      <div className="flex items-center gap-3">
+                        <p className="text-xs text-stone-600 font-serif">DG disponibles: <span className="font-bold">{hitDiceAvailable}</span> d{hitDie}</p>
+                        <div className="flex items-center gap-1 ml-auto">
+                          <button onClick={() => setShortRestHd(Math.max(1, shortRestHd - 1))} className="w-5 h-5 border border-stone-400 text-stone-600 text-xs leading-none">−</button>
+                          <span className="text-sm font-mono w-5 text-center">{shortRestHd}</span>
+                          <button onClick={() => setShortRestHd(Math.min(hitDiceAvailable, shortRestHd + 1))} className="w-5 h-5 border border-stone-400 text-stone-600 text-xs leading-none">+</button>
+                          <span className="text-xs text-stone-500 font-serif ml-1">DG a gastar</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <label className="text-xs text-stone-600 font-serif">PV recuperados (tirás físicamente):</label>
+                        <input type="number" min="0" value={shortRestHpInput} onChange={e => setShortRestHpInput(e.target.value)}
+                          className="w-16 px-2 py-0.5 text-sm border border-stone-400 bg-amber-50/80 font-mono focus:outline-none" placeholder="0" />
+                      </div>
+                      <div className="flex gap-2">
+                        <button onClick={shortRest} disabled={hitDiceAvailable === 0}
+                          className="px-3 py-1 text-xs bg-stone-700 hover:bg-stone-600 disabled:opacity-40 text-amber-300 font-serif">
+                          Descansar
+                        </button>
+                        <button onClick={() => setShowRestPanel(false)} className="text-xs text-stone-500 font-serif">Cancelar</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex gap-2">
+                      <button onClick={() => setShowRestPanel(true)} disabled={hitDiceAvailable === 0}
+                        className="px-3 py-1 text-xs border border-stone-400 text-stone-600 hover:bg-stone-200/50 disabled:opacity-40 font-serif transition-colors">
+                        ☽ Descanso corto
+                      </button>
+                      <button onClick={() => setShowLongRestConfirm(true)}
+                        className="px-3 py-1 text-xs border border-amber-700 text-amber-800 hover:bg-amber-100/50 font-serif transition-colors">
+                        ☀ Descanso largo
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </SheetRow>
 
         {/* Proficiencies + Skills */}
         <SheetRow className="border-t border-stone-600">
@@ -532,6 +703,47 @@ function CharacterSheet() {
                   <SpellBadge key={idx} index={idx} onInfo={data => setModal({ kind: 'spell', data })} />
                 ))}
               </div>
+            </div>
+          </SheetRow>
+        )}
+
+        {/* Spell slots */}
+        {isSpellcaster && (
+          <SheetRow className="border-t border-stone-600">
+            <div className="flex-1 p-4">
+              <div className="flex items-center justify-between mb-3">
+                <SheetLabel>Espacios de Conjuro</SheetLabel>
+              </div>
+              <div className="space-y-2">
+                {maxSlots.map((max, idx) => {
+                  if (max === 0) return null
+                  const slotLevel = idx + 1
+                  const used = slotsUsed[String(slotLevel)] ?? 0
+                  const available = max - used
+                  return (
+                    <div key={slotLevel} className="flex items-center gap-3">
+                      <span className="text-xs text-stone-500 font-serif w-10">Nv. {slotLevel}</span>
+                      <div className="flex gap-1.5">
+                        {Array.from({ length: max }, (_, i) => (
+                          <button key={i}
+                            onClick={() => isOwner && toggleSlot(slotLevel, i)}
+                            title={i < available ? 'Usar espacio' : 'Recuperar espacio'}
+                            className={`w-5 h-5 border-2 rounded-full transition-colors ${
+                              i < available
+                                ? 'bg-amber-700 border-amber-600 hover:bg-amber-600'
+                                : 'bg-transparent border-stone-500 hover:border-amber-700'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-xs text-stone-400 font-serif">{available}/{max}</span>
+                    </div>
+                  )
+                })}
+              </div>
+              {isWarlock(character.class) && (
+                <p className="text-xs text-stone-500 font-serif italic mt-2">Magia de pacto — se recupera con descanso corto</p>
+              )}
             </div>
           </SheetRow>
         )}
@@ -597,7 +809,6 @@ function CharacterSheet() {
             {isOwner && (
               addingItem ? (
                 <div className="border border-stone-400 p-3 space-y-2" style={{ background: 'rgba(200,170,110,0.2)' }}>
-                  {/* Equipment search */}
                   <div className="relative">
                     <input
                       placeholder="Buscar en catálogo de equipo..."
@@ -677,7 +888,7 @@ function CharacterSheet() {
   )
 }
 
-// ── Styles ──────────────────────────────────────────────────────────────────
+// ── Styles ───────────────────────────────────────────────────────────────────
 
 const parchmentStyle: React.CSSProperties = {
   background: 'radial-gradient(ellipse at 50% 30%, #f2e6c8 0%, #e8d5a8 40%, #d4b87a 100%)',
@@ -694,7 +905,7 @@ const sheetStyle: React.CSSProperties = {
   `,
 }
 
-// ── Small components ─────────────────────────────────────────────────────────
+// ── Small components ──────────────────────────────────────────────────────────
 
 function SheetLabel({ children }: { children: React.ReactNode }) {
   return (
