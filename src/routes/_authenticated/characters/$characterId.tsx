@@ -283,8 +283,11 @@ function CharacterSheet() {
       {/* Dark header bar */}
       <header className="border-b-2 border-stone-800 bg-stone-900 px-8 py-3 flex items-center gap-4">
         <Link to="/" className="text-amber-400 hover:text-amber-200 transition-colors text-sm font-serif">← La Taberna</Link>
-        <div className="flex-1" />
-        <div className="text-xs text-stone-400 font-serif capitalize">{character.race} · {character.class} · Nivel {character.level}</div>
+        <div className="w-px h-4 bg-stone-700" />
+        <div className="flex-1 min-w-0">
+          <span className="text-amber-200 font-serif font-semibold truncate">{character.name}</span>
+          <span className="text-stone-500 font-serif text-xs ml-2 capitalize">{character.race} · {character.class} · Nv. {character.level}</span>
+        </div>
         {isOwner && (
           assigningCampaign ? (
             <div className="flex items-center gap-2">
