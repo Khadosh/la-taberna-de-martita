@@ -86,6 +86,13 @@ function CampaignDetail() {
             >
               {copied ? '¡Copiado!' : 'Copiar invite'}
             </button>
+            <Link
+              to="/campaigns/$campaignId/session"
+              params={{ campaignId }}
+              className="px-3 py-1.5 text-sm rounded-lg bg-amber-800 hover:bg-amber-700 text-amber-100 transition-colors"
+            >
+              ⚔ Pantalla DM
+            </Link>
           </div>
         )}
       </header>
