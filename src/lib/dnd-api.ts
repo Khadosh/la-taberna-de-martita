@@ -52,6 +52,28 @@ export interface TraitDetail {
   desc: string[]
 }
 
+export interface FeatureDetail {
+  index: string
+  name: string
+  level: number
+  desc: string[]
+  class: ApiRef
+  subclass?: ApiRef
+}
+
+export interface ClassLevel {
+  level: number
+  features: ApiRef[]
+}
+
+export interface SubclassDetail {
+  index: string
+  name: string
+  subclass_flavor: string
+  class: ApiRef
+  desc: string
+}
+
 export interface SkillDetail {
   index: string
   name: string
@@ -74,8 +96,13 @@ export const dndApi = {
   classes: () => get<{ results: ApiRef[] }>('/classes'),
   klass: (i: string) => get<ClassDetail>(`/classes/${i}`),
   classSpells: (i: string) => get<{ results: ApiRef[] }>(`/classes/${i}/spells`),
+  classLevels: (i: string) => get<ClassLevel[]>(`/classes/${i}/levels`),
+  classSubclasses: (i: string) => get<{ results: ApiRef[] }>(`/classes/${i}/subclasses`),
   spell: (i: string) => get<SpellDetail>(`/spells/${i}`),
   trait: (i: string) => get<TraitDetail>(`/traits/${i}`),
+  feature: (i: string) => get<FeatureDetail>(`/features/${i}`),
+  subclass: (i: string) => get<SubclassDetail>(`/subclasses/${i}`),
+  subclassFeatures: (i: string) => get<{ results: ApiRef[] }>(`/subclasses/${i}/features`),
   skill: (i: string) => get<SkillDetail>(`/skills/${i}`),
   equipment: () => get<{ count: number; results: ApiRef[] }>('/equipment'),
   equipmentDetail: (i: string) => get<EquipmentItem>(`/equipment/${i}`),
@@ -87,8 +114,13 @@ export const dndKeys = {
   classes: ['dnd', 'classes'] as const,
   klass: (i: string) => ['dnd', 'classes', i] as const,
   classSpells: (i: string) => ['dnd', 'classes', i, 'spells'] as const,
+  classLevels: (i: string) => ['dnd', 'classes', i, 'levels'] as const,
+  classSubclasses: (i: string) => ['dnd', 'classes', i, 'subclasses'] as const,
   spell: (i: string) => ['dnd', 'spells', i] as const,
   trait: (i: string) => ['dnd', 'traits', i] as const,
+  feature: (i: string) => ['dnd', 'features', i] as const,
+  subclass: (i: string) => ['dnd', 'subclasses', i] as const,
+  subclassFeatures: (i: string) => ['dnd', 'subclasses', i, 'features'] as const,
   skill: (i: string) => ['dnd', 'skills', i] as const,
   equipment: ['dnd', 'equipment'] as const,
 }

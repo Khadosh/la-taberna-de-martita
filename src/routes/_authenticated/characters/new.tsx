@@ -17,6 +17,7 @@ interface Draft {
   name: string
   raceIndex: string
   classIndex: string
+  subclassIndex: string
   level: number
   rolledValues: number[]
   stats: Stats
@@ -42,7 +43,7 @@ function NewCharacter() {
   const [error, setError] = useState<string | null>(null)
   const [spellModal, setSpellModal] = useState<SpellDetail | null>(null)
   const [draft, setDraft] = useState<Draft>({
-    name: '', raceIndex: '', classIndex: '', level: 1,
+    name: '', raceIndex: '', classIndex: '', subclassIndex: '', level: 1,
     rolledValues: rollAll(),
     stats: EMPTY_STATS,
     skillProficiencies: [], spells: [], backstory: '', campaignId: '',
@@ -60,6 +61,11 @@ function NewCharacter() {
   const { data: classDetail } = useQuery({
     queryKey: dndKeys.klass(draft.classIndex),
     queryFn: () => dndApi.klass(draft.classIndex),
+    enabled: !!draft.classIndex,
+  })
+  const { data: classSubclasses } = useQuery({
+    queryKey: dndKeys.classSubclasses(draft.classIndex),
+    queryFn: () => dndApi.classSubclasses(draft.classIndex),
     enabled: !!draft.classIndex,
   })
   const { data: userCampaigns = [] } = useQuery({
@@ -128,6 +134,7 @@ function NewCharacter() {
         spells: draft.spells,
         hit_die: classDetail?.hit_die ?? 8,
         saving_throws: classDetail?.saving_throws.map(s => s.index) ?? [],
+        ...(draft.subclassIndex ? { subclass: draft.subclassIndex } : {}),
       },
     })
     if (error) { setError(error.message); return }
@@ -203,7 +210,7 @@ function NewCharacter() {
                   <label className="text-xs text-stone-500 font-display tracking-widest uppercase">Clase</label>
                   <select
                     value={draft.classIndex}
-                    onChange={e => patch({ classIndex: e.target.value, spells: [], skillProficiencies: [] })}
+                    onChange={e => patch({ classIndex: e.target.value, subclassIndex: '', spells: [], skillProficiencies: [] })}
                     style={inputStyle}
                     className="w-full px-3 py-2.5 text-stone-100 font-serif focus:outline-none transition-colors"
                   >
@@ -222,6 +229,25 @@ function NewCharacter() {
                   className="w-24 px-4 py-2.5 text-stone-100 font-mono focus:outline-none transition-colors"
                 />
               </div>
+
+              {/* Subclass selector — only when class is selected and has subclasses */}
+              {classSubclasses && classSubclasses.results.length > 0 && (
+                <div className="space-y-1.5">
+                  <label className="text-xs text-stone-500 font-display tracking-widest uppercase">Subclase</label>
+                  <select
+                    value={draft.subclassIndex}
+                    onChange={e => patch({ subclassIndex: e.target.value })}
+                    style={inputStyle}
+                    className="w-full px-3 py-2.5 text-stone-100 font-serif focus:outline-none transition-colors"
+                  >
+                    <option value="">Elegir subclase... (opcional)</option>
+                    {classSubclasses.results.map(s => (
+                      <option key={s.index} value={s.index}>{s.name}</option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-stone-700 font-serif italic">Contenido disponible según el SRD (licencia abierta D&D)</p>
+                </div>
+              )}
 
               {/* Race + class preview */}
               {(raceDetail || classDetail) && (

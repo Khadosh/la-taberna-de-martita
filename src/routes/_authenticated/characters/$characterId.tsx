@@ -9,7 +9,7 @@ import {
   abilityModifier, modifierColor,
   ABILITY_LABELS, ABILITY_FULL,
 } from '../../../lib/dnd-api'
-import type { SpellDetail, TraitDetail, SkillDetail } from '../../../lib/dnd-api'
+import type { SpellDetail, TraitDetail, SkillDetail, FeatureDetail } from '../../../lib/dnd-api'
 import { CONDITIONS, XP_THRESHOLDS, getSpellSlots, isWarlock } from '../../../lib/dnd-constants'
 
 export const Route = createFileRoute('/_authenticated/characters/$characterId')({
@@ -27,12 +27,14 @@ type SheetJson = {
   spell_slots_used?: Record<string, number>
   death_saves?: { successes: number; failures: number }
   hit_dice_used?: number
+  subclass?: string
 }
 
 type InfoModal =
   | { kind: 'spell'; data: SpellDetail }
   | { kind: 'trait'; data: TraitDetail }
   | { kind: 'skill'; data: SkillDetail }
+  | { kind: 'feature'; data: FeatureDetail }
 
 function CharacterSheet() {
   const { characterId } = Route.useParams()
@@ -126,6 +128,28 @@ function CharacterSheet() {
     queryKey: dndKeys.klass(character?.class ?? ''),
     queryFn: () => dndApi.klass(character!.class),
     enabled: !!character?.class,
+  })
+
+  const { data: classLevels } = useQuery({
+    queryKey: dndKeys.classLevels(character?.class ?? ''),
+    queryFn: () => dndApi.classLevels(character!.class),
+    enabled: !!character?.class,
+    staleTime: Infinity,
+  })
+
+  const sheetSubclass = (character?.sheet_json as SheetJson | null)?.subclass
+  const { data: subclassDetail } = useQuery({
+    queryKey: dndKeys.subclass(sheetSubclass ?? ''),
+    queryFn: () => dndApi.subclass(sheetSubclass!),
+    enabled: !!sheetSubclass,
+    staleTime: Infinity,
+  })
+
+  const { data: subclassFeatureList } = useQuery({
+    queryKey: dndKeys.subclassFeatures(sheetSubclass ?? ''),
+    queryFn: () => dndApi.subclassFeatures(sheetSubclass!),
+    enabled: !!sheetSubclass,
+    staleTime: Infinity,
   })
 
   const filteredEquipment = useMemo(() =>
@@ -358,6 +382,16 @@ function CharacterSheet() {
   // Hit dice
   const hitDiceAvailable = level - (sheet.hit_dice_used ?? 0)
 
+  // Class features unlocked at current level (deduplicated)
+  const classFeatures = useMemo(() => {
+    if (!classLevels) return []
+    const seen = new Set<string>()
+    return classLevels
+      .filter(l => l.level <= level)
+      .flatMap(l => l.features)
+      .filter(f => seen.has(f.index) ? false : (seen.add(f.index), true))
+  }, [classLevels, level])
+
   return (
     <div className="min-h-screen text-stone-900" style={parchmentStyle}>
 
@@ -396,7 +430,11 @@ function CharacterSheet() {
         <div className="text-center border-4 border-double border-stone-800 px-8 py-5 mb-0" style={{ background: 'rgba(200,170,110,0.25)' }}>
           <p className="text-xs tracking-[0.3em] text-stone-500 uppercase font-serif mb-1">Hoja de Personaje · D&D 5ª Edición</p>
           <h1 className="text-4xl font-bold text-stone-900" style={{ fontFamily: 'Georgia, serif', letterSpacing: '0.04em' }}>{character.name}</h1>
-          <p className="text-sm text-stone-500 mt-1 font-serif italic capitalize">{character.race} · {character.class} · Nivel {character.level}</p>
+          <p className="text-sm text-stone-500 mt-1 font-serif italic capitalize">
+            {character.race} · {character.class}
+            {subclassDetail && <span className="text-amber-700"> · {subclassDetail.name}</span>}
+            {' '}· Nivel {character.level}
+          </p>
         </div>
 
         {/* Portrait + Stats */}
@@ -762,6 +800,37 @@ function CharacterSheet() {
           </SheetRow>
         )}
 
+        {/* Class features + subclass */}
+        <SheetRow className="border-t border-stone-600">
+          <div className="flex-1 p-4">
+            <SheetLabel>
+              Habilidades de clase
+              {subclassDetail && <span className="font-serif normal-case tracking-normal ml-1">· {subclassDetail.subclass_flavor}: {subclassDetail.name}</span>}
+            </SheetLabel>
+            <div className="mt-3">
+              {classFeatures.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {classFeatures.map(f => (
+                    <FeatureBadge key={f.index} index={f.index} name={f.name} onInfo={data => setModal({ kind: 'feature', data })} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-stone-400 text-xs font-serif italic">Cargando habilidades...</p>
+              )}
+              {subclassFeatureList && subclassFeatureList.results.length > 0 && (
+                <div className="mt-4 pt-3 border-t border-stone-400/40">
+                  <p className="text-xs text-stone-500 font-serif italic mb-2">{subclassDetail?.subclass_flavor ?? 'Subclase'}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {subclassFeatureList.results.map(f => (
+                      <FeatureBadge key={f.index} index={f.index} name={f.name} onInfo={data => setModal({ kind: 'feature', data })} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </SheetRow>
+
         {/* Inventory */}
         <SheetRow className="border-t border-stone-600">
           <div className="flex-1 p-4">
@@ -937,6 +1006,11 @@ function InfoModal({ modal, onClose }: { modal: InfoModal; onClose: () => void }
     title = s.name; subtitle = `Nivel ${s.level} · ${s.school.name} · ${s.casting_time}`; body = s.desc[0] ?? ''
   } else if (modal.kind === 'trait') {
     title = modal.data.name; subtitle = 'Rasgo racial'; body = modal.data.desc.join('\n\n')
+  } else if (modal.kind === 'feature') {
+    const f = modal.data
+    title = f.name
+    subtitle = `Nivel ${f.level} · ${f.subclass ? f.subclass.name : f.class.name}`
+    body = f.desc.join('\n\n')
   } else {
     const sk = modal.data; title = sk.name; subtitle = `Pericia · ${sk.ability_score.name}`; body = sk.desc.join('\n\n')
   }
@@ -979,6 +1053,22 @@ function TraitBadge({ index, name, onInfo }: { index: string; name: string; onIn
     <div className="flex items-center gap-1 border border-stone-400 px-2 py-0.5" style={{ background: 'rgba(200,170,110,0.15)' }}>
       <span className="text-xs text-stone-600 font-serif">{name}</span>
       {trait && <button onClick={() => onInfo(trait)} className="text-stone-400 hover:text-amber-700 text-xs ml-0.5">ℹ</button>}
+    </div>
+  )
+}
+
+function FeatureBadge({ index, name, onInfo }: { index: string; name: string; onInfo: (f: FeatureDetail) => void }) {
+  const { data: feature } = useQuery({
+    queryKey: dndKeys.feature(index),
+    queryFn: () => dndApi.feature(index),
+    staleTime: Infinity,
+  })
+  return (
+    <div className="flex items-center gap-1 border border-stone-400 px-2 py-0.5" style={{ background: 'rgba(200,170,110,0.15)' }}>
+      <span className="text-xs text-stone-600 font-serif capitalize">{name.replace(/-/g, ' ')}</span>
+      {feature && feature.desc.length > 0 && (
+        <button onClick={() => onInfo(feature)} className="text-stone-400 hover:text-amber-700 text-xs ml-0.5">ℹ</button>
+      )}
     </div>
   )
 }
