@@ -154,7 +154,7 @@ function NewCharacter() {
       {/* Header */}
       <header className="border-b border-stone-800/80 px-4 sm:px-8 py-3 flex items-center justify-between gap-2" style={headerStyle}>
         <div className="flex items-center gap-3">
-          <span className="text-lg leading-none">🔥</span>
+          <img src="/favicon.svg" alt="" className="w-7 h-7" />
           <div className="hidden sm:block">
             <h1 className="font-display text-amber-200/90 text-base leading-tight tracking-wide">La Taberna</h1>
             <p className="font-display text-amber-500/80 text-[0.6rem] tracking-[0.3em] uppercase leading-none">de Martita</p>

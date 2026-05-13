@@ -57,7 +57,7 @@ function LoginPage() {
 
               {/* Brand */}
               <div className="text-center space-y-1">
-                <div className="text-3xl mb-3 leading-none">🔥</div>
+                <img src="/favicon.svg" alt="" className="w-12 h-12 mx-auto mb-1" />
                 <h1 className="font-display text-amber-200 leading-tight" style={{ fontSize: '1.6rem', letterSpacing: '0.05em' }}>
                   La Taberna
                 </h1>
