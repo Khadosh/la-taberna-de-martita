@@ -55,12 +55,20 @@ function Dashboard() {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-stone-200">Tus campañas (GM)</h2>
-            <Link
-              to="/campaigns/new"
-              className="px-4 py-1.5 bg-amber-700 hover:bg-amber-600 text-white text-sm rounded-lg transition-colors"
-            >
-              + Nueva campaña
-            </Link>
+            <div className="flex gap-2">
+              <Link
+                to="/characters/new"
+                className="px-4 py-1.5 bg-stone-700 hover:bg-stone-600 text-white text-sm rounded-lg transition-colors"
+              >
+                + Personaje
+              </Link>
+              <Link
+                to="/campaigns/new"
+                className="px-4 py-1.5 bg-amber-700 hover:bg-amber-600 text-white text-sm rounded-lg transition-colors"
+              >
+                + Campaña
+              </Link>
+            </div>
           </div>
           {loadingGm ? (
             <p className="text-stone-500 text-sm">Cargando...</p>
