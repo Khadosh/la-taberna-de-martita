@@ -569,15 +569,19 @@ function CharacterSheet() {
                 <div className="h-full bg-amber-700 transition-all" style={{ width: `${xpPct}%` }} />
               </div>
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2">
                   {editingXp && isGm ? (
                     <input autoFocus value={xpInput} onChange={e => setXpInput(e.target.value)}
                       onBlur={saveXp} onKeyDown={e => e.key === 'Enter' && saveXp()}
                       className="w-20 text-sm font-mono border-b border-stone-600 bg-transparent focus:outline-none" />
                   ) : (
-                    <button onClick={() => { if (isGm) { setEditingXp(true); setXpInput(String(xp)) } }}
-                      className={`text-sm font-mono text-stone-700 transition-colors ${isGm ? 'hover:text-amber-800 cursor-pointer' : 'cursor-default'}`}>
-                      {xp.toLocaleString()} XP
+                    <span className="text-sm font-mono text-stone-700">{xp.toLocaleString()} XP</span>
+                  )}
+                  {isGm && !editingXp && (
+                    <button
+                      onClick={() => { setEditingXp(true); setXpInput(String(xp)) }}
+                      className="text-[10px] px-1.5 py-0.5 border border-stone-500 hover:border-amber-700 text-stone-500 hover:text-amber-700 font-serif transition-colors leading-none">
+                      ✎ otorgar
                     </button>
                   )}
                 </div>
@@ -585,6 +589,9 @@ function CharacterSheet() {
               </div>
               {!isGm && character.campaign_id && (
                 <p className="text-[10px] text-stone-500 font-serif italic">Solo el GM puede otorgar XP</p>
+              )}
+              {!isGm && !character.campaign_id && !isOwner && (
+                <p className="text-[10px] text-stone-500 font-serif italic">El personaje no está asignado a ninguna campaña</p>
               )}
               {canLevelUp && isGm && (
                 <button onClick={levelUp}
