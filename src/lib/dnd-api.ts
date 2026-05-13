@@ -90,6 +90,52 @@ export interface EquipmentItem {
   desc?: string[]
 }
 
+export interface MonsterSummary {
+  index: string
+  name: string
+}
+
+export interface MonsterAction {
+  name: string
+  desc: string
+  attack_bonus?: number
+  damage?: { damage_dice: string; damage_type: ApiRef }[]
+  dc?: { dc_type: ApiRef; dc_value: number; success_type: string }
+  multiattack_type?: string
+  actions?: { action_name: string; count: number; type: string }[]
+}
+
+export interface MonsterDetail {
+  index: string
+  name: string
+  size: string
+  type: string
+  alignment: string
+  armor_class: { type: string; value: number }[]
+  hit_points: number
+  hit_points_roll: string
+  speed: Record<string, string>
+  strength: number
+  dexterity: number
+  constitution: number
+  intelligence: number
+  wisdom: number
+  charisma: number
+  proficiencies: { value: number; proficiency: ApiRef }[]
+  damage_vulnerabilities: string[]
+  damage_resistances: string[]
+  damage_immunities: string[]
+  condition_immunities: ApiRef[]
+  senses: Record<string, string | number>
+  languages: string
+  challenge_rating: number
+  xp: number
+  special_abilities?: { name: string; desc: string }[]
+  actions?: MonsterAction[]
+  legendary_actions?: { name: string; desc: string }[]
+  reactions?: { name: string; desc: string }[]
+}
+
 export const dndApi = {
   races: () => get<{ results: ApiRef[] }>('/races'),
   race: (i: string) => get<RaceDetail>(`/races/${i}`),
@@ -106,6 +152,8 @@ export const dndApi = {
   skill: (i: string) => get<SkillDetail>(`/skills/${i}`),
   equipment: () => get<{ count: number; results: ApiRef[] }>('/equipment'),
   equipmentDetail: (i: string) => get<EquipmentItem>(`/equipment/${i}`),
+  monsters: () => get<{ count: number; results: MonsterSummary[] }>('/monsters'),
+  monster: (i: string) => get<MonsterDetail>(`/monsters/${i}`),
 }
 
 export const dndKeys = {
@@ -123,6 +171,8 @@ export const dndKeys = {
   subclassFeatures: (i: string) => ['dnd', 'subclasses', i, 'features'] as const,
   skill: (i: string) => ['dnd', 'skills', i] as const,
   equipment: ['dnd', 'equipment'] as const,
+  monsters: ['dnd', 'monsters'] as const,
+  monster: (i: string) => ['dnd', 'monsters', i] as const,
 }
 
 export function rollStat(): number {

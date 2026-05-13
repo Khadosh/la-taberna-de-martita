@@ -64,6 +64,11 @@ function Dashboard() {
             + Campaña
           </Link>
           <div className="hidden sm:block w-px h-5 bg-stone-800" />
+          <Link to="/bestiary"
+            className="hidden sm:block text-xs text-stone-600 hover:text-stone-400 transition-colors font-serif whitespace-nowrap">
+            Bestiario
+          </Link>
+          <div className="hidden sm:block w-px h-5 bg-stone-800" />
           <button onClick={() => supabase.auth.signOut()}
             className="hidden sm:block text-xs text-stone-600 hover:text-stone-400 transition-colors font-serif italic whitespace-nowrap">
             Cerrar sesión
