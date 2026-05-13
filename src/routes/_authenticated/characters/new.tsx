@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { dndApi, dndKeys, rollStat, abilityModifier, modifierColor, ABILITY_LABELS, ABILITY_FULL } from '../../../lib/dnd-api'
 import type { SpellDetail } from '../../../lib/dnd-api'
+import { CLASS_ICONS } from '../../../lib/class-meta'
 
 export const Route = createFileRoute('/_authenticated/characters/new')({
   component: NewCharacter,
@@ -134,68 +135,121 @@ function NewCharacter() {
     navigate({ to: '/' })
   }
 
+  const classIcon = CLASS_ICONS[draft.classIndex] ?? '🎲'
+
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-100">
-      <header className="border-b border-stone-800 px-8 py-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-amber-200">Nuevo personaje</h1>
-        <span className="text-sm text-stone-500">Paso {step} de {totalSteps}</span>
+    <div className="min-h-screen bg-stone-tavern text-stone-100">
+
+      {/* Header */}
+      <header className="border-b border-stone-800/80 px-4 sm:px-8 py-3 flex items-center justify-between gap-2" style={headerStyle}>
+        <div className="flex items-center gap-3">
+          <span className="text-lg leading-none">🔥</span>
+          <div className="hidden sm:block">
+            <h1 className="font-display text-amber-200/90 text-base leading-tight tracking-wide">La Taberna</h1>
+            <p className="font-display text-amber-800/70 text-[0.6rem] tracking-[0.3em] uppercase leading-none">de Martita</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <p className="font-display text-amber-700/60 text-xs tracking-widest uppercase hidden sm:block">Nuevo personaje</p>
+          <span className="text-xs text-stone-600 font-serif">Paso {step} de {totalSteps}</span>
+        </div>
       </header>
 
-      <div className="max-w-2xl mx-auto px-8 py-10">
+      <div className="max-w-2xl mx-auto px-4 sm:px-8 py-8">
+
+        {/* Step indicator */}
+        <div className="flex items-center mb-8">
+          {Array.from({ length: totalSteps }, (_, i) => (
+            <div key={i} className="flex items-center flex-1">
+              <div className={`w-6 h-6 flex items-center justify-center text-xs font-display transition-colors ${
+                i + 1 < step ? 'text-amber-600 border border-amber-800/60' :
+                i + 1 === step ? 'text-amber-300 border border-amber-600' :
+                'text-stone-700 border border-stone-800'
+              }`}>
+                {i + 1 < step ? '✓' : i + 1}
+              </div>
+              {i < totalSteps - 1 && <div className={`flex-1 h-px mx-1 ${i + 1 < step ? 'bg-amber-800/60' : 'bg-stone-800'}`} />}
+            </div>
+          ))}
+        </div>
+
         {/* Step 1: Basic info */}
         {step === 1 && (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold">Información básica</h2>
+            <StepTitle>Información básica</StepTitle>
             <div className="space-y-4">
               <input
                 type="text"
                 placeholder="Nombre del personaje"
                 value={draft.name}
                 onChange={e => patch({ name: e.target.value })}
-                className="w-full px-4 py-2 rounded-lg bg-stone-800 border border-stone-700 focus:outline-none focus:border-amber-500"
+                style={inputStyle}
+                className="w-full px-4 py-3 text-stone-100 placeholder-stone-600 font-serif focus:outline-none transition-colors"
               />
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm text-stone-400">Raza</label>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs text-stone-500 font-display tracking-widest uppercase">Raza</label>
                   <select
                     value={draft.raceIndex}
                     onChange={e => patch({ raceIndex: e.target.value })}
-                    className="w-full px-4 py-2 rounded-lg bg-stone-800 border border-stone-700 focus:outline-none focus:border-amber-500"
+                    style={inputStyle}
+                    className="w-full px-3 py-2.5 text-stone-100 font-serif focus:outline-none transition-colors"
                   >
                     <option value="">Elegir raza...</option>
                     {races?.results.map(r => <option key={r.index} value={r.index}>{r.name}</option>)}
                   </select>
                 </div>
-                <div className="space-y-1">
-                  <label className="text-sm text-stone-400">Clase</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs text-stone-500 font-display tracking-widest uppercase">Clase</label>
                   <select
                     value={draft.classIndex}
                     onChange={e => patch({ classIndex: e.target.value, spells: [], skillProficiencies: [] })}
-                    className="w-full px-4 py-2 rounded-lg bg-stone-800 border border-stone-700 focus:outline-none focus:border-amber-500"
+                    style={inputStyle}
+                    className="w-full px-3 py-2.5 text-stone-100 font-serif focus:outline-none transition-colors"
                   >
                     <option value="">Elegir clase...</option>
                     {classes?.results.map(c => <option key={c.index} value={c.index}>{c.name}</option>)}
                   </select>
                 </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-sm text-stone-400">Nivel</label>
+              <div className="space-y-1.5">
+                <label className="text-xs text-stone-500 font-display tracking-widest uppercase">Nivel</label>
                 <input
                   type="number" min={1} max={20}
                   value={draft.level}
                   onChange={e => patch({ level: Math.min(20, Math.max(1, +e.target.value)) })}
-                  className="w-32 px-4 py-2 rounded-lg bg-stone-800 border border-stone-700 focus:outline-none focus:border-amber-500"
+                  style={inputStyle}
+                  className="w-24 px-4 py-2.5 text-stone-100 font-mono focus:outline-none transition-colors"
                 />
               </div>
-              {raceDetail && (
-                <div className="p-4 rounded-lg bg-stone-900 border border-stone-800 text-sm space-y-1">
-                  <p className="text-stone-400">Bonificaciones raciales:</p>
-                  {raceDetail.ability_bonuses.map(b => (
-                    <p key={b.ability_score.index} className="text-amber-300">
-                      +{b.bonus} {b.ability_score.name}
-                    </p>
-                  ))}
-                  {raceDetail.ability_bonuses.length === 0 && <p className="text-stone-500">Ninguna</p>}
+
+              {/* Race + class preview */}
+              {(raceDetail || classDetail) && (
+                <div style={cardStyle} className="p-4 space-y-3">
+                  {classDetail && (
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{classIcon}</span>
+                      <div>
+                        <p className="text-amber-200/80 font-display text-sm tracking-wide">{classDetail.name}</p>
+                        <p className="text-stone-500 text-xs font-serif">d{classDetail.hit_die} hit die · {classDetail.saving_throws.map(s => s.name).join(', ')}</p>
+                      </div>
+                    </div>
+                  )}
+                  {raceDetail?.ability_bonuses && raceDetail.ability_bonuses.length > 0 && (
+                    <div>
+                      <p className="text-xs text-stone-600 font-display tracking-widest uppercase mb-1.5">Bonificaciones raciales</p>
+                      <div className="flex gap-2 flex-wrap">
+                        {raceDetail.ability_bonuses.map(b => (
+                          <span key={b.ability_score.index} className="text-xs text-amber-400/80 border border-amber-900/40 px-2 py-0.5 font-serif">
+                            +{b.bonus} {b.ability_score.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {raceDetail?.ability_bonuses.length === 0 && (
+                    <p className="text-xs text-stone-600 font-serif italic">Esta raza no tiene bonificadores fijos.</p>
+                  )}
                 </div>
               )}
             </div>
@@ -206,19 +260,18 @@ function NewCharacter() {
         {step === 2 && (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Atributos</h2>
+              <StepTitle>Atributos</StepTitle>
               <button
                 onClick={() => patch({ rolledValues: rollAll(), stats: EMPTY_STATS })}
-                className="text-sm px-3 py-1.5 rounded-lg bg-stone-800 hover:bg-stone-700 text-amber-300 transition-colors"
+                className="text-xs px-3 py-1.5 border border-stone-700 hover:border-amber-700 text-stone-400 hover:text-amber-400 transition-colors font-serif"
               >
                 ↺ Volver a tirar
               </button>
             </div>
-            <p className="text-sm text-stone-400">
+            <p className="text-sm text-stone-500 font-serif italic">
               Asigná cada valor a un atributo. Cada valor puede usarse una sola vez.
             </p>
 
-            {/* Rolled values */}
             <div className="flex gap-2 flex-wrap">
               {draft.rolledValues.map((v, i) => {
                 const used = Object.values(draft.stats).includes(v) &&
@@ -227,7 +280,8 @@ function NewCharacter() {
                 return (
                   <span
                     key={i}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-mono font-bold ${used ? 'bg-stone-800 text-stone-600' : 'bg-amber-900 text-amber-200'}`}
+                    className={`px-3 py-1.5 text-sm font-mono font-bold border ${used ? 'border-stone-800 text-stone-700' : 'border-amber-800/60 text-amber-300'}`}
+                    style={used ? {} : { background: 'rgba(120,60,10,0.2)' }}
                   >
                     {v}
                   </span>
@@ -235,33 +289,33 @@ function NewCharacter() {
               })}
             </div>
 
-            {/* Stat assignment */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2.5">
               {STAT_KEYS.map(key => (
-                <div key={key} className="flex items-center gap-3 p-3 rounded-lg bg-stone-900 border border-stone-800">
-                  <div className="w-16">
-                    <p className="font-bold text-amber-200">{ABILITY_LABELS[key]}</p>
-                    <p className="text-xs text-stone-500">{ABILITY_FULL[key]}</p>
+                <div key={key} style={cardStyle} className="flex items-center gap-3 p-3">
+                  <div className="w-12 shrink-0">
+                    <p className="font-display text-amber-400/80 text-xs tracking-wider">{ABILITY_LABELS[key]}</p>
+                    <p className="text-[10px] text-stone-600 font-serif">{ABILITY_FULL[key]}</p>
                   </div>
                   <select
                     value={draft.stats[key] || ''}
                     onChange={e => patch({ stats: { ...draft.stats, [key]: +e.target.value } })}
-                    className="flex-1 px-3 py-1.5 rounded-lg bg-stone-800 border border-stone-700 focus:outline-none focus:border-amber-500 text-sm"
+                    style={inputStyle}
+                    className="flex-1 px-2 py-1.5 text-stone-100 font-mono text-sm focus:outline-none"
                   >
                     <option value="">—</option>
                     {draft.rolledValues.map((v, i) => <option key={i} value={v}>{v}</option>)}
                   </select>
                   {draft.stats[key] > 0 && (
-                    <div className="text-right w-16">
-                      <p className="text-sm font-mono">{draft.stats[key] + (racialBonuses[key] ?? 0)}</p>
-                      <p className={`text-xs ${modifierColor(draft.stats[key] + (racialBonuses[key] ?? 0))}`}>{abilityModifier(draft.stats[key] + (racialBonuses[key] ?? 0))}</p>
+                    <div className="text-right w-12 shrink-0">
+                      <p className="text-sm font-mono text-stone-200">{draft.stats[key] + (racialBonuses[key] ?? 0)}</p>
+                      <p className={`text-xs font-mono ${modifierColor(draft.stats[key] + (racialBonuses[key] ?? 0))}`}>{abilityModifier(draft.stats[key] + (racialBonuses[key] ?? 0))}</p>
                     </div>
                   )}
                 </div>
               ))}
             </div>
             {Object.keys(racialBonuses).length > 0 && (
-              <p className="text-xs text-stone-500">Los valores mostrados ya incluyen los bonificadores raciales.</p>
+              <p className="text-xs text-stone-600 font-serif italic">Los valores muestran los bonificadores raciales incluidos.</p>
             )}
           </div>
         )}
@@ -269,15 +323,14 @@ function NewCharacter() {
         {/* Step 3: Proficiencies */}
         {step === 3 && classDetail && (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold">Pericias</h2>
+            <StepTitle>Pericias</StepTitle>
 
-            {/* Auto-assigned weapon/armor proficiencies */}
             {classDetail.proficiencies.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-stone-300">Competencias automáticas de clase</p>
-                <div className="flex flex-wrap gap-2">
+              <div style={cardStyle} className="p-4 space-y-2">
+                <p className="text-xs text-stone-500 font-display tracking-widest uppercase">Competencias automáticas de clase</p>
+                <div className="flex flex-wrap gap-1.5">
                   {classDetail.proficiencies.map(p => (
-                    <span key={p.index} className="px-2 py-1 text-xs rounded bg-stone-800 text-stone-300 border border-stone-700">
+                    <span key={p.index} className="px-2 py-0.5 text-xs font-serif text-stone-400 border border-stone-700/60">
                       {p.name}
                     </span>
                   ))}
@@ -285,12 +338,13 @@ function NewCharacter() {
               </div>
             )}
 
-            {/* Skill choices */}
             {classDetail.proficiency_choices.map((choice, ci) => (
               <div key={ci} className="space-y-3">
-                <p className="text-sm font-medium text-stone-300">
-                  Elegí {choice.choose} pericias de habilidad:
-                  <span className="text-amber-400 ml-2">{draft.skillProficiencies.length}/{choice.choose}</span>
+                <p className="text-sm text-stone-300 font-serif">
+                  Elegí {choice.choose} pericias:{' '}
+                  <span className={`font-mono ${draft.skillProficiencies.length >= choice.choose ? 'text-amber-400' : 'text-stone-500'}`}>
+                    {draft.skillProficiencies.length}/{choice.choose}
+                  </span>
                 </p>
                 <div className="grid grid-cols-2 gap-2">
                   {choice.from.options.map(opt => {
@@ -307,13 +361,14 @@ function NewCharacter() {
                             ? draft.skillProficiencies.filter(s => s !== idx)
                             : [...draft.skillProficiencies, idx],
                         })}
-                        className={`px-3 py-2 rounded-lg text-sm text-left transition-colors border ${
+                        className={`px-3 py-2 text-sm text-left transition-colors border font-serif ${
                           selected
-                            ? 'bg-amber-800 border-amber-600 text-amber-100'
+                            ? 'border-amber-700/80 text-amber-200'
                             : maxed
-                            ? 'bg-stone-900 border-stone-800 text-stone-600 cursor-not-allowed'
-                            : 'bg-stone-900 border-stone-700 text-stone-300 hover:border-amber-700'
+                            ? 'border-stone-800 text-stone-700 cursor-not-allowed'
+                            : 'border-stone-700/60 text-stone-400 hover:border-amber-800/60 hover:text-stone-200'
                         }`}
+                        style={selected ? { background: 'rgba(120,60,10,0.3)' } : {}}
                       >
                         {name}
                       </button>
@@ -328,27 +383,27 @@ function NewCharacter() {
         {/* Step 4: Spells (only for casters) */}
         {step === 4 && isCaster && classSpells && (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold">Hechizos</h2>
-            <p className="text-sm text-stone-400">
-              Seleccioná los hechizos iniciales de tu {classDetail?.name}.
-              Hechizos seleccionados: <span className="text-amber-400">{draft.spells.length}</span>
+            <StepTitle>Hechizos iniciales</StepTitle>
+            <p className="text-sm text-stone-500 font-serif italic">
+              Seleccioná los hechizos de tu {classDetail?.name}.{' '}
+              <span className="text-amber-500/80 not-italic">{draft.spells.length} seleccionados</span>
             </p>
-            <div className="grid grid-cols-2 gap-2 max-h-[400px] overflow-y-auto pr-1">
+            <div className="grid grid-cols-2 gap-1.5 max-h-[400px] overflow-y-auto pr-1">
               {classSpells.results.map(s => {
                 const selected = draft.spells.includes(s.index)
                 return (
-                  <div key={s.index} className={`flex items-center rounded-lg border transition-colors ${
-                    selected ? 'bg-amber-800 border-amber-600' : 'bg-stone-900 border-stone-700 hover:border-amber-700'
-                  }`}>
+                  <div key={s.index} className={`flex items-center border transition-colors ${
+                    selected ? 'border-amber-700/80' : 'border-stone-700/50 hover:border-amber-800/50'
+                  }`} style={selected ? { background: 'rgba(120,60,10,0.25)' } : {}}>
                     <button
                       onClick={() => patch({
                         spells: selected
                           ? draft.spells.filter(i => i !== s.index)
                           : [...draft.spells, s.index],
                       })}
-                      className="flex-1 px-3 py-2 text-sm text-left"
+                      className="flex-1 px-3 py-2 text-sm text-left font-serif"
                     >
-                      <span className={selected ? 'text-amber-100' : 'text-stone-300'}>{s.name}</span>
+                      <span className={selected ? 'text-amber-200' : 'text-stone-400'}>{s.name}</span>
                     </button>
                     <SpellInfoButton index={s.index} onInfo={setSpellModal} />
                   </div>
@@ -361,37 +416,54 @@ function NewCharacter() {
         {/* Last step: Backstory */}
         {step === totalSteps && (
           <div className="space-y-6">
-            <h2 className="text-lg font-semibold">Historia</h2>
+            <StepTitle>Historia & resumen</StepTitle>
             <textarea
               placeholder="Contá la historia de tu personaje... (opcional)"
               value={draft.backstory}
               onChange={e => patch({ backstory: e.target.value })}
-              rows={8}
-              className="w-full px-4 py-3 rounded-lg bg-stone-800 border border-stone-700 focus:outline-none focus:border-amber-500 resize-none text-sm"
+              rows={6}
+              style={inputStyle}
+              className="w-full px-4 py-3 text-stone-200 placeholder-stone-600 font-serif focus:outline-none resize-none text-sm"
             />
 
-            {/* Campaign association */}
-            <div className="space-y-1">
-              <label className="text-sm text-stone-400">Asociar a campaña <span className="text-stone-600">(opcional)</span></label>
+            <div className="space-y-1.5">
+              <label className="text-xs text-stone-500 font-display tracking-widest uppercase">Campaña <span className="text-stone-700 normal-case">(opcional)</span></label>
               <select
                 value={draft.campaignId}
                 onChange={e => patch({ campaignId: e.target.value })}
-                className="w-full px-4 py-2 rounded-lg bg-stone-800 border border-stone-700 focus:outline-none focus:border-amber-500 text-sm"
+                style={inputStyle}
+                className="w-full px-4 py-2.5 text-stone-200 font-serif focus:outline-none text-sm"
               >
                 <option value="">Sin campaña por ahora</option>
                 {userCampaigns.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
 
-            {/* Summary */}
-            <div className="p-4 rounded-lg bg-stone-900 border border-stone-800 space-y-2 text-sm">
-              <p className="font-medium text-stone-300">Resumen</p>
-              <p><span className="text-stone-500">Nombre:</span> {draft.name}</p>
-              <p><span className="text-stone-500">Raza:</span> {raceDetail?.name} · <span className="text-stone-500">Clase:</span> {classDetail?.name} · <span className="text-stone-500">Nivel:</span> {draft.level}</p>
-              <p><span className="text-stone-500">Stats:</span> {STAT_KEYS.map(k => `${ABILITY_LABELS[k]} ${totalStats[k]}`).join(' · ')}</p>
+            <div style={cardStyle} className="p-4 space-y-2 text-sm">
+              <p className="text-xs text-stone-500 font-display tracking-widest uppercase mb-3">Resumen</p>
+              <div className="flex items-center gap-3 mb-2">
+                <span className="text-2xl">{classIcon}</span>
+                <div>
+                  <p className="text-stone-200 font-serif font-semibold">{draft.name}</p>
+                  <p className="text-stone-500 text-xs font-serif capitalize">{raceDetail?.name} · {classDetail?.name} · Nivel {draft.level}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-6 gap-1 pt-2 border-t border-stone-800">
+                {STAT_KEYS.map(k => (
+                  <div key={k} className="text-center">
+                    <p className="text-[10px] text-stone-600 font-display tracking-wider uppercase">{ABILITY_LABELS[k]}</p>
+                    <p className="text-sm font-mono font-bold text-stone-200">{totalStats[k] || '—'}</p>
+                    {totalStats[k] > 0 && <p className={`text-[10px] font-mono ${modifierColor(totalStats[k])}`}>{abilityModifier(totalStats[k])}</p>}
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {error && <p className="text-red-400 text-sm">{error}</p>}
+            {error && (
+              <p className="text-red-400/90 text-xs font-serif text-center border border-red-900/40 px-3 py-1.5 bg-red-950/30">
+                {error}
+              </p>
+            )}
           </div>
         )}
 
@@ -399,22 +471,24 @@ function NewCharacter() {
         <div className="flex gap-3 mt-8">
           <button
             onClick={() => step > 1 ? setStep(s => s - 1) : navigate({ to: '/' })}
-            className="flex-1 py-2 rounded-lg border border-stone-700 text-stone-300 hover:bg-stone-800 transition-colors text-sm"
+            className="flex-1 py-2.5 border border-stone-700 hover:border-stone-500 text-stone-400 hover:text-stone-200 transition-colors text-sm font-serif"
           >
-            {step === 1 ? 'Cancelar' : 'Atrás'}
+            {step === 1 ? 'Cancelar' : '← Atrás'}
           </button>
           {step < totalSteps ? (
             <button
               onClick={() => canProceed() && setStep(s => s + 1)}
               disabled={!canProceed()}
-              className="flex-1 py-2 bg-amber-700 hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-lg font-semibold transition-colors text-sm"
+              style={canProceed() ? btnStyle : {}}
+              className={`flex-1 py-2.5 text-sm font-display tracking-wider transition-all ${!canProceed() ? 'border border-stone-800 text-stone-700 cursor-not-allowed' : ''}`}
             >
-              Siguiente
+              Siguiente →
             </button>
           ) : (
             <button
               onClick={handleSave}
-              className="flex-1 py-2 bg-amber-700 hover:bg-amber-600 text-white rounded-lg font-semibold transition-colors text-sm"
+              style={btnStyle}
+              className="flex-1 py-2.5 font-display text-sm tracking-wider transition-all"
             >
               Crear personaje
             </button>
@@ -424,26 +498,38 @@ function NewCharacter() {
 
       {/* Spell info modal */}
       {spellModal && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setSpellModal(null)}>
-          <div className="bg-stone-900 border border-stone-700 rounded-2xl max-w-md w-full p-6 space-y-3" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setSpellModal(null)}>
+          <div onClick={e => e.stopPropagation()} style={modalStyle} className="max-w-md w-full p-6 space-y-3">
             <div className="flex items-start justify-between">
               <div>
-                <h3 className="font-bold text-amber-200">{spellModal.name}</h3>
-                <p className="text-xs text-stone-400 mt-0.5">
+                <h3 className="font-display text-amber-200 tracking-wide">{spellModal.name}</h3>
+                <p className="text-xs text-stone-500 mt-0.5 font-serif">
                   Nv. {spellModal.level} · {spellModal.school.name} · {spellModal.casting_time}
                 </p>
               </div>
-              <button onClick={() => setSpellModal(null)} className="text-stone-500 hover:text-stone-300 text-lg leading-none">✕</button>
+              <button onClick={() => setSpellModal(null)} className="text-stone-600 hover:text-stone-300 text-lg leading-none ml-4">✕</button>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-xs text-stone-400">
+            <div className="grid grid-cols-2 gap-2 text-xs text-stone-500 font-serif border-t border-stone-800 pt-3">
               <span>Alcance: {spellModal.range}</span>
               <span>Duración: {spellModal.duration}</span>
               <span>Componentes: {spellModal.components.join(', ')}</span>
             </div>
-            <p className="text-sm text-stone-300 leading-relaxed max-h-48 overflow-y-auto">{spellModal.desc[0]}</p>
+            <p className="text-sm text-stone-300 leading-relaxed font-serif max-h-48 overflow-y-auto">{spellModal.desc[0]}</p>
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function StepTitle({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-4">
+        <div className="h-px flex-1 bg-stone-800" />
+        <p className="text-xs font-display tracking-widest text-stone-500 uppercase whitespace-nowrap">{children}</p>
+        <div className="h-px flex-1 bg-stone-800" />
+      </div>
     </div>
   )
 }
@@ -457,10 +543,38 @@ function SpellInfoButton({ index, onInfo }: { index: string; onInfo: (s: SpellDe
   return (
     <button
       onClick={e => { e.stopPropagation(); onInfo(spell) }}
-      className="px-2 py-2 text-stone-500 hover:text-amber-400 transition-colors text-xs"
+      className="px-2 py-2 text-stone-600 hover:text-amber-500 transition-colors text-xs"
       title="Ver descripción"
     >
       ℹ
     </button>
   )
+}
+
+// ── Styles ────────────────────────────────────────────────────────────────────
+
+const headerStyle: React.CSSProperties = {
+  background: 'linear-gradient(180deg, #100c08 0%, #0c0a08 100%)',
+}
+
+const inputStyle: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.04)',
+  border: '1px solid rgba(120,70,20,0.35)',
+}
+
+const cardStyle: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.025)',
+  border: '1px solid rgba(255,255,255,0.06)',
+}
+
+const btnStyle: React.CSSProperties = {
+  background: 'linear-gradient(180deg, #9B4A10 0%, #7B3408 100%)',
+  color: '#f5d9a8',
+  border: '1px solid #6B2C06',
+  letterSpacing: '0.1em',
+}
+
+const modalStyle: React.CSSProperties = {
+  background: 'linear-gradient(170deg, #180e06 0%, #0f0804 100%)',
+  border: '1px solid rgba(120,70,20,0.4)',
 }

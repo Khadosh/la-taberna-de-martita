@@ -46,26 +46,26 @@ function Dashboard() {
     <div className="min-h-screen bg-stone-tavern text-stone-100">
 
       {/* Header */}
-      <header className="border-b border-stone-800/80 px-8 py-4 flex items-center justify-between" style={headerStyle}>
-        <div className="flex items-center gap-3">
+      <header className="border-b border-stone-800/80 px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between gap-2" style={headerStyle}>
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
           <span className="text-lg leading-none">🔥</span>
-          <div>
+          <div className="hidden sm:block">
             <h1 className="font-display text-amber-200/90 text-base leading-tight tracking-wide">La Taberna</h1>
             <p className="font-display text-amber-800/70 text-[0.6rem] tracking-[0.3em] uppercase leading-none">de Martita</p>
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
           <Link to="/characters/new"
-            className="px-4 py-1.5 text-sm font-serif border border-stone-700 hover:border-stone-500 text-stone-300 hover:text-stone-100 transition-colors">
+            className="px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-serif border border-stone-700 hover:border-stone-500 text-stone-300 hover:text-stone-100 transition-colors whitespace-nowrap">
             + Personaje
           </Link>
           <Link to="/campaigns/new"
-            className="px-4 py-1.5 text-sm font-serif border border-amber-800/60 hover:border-amber-600 text-amber-400/80 hover:text-amber-300 transition-colors">
+            className="px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-serif border border-amber-800/60 hover:border-amber-600 text-amber-400/80 hover:text-amber-300 transition-colors whitespace-nowrap">
             + Campaña
           </Link>
-          <div className="w-px h-5 bg-stone-800" />
+          <div className="hidden sm:block w-px h-5 bg-stone-800" />
           <button onClick={() => supabase.auth.signOut()}
-            className="text-xs text-stone-600 hover:text-stone-400 transition-colors font-serif italic">
+            className="hidden sm:block text-xs text-stone-600 hover:text-stone-400 transition-colors font-serif italic whitespace-nowrap">
             Cerrar sesión
           </button>
         </div>

@@ -362,28 +362,28 @@ function CharacterSheet() {
     <div className="min-h-screen text-stone-900" style={parchmentStyle}>
 
       {/* Header */}
-      <header className="border-b-2 border-stone-800 bg-stone-900 px-8 py-3 flex items-center gap-4">
-        <Link to="/" className="text-amber-400 hover:text-amber-200 transition-colors text-sm font-serif">← La Taberna</Link>
-        <div className="w-px h-4 bg-stone-700" />
+      <header className="border-b-2 border-stone-800 bg-stone-900 px-4 sm:px-8 py-2.5 flex items-center gap-3">
+        <Link to="/" className="text-amber-400 hover:text-amber-200 transition-colors text-sm font-serif shrink-0">← La Taberna</Link>
+        <div className="w-px h-4 bg-stone-700 shrink-0" />
         <div className="flex-1 min-w-0">
-          <span className="text-amber-200 font-serif font-semibold truncate">{character.name}</span>
-          <span className="text-stone-500 font-serif text-xs ml-2 capitalize">{character.race} · {character.class} · Nv. {character.level}</span>
+          <p className="text-amber-200 font-serif font-semibold text-sm leading-tight truncate">{character.name}</p>
+          <p className="text-stone-500 font-serif text-xs leading-tight capitalize truncate">{character.race} · {character.class} · Nv. {character.level}</p>
         </div>
         {isOwner && (
           assigningCampaign ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               <select value={selectedCampaignId} onChange={e => setSelectedCampaignId(e.target.value)}
-                className="px-3 py-1 text-sm rounded bg-stone-800 border border-stone-600 text-stone-200 focus:outline-none">
+                className="px-2 py-1 text-xs bg-stone-800 border border-stone-600 text-stone-200 focus:outline-none max-w-[120px]">
                 <option value="">Sin campaña</option>
                 {userCampaigns.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
-              <button onClick={assignToCampaign} className="px-3 py-1 text-sm bg-amber-700 hover:bg-amber-600 rounded text-white">Guardar</button>
+              <button onClick={assignToCampaign} className="px-2 py-1 text-xs bg-amber-700 hover:bg-amber-600 text-white">OK</button>
               <button onClick={() => setAssigningCampaign(false)} className="text-stone-500 hover:text-stone-300 text-sm">✕</button>
             </div>
           ) : (
             <button onClick={() => { setAssigningCampaign(true); setSelectedCampaignId(character.campaign_id ?? '') }}
-              className="text-xs px-3 py-1 rounded bg-stone-800 hover:bg-stone-700 text-stone-300 transition-colors">
-              {character.campaign_id ? '✎ Campaña' : '+ Campaña'}
+              className="text-xs px-2.5 py-1 border border-stone-700 hover:border-stone-500 text-stone-400 hover:text-stone-200 transition-colors shrink-0 font-serif">
+              {character.campaign_id ? '✦ Campaña' : '+ Campaña'}
             </button>
           )
         )}
