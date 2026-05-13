@@ -427,9 +427,9 @@ function CharacterSheet() {
       <main className="max-w-4xl mx-auto px-4 py-6" style={sheetStyle}>
 
         {/* Title */}
-        <div className="text-center border-4 border-double border-stone-800 px-8 py-5 mb-0" style={{ background: 'rgba(200,170,110,0.25)' }}>
+        <div className="text-center border-4 border-double border-stone-800 px-4 sm:px-8 py-4 sm:py-5 mb-0" style={{ background: 'rgba(200,170,110,0.25)' }}>
           <p className="text-xs tracking-[0.3em] text-stone-500 uppercase font-serif mb-1">Hoja de Personaje · D&D 5ª Edición</p>
-          <h1 className="text-4xl font-bold text-stone-900" style={{ fontFamily: 'Georgia, serif', letterSpacing: '0.04em' }}>{character.name}</h1>
+          <h1 className="text-2xl sm:text-4xl font-bold text-stone-900" style={{ fontFamily: 'Georgia, serif', letterSpacing: '0.04em' }}>{character.name}</h1>
           <p className="text-sm text-stone-500 mt-1 font-serif italic capitalize">
             {character.race} · {character.class}
             {subclassDetail && <span className="text-amber-700"> · {subclassDetail.name}</span>}
@@ -439,51 +439,54 @@ function CharacterSheet() {
 
         {/* Portrait + Stats */}
         <SheetRow>
-          <div className="w-1/3 border-r border-stone-600 p-4 flex flex-col gap-3">
+          <div className="sm:w-1/3 border-b sm:border-b-0 sm:border-r border-stone-600 p-4">
             <SheetLabel>Retrato</SheetLabel>
-            <div className="relative group aspect-square bg-stone-300/50 border border-stone-500 overflow-hidden flex items-center justify-center">
-              {character.portrait_url ? (
-                <>
-                  <img src={character.portrait_url} alt={character.name} className="w-full h-full object-cover" />
-                  {isOwner && (
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                      <button onClick={() => fileInputRef.current?.click()} className="px-2 py-1 text-xs bg-stone-900 text-white rounded">Cambiar</button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="flex flex-col items-center gap-1 p-3 text-center">
-                  <span className="text-stone-400 text-3xl">⚔</span>
-                  <p className="text-xs text-stone-400 font-serif italic">Sin retrato</p>
+            {/* Mobile: horizontal row; Desktop: vertical stack */}
+            <div className="flex sm:flex-col gap-3 mt-3">
+              <div className="relative group w-24 h-24 sm:w-full sm:aspect-square sm:h-auto bg-stone-300/50 border border-stone-500 overflow-hidden flex items-center justify-center shrink-0">
+                {character.portrait_url ? (
+                  <>
+                    <img src={character.portrait_url} alt={character.name} className="w-full h-full object-cover" />
+                    {isOwner && (
+                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <button onClick={() => fileInputRef.current?.click()} className="px-2 py-1 text-xs bg-stone-900 text-white rounded">Cambiar</button>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center gap-1 p-3 text-center">
+                    <span className="text-stone-400 text-3xl">⚔</span>
+                    <p className="text-xs text-stone-400 font-serif italic hidden sm:block">Sin retrato</p>
+                  </div>
+                )}
+              </div>
+              {isOwner && (
+                <div className="flex flex-col gap-1.5 flex-1 sm:flex-none">
+                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePortraitUpload} />
+                  <button onClick={() => fileInputRef.current?.click()} className="w-full text-xs py-1.5 border border-stone-500 text-stone-600 hover:bg-stone-200/50 font-serif transition-colors">
+                    Importar imagen
+                  </button>
+                  <button onClick={generatePortrait} disabled={generatingPortrait}
+                    className="w-full text-xs py-1.5 bg-stone-800 hover:bg-stone-700 disabled:opacity-50 text-amber-300 font-serif transition-colors">
+                    {generatingPortrait ? 'Generando...' : '✦ Generar con IA'}
+                  </button>
+                  {portraitError && <p className="text-xs text-red-700 font-serif text-center">{portraitError}</p>}
                 </div>
               )}
             </div>
-            {isOwner && (
-              <div className="flex flex-col gap-1.5">
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePortraitUpload} />
-                <button onClick={() => fileInputRef.current?.click()} className="w-full text-xs py-1.5 border border-stone-500 text-stone-600 hover:bg-stone-200/50 font-serif transition-colors">
-                  Importar imagen
-                </button>
-                <button onClick={generatePortrait} disabled={generatingPortrait}
-                  className="w-full text-xs py-1.5 bg-stone-800 hover:bg-stone-700 disabled:opacity-50 text-amber-300 font-serif transition-colors">
-                  {generatingPortrait ? 'Generando...' : '✦ Generar con IA'}
-                </button>
-                {portraitError && <p className="text-xs text-red-700 font-serif text-center">{portraitError}</p>}
-              </div>
-            )}
           </div>
 
           <div className="flex-1 p-4">
             <SheetLabel>Características</SheetLabel>
             <div className="grid grid-cols-3 gap-2 mt-3">
               {STAT_KEYS.map(k => (
-                <div key={k} className="border border-stone-500 text-center py-2.5 px-1" style={{ background: 'rgba(200,170,110,0.15)' }}>
+                <div key={k} className="border border-stone-500 text-center py-2 px-1" style={{ background: 'rgba(200,170,110,0.15)' }}>
                   <p className="text-xs text-stone-500 font-serif tracking-widest uppercase">{ABILITY_LABELS[k]}</p>
-                  <p className="text-3xl font-bold text-stone-900 my-0.5" style={{ fontFamily: 'Georgia, serif' }}>{stats[k] ?? '—'}</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-stone-900 my-0.5" style={{ fontFamily: 'Georgia, serif' }}>{stats[k] ?? '—'}</p>
                   <div className="border-t border-stone-400 pt-0.5">
-                    <p className={`text-base font-bold font-mono ${stats[k] ? modifierColor(stats[k]) : 'text-stone-400'}`}>{stats[k] ? abilityModifier(stats[k]) : ''}</p>
+                    <p className={`text-sm sm:text-base font-bold font-mono ${stats[k] ? modifierColor(stats[k]) : 'text-stone-400'}`}>{stats[k] ? abilityModifier(stats[k]) : ''}</p>
                   </div>
-                  <p className="text-xs text-stone-400 font-serif italic mt-0.5">{ABILITY_FULL[k]}</p>
+                  <p className="text-xs text-stone-400 font-serif italic mt-0.5 hidden sm:block">{ABILITY_FULL[k]}</p>
                 </div>
               ))}
             </div>
@@ -491,7 +494,7 @@ function CharacterSheet() {
         </SheetRow>
 
         {/* Combat bar */}
-        <div className="border-t border-stone-600 bg-stone-900 px-5 py-3 grid grid-cols-4 divide-x divide-stone-700 text-center">
+        <div className="border-t border-stone-600 bg-stone-900 px-5 py-3 grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-stone-700 text-center">
           <StatBlock label="Dado de Golpe" value={`d${hitDie}`} mono />
           <StatBlock label="PV Máximos" value={String(maxHp)} mono />
           <StatBlock label="CA" value={String(ac)} mono />
@@ -504,7 +507,7 @@ function CharacterSheet() {
         {/* Combat state */}
         <SheetRow className="border-t-0">
           {/* HP */}
-          <div className="flex-1 border-r border-stone-600 p-4">
+          <div className="flex-1 border-b sm:border-b-0 sm:border-r border-stone-600 p-4">
             <SheetLabel>Puntos de Vida</SheetLabel>
             <div className="mt-3 space-y-2">
               <div className="h-3 border border-stone-500 overflow-hidden bg-stone-200/40">
@@ -531,7 +534,7 @@ function CharacterSheet() {
           </div>
 
           {/* AC */}
-          <div className="w-32 border-r border-stone-600 p-4 text-center">
+          <div className="sm:w-32 border-b sm:border-b-0 sm:border-r border-stone-600 p-4 text-center">
             <SheetLabel>CA</SheetLabel>
             <div className="mt-3">
               {editingAc && isOwner ? (
@@ -709,7 +712,7 @@ function CharacterSheet() {
 
         {/* Proficiencies + Skills */}
         <SheetRow className="border-t border-stone-600">
-          <div className="flex-1 border-r border-stone-600 p-4">
+          <div className="flex-1 border-b sm:border-b-0 sm:border-r border-stone-600 p-4">
             <SheetLabel>Competencias</SheetLabel>
             <div className="flex flex-wrap gap-1.5 mt-3">
               {(sheet.weapon_proficiencies ?? []).map(p => (
@@ -987,14 +990,14 @@ function SheetLabel({ children }: { children: React.ReactNode }) {
 }
 
 function SheetRow({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return <div className={`flex border-x border-stone-600 ${className}`}>{children}</div>
+  return <div className={`flex flex-col sm:flex-row border-x border-stone-600 ${className}`}>{children}</div>
 }
 
 function StatBlock({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
-    <div className="px-4">
-      <p className="text-xs text-stone-400 font-serif tracking-widest uppercase">{label}</p>
-      <p className={`text-2xl font-bold text-amber-300 mt-0.5 ${mono ? 'font-mono' : 'font-serif'}`}>{value}</p>
+    <div className="px-2 sm:px-4 py-1 sm:py-0">
+      <p className="text-[10px] sm:text-xs text-stone-400 font-serif tracking-widest uppercase">{label}</p>
+      <p className={`text-xl sm:text-2xl font-bold text-amber-300 mt-0.5 ${mono ? 'font-mono' : 'font-serif'}`}>{value}</p>
     </div>
   )
 }
