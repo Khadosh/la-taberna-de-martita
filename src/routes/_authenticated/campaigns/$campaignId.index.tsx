@@ -4,6 +4,8 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../../../lib/supabase'
 import { ABILITY_LABELS } from '../../../lib/dnd-api'
 import { getSpellSlots } from '../../../lib/dnd-constants'
+import { CLASS_ICONS } from '../../../lib/class-meta'
+import type { Tables } from '../../../lib/database.types'
 
 export const Route = createFileRoute('/_authenticated/campaigns/$campaignId/')({
   component: CampaignHubLanding,
@@ -67,6 +69,19 @@ function CampaignHubLanding() {
     },
   })
 
+  const { data: npcs = [] } = useQuery({
+    queryKey: ['campaign-npcs', campaignId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('npcs')
+        .select('*')
+        .eq('campaign_id', campaignId)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data
+    },
+  })
+
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-10">
 
@@ -83,11 +98,14 @@ function CampaignHubLanding() {
 
       {/* PNJs */}
       <section>
-        <SectionHeader icon="😈" label="PNJs" />
+        <SectionHeader icon="😈" label={`PNJs · ${npcs.length}`} />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {npcs.map(npc => (
+            <NpcLandingCard key={npc.id} npc={npc} campaignId={campaignId} />
+          ))}
           <AddSlot
             label="+ generar PNJ"
-            hint="Próximamente: generador desde la pestaña 'Generador de PNJ'"
+            hint="Crea antagonistas, aliados y neutrales"
             to="/campaigns/$campaignId/pnj"
             params={{ campaignId }}
           />
@@ -95,6 +113,83 @@ function CampaignHubLanding() {
       </section>
 
     </main>
+  )
+}
+
+// ── NPC Card (landing) ───────────────────────────────────────────────────────
+
+const ROLE_STYLES: Record<string, { label: string; chip: string }> = {
+  antagonist: { label: 'Antagonista', chip: 'bg-red-900/30 border-red-800/40 text-red-900' },
+  ally: { label: 'Aliado', chip: 'bg-green-900/20 border-green-800/40 text-green-900' },
+  neutral: { label: 'Neutral', chip: 'bg-stone-200 border-stone-400 text-stone-700' },
+}
+
+function NpcLandingCard({ npc, campaignId }: { npc: Tables<'npcs'>; campaignId: string }) {
+  const stats = npc.stats as Record<string, number> | null
+  const role = ROLE_STYLES[npc.role] ?? ROLE_STYLES.neutral
+  const icon = npc.class ? CLASS_ICONS[npc.class] ?? '👤' : '👤'
+  const hpPct = npc.max_hp && npc.current_hp != null
+    ? Math.max(0, Math.min((npc.current_hp / npc.max_hp) * 100, 100))
+    : null
+
+  return (
+    <Link to="/campaigns/$campaignId/pnj" params={{ campaignId }} className="block hover:scale-[1.005] transition-transform">
+      <Frame>
+        <div className="p-4 space-y-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <span className={`inline-block text-[10px] font-serif tracking-wide px-2 py-0.5 border ${role.chip} mb-1`}>
+                {role.label}
+              </span>
+              {npc.is_hidden && (
+                <span className="ml-1 inline-block text-[10px] font-serif tracking-wide px-2 py-0.5 border border-stone-700 text-stone-700 bg-stone-200 mb-1">
+                  oculto
+                </span>
+              )}
+              <h3 className="text-lg font-display font-bold text-stone-900 leading-tight truncate">{npc.name}</h3>
+              {(npc.race || npc.class) && (
+                <p className="text-xs italic text-stone-600 capitalize">
+                  {[npc.race, npc.class, `Nv. ${npc.level}`].filter(Boolean).join(' · ')}
+                </p>
+              )}
+            </div>
+            <span className="text-2xl shrink-0">{icon}</span>
+          </div>
+
+          {hpPct != null && npc.max_hp != null && (
+            <div>
+              <div className="flex items-baseline justify-between mb-1">
+                <p className="text-[10px] font-display tracking-widest text-stone-600 uppercase">PG</p>
+                <p className="text-sm font-mono">
+                  <span className="font-bold text-stone-900">{npc.current_hp}</span>
+                  <span className="text-stone-600"> / {npc.max_hp}</span>
+                </p>
+              </div>
+              <div className="h-1.5 bg-stone-300/60 rounded-sm overflow-hidden border border-stone-400/40">
+                <div className={`h-full ${hpPct > 50 ? 'bg-red-900' : hpPct > 25 ? 'bg-amber-700' : 'bg-red-700'}`} style={{ width: `${hpPct}%` }} />
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs font-mono text-stone-700">
+            {npc.armor_class != null && <span>🛡 CA {npc.armor_class}</span>}
+            {npc.attack_bonus != null && <span>⚔ {formatMod(npc.attack_bonus)}</span>}
+            {npc.damage && <span className="text-stone-600">{npc.damage}</span>}
+          </div>
+
+          {stats && (
+            <div className="grid grid-cols-6 gap-1">
+              {STAT_KEYS.map(k => (
+                <div key={k} className="text-center bg-amber-100/40 border border-stone-400/30 py-0.5">
+                  <p className="text-[8px] font-display tracking-wider text-stone-700 uppercase">{k}</p>
+                  <p className="text-[11px] font-mono text-stone-900">{formatMod(abilityMod(stats[k] ?? 10))}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </Frame>
+    </Link>
   )
 }
 

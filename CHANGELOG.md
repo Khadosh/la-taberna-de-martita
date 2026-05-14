@@ -4,6 +4,33 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 
 ---
 
+## [0.9.0] — 2026-05-14 · Generador de PNJ Persistente
+
+Los PNJ ahora son entidades persistentes de campaña, no estado efímero del tracker de combate.
+
+### 🗄 Schema
+- **Tabla `npcs`**: shape paralelo a `characters` pero todo opcional excepto `campaign_id` y `name`. Incluye `role` (antagonist / ally / neutral), `is_hidden` (villano sorpresa), stats default a 10s, max_hp / armor_class / attack_bonus / damage / conditions, `sheet_json` para extensiones.
+- **Tabla `npc_inventory`**: paralela a `character_inventory` (name, weight_lbs, quantity, notes). Para loot al morir.
+- **RLS**: DM full access en sus campañas; players SELECT sólo si `is_hidden = false`.
+- **Realtime**: ambas tablas publicadas para sincronizar HP/condiciones/loot durante combate.
+
+### 👤 Generador (`/campaigns/:id/pnj`)
+- Form con secciones: Identidad / Características / Combate / Notas.
+- Botón **🎲 Tirar (4d6dl)** que rerolea las 6 características.
+- Modo creación y modo edición sobre el mismo form (click "Editar" carga el PNJ; "Cancelar edición" vuelve a creación).
+- Lista de PNJs con chips de rol coloreados (antagonista rojo, aliado verde, neutral neutro), botón de eliminar con confirm inline.
+
+### 📜 Landing
+- Sección PNJs ahora renderiza los persistidos con role chip, barra de PG (si tiene max_hp), CA / bono de ataque / daño y modificadores de stats.
+- Card linkea al generador en modo edición.
+
+### ⚔️ Combate
+- Nuevo botón **🎭 PNJ campaña** junto a Bestiario y Personalizado.
+- Despliega buscador filtrable (por nombre, raza o rol); click agrega al tracker copiando stats + loot al combatant efímero.
+- Sufijos numerados cuando el mismo PNJ se agrega varias veces.
+
+---
+
 ## [0.8.0] — 2026-05-14 · Hub de Campaña con Pestañas DM
 
 Rediseño de `/campaigns/:id` como hub del DM con barra de pestañas dedicadas para cada herramienta de partida.

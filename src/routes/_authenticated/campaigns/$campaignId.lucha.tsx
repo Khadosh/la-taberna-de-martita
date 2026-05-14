@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -54,6 +54,8 @@ type Combatant =
 
 const getInitiative = (c: Combatant) => c.kind === 'player' ? c.initiative : c.npc.initiative
 
+const formatModInline = (mod: number) => mod >= 0 ? `+${mod}` : `${mod}`
+
 // ── Component ────────────────────────────────────────────────────────────────
 
 function DmSession() {
@@ -77,6 +79,10 @@ function DmSession() {
   const [bestiarySearch, setBestiarySearch] = useState('')
   const [bestiaryQty, setBestiaryQty] = useState(1)
   const [addingMonster, setAddingMonster] = useState(false)
+
+  // Campaign NPCs picker
+  const [showCampaignNpcs, setShowCampaignNpcs] = useState(false)
+  const [campaignNpcSearch, setCampaignNpcSearch] = useState('')
 
   // Custom NPC form
   const [showNpcForm, setShowNpcForm] = useState(false)
@@ -153,6 +159,29 @@ function DmSession() {
     if (!q) return []
     return monsterList.filter(m => m.name.toLowerCase().includes(q)).slice(0, 10)
   }, [monsterList, bestiarySearch])
+
+  const { data: campaignNpcs = [] } = useQuery({
+    queryKey: ['campaign-npcs', campaignId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('npcs')
+        .select('*')
+        .eq('campaign_id', campaignId)
+        .order('created_at', { ascending: false })
+      if (error) throw error
+      return data
+    },
+  })
+
+  const filteredCampaignNpcs = useMemo(() => {
+    const q = campaignNpcSearch.trim().toLowerCase()
+    if (!q) return campaignNpcs
+    return campaignNpcs.filter(n =>
+      n.name.toLowerCase().includes(q) ||
+      n.role.toLowerCase().includes(q) ||
+      (n.race ?? '').toLowerCase().includes(q)
+    )
+  }, [campaignNpcs, campaignNpcSearch])
 
   // ── Realtime ──────────────────────────────────────────────────────────────
 
@@ -279,6 +308,34 @@ function DmSession() {
     } finally {
       setAddingMonster(false)
     }
+  }
+
+  const addNpcFromCampaign = (cn: typeof campaignNpcs[number]) => {
+    const stats = (cn.stats as Record<string, number> | null) ?? { dex: 10 }
+    const dexMod = Math.floor(((stats.dex ?? 10) - 10) / 2)
+    const hp = cn.current_hp ?? cn.max_hp ?? 10
+    const maxHp = cn.max_hp ?? hp
+    // Suffix when same NPC is added multiple times
+    const existing = combatants.filter(c => c.kind === 'npc' && c.npc.name.replace(/ \d+$/, '') === cn.name).length
+    const suffix = existing > 0 ? ` ${existing + 1}` : ''
+    const loot = ((cn.sheet_json as { loot?: NpcItem[] } | null)?.loot) ?? []
+    const npc: Npc = {
+      id: crypto.randomUUID(),
+      name: `${cn.name}${suffix}`,
+      currentHp: hp,
+      maxHp,
+      initiative: Math.ceil(Math.random() * 20) + dexMod,
+      ac: cn.armor_class ?? undefined,
+      attackBonus: cn.attack_bonus ?? undefined,
+      damage: cn.damage ?? undefined,
+      npcType: cn.race ?? undefined,
+      loot,
+    }
+    setCombatants(prev => {
+      const list = [...prev, { kind: 'npc' as const, npc }]
+      list.sort((a, b) => getInitiative(b) - getInitiative(a))
+      return list
+    })
   }
 
   const createCustomNpc = () => {
@@ -746,18 +803,76 @@ function DmSession() {
                       + NPC
                     </button>
                     <button
-                      onClick={() => { setShowBestiary(b => !b); setBestiarySearch(''); if (showNpcForm) setShowNpcForm(false) }}
+                      onClick={() => {
+                        setShowCampaignNpcs(b => !b)
+                        setCampaignNpcSearch('')
+                        if (showBestiary) setShowBestiary(false)
+                        if (showNpcForm) setShowNpcForm(false)
+                      }}
+                      className={`px-3 py-2 font-serif text-sm transition-colors border ${showCampaignNpcs ? 'border-amber-700 bg-amber-950/40 text-amber-300' : 'border-stone-700 bg-stone-900 text-stone-400 hover:border-stone-500 hover:text-stone-200'}`}
+                    >
+                      🎭 PNJ campaña
+                    </button>
+                    <button
+                      onClick={() => { setShowBestiary(b => !b); setBestiarySearch(''); if (showNpcForm) setShowNpcForm(false); if (showCampaignNpcs) setShowCampaignNpcs(false) }}
                       className={`px-3 py-2 font-serif text-sm transition-colors border ${showBestiary ? 'border-amber-700 bg-amber-950/40 text-amber-300' : 'border-stone-700 bg-stone-900 text-stone-400 hover:border-stone-500 hover:text-stone-200'}`}
                     >
                       ⚔ Bestiario
                     </button>
                     <button
-                      onClick={() => { setShowNpcForm(b => !b); if (showBestiary) setShowBestiary(false) }}
+                      onClick={() => { setShowNpcForm(b => !b); if (showBestiary) setShowBestiary(false); if (showCampaignNpcs) setShowCampaignNpcs(false) }}
                       className={`px-3 py-2 font-serif text-sm transition-colors border ${showNpcForm ? 'border-amber-700 bg-amber-950/40 text-amber-300' : 'border-stone-700 bg-stone-900 text-stone-400 hover:border-stone-500 hover:text-stone-200'}`}
                     >
                       ✏ Personalizado
                     </button>
                   </div>
+
+                  {showCampaignNpcs && (
+                    <div className="bg-stone-950 border border-stone-700 p-3 space-y-2">
+                      <input
+                        autoFocus
+                        value={campaignNpcSearch}
+                        onChange={e => setCampaignNpcSearch(e.target.value)}
+                        placeholder="Buscar PNJ de campaña..."
+                        className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-300 text-sm font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500"
+                      />
+                      {campaignNpcs.length === 0 ? (
+                        <p className="text-xs text-stone-600 font-serif italic px-1 py-2">
+                          No hay PNJs en esta campaña. <Link to="/campaigns/$campaignId/pnj" params={{ campaignId }} className="text-amber-500 hover:text-amber-400 underline">Crear uno →</Link>
+                        </p>
+                      ) : filteredCampaignNpcs.length === 0 ? (
+                        <p className="text-xs text-stone-600 font-serif italic px-1">Sin resultados.</p>
+                      ) : (
+                        <ul className="max-h-60 overflow-y-auto divide-y divide-stone-800">
+                          {filteredCampaignNpcs.map(n => {
+                            const stats = n.stats as Record<string, number> | null
+                            const dexMod = Math.floor((((stats?.dex) ?? 10) - 10) / 2)
+                            const roleChip =
+                              n.role === 'antagonist' ? 'text-red-400' :
+                              n.role === 'ally' ? 'text-green-400' : 'text-stone-500'
+                            return (
+                              <li key={n.id}>
+                                <button
+                                  onClick={() => addNpcFromCampaign(n)}
+                                  className="w-full text-left px-3 py-2 text-sm text-stone-300 hover:bg-stone-800 font-serif transition-colors flex items-center justify-between gap-3"
+                                >
+                                  <div className="min-w-0 flex-1">
+                                    <span className="block truncate">{n.name}</span>
+                                    <span className={`text-[10px] tracking-wide uppercase ${roleChip}`}>{n.role}</span>
+                                  </div>
+                                  <div className="flex items-center gap-3 text-xs font-mono text-stone-500 shrink-0">
+                                    {n.max_hp != null && <span>{n.max_hp} PG</span>}
+                                    {n.armor_class != null && <span>CA {n.armor_class}</span>}
+                                    <span>Ini {formatModInline(dexMod)}</span>
+                                  </div>
+                                </button>
+                              </li>
+                            )
+                          })}
+                        </ul>
+                      )}
+                    </div>
+                  )}
 
                   {showBestiary && (
                     <div className="bg-stone-950 border border-stone-700 p-3 space-y-2">

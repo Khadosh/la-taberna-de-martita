@@ -25,15 +25,12 @@
 
 Fase 1 ✅ terminada (2026-05-14) — layout con tab-bar, landing nueva con cards detalladas de PJs/PNJs, migración de la Pantalla DM a la pestaña `Lucha`, skeletons de las 6 pestañas restantes.
 
-### 🔜 Fase 2 — Generador de PNJ *(prioridad alta)*
-- Tabla nueva `npcs` (campaign_id, name, race, class, level, stats, role, sheet_json).
-- Form de creación: rol (antagonista / aliado / neutral), raza, clase, nivel.
-- Random: stats 4d6-drop-lowest, nombre por raza, HP/CA derivados.
-- Renderizar PNJs persistidos en la sección PNJs de la landing.
+Fase 2 ✅ terminada (2026-05-14) — tabla `npcs` + `npc_inventory` en prod, generador completo en `/campaigns/:id/pnj` con shape paralelo a `characters` (campos opcionales), render real en la landing, integración con `Lucha` vía botón **🎭 PNJ campaña** que copia el PNJ persistido al tracker de combate.
 
-### 🍺 Fase 3 — Taberna *(prioridad alta)*
+### 🍺 Fase 3 — Taberna *(próximo paso)*
 - Catálogos: armería, pociones, objetos mágicos con precios y pesos.
 - Acción "vender al party": mueve oro y agrega items al inventario del PJ.
+- Definir si los catálogos son hardcodeados, traídos del 5e API (`/equipment-categories`), o una mezcla.
 
 ### 📦 Fase 4 — Objetos
 - Embeber `/equipment` del 5e API con filtros (arma / armadura / equipo).

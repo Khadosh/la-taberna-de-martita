@@ -189,6 +189,124 @@ export type Database = {
           },
         ]
       }
+      npc_inventory: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          notes: string | null
+          npc_id: string
+          quantity: number
+          weight_lbs: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          npc_id: string
+          quantity?: number
+          weight_lbs?: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          npc_id?: string
+          quantity?: number
+          weight_lbs?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "npc_inventory_npc_id_fkey"
+            columns: ["npc_id"]
+            isOneToOne: false
+            referencedRelation: "npcs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      npcs: {
+        Row: {
+          armor_class: number | null
+          attack_bonus: number | null
+          backstory: string | null
+          campaign_id: string
+          class: string | null
+          conditions: string[]
+          created_at: string | null
+          current_hp: number | null
+          damage: string | null
+          id: string
+          is_hidden: boolean
+          level: number
+          max_hp: number | null
+          name: string
+          notes: string | null
+          portrait_url: string | null
+          race: string | null
+          role: string
+          sheet_json: Json
+          stats: Json
+          updated_at: string | null
+        }
+        Insert: {
+          armor_class?: number | null
+          attack_bonus?: number | null
+          backstory?: string | null
+          campaign_id: string
+          class?: string | null
+          conditions?: string[]
+          created_at?: string | null
+          current_hp?: number | null
+          damage?: string | null
+          id?: string
+          is_hidden?: boolean
+          level?: number
+          max_hp?: number | null
+          name: string
+          notes?: string | null
+          portrait_url?: string | null
+          race?: string | null
+          role?: string
+          sheet_json?: Json
+          stats?: Json
+          updated_at?: string | null
+        }
+        Update: {
+          armor_class?: number | null
+          attack_bonus?: number | null
+          backstory?: string | null
+          campaign_id?: string
+          class?: string | null
+          conditions?: string[]
+          created_at?: string | null
+          current_hp?: number | null
+          damage?: string | null
+          id?: string
+          is_hidden?: boolean
+          level?: number
+          max_hp?: number | null
+          name?: string
+          notes?: string | null
+          portrait_url?: string | null
+          race?: string | null
+          role?: string
+          sheet_json?: Json
+          stats?: Json
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "npcs_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
