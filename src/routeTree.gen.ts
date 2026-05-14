@@ -13,6 +13,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedSpellbookRouteImport } from './routes/_authenticated/spellbook'
 import { Route as AuthenticatedBestiaryRouteImport } from './routes/_authenticated/bestiary'
 import { Route as AuthenticatedJoinCampaignIdRouteImport } from './routes/_authenticated/join/$campaignId'
 import { Route as AuthenticatedCharactersNewRouteImport } from './routes/_authenticated/characters/new'
@@ -38,6 +39,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSpellbookRoute = AuthenticatedSpellbookRouteImport.update({
+  id: '/spellbook',
+  path: '/spellbook',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedBestiaryRoute = AuthenticatedBestiaryRouteImport.update({
@@ -83,10 +89,11 @@ const AuthenticatedCampaignsCampaignIdSessionRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/bestiary': typeof AuthenticatedBestiaryRoute
+  '/spellbook': typeof AuthenticatedSpellbookRoute
+  '/': typeof AuthenticatedIndexRoute
   '/campaigns/$campaignId': typeof AuthenticatedCampaignsCampaignIdRoute
   '/campaigns/new': typeof AuthenticatedCampaignsNewRoute
   '/characters/$characterId': typeof AuthenticatedCharactersCharacterIdRoute
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/bestiary': typeof AuthenticatedBestiaryRoute
+  '/spellbook': typeof AuthenticatedSpellbookRoute
   '/': typeof AuthenticatedIndexRoute
   '/campaigns/$campaignId': typeof AuthenticatedCampaignsCampaignIdRoute
   '/campaigns/new': typeof AuthenticatedCampaignsNewRoute
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_authenticated/bestiary': typeof AuthenticatedBestiaryRoute
+  '/_authenticated/spellbook': typeof AuthenticatedSpellbookRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
   '/_authenticated/campaigns/$campaignId': typeof AuthenticatedCampaignsCampaignIdRoute
   '/_authenticated/campaigns/new': typeof AuthenticatedCampaignsNewRoute
@@ -123,10 +132,11 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/login'
     | '/reset-password'
     | '/bestiary'
+    | '/spellbook'
+    | '/'
     | '/campaigns/$campaignId'
     | '/campaigns/new'
     | '/characters/$characterId'
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/bestiary'
+    | '/spellbook'
     | '/'
     | '/campaigns/$campaignId'
     | '/campaigns/new'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/reset-password'
     | '/_authenticated/bestiary'
+    | '/_authenticated/spellbook'
     | '/_authenticated/'
     | '/_authenticated/campaigns/$campaignId'
     | '/_authenticated/campaigns/new'
@@ -185,7 +197,7 @@ declare module '@tanstack/react-router' {
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
-      fullPath: '/'
+      fullPath: ''
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
@@ -194,6 +206,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/spellbook': {
+      id: '/_authenticated/spellbook'
+      path: '/spellbook'
+      fullPath: '/spellbook'
+      preLoaderRoute: typeof AuthenticatedSpellbookRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/bestiary': {
@@ -250,6 +269,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteChildren {
   AuthenticatedBestiaryRoute: typeof AuthenticatedBestiaryRoute
+  AuthenticatedSpellbookRoute: typeof AuthenticatedSpellbookRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
   AuthenticatedCampaignsCampaignIdRoute: typeof AuthenticatedCampaignsCampaignIdRoute
   AuthenticatedCampaignsNewRoute: typeof AuthenticatedCampaignsNewRoute
@@ -261,6 +281,7 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBestiaryRoute: AuthenticatedBestiaryRoute,
+  AuthenticatedSpellbookRoute: AuthenticatedSpellbookRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
   AuthenticatedCampaignsCampaignIdRoute: AuthenticatedCampaignsCampaignIdRoute,
   AuthenticatedCampaignsNewRoute: AuthenticatedCampaignsNewRoute,

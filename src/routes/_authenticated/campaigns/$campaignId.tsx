@@ -44,7 +44,7 @@ function CampaignDetail() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('characters')
-        .select('*')
+        .select('*, profiles!characters_user_id_profiles_id_fk(username)')
         .eq('campaign_id', campaignId)
       if (error) throw error
       return data
@@ -134,6 +134,7 @@ function CampaignDetail() {
               {characters.map(c => {
                 const stats = c.stats as Record<string, number>
                 const icon = CLASS_ICONS[c.class] ?? '🎲'
+                const playerName = (c as unknown as { profiles: { username: string | null } | null }).profiles?.username
                 return (
                   <li key={c.id}>
                     <Link
@@ -141,12 +142,41 @@ function CampaignDetail() {
                       params={{ characterId: c.id }}
                       className="block bg-stone-900 border border-stone-800 rounded-xl p-4 hover:bg-stone-800/50 transition-colors"
                     >
+                      {playerName && (
+                        <p className="text-[10px] text-stone-500 font-serif tracking-wider uppercase mb-1">Jugador: {playerName}</p>
+                      )}
                       <div className="flex items-start justify-between mb-3">
                         <div>
                           <p className="font-semibold text-stone-100">{c.name}</p>
                           <p className="text-xs text-stone-400 capitalize mt-0.5">{c.race} · {c.class} · Nv. {c.level}</p>
                         </div>
                         <span className="text-2xl">{icon}</span>
+                      </div>
+                      {/* Combat summary */}
+                      <div className="flex items-center gap-3 mb-3">
+                        {c.current_hp != null && (() => {
+                          const conMod = Math.floor(((stats.con ?? 10) - 10) / 2)
+                          const hitDie = (c.sheet_json as { hit_die?: number })?.hit_die ?? 8
+                          const maxHp = hitDie + conMod
+                          const hpPct = Math.max(0, Math.min((c.current_hp / maxHp) * 100, 100))
+                          return (
+                            <div className="flex items-center gap-1.5 flex-1">
+                              <span className="text-xs text-stone-500">PV</span>
+                              <div className="flex-1 h-1.5 bg-stone-700 rounded-full overflow-hidden">
+                                <div className={`h-full rounded-full ${hpPct > 50 ? 'bg-green-700' : hpPct > 25 ? 'bg-amber-600' : 'bg-red-700'}`} style={{ width: `${hpPct}%` }} />
+                              </div>
+                              <span className="text-xs font-mono text-stone-400">{c.current_hp}/{maxHp}</span>
+                            </div>
+                          )
+                        })()}
+                        <span className="text-xs font-mono text-stone-500 bg-stone-800 px-1.5 py-0.5 rounded">
+                          CA {c.armor_class ?? (10 + Math.floor(((stats.dex ?? 10) - 10) / 2))}
+                        </span>
+                        {(() => {
+                          const currency = (c.sheet_json as { currency?: { gold: number } })?.currency
+                          if (!currency?.gold) return null
+                          return <span className="text-xs font-mono text-amber-400">{currency.gold} PO</span>
+                        })()}
                       </div>
                       <div className="grid grid-cols-6 gap-1">
                         {STAT_KEYS.map(k => (

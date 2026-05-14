@@ -68,7 +68,10 @@ function Dashboard() {
             className="hidden sm:block text-xs text-stone-600 hover:text-stone-400 transition-colors font-serif whitespace-nowrap">
             Bestiario
           </Link>
-          <div className="hidden sm:block w-px h-5 bg-stone-800" />
+          <Link to="/spellbook"
+            className="hidden sm:block text-xs text-stone-600 hover:text-stone-400 transition-colors font-serif whitespace-nowrap">
+            Conjuros
+          </Link>
           <button onClick={() => supabase.auth.signOut()}
             className="hidden sm:block text-xs text-stone-600 hover:text-stone-400 transition-colors font-serif italic whitespace-nowrap">
             Cerrar sesión
@@ -154,8 +157,11 @@ function CharacterCard({ character }: { character: Tables<'characters'> }) {
   const stats = character.stats as Record<string, number>
   const borderColor = CLASS_COLORS[character.class] ?? 'border-stone-700'
   const icon = CLASS_ICONS[character.class] ?? '🎲'
+  const conMod = Math.floor(((stats.con ?? 10) - 10) / 2)
+  const hitDie = (character.sheet_json as { hit_die?: number })?.hit_die ?? 8
+  const maxHp = hitDie + conMod
   const hpPct = character.current_hp != null
-    ? Math.max(0, Math.min(100, (character.current_hp / Math.max(1, character.current_hp)) * 100))
+    ? Math.max(0, Math.min(100, (character.current_hp / Math.max(1, maxHp)) * 100))
     : 100
 
   return (

@@ -64,6 +64,19 @@ export interface FeatureDetail {
 export interface ClassLevel {
   level: number
   features: ApiRef[]
+  ability_score_bonuses: number
+  prof_bonus: number
+  spellcasting?: {
+    spell_slots_level_1?: number
+    spell_slots_level_2?: number
+    spell_slots_level_3?: number
+    spell_slots_level_4?: number
+    spell_slots_level_5?: number
+    spell_slots_level_6?: number
+    spell_slots_level_7?: number
+    spell_slots_level_8?: number
+    spell_slots_level_9?: number
+  }
 }
 
 export interface SubclassDetail {
@@ -87,6 +100,8 @@ export interface EquipmentItem {
   weight: number
   cost: { quantity: number; unit: string }
   equipment_category: ApiRef
+  armor_category?: string
+  armor_class?: { base: number; dex_bonus: boolean; max_bonus?: number }
   desc?: string[]
 }
 

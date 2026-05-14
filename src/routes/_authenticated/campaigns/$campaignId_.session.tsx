@@ -108,6 +108,11 @@ function DmSession() {
   const [conditionPickerFor, setConditionPickerFor] = useState<string | null>(null)
   const [showLongRestConfirm, setShowLongRestConfirm] = useState(false)
 
+  // Attack calculator
+  const [showAttackCalc, setShowAttackCalc] = useState(false)
+  const [attackerId, setAttackerId] = useState('')
+  const [defenderId, setDefenderId] = useState('')
+
   // ── Queries ──────────────────────────────────────────────────────────────
 
   const { data: campaign } = useQuery({
@@ -385,6 +390,55 @@ function DmSession() {
     notesTimer.current = setTimeout(() => saveNote(title, body, noteId), 1500)
   }
 
+  // ── Attack calculator ──────────────────────────────────────────────────────
+
+  const allCombatEntities = useMemo(() => {
+    const entities: { id: string; name: string; ac: number; attackBonus: number; kind: 'player' | 'npc' }[] = []
+    for (const c of combatants) {
+      if (c.kind === 'player') {
+        const ch = characters.find(x => x.id === c.characterId)
+        if (!ch) continue
+        const strMod = Math.floor(((ch.stats.str ?? 10) - 10) / 2)
+        const dexMod = Math.floor(((ch.stats.dex ?? 10) - 10) / 2)
+        const prof = Math.ceil(ch.level / 4) + 1
+        // Use the higher of STR/DEX as default attack mod
+        const atkMod = Math.max(strMod, dexMod)
+        entities.push({
+          id: ch.id,
+          name: ch.name,
+          ac: ch.armor_class ?? (10 + Math.floor(((ch.stats.dex ?? 10) - 10) / 2)),
+          attackBonus: prof + atkMod,
+          kind: 'player',
+        })
+      } else {
+        entities.push({
+          id: c.npc.id,
+          name: c.npc.name,
+          ac: c.npc.ac ?? 10,
+          attackBonus: c.npc.attackBonus ?? 0,
+          kind: 'npc',
+        })
+      }
+    }
+    return entities
+  }, [combatants, characters])
+
+  const attackCalcResult = useMemo(() => {
+    if (!attackerId || !defenderId) return null
+    const atk = allCombatEntities.find(e => e.id === attackerId)
+    const def = allCombatEntities.find(e => e.id === defenderId)
+    if (!atk || !def) return null
+    const needed = def.ac - atk.attackBonus
+    const minRoll = Math.max(2, Math.min(20, needed)) // 1 always misses (nat 1), 20 always hits
+    return {
+      attacker: atk,
+      defender: def,
+      minRoll,
+      hitChance: Math.max(5, Math.min(100, (21 - minRoll) * 5)), // 5% to 100%
+      nat20Always: needed <= 1,
+    }
+  }, [attackerId, defenderId, allCombatEntities])
+
   // ── Render ───────────────────────────────────────────────────────────────
 
   const sortedCombatants = combatActive ? combatants : []
@@ -644,7 +698,69 @@ function DmSession() {
                   <span className="text-xs text-stone-500 font-serif">
                     Turno {currentTurn + 1} de {combatants.length}
                   </span>
+                  <div className="flex-1" />
+                  <button
+                    onClick={() => setShowAttackCalc(v => !v)}
+                    className={`px-3 py-1.5 font-serif text-xs transition-colors border ${showAttackCalc ? 'border-amber-700 bg-amber-950/40 text-amber-300' : 'border-stone-700 text-stone-400 hover:border-stone-500 hover:text-stone-200'}`}
+                  >
+                    ⚔ Calculadora de ataque
+                  </button>
                 </div>
+
+                {/* Attack calculator */}
+                {showAttackCalc && (
+                  <div className="bg-stone-950 border border-stone-700 p-4 mb-4 space-y-3">
+                    <p className="text-xs tracking-widest text-stone-500 uppercase font-serif">Calculadora de ataque</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-stone-600 font-serif mb-1">Atacante</label>
+                        <select value={attackerId} onChange={e => setAttackerId(e.target.value)}
+                          className="w-full px-2 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-serif focus:outline-none focus:border-stone-500">
+                          <option value="">Elegir...</option>
+                          {allCombatEntities.map(e => (
+                            <option key={e.id} value={e.id}>{e.name} (ataque +{e.attackBonus})</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs text-stone-600 font-serif mb-1">Defensor</label>
+                        <select value={defenderId} onChange={e => setDefenderId(e.target.value)}
+                          className="w-full px-2 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-serif focus:outline-none focus:border-stone-500">
+                          <option value="">Elegir...</option>
+                          {allCombatEntities.map(e => (
+                            <option key={e.id} value={e.id}>{e.name} (CA {e.ac})</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                    {attackCalcResult && (
+                      <div className="border border-stone-700 bg-stone-900/60 p-3 flex items-center gap-4">
+                        <div className="text-center">
+                          <p className="text-3xl font-bold font-mono text-amber-300">
+                            {attackCalcResult.nat20Always ? '✔' : attackCalcResult.minRoll}+
+                          </p>
+                          <p className="text-[10px] text-stone-500 font-serif uppercase tracking-widest mt-0.5">Necesita</p>
+                        </div>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-sm text-stone-300 font-serif">
+                            <span className="text-amber-400 font-semibold">{attackCalcResult.attacker.name}</span>
+                            {' '}→{' '}
+                            <span className="text-stone-200 font-semibold">{attackCalcResult.defender.name}</span>
+                          </p>
+                          <p className="text-xs text-stone-500 font-serif">
+                            Ataque +{attackCalcResult.attacker.attackBonus} vs CA {attackCalcResult.defender.ac}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-1.5 bg-stone-800 rounded-full overflow-hidden">
+                              <div className="h-full rounded-full bg-amber-700 transition-all" style={{ width: `${attackCalcResult.hitChance}%` }} />
+                            </div>
+                            <span className="text-xs font-mono text-amber-400">{attackCalcResult.hitChance}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Combatant list */}
                 {sortedCombatants.map((combatant, idx) => {

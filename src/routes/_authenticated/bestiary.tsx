@@ -61,6 +61,10 @@ function BestiaryPage() {
           <p className="text-amber-200 font-serif font-semibold text-sm leading-tight">Bestiario</p>
           <p className="text-stone-500 font-serif text-xs leading-tight">D&amp;D 5ª Edición · SRD</p>
         </div>
+        <div className="flex-1" />
+        <Link to="/spellbook" className="text-stone-400 hover:text-amber-300 transition-colors text-xs font-serif">
+          Conjuros →
+        </Link>
       </header>
 
       <div className="max-w-5xl mx-auto px-4 sm:px-8 py-8 flex flex-col sm:flex-row gap-6">

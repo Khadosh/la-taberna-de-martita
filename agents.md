@@ -197,7 +197,11 @@ Usamos [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## 📝 Changelog
 
-- **2026-05-11**: `chore: basic project setup` (Scaffold, Supabase client, TanStack Router/Query/Form).
+- **2026-05-14**: `feat: complete session 1 feedback loop`
+  - ✅ **UX/UI**: Rediseño de sección de equipamiento, botones de curar/daño rápidos, barra de XP con thresholds.
+  - ✅ **Combate**: Calculadora de ataque en pantalla DM (mínimo d20 necesario), auto-aplicación de CA por armadura/escudo.
+  - ✅ **Sistemas**: Modal de subida de nivel PRO (features API, subclase nv3, ASI nv4+), compendio de conjuros completo (`/spellbook`).
+  - ✅ **Fixes**: Navegación al salir de ficha, barra de HP en dashboard, eliminación de personajes.
 
 ---
 
@@ -207,4 +211,4 @@ El seguimiento de tareas y próximos pasos se encuentra en [roadmap.md](file:///
 
 ---
 
-*Última actualización: scaffold inicial completado + reglas de commit y changelog*
+*Última actualización: implementado feedback sesión 1 (19/21 items) + sistemas de level-up y hechizos*
