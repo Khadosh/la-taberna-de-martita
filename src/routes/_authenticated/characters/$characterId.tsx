@@ -1,5 +1,5 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useQuery, useQueries, useQueryClient } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
 import { useRef, useState, useMemo, useEffect } from 'react'
 import { supabase } from '../../../lib/supabase'
@@ -7,7 +7,7 @@ import type { Database } from '../../../lib/database.types'
 import {
   dndApi, dndKeys,
   abilityModifier, modifierColor,
-  ABILITY_LABELS, ABILITY_FULL,
+  ABILITY_LABELS,
 } from '../../../lib/dnd-api'
 import type { SpellDetail, TraitDetail, SkillDetail, FeatureDetail } from '../../../lib/dnd-api'
 import { CONDITIONS, XP_THRESHOLDS, getSpellSlots, isWarlock } from '../../../lib/dnd-constants'
@@ -29,7 +29,9 @@ type SheetJson = {
   hit_dice_used?: number
   subclass?: string
   equipped_items?: string[]
+  equipped_armor?: { name: string; base: number; dex_bonus: boolean; max_bonus?: number; category: string }
   currency?: { gold: number; silver: number; copper: number }
+  max_hp?: number
 }
 
 type InfoModal =
@@ -51,6 +53,10 @@ function CharacterSheet() {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [generatingPortrait, setGeneratingPortrait] = useState(false)
   const [portraitError, setPortraitError] = useState('')
+  const [showLevelUpModal, setShowLevelUpModal] = useState(false)
+  const [levelUpHpInput, setLevelUpHpInput] = useState('')
+  const [levelUpSubclass, setLevelUpSubclass] = useState('')
+  const [levelUpAsi, setLevelUpAsi] = useState<Record<string, number>>({})
 
   // Inventory
   const [newItemName, setNewItemName] = useState('')
@@ -64,6 +70,8 @@ function CharacterSheet() {
   // Combat state editing
   const [editingHp, setEditingHp] = useState(false)
   const [hpInput, setHpInput] = useState('')
+  const [editingMaxHp, setEditingMaxHp] = useState(false)
+  const [maxHpInput, setMaxHpInput] = useState('')
   const [editingAc, setEditingAc] = useState(false)
   const [acInput, setAcInput] = useState('')
   const [xpInput, setXpInput] = useState('')
@@ -205,11 +213,55 @@ function CharacterSheet() {
 
   const toggleEquip = async (itemId: string) => {
     const current = sheet.equipped_items ?? []
-    await patchSheet({
-      equipped_items: current.includes(itemId)
-        ? current.filter(id => id !== itemId)
-        : [...current, itemId],
-    })
+    const isEquipping = !current.includes(itemId)
+    const newEquipped = isEquipping
+      ? [...current, itemId]
+      : current.filter(id => id !== itemId)
+    const item = inventory.find(i => i.id === itemId)
+
+    // If unequipping, check if this was the equipped armor
+    if (!isEquipping && sheet.equipped_armor) {
+      if (item && item.name === sheet.equipped_armor.name) {
+        // Remove armor and reset AC to base (10 + DEX)
+        await patchSheet({ equipped_items: newEquipped, equipped_armor: undefined })
+        await patchCharacter({ armor_class: 10 + dexMod })
+        return
+      }
+    }
+
+    // If equipping, check if it's armor (notes contain 'CA')
+    if (isEquipping && item?.notes?.startsWith('CA ')) {
+      // Parse AC info from notes: "CA 16" or "CA 11 + DES" or "CA 14 + DES (máx 2)"
+      const match = item.notes.match(/CA (\d+)/)
+      if (match) {
+        const base = parseInt(match[1])
+        const hasDex = item.notes.includes('DES')
+        const maxBonusMatch = item.notes.match(/máx (\d+)/)
+        const maxBonus = maxBonusMatch ? parseInt(maxBonusMatch[1]) : undefined
+        const dexBonus = hasDex ? (maxBonus ? Math.min(dexMod, maxBonus) : dexMod) : 0
+        const newAc = base + dexBonus
+
+        const category = !hasDex ? 'Pesada' : maxBonus ? 'Media' : 'Ligera'
+        await patchSheet({
+          equipped_items: newEquipped,
+          equipped_armor: { name: item.name, base, dex_bonus: hasDex, max_bonus: maxBonus, category },
+        })
+        await patchCharacter({ armor_class: newAc })
+        return
+      }
+    }
+
+    // If equipping, check if it's a shield (notes say 'Escudo')
+    if (isEquipping && item?.notes?.startsWith('Escudo')) {
+      const currentAc = ac
+      const shieldMatch = item.notes.match(/\+(\d+)/)
+      const shieldBonus = shieldMatch ? parseInt(shieldMatch[1]) : 2
+      await patchSheet({ equipped_items: newEquipped })
+      await patchCharacter({ armor_class: currentAc + shieldBonus })
+      return
+    }
+
+    await patchSheet({ equipped_items: newEquipped })
   }
 
   const patchSheet = async (sheetPatch: Partial<SheetJson>) => {
@@ -241,7 +293,11 @@ function CharacterSheet() {
 
   const adjustHp = async (delta: number) => {
     const current = character?.current_hp ?? maxHp
-    await patchCharacter({ current_hp: Math.max(0, Math.min(maxHp, current + delta)) })
+    // When healing (delta > 0), cap at maxHp. When taking damage, no upper cap needed.
+    const newHp = delta > 0
+      ? Math.min(maxHp, current + delta)
+      : current + delta
+    await patchCharacter({ current_hp: Math.max(0, newHp) })
   }
 
   const saveAc = async () => {
@@ -252,13 +308,38 @@ function CharacterSheet() {
 
   const saveXp = async () => {
     const val = parseInt(xpInput)
-    if (!isNaN(val)) await patchCharacter({ experience_points: val })
+    if (!isNaN(val) && val > 0) await patchCharacter({ experience_points: xp + val })
     setEditingXp(false)
+    setXpInput('')
   }
 
   const levelUp = async () => {
     if (!character) return
-    await patchCharacter({ level: character.level + 1 })
+    const hpGain = parseInt(levelUpHpInput) || 0
+    const newCurrentHp = currentHp + hpGain
+    const newMaxHp = maxHp + hpGain
+    const patch: Record<string, unknown> = { level: character.level + 1, current_hp: newCurrentHp }
+
+    const sheetPatches: Partial<SheetJson> = { max_hp: newMaxHp }
+
+    // Apply subclass choice
+    if (levelUpSubclass) sheetPatches.subclass = levelUpSubclass
+
+    // Apply ASI stat increases
+    if (Object.keys(levelUpAsi).length > 0) {
+      const newStats = { ...stats }
+      for (const [key, val] of Object.entries(levelUpAsi)) {
+        newStats[key] = (newStats[key] ?? 10) + val
+      }
+      patch.stats = newStats
+    }
+
+    await patchSheet(sheetPatches)
+    await patchCharacter(patch)
+    setShowLevelUpModal(false)
+    setLevelUpHpInput('')
+    setLevelUpSubclass('')
+    setLevelUpAsi({})
   }
 
   const toggleCondition = async (cond: string) => {
@@ -360,6 +441,13 @@ function CharacterSheet() {
     const detail = await dndApi.equipmentDetail(index)
     setNewItemName(detail.name)
     setNewItemWeight(String(detail.weight ?? 0))
+    // If it's armor, store the note so user knows
+    if (detail.armor_class) {
+      const acDesc = detail.armor_category === 'Shield'
+        ? `Escudo +${detail.armor_class.base}`
+        : `CA ${detail.armor_class.base}${detail.armor_class.dex_bonus ? ' + DES' : ''}${detail.armor_class.max_bonus ? ` (máx ${detail.armor_class.max_bonus})` : ''}`
+      setNewItemNotes(acDesc)
+    }
     setEquipSearch('')
     setShowEquipDropdown(false)
   }
@@ -392,8 +480,13 @@ function CharacterSheet() {
   const dexMod = Math.floor(((stats.dex ?? 10) - 10) / 2)
   const profBonus = Math.ceil(level / 4) + 1
   const passivePerception = 10 + Math.floor(((stats.wis ?? 10) - 10) / 2)
-  const maxHp = hitDie + conMod
-  const currentHp = character.current_hp ?? maxHp
+  // Estimate max HP per level when not explicitly stored:
+  // level 1 = hitDie + CON, each subsequent level = floor(hitDie/2)+1 + CON (average roll)
+  const estimatedMaxHp = (hitDie + conMod) + (level - 1) * (Math.floor(hitDie / 2) + 1 + conMod)
+  const rawCurrentHp = character.current_hp
+  // Never let stored/estimated max be lower than current HP (handles legacy characters leveled before tracking max_hp)
+  const maxHp = sheet.max_hp ?? Math.max(estimatedMaxHp, rawCurrentHp ?? 0)
+  const currentHp = rawCurrentHp ?? maxHp
   const ac = character.armor_class ?? (10 + dexMod)
   const xp = character.experience_points ?? 0
   const conditions: string[] = (character.conditions as string[]) ?? []
@@ -431,7 +524,16 @@ function CharacterSheet() {
 
       {/* Header */}
       <header className="border-b-2 border-stone-800 bg-stone-900 px-4 sm:px-8 py-2.5 flex items-center gap-3">
-        <Link to="/" className="text-amber-400 hover:text-amber-200 transition-colors text-sm font-serif shrink-0">← La Taberna</Link>
+        <button
+          onClick={() => {
+            if (window.history.length > 1) { window.history.back(); return }
+            if (character.campaign_id) navigate({ to: '/campaigns/$campaignId', params: { campaignId: character.campaign_id } })
+            else navigate({ to: '/' })
+          }}
+          className="text-amber-400 hover:text-amber-200 transition-colors text-sm font-serif shrink-0"
+        >
+          {character.campaign_id ? '← Campaña' : '← La Taberna'}
+        </button>
         <div className="w-px h-4 bg-stone-700 shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-amber-200 font-serif font-semibold text-sm leading-tight truncate">{character.name}</p>
@@ -513,43 +615,69 @@ function CharacterSheet() {
           <div className="flex-1 p-4">
             <SheetLabel>Características</SheetLabel>
             <div className="grid grid-cols-3 gap-2 mt-3">
-              {STAT_KEYS.map(k => (
-                <div key={k} className="border border-stone-500 text-center py-2 px-1" style={{ background: 'rgba(200,170,110,0.15)' }}>
-                  <p className="text-xs text-stone-500 font-serif tracking-widest uppercase">{ABILITY_LABELS[k]}</p>
-                  <p className="text-2xl sm:text-3xl font-bold text-stone-900 my-0.5" style={{ fontFamily: 'Georgia, serif' }}>{stats[k] ?? '—'}</p>
-                  <div className="border-t border-stone-400 pt-0.5">
-                    <p className={`text-sm sm:text-base font-bold font-mono ${stats[k] ? modifierColor(stats[k]) : 'text-stone-400'}`}>{stats[k] ? abilityModifier(stats[k]) : ''}</p>
+              {STAT_KEYS.map(k => {
+                return (
+                  <div key={k} className="border border-stone-500 text-center py-2 px-1" style={{ background: 'rgba(200,170,110,0.15)' }}>
+                    <p className="text-xs text-stone-500 font-serif tracking-widest uppercase">{ABILITY_LABELS[k]}</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-stone-900 my-0.5" style={{ fontFamily: 'Georgia, serif' }}>{stats[k] ?? '—'}</p>
+                    <div className="border-t border-stone-400 pt-0.5">
+                      <p className={`text-sm sm:text-base font-bold font-mono ${stats[k] ? modifierColor(stats[k]) : 'text-stone-400'}`}>{stats[k] ? abilityModifier(stats[k]) : ''}</p>
+                    </div>
                   </div>
-                  <p className="text-xs text-stone-400 font-serif italic mt-0.5 hidden sm:block">{ABILITY_FULL[k]}</p>
+                )
+              })}
+            </div>
+
+            <div className="mt-6">
+              <div className="border-t border-stone-600 bg-stone-900 px-3 sm:px-5 py-3 grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-stone-700 text-center">
+                <StatBlock label="Dado" value={`d${hitDie}`} mono />
+                <div className="px-2 sm:px-4 py-1 sm:py-0">
+                  <p className="text-[10px] sm:text-xs text-stone-400 font-serif tracking-widest uppercase whitespace-nowrap">PV Máximos</p>
+                  {(isOwner || isGm) && editingMaxHp ? (
+                    <input autoFocus value={maxHpInput}
+                      onChange={e => setMaxHpInput(e.target.value)}
+                      onBlur={() => { const v = parseInt(maxHpInput); if (!isNaN(v) && v > 0) { patchSheet({ max_hp: v }); patchCharacter({ current_hp: Math.min(currentHp, v) }) } setEditingMaxHp(false) }}
+                      onKeyDown={e => { if (e.key === 'Enter') { const v = parseInt(maxHpInput); if (!isNaN(v) && v > 0) { patchSheet({ max_hp: v }); patchCharacter({ current_hp: Math.min(currentHp, v) }) } setEditingMaxHp(false) } }}
+                      className="w-14 text-center text-xl font-bold font-mono text-amber-300 bg-transparent border-b border-amber-500 focus:outline-none mt-0.5"
+                    />
+                  ) : (
+                    <button
+                      onClick={() => { if (isOwner || isGm) { setMaxHpInput(String(maxHp)); setEditingMaxHp(true) } }}
+                      className={`text-xl sm:text-2xl font-bold font-mono text-amber-300 mt-0.5 ${(isOwner || isGm) ? 'hover:text-amber-100 transition-colors' : ''}`}
+                      title={(isOwner || isGm) ? 'Clic para editar PV máximos' : undefined}
+                    >
+                      {maxHp}
+                    </button>
+                  )}
                 </div>
-              ))}
+                <StatBlock label="CA" value={String(ac)} mono />
+                <div className="px-2 sm:px-4 py-1 sm:py-0">
+                  <p className="text-[10px] sm:text-xs text-stone-400 font-serif tracking-widest uppercase whitespace-nowrap">Salvaciones</p>
+                  <p className="text-xs text-amber-200 font-serif capitalize mt-1 leading-tight">{sheet.saving_throws?.join(', ') ?? '—'}</p>
+                </div>
+              </div>
             </div>
           </div>
         </SheetRow>
 
         {/* Combat bar */}
-        <div className="border-t border-stone-600 bg-stone-900 px-5 py-3 grid grid-cols-2 sm:grid-cols-4 divide-x divide-y sm:divide-y-0 divide-stone-700 text-center">
-          <StatBlock label="Dado de Golpe" value={`d${hitDie}`} mono />
-          <StatBlock label="PV Máximos" value={String(maxHp)} mono />
-          <StatBlock label="CA" value={String(ac)} mono />
-          <div className="px-4">
-            <p className="text-xs text-stone-400 font-serif tracking-widest uppercase">Salvaciones</p>
-            <p className="text-xs text-amber-200 font-serif capitalize mt-1 leading-tight">{sheet.saving_throws?.join(', ') ?? '—'}</p>
-          </div>
-        </div>
+
 
         {/* Quick stats strip */}
-        <div className="border-t border-stone-500/40 px-4 sm:px-6 py-2 flex flex-wrap items-center gap-x-5 gap-y-1.5" style={{ background: 'rgba(180,145,80,0.1)' }}>
+        <div className="border-t border-stone-500/40 px-4 sm:px-6 py-2 flex flex-wrap items-center gap-x-4 gap-y-1.5" style={{ background: 'rgba(180,145,80,0.1)' }}>
           <QuickPill label="Velocidad" value={`${raceDetail?.speed ?? 30} ft`} />
           <QuickPill label="Iniciativa" value={dexMod >= 0 ? `+${dexMod}` : String(dexMod)} />
-          <QuickPill label="Perc. pasiva" value={String(passivePerception)} />
-          <QuickPill label="Comp." value={`+${profBonus}`} />
-          {raceDetail?.ability_bonuses.filter(b => b.bonus !== 0).map(b => (
-            <QuickPill key={b.ability_score.index} label={ABILITY_LABELS[b.ability_score.index]} value={`+${b.bonus}`} variant="racial" />
-          ))}
-          {classDetail?.saving_throws.map(st => (
-            <QuickPill key={st.index} label={`Sal. ${ABILITY_LABELS[st.index]}`} value="✓" variant="save" />
-          ))}
+          <QuickPill label="Perc. pasiva" value={String(passivePerception)} title="Percepción Pasiva: 10 + mod. Sabiduría" />
+          <QuickPill label="Bono prof." value={`+${profBonus}`} title="Bonus de competencia (se suma a ataques, pericias y salvaciones en las que tenés competencia)" />
+          {currency.gold > 0 && <QuickPill label="PO" value={String(currency.gold)} variant="gold" />}
+          {classDetail?.saving_throws && classDetail.saving_throws.length > 0 && (
+            <QuickPill
+              label="Sal. prof."
+              value={classDetail.saving_throws.map(st => ABILITY_LABELS[st.index]).join(', ')}
+              variant="save"
+              title={`Tiradas de salvación con competencia: ${classDetail.saving_throws.map(st => st.name).join(', ')}`}
+            />
+          )}
         </div>
 
         {/* Combat state */}
@@ -563,6 +691,7 @@ function CharacterSheet() {
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1">
+                  {isOwner && <button onClick={() => adjustHp(-5)} className="w-7 h-6 text-xs border border-red-700/60 text-red-700 hover:bg-red-100/30 leading-none font-mono" title="−5 daño">-5</button>}
                   {isOwner && <button onClick={() => adjustHp(-1)} className="w-6 h-6 text-sm border border-stone-500 text-stone-600 hover:bg-stone-200/50 leading-none font-mono">−</button>}
                   {editingHp ? (
                     <input autoFocus value={hpInput} onChange={e => setHpInput(e.target.value)}
@@ -575,6 +704,7 @@ function CharacterSheet() {
                     </button>
                   )}
                   {isOwner && <button onClick={() => adjustHp(1)} className="w-6 h-6 text-sm border border-stone-500 text-stone-600 hover:bg-stone-200/50 leading-none font-mono">+</button>}
+                  {isOwner && <button onClick={() => adjustHp(5)} className="w-7 h-6 text-xs border border-green-700/60 text-green-700 hover:bg-green-100/30 leading-none font-mono" title="+5 curar">+5</button>}
                 </div>
                 <span className="text-xs text-stone-500 font-serif">/ {maxHp} PV</span>
               </div>
@@ -603,25 +733,37 @@ function CharacterSheet() {
           <div className="flex-1 p-4">
             <SheetLabel>Experiencia</SheetLabel>
             <div className="mt-3 space-y-2">
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-[10px] text-stone-400 font-serif">Nv. {level} — {xpForCurrent.toLocaleString()} XP</span>
+                {xpForNext && <span className="text-[10px] text-stone-400 font-serif">Nv. {level + 1} — {xpForNext.toLocaleString()} XP</span>}
+              </div>
               <div className="h-3 border border-stone-500 overflow-hidden bg-stone-200/40">
                 <div className="h-full bg-amber-700 transition-all" style={{ width: `${xpPct}%` }} />
               </div>
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
+                  <span className="text-sm font-mono text-stone-700">{xp.toLocaleString()} XP</span>
                   {editingXp && isGm ? (
-                    <input autoFocus value={xpInput} onChange={e => setXpInput(e.target.value)}
-                      onBlur={saveXp} onKeyDown={e => e.key === 'Enter' && saveXp()}
-                      className="w-20 text-sm font-mono border-b border-stone-600 bg-transparent focus:outline-none" />
-                  ) : (
-                    <span className="text-sm font-mono text-stone-700">{xp.toLocaleString()} XP</span>
-                  )}
-                  {isGm && !editingXp && (
+                    <div className="flex items-center gap-1">
+                      <span className="text-xs text-stone-500 font-serif">+</span>
+                      <input autoFocus value={xpInput} onChange={e => setXpInput(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && saveXp()}
+                        placeholder="0"
+                        className="w-16 text-sm font-mono border-b border-stone-600 bg-transparent focus:outline-none text-center" />
+                      <button onClick={saveXp}
+                        className="text-[10px] px-1.5 py-0.5 bg-amber-800 hover:bg-amber-700 text-amber-100 font-serif transition-colors leading-none">
+                        OK
+                      </button>
+                      <button onClick={() => { setEditingXp(false); setXpInput('') }}
+                        className="text-stone-500 hover:text-stone-300 text-xs">✕</button>
+                    </div>
+                  ) : isGm ? (
                     <button
-                      onClick={() => { setEditingXp(true); setXpInput(String(xp)) }}
+                      onClick={() => { setEditingXp(true); setXpInput('') }}
                       className="text-[10px] px-1.5 py-0.5 border border-stone-500 hover:border-amber-700 text-stone-500 hover:text-amber-700 font-serif transition-colors leading-none">
-                      ✎ otorgar
+                      + otorgar XP
                     </button>
-                  )}
+                  ) : null}
                 </div>
                 {xpForNext && <span className="text-xs text-stone-400 font-serif">→ {xpForNext.toLocaleString()}</span>}
               </div>
@@ -631,8 +773,8 @@ function CharacterSheet() {
               {!isGm && !character.campaign_id && !isOwner && (
                 <p className="text-[10px] text-stone-500 font-serif italic">El personaje no está asignado a ninguna campaña</p>
               )}
-              {canLevelUp && isGm && (
-                <button onClick={levelUp}
+              {canLevelUp && (isGm || isOwner) && (
+                <button onClick={() => { setShowLevelUpModal(true); setLevelUpHpInput('') }}
                   className="w-full text-xs py-1 bg-amber-800 hover:bg-amber-700 text-amber-100 font-serif transition-colors animate-pulse">
                   ⬆ Subir al nivel {level + 1}
                 </button>
@@ -855,11 +997,10 @@ function CharacterSheet() {
                           <button key={i}
                             onClick={() => isOwner && toggleSlot(slotLevel, i)}
                             title={i < available ? 'Usar espacio' : 'Recuperar espacio'}
-                            className={`w-5 h-5 border-2 rounded-full transition-colors ${
-                              i < available
-                                ? 'bg-amber-700 border-amber-600 hover:bg-amber-600'
-                                : 'bg-transparent border-stone-500 hover:border-amber-700'
-                            }`}
+                            className={`w-5 h-5 border-2 rounded-full transition-colors ${i < available
+                              ? 'bg-amber-700 border-amber-600 hover:bg-amber-600'
+                              : 'bg-transparent border-stone-500 hover:border-amber-700'
+                              }`}
                           />
                         ))}
                       </div>
@@ -917,35 +1058,59 @@ function CharacterSheet() {
             {/* Currency */}
             <div className="flex gap-2 mb-4">
               {([
-                { key: 'gold',   label: 'PO', color: 'text-amber-700',  border: 'border-amber-600/50', bg: 'rgba(200,140,20,0.12)' },
-                { key: 'silver', label: 'PP', color: 'text-stone-500',  border: 'border-stone-400/60', bg: 'rgba(180,180,180,0.10)' },
+                { key: 'gold', label: 'PO', color: 'text-amber-700', border: 'border-amber-600/50', bg: 'rgba(200,140,20,0.12)' },
+                { key: 'silver', label: 'PP', color: 'text-stone-500', border: 'border-stone-400/60', bg: 'rgba(180,180,180,0.10)' },
                 { key: 'copper', label: 'PC', color: 'text-orange-700', border: 'border-orange-700/40', bg: 'rgba(180,100,40,0.10)' },
               ] as const).map(({ key, label, color, border, bg }) => (
-                <div key={key} className={`flex-1 border ${border} px-2 py-1.5 text-center`} style={{ background: bg }}>
-                  <p className={`text-[10px] font-display tracking-widest uppercase ${color} mb-0.5`}>{label}</p>
+                <div key={key} className={`flex-1 border ${border} px-2 py-2 text-center`} style={{ background: bg }}>
+                  <p className={`text-[10px] font-display tracking-widest uppercase ${color} mb-1`}>{label}</p>
                   {isOwner && editingCoin === key ? (
-                    <input
-                      type="number" min={0}
-                      value={coinInput}
-                      onChange={e => setCoinInput(e.target.value)}
-                      onBlur={() => {
-                        patchCurrency({ [key]: Math.max(0, parseInt(coinInput) || 0) })
-                        setEditingCoin(null)
-                      }}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') { patchCurrency({ [key]: Math.max(0, parseInt(coinInput) || 0) }); setEditingCoin(null) }
-                        if (e.key === 'Escape') setEditingCoin(null)
-                      }}
-                      autoFocus
-                      className="w-full text-center text-sm font-mono font-bold text-stone-800 bg-white/60 border border-stone-400 focus:outline-none py-0.5"
-                    />
+                    <div className="space-y-1">
+                      <p className="text-base font-mono font-bold text-stone-700">{currency[key]}</p>
+                      <div className="flex items-center gap-0.5 justify-center">
+                        <input
+                          type="number"
+                          value={coinInput}
+                          onChange={e => setCoinInput(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              patchCurrency({ [key]: Math.max(0, currency[key] + (parseInt(coinInput) || 0)) })
+                              setEditingCoin(null); setCoinInput('')
+                            }
+                            if (e.key === 'Escape') { setEditingCoin(null); setCoinInput('') }
+                          }}
+                          autoFocus
+                          placeholder="±0"
+                          className="w-12 text-center text-sm font-mono border border-stone-400 bg-white/70 focus:outline-none py-0.5"
+                        />
+                        <button onClick={() => {
+                          patchCurrency({ [key]: Math.max(0, currency[key] + (parseInt(coinInput) || 0)) })
+                          setEditingCoin(null); setCoinInput('')
+                        }} className="text-[10px] px-1 py-0.5 bg-stone-800 hover:bg-stone-700 text-amber-300 leading-none">OK</button>
+                        <button onClick={() => { setEditingCoin(null); setCoinInput('') }}
+                          className="text-stone-400 hover:text-stone-600 text-xs leading-none">✕</button>
+                      </div>
+                    </div>
                   ) : (
-                    <p
-                      className={`text-sm font-mono font-bold text-stone-700 ${isOwner ? 'cursor-pointer hover:text-stone-900' : ''}`}
-                      onClick={() => { if (isOwner) { setCoinInput(String(currency[key])); setEditingCoin(key) } }}
-                    >
-                      {currency[key]}
-                    </p>
+                    <div>
+                      <p
+                        className={`text-base font-mono font-bold text-stone-700 mb-1 ${isOwner ? 'cursor-pointer hover:text-amber-800' : ''}`}
+                        title={isOwner ? 'Clic para sumar o restar' : undefined}
+                        onClick={() => { if (isOwner) { setCoinInput(''); setEditingCoin(key) } }}
+                      >
+                        {currency[key]}
+                      </p>
+                      {isOwner && (
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() => patchCurrency({ [key]: Math.max(0, currency[key] - 1) })}
+                            className="w-5 h-5 text-xs border border-stone-400 text-stone-500 hover:bg-stone-200/50 leading-none font-mono">−</button>
+                          <button
+                            onClick={() => patchCurrency({ [key]: currency[key] + 1 })}
+                            className="w-5 h-5 text-xs border border-stone-400 text-stone-500 hover:bg-stone-200/50 leading-none font-mono">+</button>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               ))}
@@ -955,24 +1120,37 @@ function CharacterSheet() {
               <div className={`h-full transition-all ${weightColor}`} style={{ width: `${weightPct}%` }} />
             </div>
 
-            {/* Equipped items */}
-            {equippedItems.length > 0 && (
-              <div className="mb-4 pb-3 border-b border-stone-400/50">
-                <p className="text-[10px] text-stone-500 uppercase tracking-widest font-serif mb-2">Equipado</p>
-                <div className="flex flex-wrap gap-2">
+            {/* Equipped items — prominent section */}
+            <div className="mb-4 border-2 border-amber-700/40 p-3" style={{ background: 'rgba(200,140,40,0.08)' }}>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs text-amber-800 uppercase tracking-widest font-serif font-semibold">⚔ Equipado</p>
+                {sheet.equipped_armor && (
+                  <span className="text-xs font-mono font-bold text-amber-900 bg-amber-200/50 px-2 py-0.5 border border-amber-600/40">
+                    CA {ac} {sheet.equipped_armor.dex_bonus ? `(${sheet.equipped_armor.base} + DES ${dexMod >= 0 ? '+' : ''}${dexMod})` : `(${sheet.equipped_armor.category})`}
+                  </span>
+                )}
+              </div>
+              {equippedItems.length > 0 ? (
+                <div className="space-y-1.5">
                   {equippedItems.map(item => (
-                    <div key={item.id} className="flex items-center gap-1.5 px-2.5 py-1 border border-amber-700/60 text-xs font-serif text-amber-900" style={{ background: 'rgba(200,140,40,0.13)' }}>
-                      <span className="text-stone-500">⚔</span>
-                      <span>{item.name}</span>
-                      {item.notes && <span className="text-stone-500 italic">· {item.notes}</span>}
+                    <div key={item.id} className="flex items-center gap-2 px-2 py-1.5 bg-amber-100/30 border border-amber-600/30">
+                      <span className="text-amber-700 text-sm">⚔</span>
+                      <span className="text-sm font-serif text-stone-800 font-medium flex-1">{item.name}</span>
+                      {item.notes && <span className="text-xs text-stone-500 italic">{item.notes}</span>}
+                      {item.weight_lbs > 0 && <span className="text-xs text-stone-400 font-mono">{Number(item.weight_lbs)} lb</span>}
                       {isOwner && (
-                        <button onClick={() => toggleEquip(item.id)} className="text-stone-400 hover:text-stone-600 ml-0.5 leading-none" title="Desequipar">✕</button>
+                        <button onClick={() => toggleEquip(item.id)}
+                          className="text-xs px-1.5 py-0.5 border border-stone-400 text-stone-500 hover:border-red-600 hover:text-red-700 font-serif transition-colors">
+                          Desequipar
+                        </button>
                       )}
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <p className="text-xs text-stone-400 font-serif italic">Nada equipado. Usá el botón "Equipar" en la tabla de inventario.</p>
+              )}
+            </div>
 
             {inventory.length > 0 && (
               <table className="w-full text-sm font-serif mb-3">
@@ -993,16 +1171,32 @@ function CharacterSheet() {
                         {item.notes && <span className="ml-1 text-xs text-stone-400 italic">· {item.notes}</span>}
                         {equippedItemIds.has(item.id) && <span className="ml-1.5 text-[10px] text-amber-700 border border-amber-600/50 px-1 font-serif">equipado</span>}
                       </td>
-                      <td className="text-center text-stone-600">{item.quantity}</td>
+                      <td className="text-center text-stone-600">
+                        {isOwner ? (
+                          <div className="flex items-center justify-center gap-0.5">
+                            <button onClick={async () => {
+                              if (item.quantity <= 1) return removeInventoryItem(item.id)
+                              await supabase.from('character_inventory').update({ quantity: item.quantity - 1 }).eq('id', item.id)
+                              queryClient.invalidateQueries({ queryKey: ['inventory', characterId] })
+                            }} className="w-5 h-5 text-xs border border-stone-400 text-stone-500 hover:bg-stone-200/50 leading-none font-mono">−</button>
+                            <span className="min-w-[1.5rem] text-center">{item.quantity}</span>
+                            <button onClick={async () => {
+                              await supabase.from('character_inventory').update({ quantity: item.quantity + 1 }).eq('id', item.id)
+                              queryClient.invalidateQueries({ queryKey: ['inventory', characterId] })
+                            }} className="w-5 h-5 text-xs border border-stone-400 text-stone-500 hover:bg-stone-200/50 leading-none font-mono">+</button>
+                          </div>
+                        ) : (
+                          item.quantity
+                        )}
+                      </td>
                       <td className="text-center text-stone-500">{Number(item.weight_lbs)} lb</td>
                       <td className="text-center text-stone-600 font-medium">{(Number(item.weight_lbs) * item.quantity).toFixed(1)} lb</td>
                       {isOwner && (
                         <td className="text-center">
-                          <div className="flex items-center justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all">
+                          <div className="flex items-center justify-center gap-1.5">
                             <button onClick={() => toggleEquip(item.id)}
-                              className={`text-xs transition-colors ${equippedItemIds.has(item.id) ? 'text-amber-700 hover:text-amber-900' : 'text-stone-400 hover:text-amber-700'}`}
-                              title={equippedItemIds.has(item.id) ? 'Desequipar' : 'Equipar'}>
-                              ⚔
+                              className={`text-[10px] px-1.5 py-0.5 border font-serif transition-colors ${equippedItemIds.has(item.id) ? 'border-amber-600/60 text-amber-800 bg-amber-100/40 hover:bg-amber-200/50' : 'border-stone-400 text-stone-500 hover:border-amber-700 hover:text-amber-700'}`}>
+                              {equippedItemIds.has(item.id) ? '✓ Equipado' : 'Equipar'}
                             </button>
                             <button onClick={() => removeInventoryItem(item.id)} className="text-stone-300 hover:text-red-700 text-xs">✕</button>
                           </div>
@@ -1072,7 +1266,7 @@ function CharacterSheet() {
         )}
 
         {/* Delete */}
-        {isOwner && !character.campaign_id && (
+        {isOwner && (
           <div className="border-t border-stone-600 px-4 py-3">
             {confirmDelete ? (
               <div className="flex items-center gap-3">
@@ -1089,6 +1283,26 @@ function CharacterSheet() {
         )}
 
       </main>
+
+      {/* Level up modal */}
+      {showLevelUpModal && (
+        <LevelUpModal
+          character={character}
+          level={level}
+          hitDie={hitDie}
+          conMod={conMod}
+          stats={stats}
+          hpInput={levelUpHpInput}
+          setHpInput={setLevelUpHpInput}
+          subclass={levelUpSubclass}
+          setSubclass={setLevelUpSubclass}
+          asi={levelUpAsi}
+          setAsi={setLevelUpAsi}
+          currentSubclass={sheet.subclass}
+          onConfirm={levelUp}
+          onCancel={() => { setShowLevelUpModal(false); setLevelUpHpInput(''); setLevelUpSubclass(''); setLevelUpAsi({}) }}
+        />
+      )}
 
       {/* Modal */}
       {modal && <InfoModal modal={modal} onClose={() => setModal(null)} />}
@@ -1132,7 +1346,7 @@ function SheetRow({ children, className = '' }: { children: React.ReactNode; cla
 function StatBlock({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
   return (
     <div className="px-2 sm:px-4 py-1 sm:py-0">
-      <p className="text-[10px] sm:text-xs text-stone-400 font-serif tracking-widest uppercase">{label}</p>
+      <p className="text-[10px] sm:text-xs text-stone-400 font-serif tracking-widest uppercase whitespace-nowrap">{label}</p>
       <p className={`text-xl sm:text-2xl font-bold text-amber-300 mt-0.5 ${mono ? 'font-mono' : 'font-serif'}`}>{value}</p>
     </div>
   )
@@ -1179,9 +1393,14 @@ function InfoModal({ modal, onClose }: { modal: InfoModal; onClose: () => void }
 function SpellBadge({ index, onInfo }: { index: string; onInfo: (s: SpellDetail) => void }) {
   const { data: spell } = useQuery({ queryKey: dndKeys.spell(index), queryFn: () => dndApi.spell(index) })
   return (
-    <div className="flex items-center gap-1 border border-stone-400 px-3 py-2" style={{ background: 'rgba(200,170,110,0.15)' }}>
+    <div className="flex items-center gap-1.5 border border-stone-400 px-3 py-2" style={{ background: 'rgba(200,170,110,0.15)' }}>
       <span className="text-sm text-stone-700 flex-1 capitalize font-serif">{index.replace(/-/g, ' ')}</span>
-      {spell && <button onClick={() => onInfo(spell)} className="text-stone-400 hover:text-amber-700 text-xs ml-1">ℹ</button>}
+      {spell && (
+        <button onClick={() => onInfo(spell)}
+          className="text-[10px] px-1.5 py-0.5 border border-amber-700/60 text-amber-800 hover:bg-amber-100/50 font-serif transition-colors leading-none">
+          Ver
+        </button>
+      )}
     </div>
   )
 }
@@ -1214,14 +1433,16 @@ function FeatureBadge({ index, name, onInfo }: { index: string; name: string; on
   )
 }
 
-function QuickPill({ label, value, variant }: { label: string; value: string; variant?: 'racial' | 'save' }) {
+function QuickPill({ label, value, variant, title }: { label: string; value: string; variant?: 'racial' | 'save' | 'gold'; title?: string }) {
   const cls = variant === 'racial'
     ? 'border-amber-600/70 text-amber-900 bg-amber-50/60'
     : variant === 'save'
-    ? 'border-green-600/60 text-green-900 bg-green-50/50'
-    : 'border-stone-400/70 text-stone-700'
+      ? 'border-green-600/60 text-green-900 bg-green-50/50'
+      : variant === 'gold'
+        ? 'border-amber-500/80 text-amber-800 bg-amber-50/70 font-semibold'
+        : 'border-stone-400/70 text-stone-700'
   return (
-    <div className="flex items-center gap-1.5 text-xs font-serif">
+    <div className="flex items-center gap-1.5 text-xs font-serif" title={title}>
       <span className="text-stone-400">{label}</span>
       <span className={`px-1.5 py-px border font-mono ${cls}`}>{value}</span>
     </div>
@@ -1236,5 +1457,231 @@ function SkillBadge({ index, onInfo }: { index: string; onInfo: (s: SkillDetail)
       <span className="text-xs text-amber-800 font-serif capitalize">{skillIndex.replace(/-/g, ' ')}</span>
       {skill && <button onClick={() => onInfo(skill)} className="text-amber-500 hover:text-amber-900 text-xs ml-0.5">ℹ</button>}
     </div>
+  )
+}
+
+// ── Level Up Modal ──────────────────────────────────────────────────────────
+
+const STAT_LABELS_FULL: Record<string, string> = {
+  str: 'Fuerza', dex: 'Destreza', con: 'Constitución',
+  int: 'Inteligencia', wis: 'Sabiduría', cha: 'Carisma',
+}
+
+function LevelUpModal({ character, level, hitDie, conMod, stats, hpInput, setHpInput, subclass, setSubclass, asi, setAsi, currentSubclass, onConfirm, onCancel }: {
+  character: { name: string; class: string }
+  level: number
+  hitDie: number
+  conMod: number
+  stats: Record<string, number>
+  hpInput: string
+  setHpInput: (v: string) => void
+  subclass: string
+  setSubclass: (v: string) => void
+  asi: Record<string, number>
+  setAsi: (v: Record<string, number>) => void
+  currentSubclass?: string
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  const nextLevel = level + 1
+  const classIndex = character.class.toLowerCase()
+
+  // Fetch level data
+  const { data: classLevels } = useQuery({
+    queryKey: dndKeys.classLevels(classIndex),
+    queryFn: () => dndApi.classLevels(classIndex),
+    staleTime: Infinity,
+  })
+  const { data: subclasses } = useQuery({
+    queryKey: dndKeys.classSubclasses(classIndex),
+    queryFn: () => dndApi.classSubclasses(classIndex),
+    staleTime: Infinity,
+  })
+
+  const targetLevel = classLevels?.find(l => l.level === nextLevel)
+  const features = targetLevel?.features ?? []
+  const hasAsi = (targetLevel?.ability_score_bonuses ?? 0) > 0 && !currentSubclass?.includes('asi-done-' + nextLevel)
+  const needsSubclass = features.some(f =>
+    f.name.toLowerCase().includes('archetype') ||
+    f.name.toLowerCase().includes('tradition') ||
+    f.name.toLowerCase().includes('oath') ||
+    f.name.toLowerCase().includes('origin') ||
+    f.name.toLowerCase().includes('circle') ||
+    f.name.toLowerCase().includes('domain') ||
+    f.name.toLowerCase().includes('patron') ||
+    f.name.toLowerCase().includes('path') ||
+    f.name.toLowerCase().includes('college') ||
+    f.name.toLowerCase().includes('school') ||
+    f.name.toLowerCase().includes('roguish') ||
+    f.name.toLowerCase().includes('ranger') ||
+    f.name.toLowerCase().includes('sorcerous') ||
+    f.index.includes('subclass')
+  ) && !currentSubclass
+
+  // Feature details
+  const featureResults = useQueries({
+    queries: features.map(f => ({
+      queryKey: dndKeys.feature(f.index),
+      queryFn: () => dndApi.feature(f.index),
+      staleTime: Infinity,
+    })),
+  })
+
+  // ASI helpers
+  const totalAsiPoints = Object.values(asi).reduce((a, b) => a + b, 0)
+  const maxAsiPoints = 2 // Standard D&D 5e ASI gives +2
+
+  const avgHp = Math.floor(hitDie / 2) + 1 + conMod
+
+  // Validation
+  const hpValid = hpInput && parseInt(hpInput) >= 1
+  const subclassValid = !needsSubclass || subclass
+  const asiValid = !hasAsi || totalAsiPoints === maxAsiPoints
+  const canConfirm = hpValid && subclassValid && asiValid
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={onCancel}>
+      <div className="border-4 border-double border-stone-700 max-w-lg w-full max-h-[90vh] overflow-y-auto p-6 space-y-5"
+        style={{ ...parchmentStyle, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="border-b-2 border-stone-600 pb-3">
+          <h3 className="font-bold text-stone-800 font-serif text-xl">⬆ Subir al nivel {nextLevel}</h3>
+          <p className="text-sm text-stone-500 font-serif italic mt-1">
+            {character.name} · {character.class} · d{hitDie}
+          </p>
+        </div>
+
+        {/* New features */}
+        {features.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">Nuevas características</p>
+            {featureResults.map((q, i) => (
+              <div key={features[i].index} className="border border-stone-400 p-3" style={{ background: 'rgba(200,170,110,0.15)' }}>
+                <p className="text-sm font-semibold text-stone-800 font-serif">{features[i].name}</p>
+                {q.data?.desc?.[0] && (
+                  <p className="text-xs text-stone-600 font-serif italic mt-1 line-clamp-3">{q.data.desc[0]}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Subclass selection */}
+        {needsSubclass && subclasses && (
+          <div className="space-y-2">
+            <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">Elegí tu especialidad</p>
+            <p className="text-xs text-stone-500 font-serif italic">
+              Al llegar a nivel {nextLevel}, elegís tu camino de especialización.
+            </p>
+            <div className="grid gap-2">
+              {subclasses.results.map(sc => (
+                <SubclassOption key={sc.index} index={sc.index} selected={subclass === sc.index} onSelect={() => setSubclass(sc.index)} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ASI */}
+        {hasAsi && (
+          <div className="space-y-2">
+            <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">
+              Mejora de características ({totalAsiPoints}/{maxAsiPoints} puntos)
+            </p>
+            <p className="text-xs text-stone-500 font-serif italic">
+              Repartí {maxAsiPoints} puntos entre tus características (máx 20).
+            </p>
+            <div className="grid grid-cols-3 gap-2">
+              {(['str', 'dex', 'con', 'int', 'wis', 'cha'] as const).map(k => {
+                const current = stats[k] ?? 10
+                const bonus = asi[k] ?? 0
+                const canAdd = totalAsiPoints < maxAsiPoints && current + bonus < 20
+                return (
+                  <div key={k} className="border border-stone-400 p-2 text-center" style={{ background: bonus > 0 ? 'rgba(200,140,40,0.15)' : 'rgba(200,170,110,0.08)' }}>
+                    <p className="text-[10px] text-stone-500 uppercase tracking-widest">{STAT_LABELS_FULL[k]}</p>
+                    <p className="text-lg font-bold font-mono text-stone-800">
+                      {current}{bonus > 0 && <span className="text-amber-700 text-sm ml-0.5">+{bonus}</span>}
+                    </p>
+                    <div className="flex items-center justify-center gap-1 mt-1">
+                      <button
+                        disabled={bonus <= 0}
+                        onClick={() => setAsi({ ...asi, [k]: bonus - 1 })}
+                        className="w-5 h-5 text-xs border border-stone-400 text-stone-500 disabled:opacity-30 hover:bg-stone-200/50 leading-none font-mono">−</button>
+                      <button
+                        disabled={!canAdd}
+                        onClick={() => setAsi({ ...asi, [k]: bonus + 1 })}
+                        className="w-5 h-5 text-xs border border-stone-400 text-stone-500 disabled:opacity-30 hover:bg-stone-200/50 leading-none font-mono">+</button>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* HP gain */}
+        <div className="space-y-2">
+          <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">Puntos de golpe</p>
+          <p className="text-xs text-stone-500 font-serif italic">
+            Tirá 1d{hitDie} + {conMod >= 0 ? `+${conMod}` : conMod} CON = entre {Math.max(1, 1 + conMod)} y {hitDie + conMod} PG.
+            Promedio: {avgHp}.
+          </p>
+          <div className="flex items-center gap-2">
+            <input
+              autoFocus={!needsSubclass}
+              type="number"
+              min={1}
+              value={hpInput}
+              onChange={e => setHpInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && canConfirm && onConfirm()}
+              placeholder={String(avgHp)}
+              className="flex-1 px-3 py-2 text-lg font-mono text-center border border-stone-500 bg-amber-50/80 focus:outline-none focus:border-amber-700"
+            />
+            <button onClick={() => setHpInput(String(avgHp))}
+              className="px-3 py-2 text-xs border border-stone-400 text-stone-600 hover:bg-stone-200/50 font-serif transition-colors">
+              Promedio ({avgHp})
+            </button>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-2 pt-2 border-t border-stone-400">
+          <button onClick={onCancel}
+            className="flex-1 px-3 py-2 text-sm border border-stone-400 text-stone-500 hover:bg-stone-200/50 font-serif transition-colors">
+            Cancelar
+          </button>
+          <button onClick={onConfirm} disabled={!canConfirm}
+            className="flex-1 px-3 py-2 text-sm bg-amber-800 hover:bg-amber-700 disabled:opacity-40 text-amber-100 font-serif transition-colors font-semibold">
+            ⬆ Confirmar nivel {nextLevel}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function SubclassOption({ index, selected, onSelect }: { index: string; selected: boolean; onSelect: () => void }) {
+  const { data: detail } = useQuery({
+    queryKey: dndKeys.subclass(index),
+    queryFn: () => dndApi.subclass(index),
+    staleTime: Infinity,
+  })
+
+  return (
+    <button
+      onClick={onSelect}
+      className={`text-left border p-3 transition-colors ${selected
+        ? 'border-amber-700 bg-amber-100/50 ring-1 ring-amber-600'
+        : 'border-stone-400 hover:border-amber-600 hover:bg-amber-50/30'
+        }`}
+    >
+      <p className="text-sm font-semibold text-stone-800 font-serif capitalize">{detail?.name ?? index.replace(/-/g, ' ')}</p>
+      {detail?.subclass_flavor && (
+        <p className="text-[10px] text-stone-500 font-serif uppercase tracking-wider mt-0.5">{detail.subclass_flavor}</p>
+      )}
+      {detail?.desc && (
+        <p className="text-xs text-stone-600 font-serif italic mt-1 line-clamp-2">{detail.desc}</p>
+      )}
+    </button>
   )
 }
