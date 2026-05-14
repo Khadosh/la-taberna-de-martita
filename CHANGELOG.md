@@ -4,6 +4,26 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 
 ---
 
+## [0.8.0] — 2026-05-14 · Hub de Campaña con Pestañas DM
+
+Rediseño de `/campaigns/:id` como hub del DM con barra de pestañas dedicadas para cada herramienta de partida.
+
+### 🎨 Layout & Landing
+- **Layout de Hub**: `/campaigns/:id` ahora es un layout con header (Dashboard + nombre + Pantalla DM) y tab-bar persistente sobre fondo pergamino cuadriculado.
+- **Cards detalladas de PJs**: Reemplazo de las cards planas por tarjetas estilo hoja de personaje con esquinas decoradas — PG con barra, CA / Iniciativa / Percepción Pasiva, las 6 características con modificadores, Bonus de Competencia, GACO, Salvaciones, Rasgos de Clase y Espacios de Conjuro.
+- **Sección PNJs**: Slot vacío en la landing con CTA al generador (placeholder hasta Fase 2).
+
+### 🗂 Pestañas (rutas hijas, deep-linkables)
+- `Lucha` — migración de la pantalla DM (1100+ líneas: iniciativa, NPCs, bestiary picker, notas, calc. de ataque, descansos) desde `/campaigns/:id/session` a `/campaigns/:id/lucha`.
+- `Generador de PNJ`, `Hechizos`, `Objetos`, `Habilidades`, `Taberna`, `Mapas` — skeletons navegables con tarjeta "Próximamente" + descripción del roadmap.
+- **Hechizos** ya enlaza al `/spellbook` global como atajo.
+
+### 🧹 Limpieza
+- Eliminado `$campaignId_.session.tsx` (ruta huérfana sin layout compartido).
+- Header propio de la pantalla DM reducido a action bar (descanso largo + combate); la navegación la aporta el layout.
+
+---
+
 ## [0.7.0] — 2026-05-14 · Feedback Sesión 1 & Compendio
 
 Basado en el feedback de la primera sesión de juego real con el party.

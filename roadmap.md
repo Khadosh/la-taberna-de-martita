@@ -21,6 +21,52 @@
 
 ---
 
+## 🎯 Prioridad actual: completar el Hub de Campaña
+
+Fase 1 ✅ terminada (2026-05-14) — layout con tab-bar, landing nueva con cards detalladas de PJs/PNJs, migración de la Pantalla DM a la pestaña `Lucha`, skeletons de las 6 pestañas restantes.
+
+### 🔜 Fase 2 — Generador de PNJ *(prioridad alta)*
+- Tabla nueva `npcs` (campaign_id, name, race, class, level, stats, role, sheet_json).
+- Form de creación: rol (antagonista / aliado / neutral), raza, clase, nivel.
+- Random: stats 4d6-drop-lowest, nombre por raza, HP/CA derivados.
+- Renderizar PNJs persistidos en la sección PNJs de la landing.
+
+### 🍺 Fase 3 — Taberna *(prioridad alta)*
+- Catálogos: armería, pociones, objetos mágicos con precios y pesos.
+- Acción "vender al party": mueve oro y agrega items al inventario del PJ.
+
+### 📦 Fase 4 — Objetos
+- Embeber `/equipment` del 5e API con filtros (arma / armadura / equipo).
+- Acción "dar a un PJ" → agregar al `sheet_json.items`.
+
+### ✨ Fase 5 — Hechizos embed
+- Extraer `<SpellbookPage/>` a componente reusable y montarlo en el tab.
+
+### 😊 Fase 6 — Habilidades
+- Referencia rápida para el DM: 18 skills, saving throws, `CONDITIONS`, descansos.
+
+### 🗺 Fase 7 — Mapas
+- v1: Supabase Storage + upload + display de imagen como mapa de sesión.
+- v2 (post-MVP): tokens drag-and-drop, fog of war.
+
+---
+
+## Otros pendientes (Sesión 2 feedback)
+
+Bugs y mejoras independientes del hub:
+- Al salir del personaje vuelve al dashboard en vez de a la campaña.
+- Peso de objetos no aparece en la hoja de algunos PJs.
+- Características: mostrar "Bonus de tirada" en vez de repetir el nombre.
+- Oro cerca de las características (quick stats strip).
+- XP: botón Enter al escribir, sumar al valor actual en vez de reemplazar.
+- Objetos: cantidad con +/- (no input directo), peso al agregar.
+- PG gestionable desde la pantalla DM (ya parcial).
+- Level up: botón accesible desde la hoja del jugador.
+- Slots de conjuros: restar al usar conjuro, botón de detalle más visible.
+- Borrar campañas y personajes.
+
+---
+
 ## Próximo paso lógico: lo que más duele ahora
 
 ### 🎲 Tirador de dados (prioridad alta)

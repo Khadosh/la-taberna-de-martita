@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { useState, useMemo } from 'react'
-import { dndApi, dndKeys, type SpellDetail } from '../../lib/dnd-api'
+import { dndApi, dndKeys } from '../../lib/dnd-api'
 
 export const Route = createFileRoute('/_authenticated/spellbook')({
   component: SpellbookPage,
@@ -110,7 +110,7 @@ function SpellbookPage() {
             >
               <option value="">Nivel</option>
               <option value={0}>Trucos (0)</option>
-              {[1,2,3,4,5,6,7,8,9].map(l => (
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(l => (
                 <option key={l} value={l}>Nv. {l}</option>
               ))}
             </select>
@@ -131,11 +131,10 @@ function SpellbookPage() {
                 <li key={s.index}>
                   <button
                     onClick={() => setSelected(s.index === selected ? null : s.index)}
-                    className={`w-full text-left px-3 py-2 text-sm font-serif transition-colors border-l-2 ${
-                      selected === s.index
+                    className={`w-full text-left px-3 py-2 text-sm font-serif transition-colors border-l-2 ${selected === s.index
                         ? 'bg-amber-900/10 border-amber-700 text-stone-800'
                         : 'border-transparent hover:bg-stone-900/5 hover:border-stone-400 text-stone-700'
-                    }`}
+                      }`}
                   >
                     <span className="flex items-center justify-between">
                       <span>{s.name}</span>

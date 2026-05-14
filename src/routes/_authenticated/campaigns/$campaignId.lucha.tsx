@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -7,7 +7,7 @@ import { CLASS_ICONS } from '../../../lib/class-meta'
 import { CONDITIONS, getSpellSlots } from '../../../lib/dnd-constants'
 import { dndApi, dndKeys, type MonsterSummary } from '../../../lib/dnd-api'
 
-export const Route = createFileRoute('/_authenticated/campaigns/$campaignId_/session')({
+export const Route = createFileRoute('/_authenticated/campaigns/$campaignId/lucha')({
   component: DmSession,
 })
 
@@ -110,15 +110,6 @@ function DmSession() {
   const [defenderId, setDefenderId] = useState('')
 
   // ── Queries ──────────────────────────────────────────────────────────────
-
-  const { data: campaign } = useQuery({
-    queryKey: ['campaign', campaignId],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('campaigns').select('*').eq('id', campaignId).single()
-      if (error) throw error
-      return data
-    },
-  })
 
   const { data: characters = [] } = useQuery({
     queryKey: ['campaign-characters', campaignId],
@@ -429,15 +420,11 @@ function DmSession() {
   const sortedCombatants = combatActive ? combatants : []
 
   return (
-    <div className="min-h-screen bg-stone-950 text-stone-100 flex flex-col">
+    <div className="bg-stone-950 text-stone-100 flex flex-col" style={{ minHeight: 'calc(100vh - 100px)' }}>
 
-      {/* Header */}
-      <header className="border-b border-stone-800 bg-stone-900 px-6 py-3 flex items-center gap-4 shrink-0">
-        <Link to="/campaigns/$campaignId" params={{ campaignId }} className="text-amber-400 hover:text-amber-200 text-sm font-serif transition-colors">
-          ← {campaign?.name ?? 'Campaña'}
-        </Link>
-        <div className="w-px h-4 bg-stone-700" />
-        <span className="text-stone-300 font-serif text-sm">Pantalla del DM</span>
+      {/* Action bar (no nav — that comes from the campaign layout) */}
+      <header className="border-b border-stone-800 bg-stone-900 px-6 py-2 flex items-center gap-3 shrink-0">
+        <span className="text-stone-400 font-serif text-sm">Pantalla del DM</span>
         <div className="flex-1" />
         {showLongRestConfirm ? (
           <div className="flex items-center gap-2">

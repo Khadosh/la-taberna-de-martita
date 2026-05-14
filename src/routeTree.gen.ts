@@ -20,7 +20,14 @@ import { Route as AuthenticatedCharactersNewRouteImport } from './routes/_authen
 import { Route as AuthenticatedCharactersCharacterIdRouteImport } from './routes/_authenticated/characters/$characterId'
 import { Route as AuthenticatedCampaignsNewRouteImport } from './routes/_authenticated/campaigns/new'
 import { Route as AuthenticatedCampaignsCampaignIdRouteImport } from './routes/_authenticated/campaigns/$campaignId'
-import { Route as AuthenticatedCampaignsCampaignIdSessionRouteImport } from './routes/_authenticated/campaigns/$campaignId_.session'
+import { Route as AuthenticatedCampaignsCampaignIdIndexRouteImport } from './routes/_authenticated/campaigns/$campaignId.index'
+import { Route as AuthenticatedCampaignsCampaignIdTabernaRouteImport } from './routes/_authenticated/campaigns/$campaignId.taberna'
+import { Route as AuthenticatedCampaignsCampaignIdPnjRouteImport } from './routes/_authenticated/campaigns/$campaignId.pnj'
+import { Route as AuthenticatedCampaignsCampaignIdObjetosRouteImport } from './routes/_authenticated/campaigns/$campaignId.objetos'
+import { Route as AuthenticatedCampaignsCampaignIdMapasRouteImport } from './routes/_authenticated/campaigns/$campaignId.mapas'
+import { Route as AuthenticatedCampaignsCampaignIdLuchaRouteImport } from './routes/_authenticated/campaigns/$campaignId.lucha'
+import { Route as AuthenticatedCampaignsCampaignIdHechizosRouteImport } from './routes/_authenticated/campaigns/$campaignId.hechizos'
+import { Route as AuthenticatedCampaignsCampaignIdHabilidadesRouteImport } from './routes/_authenticated/campaigns/$campaignId.habilidades'
 
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
@@ -81,11 +88,53 @@ const AuthenticatedCampaignsCampaignIdRoute =
     path: '/campaigns/$campaignId',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
-const AuthenticatedCampaignsCampaignIdSessionRoute =
-  AuthenticatedCampaignsCampaignIdSessionRouteImport.update({
-    id: '/campaigns/$campaignId_/session',
-    path: '/campaigns/$campaignId/session',
-    getParentRoute: () => AuthenticatedRoute,
+const AuthenticatedCampaignsCampaignIdIndexRoute =
+  AuthenticatedCampaignsCampaignIdIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedCampaignsCampaignIdRoute,
+  } as any)
+const AuthenticatedCampaignsCampaignIdTabernaRoute =
+  AuthenticatedCampaignsCampaignIdTabernaRouteImport.update({
+    id: '/taberna',
+    path: '/taberna',
+    getParentRoute: () => AuthenticatedCampaignsCampaignIdRoute,
+  } as any)
+const AuthenticatedCampaignsCampaignIdPnjRoute =
+  AuthenticatedCampaignsCampaignIdPnjRouteImport.update({
+    id: '/pnj',
+    path: '/pnj',
+    getParentRoute: () => AuthenticatedCampaignsCampaignIdRoute,
+  } as any)
+const AuthenticatedCampaignsCampaignIdObjetosRoute =
+  AuthenticatedCampaignsCampaignIdObjetosRouteImport.update({
+    id: '/objetos',
+    path: '/objetos',
+    getParentRoute: () => AuthenticatedCampaignsCampaignIdRoute,
+  } as any)
+const AuthenticatedCampaignsCampaignIdMapasRoute =
+  AuthenticatedCampaignsCampaignIdMapasRouteImport.update({
+    id: '/mapas',
+    path: '/mapas',
+    getParentRoute: () => AuthenticatedCampaignsCampaignIdRoute,
+  } as any)
+const AuthenticatedCampaignsCampaignIdLuchaRoute =
+  AuthenticatedCampaignsCampaignIdLuchaRouteImport.update({
+    id: '/lucha',
+    path: '/lucha',
+    getParentRoute: () => AuthenticatedCampaignsCampaignIdRoute,
+  } as any)
+const AuthenticatedCampaignsCampaignIdHechizosRoute =
+  AuthenticatedCampaignsCampaignIdHechizosRouteImport.update({
+    id: '/hechizos',
+    path: '/hechizos',
+    getParentRoute: () => AuthenticatedCampaignsCampaignIdRoute,
+  } as any)
+const AuthenticatedCampaignsCampaignIdHabilidadesRoute =
+  AuthenticatedCampaignsCampaignIdHabilidadesRouteImport.update({
+    id: '/habilidades',
+    path: '/habilidades',
+    getParentRoute: () => AuthenticatedCampaignsCampaignIdRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -94,12 +143,19 @@ export interface FileRoutesByFullPath {
   '/bestiary': typeof AuthenticatedBestiaryRoute
   '/spellbook': typeof AuthenticatedSpellbookRoute
   '/': typeof AuthenticatedIndexRoute
-  '/campaigns/$campaignId': typeof AuthenticatedCampaignsCampaignIdRoute
+  '/campaigns/$campaignId': typeof AuthenticatedCampaignsCampaignIdRouteWithChildren
   '/campaigns/new': typeof AuthenticatedCampaignsNewRoute
   '/characters/$characterId': typeof AuthenticatedCharactersCharacterIdRoute
   '/characters/new': typeof AuthenticatedCharactersNewRoute
   '/join/$campaignId': typeof AuthenticatedJoinCampaignIdRoute
-  '/campaigns/$campaignId/session': typeof AuthenticatedCampaignsCampaignIdSessionRoute
+  '/campaigns/$campaignId/habilidades': typeof AuthenticatedCampaignsCampaignIdHabilidadesRoute
+  '/campaigns/$campaignId/hechizos': typeof AuthenticatedCampaignsCampaignIdHechizosRoute
+  '/campaigns/$campaignId/lucha': typeof AuthenticatedCampaignsCampaignIdLuchaRoute
+  '/campaigns/$campaignId/mapas': typeof AuthenticatedCampaignsCampaignIdMapasRoute
+  '/campaigns/$campaignId/objetos': typeof AuthenticatedCampaignsCampaignIdObjetosRoute
+  '/campaigns/$campaignId/pnj': typeof AuthenticatedCampaignsCampaignIdPnjRoute
+  '/campaigns/$campaignId/taberna': typeof AuthenticatedCampaignsCampaignIdTabernaRoute
+  '/campaigns/$campaignId/': typeof AuthenticatedCampaignsCampaignIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
@@ -107,12 +163,18 @@ export interface FileRoutesByTo {
   '/bestiary': typeof AuthenticatedBestiaryRoute
   '/spellbook': typeof AuthenticatedSpellbookRoute
   '/': typeof AuthenticatedIndexRoute
-  '/campaigns/$campaignId': typeof AuthenticatedCampaignsCampaignIdRoute
   '/campaigns/new': typeof AuthenticatedCampaignsNewRoute
   '/characters/$characterId': typeof AuthenticatedCharactersCharacterIdRoute
   '/characters/new': typeof AuthenticatedCharactersNewRoute
   '/join/$campaignId': typeof AuthenticatedJoinCampaignIdRoute
-  '/campaigns/$campaignId/session': typeof AuthenticatedCampaignsCampaignIdSessionRoute
+  '/campaigns/$campaignId/habilidades': typeof AuthenticatedCampaignsCampaignIdHabilidadesRoute
+  '/campaigns/$campaignId/hechizos': typeof AuthenticatedCampaignsCampaignIdHechizosRoute
+  '/campaigns/$campaignId/lucha': typeof AuthenticatedCampaignsCampaignIdLuchaRoute
+  '/campaigns/$campaignId/mapas': typeof AuthenticatedCampaignsCampaignIdMapasRoute
+  '/campaigns/$campaignId/objetos': typeof AuthenticatedCampaignsCampaignIdObjetosRoute
+  '/campaigns/$campaignId/pnj': typeof AuthenticatedCampaignsCampaignIdPnjRoute
+  '/campaigns/$campaignId/taberna': typeof AuthenticatedCampaignsCampaignIdTabernaRoute
+  '/campaigns/$campaignId': typeof AuthenticatedCampaignsCampaignIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -122,12 +184,19 @@ export interface FileRoutesById {
   '/_authenticated/bestiary': typeof AuthenticatedBestiaryRoute
   '/_authenticated/spellbook': typeof AuthenticatedSpellbookRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
-  '/_authenticated/campaigns/$campaignId': typeof AuthenticatedCampaignsCampaignIdRoute
+  '/_authenticated/campaigns/$campaignId': typeof AuthenticatedCampaignsCampaignIdRouteWithChildren
   '/_authenticated/campaigns/new': typeof AuthenticatedCampaignsNewRoute
   '/_authenticated/characters/$characterId': typeof AuthenticatedCharactersCharacterIdRoute
   '/_authenticated/characters/new': typeof AuthenticatedCharactersNewRoute
   '/_authenticated/join/$campaignId': typeof AuthenticatedJoinCampaignIdRoute
-  '/_authenticated/campaigns/$campaignId_/session': typeof AuthenticatedCampaignsCampaignIdSessionRoute
+  '/_authenticated/campaigns/$campaignId/habilidades': typeof AuthenticatedCampaignsCampaignIdHabilidadesRoute
+  '/_authenticated/campaigns/$campaignId/hechizos': typeof AuthenticatedCampaignsCampaignIdHechizosRoute
+  '/_authenticated/campaigns/$campaignId/lucha': typeof AuthenticatedCampaignsCampaignIdLuchaRoute
+  '/_authenticated/campaigns/$campaignId/mapas': typeof AuthenticatedCampaignsCampaignIdMapasRoute
+  '/_authenticated/campaigns/$campaignId/objetos': typeof AuthenticatedCampaignsCampaignIdObjetosRoute
+  '/_authenticated/campaigns/$campaignId/pnj': typeof AuthenticatedCampaignsCampaignIdPnjRoute
+  '/_authenticated/campaigns/$campaignId/taberna': typeof AuthenticatedCampaignsCampaignIdTabernaRoute
+  '/_authenticated/campaigns/$campaignId/': typeof AuthenticatedCampaignsCampaignIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -142,7 +211,14 @@ export interface FileRouteTypes {
     | '/characters/$characterId'
     | '/characters/new'
     | '/join/$campaignId'
-    | '/campaigns/$campaignId/session'
+    | '/campaigns/$campaignId/habilidades'
+    | '/campaigns/$campaignId/hechizos'
+    | '/campaigns/$campaignId/lucha'
+    | '/campaigns/$campaignId/mapas'
+    | '/campaigns/$campaignId/objetos'
+    | '/campaigns/$campaignId/pnj'
+    | '/campaigns/$campaignId/taberna'
+    | '/campaigns/$campaignId/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
@@ -150,12 +226,18 @@ export interface FileRouteTypes {
     | '/bestiary'
     | '/spellbook'
     | '/'
-    | '/campaigns/$campaignId'
     | '/campaigns/new'
     | '/characters/$characterId'
     | '/characters/new'
     | '/join/$campaignId'
-    | '/campaigns/$campaignId/session'
+    | '/campaigns/$campaignId/habilidades'
+    | '/campaigns/$campaignId/hechizos'
+    | '/campaigns/$campaignId/lucha'
+    | '/campaigns/$campaignId/mapas'
+    | '/campaigns/$campaignId/objetos'
+    | '/campaigns/$campaignId/pnj'
+    | '/campaigns/$campaignId/taberna'
+    | '/campaigns/$campaignId'
   id:
     | '__root__'
     | '/_authenticated'
@@ -169,7 +251,14 @@ export interface FileRouteTypes {
     | '/_authenticated/characters/$characterId'
     | '/_authenticated/characters/new'
     | '/_authenticated/join/$campaignId'
-    | '/_authenticated/campaigns/$campaignId_/session'
+    | '/_authenticated/campaigns/$campaignId/habilidades'
+    | '/_authenticated/campaigns/$campaignId/hechizos'
+    | '/_authenticated/campaigns/$campaignId/lucha'
+    | '/_authenticated/campaigns/$campaignId/mapas'
+    | '/_authenticated/campaigns/$campaignId/objetos'
+    | '/_authenticated/campaigns/$campaignId/pnj'
+    | '/_authenticated/campaigns/$campaignId/taberna'
+    | '/_authenticated/campaigns/$campaignId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -257,40 +346,123 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedCampaignsCampaignIdRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/campaigns/$campaignId_/session': {
-      id: '/_authenticated/campaigns/$campaignId_/session'
-      path: '/campaigns/$campaignId/session'
-      fullPath: '/campaigns/$campaignId/session'
-      preLoaderRoute: typeof AuthenticatedCampaignsCampaignIdSessionRouteImport
-      parentRoute: typeof AuthenticatedRoute
+    '/_authenticated/campaigns/$campaignId/': {
+      id: '/_authenticated/campaigns/$campaignId/'
+      path: '/'
+      fullPath: '/campaigns/$campaignId/'
+      preLoaderRoute: typeof AuthenticatedCampaignsCampaignIdIndexRouteImport
+      parentRoute: typeof AuthenticatedCampaignsCampaignIdRoute
+    }
+    '/_authenticated/campaigns/$campaignId/taberna': {
+      id: '/_authenticated/campaigns/$campaignId/taberna'
+      path: '/taberna'
+      fullPath: '/campaigns/$campaignId/taberna'
+      preLoaderRoute: typeof AuthenticatedCampaignsCampaignIdTabernaRouteImport
+      parentRoute: typeof AuthenticatedCampaignsCampaignIdRoute
+    }
+    '/_authenticated/campaigns/$campaignId/pnj': {
+      id: '/_authenticated/campaigns/$campaignId/pnj'
+      path: '/pnj'
+      fullPath: '/campaigns/$campaignId/pnj'
+      preLoaderRoute: typeof AuthenticatedCampaignsCampaignIdPnjRouteImport
+      parentRoute: typeof AuthenticatedCampaignsCampaignIdRoute
+    }
+    '/_authenticated/campaigns/$campaignId/objetos': {
+      id: '/_authenticated/campaigns/$campaignId/objetos'
+      path: '/objetos'
+      fullPath: '/campaigns/$campaignId/objetos'
+      preLoaderRoute: typeof AuthenticatedCampaignsCampaignIdObjetosRouteImport
+      parentRoute: typeof AuthenticatedCampaignsCampaignIdRoute
+    }
+    '/_authenticated/campaigns/$campaignId/mapas': {
+      id: '/_authenticated/campaigns/$campaignId/mapas'
+      path: '/mapas'
+      fullPath: '/campaigns/$campaignId/mapas'
+      preLoaderRoute: typeof AuthenticatedCampaignsCampaignIdMapasRouteImport
+      parentRoute: typeof AuthenticatedCampaignsCampaignIdRoute
+    }
+    '/_authenticated/campaigns/$campaignId/lucha': {
+      id: '/_authenticated/campaigns/$campaignId/lucha'
+      path: '/lucha'
+      fullPath: '/campaigns/$campaignId/lucha'
+      preLoaderRoute: typeof AuthenticatedCampaignsCampaignIdLuchaRouteImport
+      parentRoute: typeof AuthenticatedCampaignsCampaignIdRoute
+    }
+    '/_authenticated/campaigns/$campaignId/hechizos': {
+      id: '/_authenticated/campaigns/$campaignId/hechizos'
+      path: '/hechizos'
+      fullPath: '/campaigns/$campaignId/hechizos'
+      preLoaderRoute: typeof AuthenticatedCampaignsCampaignIdHechizosRouteImport
+      parentRoute: typeof AuthenticatedCampaignsCampaignIdRoute
+    }
+    '/_authenticated/campaigns/$campaignId/habilidades': {
+      id: '/_authenticated/campaigns/$campaignId/habilidades'
+      path: '/habilidades'
+      fullPath: '/campaigns/$campaignId/habilidades'
+      preLoaderRoute: typeof AuthenticatedCampaignsCampaignIdHabilidadesRouteImport
+      parentRoute: typeof AuthenticatedCampaignsCampaignIdRoute
     }
   }
 }
+
+interface AuthenticatedCampaignsCampaignIdRouteChildren {
+  AuthenticatedCampaignsCampaignIdHabilidadesRoute: typeof AuthenticatedCampaignsCampaignIdHabilidadesRoute
+  AuthenticatedCampaignsCampaignIdHechizosRoute: typeof AuthenticatedCampaignsCampaignIdHechizosRoute
+  AuthenticatedCampaignsCampaignIdLuchaRoute: typeof AuthenticatedCampaignsCampaignIdLuchaRoute
+  AuthenticatedCampaignsCampaignIdMapasRoute: typeof AuthenticatedCampaignsCampaignIdMapasRoute
+  AuthenticatedCampaignsCampaignIdObjetosRoute: typeof AuthenticatedCampaignsCampaignIdObjetosRoute
+  AuthenticatedCampaignsCampaignIdPnjRoute: typeof AuthenticatedCampaignsCampaignIdPnjRoute
+  AuthenticatedCampaignsCampaignIdTabernaRoute: typeof AuthenticatedCampaignsCampaignIdTabernaRoute
+  AuthenticatedCampaignsCampaignIdIndexRoute: typeof AuthenticatedCampaignsCampaignIdIndexRoute
+}
+
+const AuthenticatedCampaignsCampaignIdRouteChildren: AuthenticatedCampaignsCampaignIdRouteChildren =
+  {
+    AuthenticatedCampaignsCampaignIdHabilidadesRoute:
+      AuthenticatedCampaignsCampaignIdHabilidadesRoute,
+    AuthenticatedCampaignsCampaignIdHechizosRoute:
+      AuthenticatedCampaignsCampaignIdHechizosRoute,
+    AuthenticatedCampaignsCampaignIdLuchaRoute:
+      AuthenticatedCampaignsCampaignIdLuchaRoute,
+    AuthenticatedCampaignsCampaignIdMapasRoute:
+      AuthenticatedCampaignsCampaignIdMapasRoute,
+    AuthenticatedCampaignsCampaignIdObjetosRoute:
+      AuthenticatedCampaignsCampaignIdObjetosRoute,
+    AuthenticatedCampaignsCampaignIdPnjRoute:
+      AuthenticatedCampaignsCampaignIdPnjRoute,
+    AuthenticatedCampaignsCampaignIdTabernaRoute:
+      AuthenticatedCampaignsCampaignIdTabernaRoute,
+    AuthenticatedCampaignsCampaignIdIndexRoute:
+      AuthenticatedCampaignsCampaignIdIndexRoute,
+  }
+
+const AuthenticatedCampaignsCampaignIdRouteWithChildren =
+  AuthenticatedCampaignsCampaignIdRoute._addFileChildren(
+    AuthenticatedCampaignsCampaignIdRouteChildren,
+  )
 
 interface AuthenticatedRouteChildren {
   AuthenticatedBestiaryRoute: typeof AuthenticatedBestiaryRoute
   AuthenticatedSpellbookRoute: typeof AuthenticatedSpellbookRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
-  AuthenticatedCampaignsCampaignIdRoute: typeof AuthenticatedCampaignsCampaignIdRoute
+  AuthenticatedCampaignsCampaignIdRoute: typeof AuthenticatedCampaignsCampaignIdRouteWithChildren
   AuthenticatedCampaignsNewRoute: typeof AuthenticatedCampaignsNewRoute
   AuthenticatedCharactersCharacterIdRoute: typeof AuthenticatedCharactersCharacterIdRoute
   AuthenticatedCharactersNewRoute: typeof AuthenticatedCharactersNewRoute
   AuthenticatedJoinCampaignIdRoute: typeof AuthenticatedJoinCampaignIdRoute
-  AuthenticatedCampaignsCampaignIdSessionRoute: typeof AuthenticatedCampaignsCampaignIdSessionRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedBestiaryRoute: AuthenticatedBestiaryRoute,
   AuthenticatedSpellbookRoute: AuthenticatedSpellbookRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
-  AuthenticatedCampaignsCampaignIdRoute: AuthenticatedCampaignsCampaignIdRoute,
+  AuthenticatedCampaignsCampaignIdRoute:
+    AuthenticatedCampaignsCampaignIdRouteWithChildren,
   AuthenticatedCampaignsNewRoute: AuthenticatedCampaignsNewRoute,
   AuthenticatedCharactersCharacterIdRoute:
     AuthenticatedCharactersCharacterIdRoute,
   AuthenticatedCharactersNewRoute: AuthenticatedCharactersNewRoute,
   AuthenticatedJoinCampaignIdRoute: AuthenticatedJoinCampaignIdRoute,
-  AuthenticatedCampaignsCampaignIdSessionRoute:
-    AuthenticatedCampaignsCampaignIdSessionRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
