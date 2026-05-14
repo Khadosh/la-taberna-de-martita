@@ -183,13 +183,16 @@ function CharacterSheet() {
     [equipmentList, equipSearch]
   )
 
-  const classFeatures = useMemo(() => {
+  const classFeaturesByLevel = useMemo(() => {
     if (!classLevels || !character) return []
     const seen = new Set<string>()
     return classLevels
       .filter(l => l.level <= character.level)
-      .flatMap(l => l.features)
-      .filter(f => seen.has(f.index) ? false : (seen.add(f.index), true))
+      .map(l => ({
+        level: l.level,
+        features: l.features.filter(f => seen.has(f.index) ? false : (seen.add(f.index), true)),
+      }))
+      .filter(({ features }) => features.length > 0)
   }, [classLevels, character])
 
   // ── Realtime ──────────────────────────────────────────────────────────────
@@ -1021,24 +1024,45 @@ function CharacterSheet() {
           <div className="flex-1 p-4">
             <SheetLabel>
               Habilidades de clase
-              {subclassDetail && <span className="font-serif normal-case tracking-normal ml-1">· {subclassDetail.subclass_flavor}: {subclassDetail.name}</span>}
+              {subclassDetail && <span className="font-serif normal-case tracking-normal ml-1 text-amber-700">· {subclassDetail.name}</span>}
             </SheetLabel>
-            <div className="mt-3">
-              {classFeatures.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5">
-                  {classFeatures.map(f => (
-                    <FeatureBadge key={f.index} index={f.index} name={f.name} onInfo={data => setModal({ kind: 'feature', data })} />
-                  ))}
-                </div>
-              ) : (
+            <div className="mt-3 space-y-4">
+              {classFeaturesByLevel.length === 0 && (
                 <p className="text-stone-400 text-xs font-serif italic">Cargando habilidades...</p>
               )}
+              {classFeaturesByLevel.map(({ level: lvl, features }) => (
+                <div key={lvl}>
+                  <p className="text-[10px] text-stone-400 font-serif tracking-widest uppercase border-b border-stone-300/60 pb-0.5 mb-2">
+                    Nivel {lvl}
+                    {lvl === level && <span className="ml-2 text-amber-600">★ Nivel actual</span>}
+                  </p>
+                  <div className="space-y-2">
+                    {features.map(f => (
+                      <FeatureCard
+                        key={f.index}
+                        index={f.index}
+                        name={f.name}
+                        isNew={lvl === level}
+                        onInfo={data => setModal({ kind: 'feature', data })}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
               {subclassFeatureList && subclassFeatureList.results.length > 0 && (
-                <div className="mt-4 pt-3 border-t border-stone-400/40">
-                  <p className="text-xs text-stone-500 font-serif italic mb-2">{subclassDetail?.subclass_flavor ?? 'Subclase'}</p>
-                  <div className="flex flex-wrap gap-1.5">
+                <div>
+                  <p className="text-[10px] text-stone-400 font-serif tracking-widest uppercase border-b border-amber-600/30 pb-0.5 mb-2">
+                    {subclassDetail?.subclass_flavor ?? 'Subclase'} · {subclassDetail?.name}
+                  </p>
+                  <div className="space-y-2">
                     {subclassFeatureList.results.map(f => (
-                      <FeatureBadge key={f.index} index={f.index} name={f.name} onInfo={data => setModal({ kind: 'feature', data })} />
+                      <FeatureCard
+                        key={f.index}
+                        index={f.index}
+                        name={f.name}
+                        isNew={false}
+                        onInfo={data => setModal({ kind: 'feature', data })}
+                      />
                     ))}
                   </div>
                 </div>
@@ -1417,18 +1441,53 @@ function TraitBadge({ index, name, isResistance, onInfo }: { index: string; name
   )
 }
 
-function FeatureBadge({ index, name, onInfo }: { index: string; name: string; onInfo: (f: FeatureDetail) => void }) {
+function featureActionTag(desc: string): string | null {
+  const d = desc.toLowerCase()
+  if (d.includes('bonus action')) return 'Acción bonus'
+  if (d.startsWith('as an action') || d.includes('you take the') && d.includes('action')) return 'Acción'
+  if (d.includes('reaction')) return 'Reacción'
+  return null
+}
+
+function FeatureCard({ index, name, isNew, onInfo }: { index: string; name: string; isNew: boolean; onInfo: (f: FeatureDetail) => void }) {
+  const [expanded, setExpanded] = useState(isNew)
   const { data: feature } = useQuery({
     queryKey: dndKeys.feature(index),
     queryFn: () => dndApi.feature(index),
     staleTime: Infinity,
   })
+
+  const firstPara = feature?.desc[0] ?? ''
+  const actionTag = firstPara ? featureActionTag(firstPara) : null
+  const hasMore = feature && (feature.desc.length > 1 || firstPara.length > 200)
+
   return (
-    <div className="flex items-center gap-1 border border-stone-400 px-2 py-0.5" style={{ background: 'rgba(200,170,110,0.15)' }}>
-      <span className="text-xs text-stone-600 font-serif capitalize">{name.replace(/-/g, ' ')}</span>
-      {feature && feature.desc.length > 0 && (
-        <button onClick={() => onInfo(feature)} className="text-stone-400 hover:text-amber-700 text-xs ml-0.5">ℹ</button>
+    <div className={`border p-3 transition-colors ${isNew ? 'border-amber-600/50 bg-amber-50/30' : 'border-stone-300/70'}`} style={{ background: isNew ? 'rgba(200,140,20,0.06)' : 'rgba(200,170,110,0.08)' }}>
+      <div className="flex items-start justify-between gap-2 mb-1">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {isNew && (
+            <span className="text-[9px] px-1.5 py-px bg-amber-700 text-amber-100 font-serif uppercase tracking-wide leading-tight">Nuevo</span>
+          )}
+          {actionTag && (
+            <span className="text-[9px] px-1.5 py-px border border-blue-400/50 text-blue-700 font-serif leading-tight">{actionTag}</span>
+          )}
+          <p className="text-sm font-semibold text-stone-800 font-serif">{name}</p>
+        </div>
+        {feature && feature.desc.length > 0 && (
+          <button onClick={() => onInfo(feature)} className="text-stone-300 hover:text-amber-700 text-sm shrink-0 transition-colors" title="Ver descripción completa">ℹ</button>
+        )}
+      </div>
+      {firstPara && (
+        <p className={`text-xs text-stone-600 font-serif leading-relaxed ${expanded ? '' : 'line-clamp-2'}`}>
+          {firstPara}
+        </p>
       )}
+      {hasMore && (
+        <button onClick={() => setExpanded(e => !e)} className="text-[10px] text-stone-400 hover:text-amber-700 mt-1 font-serif transition-colors">
+          {expanded ? '▲ menos' : '▼ ver más'}
+        </button>
+      )}
+      {!feature && <p className="text-xs text-stone-400 font-serif italic">Cargando...</p>}
     </div>
   )
 }
