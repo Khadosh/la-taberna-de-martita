@@ -197,11 +197,17 @@ Usamos [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## 📝 Changelog
 
-- **2026-05-14**: `feat: complete session 1 feedback loop`
-  - ✅ **UX/UI**: Rediseño de sección de equipamiento, botones de curar/daño rápidos, barra de XP con thresholds.
-  - ✅ **Combate**: Calculadora de ataque en pantalla DM (mínimo d20 necesario), auto-aplicación de CA por armadura/escudo.
-  - ✅ **Sistemas**: Modal de subida de nivel PRO (features API, subclase nv3, ASI nv4+), compendio de conjuros completo (`/spellbook`).
-  - ✅ **Fixes**: Navegación al salir de ficha, barra de HP en dashboard, eliminación de personajes.
+Para ver el historial detallado de cambios, consulta el archivo [CHANGELOG.md](file:///Users/joaquinnader/coding/personal/la-taberna-de-martita/CHANGELOG.md).
+
+- **2026-05-14**: `feat: complete session 1 feedback loop & rebranding`
+  - ✅ **Rebranding**: "La Taberna de Martita" con visuales atmosféricos.
+  - ✅ **Sistemas**: Realtime sync, Bestiario, Spellbook y mecánicas de descanso.
+  - ✅ **UX/UI**: Rediseño de habilidades, inventario compacto y wizard v2.
+- **2026-05-13**: `feat: production launch & dm screen`
+  - ✅ **Infra**: Deploy en Vercel, dominio custom y email transaccional.
+  - ✅ **GM**: Pantalla de sesión con iniciativa y notas.
+- **2026-05-12**: `chore: project initialization`
+  - ✅ **Setup**: Auth, Supabase RLS, Wizard de creación inicial.
 
 ---
 

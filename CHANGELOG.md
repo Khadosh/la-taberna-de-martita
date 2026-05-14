@@ -1,93 +1,92 @@
 # Changelog — La Taberna de Martita
 
-Todos los cambios notables ordenados cronológicamente.
+Todos los cambios notables ordenados cronológicamente, reflejando la evolución desde el setup inicial hasta las sesiones de juego reales.
 
 ---
 
-## [0.5.0] — 2026-05-13 · Producción & dominio custom
+## [0.7.0] — 2026-05-14 · Feedback Sesión 1 & Compendio
 
-- Deploy en Vercel (`la-taberna-de-martita.vercel.app`)
-- Dominio custom `la-taberna-de-martita.quest` vía Porkbun
-- Email transaccional con Resend + dominio custom
-  - SPF, DKIM, DMARC configurados
-- Recovery de contraseña funcional vía email
-- Fix: SPA 404 en refresh — `vercel.json` con rewrite a `index.html`
+Basado en el feedback de la primera sesión de juego real con el party.
+
+### 📖 Compendio y Bestiario
+- **Bestiario completo**: Nueva sección `/bestiary` con búsqueda de monstruos de D&D 5e API y visualización de stat blocks (HP, CA, acciones, habilidades).
+- **Spellbook (Libro de Hechizos)**: Buscador global de conjuros con filtros por nivel, clase y escuela en `/spellbook`.
+- **Integración en Combate**: Posibilidad de añadir monstruos directamente desde el bestiario al tracker de iniciativa del DM.
+
+### 🛡️ Pantalla de DM (Mejoras)
+- **Calculadora de Ataque**: Indicador del d20 mínimo necesario para impactar basado en el bono de ataque del NPC vs CA del objetivo.
+- **Gestión de Monedas**: Tracking de tesoro y loot (CP, SP, GP, PP) para NPCs.
+- **NPCs Personalizados**: Formulario extendido para crear NPCs con stats, tipo de criatura y loot específico.
+- **Visibilidad**: Fix de privacidad en notas y limpieza de interfaz para el GM.
+
+### 🧙 Hoja de Personaje & Wizard
+- **Habilidades de Clase**: Rediseño total con `FeatureCard` expandible para leer detalles de rasgos y subclases.
+- **Inventario Compacto**: Nueva vista de inventario optimizada con sistema de monedas integrado.
+- **Botones Rápidos**: Acceso directo para curar o dañar HP sin abrir el modal.
+- **Wizard V2**: Añadido paso de trasfondo (Background) y modo de entrada manual de estadísticas (Standard Array / Point Buy / Manual).
+
+---
+
+## [0.6.0] — 2026-05-14 · Rebranding & Mecánicas Core
+
+### 🎨 Rebranding Atmosférico
+- **Nueva Identidad**: El proyecto pasa de ser una app genérica a "La Taberna de Martita".
+- **Visuales**: Reemplazo de iconos genéricos por señales de taberna colgantes, favicons personalizados y estética de madera/hierro.
+- **UX Móvil**: Primera ronda de ajustes responsivos para que la hoja sea usable en teléfonos.
+
+### 🎲 Sistemas de Juego Avanzados
+- **Realtime Sync**: Sincronización instantánea de HP y condiciones entre DM y Jugadores vía Supabase Realtime (adiós al polling).
+- **Spell Slots**: Sistema de tracking de espacios de conjuro (niveles 1-9) con persistencia en DB.
+- **Mecánicas de Descanso**: Implementación de botones para Descanso Corto y Largo, automatizando la recuperación de HP y slots.
+- **Death Saves**: Tracker de tiradas de salvación contra la muerte funcional cuando el personaje cae a 0 HP.
+
+---
+
+## [0.5.0] — 2026-05-13 · Producción & Dominio Custom
+
+- **Deploy en Vercel**: Configuración de entorno de producción (`la-taberna-de-martita.quest`).
+- **Dominio & Email**: Integración con Porkbun y Resend para emails transaccionales (SPF, DKIM, DMARC).
+- **Auth Pro**: Flujo de recuperación de contraseña (password reset) completamente funcional vía email.
+- **Infra**: Fix de SPA 404 en refresh mediante `vercel.json` con rewrites.
 
 ---
 
 ## [0.4.0] — 2026-05-13 · Pantalla de DM
 
-- Nueva ruta `/campaigns/:id/session` (solo GM)
-- Panel izquierdo: personajes del party con HP optimista, condiciones
-- Tracker de iniciativa: agrega jugadores y NPCs, ordena por iniciativa, turno resaltado
-- Input rápido de NPCs: `"Goblin 25"` → Enter (nombre + HP, iniciativa auto-roll)
-- Edición inline de HP e iniciativa de NPCs
-- Notas de sesión con guardado automático (debounce 1.5s) a tabla `session_notes`
-- HP optimista en pantalla DM: igual que personaje, 600ms debounce al backend
-- Botón "Pantalla DM" en la vista de campaña (solo visible para GM)
+- **Ruta de Sesión**: Panel exclusivo para el Game Master con vista de party completa.
+- **Tracker de Iniciativa**: Sistema de orden dinámico, resaltado de turno actual y soporte para NPCs rápidos.
+- **Notas de Sesión**: Editor con autoguardado (debounce 1.5s) persistente por campaña.
+- **HP Optimista**: Sincronización de daño/cura con feedback inmediato en la pantalla del DM.
 
 ---
 
-## [0.3.0] — 2026-05-13 · Hoja de personaje completa
+## [0.3.0] — 2026-05-13 · Hoja de Personaje Completa
 
-### Estética
-- Rediseño total: estilo pergamino antiguo con bordes quemados
-- Fuente serif, fondo crema con gradiente radial, sombras internas
-
-### Retrato
-- Subir imagen propia (FileReader → Supabase Storage)
-- Generar con IA: fal.ai `flux/schnell` vía Supabase Edge Function
-  - Prompt automático basado en raza/clase/nombre
-  - API key guardada en Supabase Secrets (nunca expuesta al cliente)
-
-### Estado de combate
-- HP actual con +/− optimista (600ms debounce al backend)
-- CA (Armadura)
-- Barra de XP con umbrales por nivel (1–20), botón de subir nivel
-- 17 condiciones D&D 5e en español, badges removibles
-
-### Inventario
-- Tabla con nombre, cantidad, peso, notas
-- Capacidad de carga basada en FUE (`STR × 15 lb`)
-- Catálogo de equipamiento de D&D 5e API con búsqueda fuzzy
-- RLS: dueño escribe, miembros de campaña leen
-
-### Modales de info
-- Hechizos: descripción completa, nivel, escuela, componentes
-- Rasgos raciales: descripción de la API
-- Pericias: descripción + atributo asociado
+- **Estética de Pergamino**: Rediseño visual con bordes quemados, fondo crema y tipografía serif.
+- **Retratos con IA**: Integración con `fal.ai` (Flux) vía Supabase Edge Functions para generar retratos basados en raza/clase.
+- **Gestión de Combate**: HP, CA, Condiciones (17 estados en español) y barra de XP con umbrales de nivel (1-20).
+- **Inventario**: Sistema de peso (`STR x 15`) y búsqueda en catálogo oficial de equipo.
 
 ---
 
-## [0.2.0] — 2026-05-13 · Campañas & personajes base
+## [0.2.0] — 2026-05-13 · Campañas & Personajes Base
 
-- Dashboard con personajes propios, campañas como GM y como jugador
-- Creación de campaña (nombre)
-- Invite link por campaña (`/join/:id`)
-- Vista de campaña: jugadores, personajes, botón copiar invite
-- Asignar personaje a campaña desde la hoja
-- RLS: GM ve todos los personajes de su campaña; jugadores ven los de sus campañas
-- Política para que el GM pueda actualizar HP/condiciones de personajes ajenos
+- **Sistema de Campañas**: Creación de campañas y links de invitación (`/join/:id`).
+- **Gestión de Miembros**: Los jugadores pueden unir sus personajes a campañas.
+- **Seguridad (RLS)**: El DM tiene permisos de escritura sobre HP/Condiciones de los personajes de su campaña.
 
 ---
 
-## [0.1.0] — 2026-05-13 · Wizard de creación de personaje
+## [0.1.0] — 2026-05-13 · Wizard de Creación de Personaje
 
-- Wizard multi-paso integrado con D&D 5e API:
-  1. Nombre y raza (rasgos raciales desde API)
-  2. Clase (hit die, proficiencias, equipo inicial)
-  3. Stats (método point-buy o tirada, valores sugeridos por clase)
-  4. Trasfondo (descripción libre)
-  5. Hechizos (clases con magia, búsqueda por nombre)
-- Guarda en tabla `characters` con `sheet_json` flexible
+- **Wizard Multi-paso**: Flujo guiado consultando la D&D 5e API para traer razas, rasgos, clases y equipo inicial.
+- **JSON Flexible**: Implementación de `sheet_json` para guardar el estado complejo del personaje sin sobrecargar el esquema relacional.
 
 ---
 
-## [0.0.1] — 2026-05-12 · Auth & setup
+## [0.0.1] — 2026-05-12 · Auth & Setup
 
-- Vite + React 19 + TanStack Router (file-based) + TanStack Query
-- Supabase JS client, RLS base, tipos generados
-- Login, registro, recuperación de contraseña
-- Rutas protegidas con guard de sesión
-- Husky + commitlint (conventional commits)
-- Schema inicial: `profiles`, `campaigns`, `campaign_players`, `characters`, `character_inventory`, `session_notes`
+- **Stack Inicial**: React 19, TanStack Router (file-based), TanStack Query y Tailwind v4.
+- **Supabase**: Cliente singleton, generación de tipos de TypeScript y políticas RLS base.
+- **Dev Workflow**: Configuración de Husky y Commitlint para estandarizar Conventional Commits.
+- **Esquema DB**: Tablas iniciales para perfiles, campañas y personajes.
