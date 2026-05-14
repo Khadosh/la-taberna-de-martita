@@ -135,59 +135,81 @@ function CampaignDetail() {
                 const stats = c.stats as Record<string, number>
                 const icon = CLASS_ICONS[c.class] ?? '🎲'
                 const playerName = (c as unknown as { profiles: { username: string | null } | null }).profiles?.username
-                return (
-                  <li key={c.id}>
-                    <Link
-                      to="/characters/$characterId"
-                      params={{ characterId: c.id }}
-                      className="block bg-stone-900 border border-stone-800 rounded-xl p-4 hover:bg-stone-800/50 transition-colors"
-                    >
-                      {playerName && (
-                        <p className="text-[10px] text-stone-500 font-serif tracking-wider uppercase mb-1">Jugador: {playerName}</p>
-                      )}
-                      <div className="flex items-start justify-between mb-3">
-                        <div>
-                          <p className="font-semibold text-stone-100">{c.name}</p>
-                          <p className="text-xs text-stone-400 capitalize mt-0.5">{c.race} · {c.class} · Nv. {c.level}</p>
-                        </div>
-                        <span className="text-2xl">{icon}</span>
+                const isOwn = c.user_id === session.user.id
+                const canSeeFullSheet = isGm || isOwn
+                const conMod = Math.floor(((stats.con ?? 10) - 10) / 2)
+                const hitDie = (c.sheet_json as { hit_die?: number })?.hit_die ?? 8
+                const sheetMaxHp = (c.sheet_json as { max_hp?: number })?.max_hp
+                const estimatedMax = (hitDie + conMod) + (c.level - 1) * (Math.floor(hitDie / 2) + 1 + conMod)
+                const maxHp = sheetMaxHp ?? Math.max(estimatedMax, c.current_hp ?? 0)
+                const hpPct = c.current_hp != null ? Math.max(0, Math.min((c.current_hp / maxHp) * 100, 100)) : null
+                const ac = c.armor_class ?? (10 + Math.floor(((stats.dex ?? 10) - 10) / 2))
+
+                const cardInner = (
+                  <>
+                    {playerName && (
+                      <p className="text-[10px] text-stone-500 font-serif tracking-wider uppercase mb-1">
+                        {isOwn ? '— tu personaje —' : `Jugador: ${playerName}`}
+                      </p>
+                    )}
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <p className="font-semibold text-stone-100">{c.name}</p>
+                        <p className="text-xs text-stone-400 capitalize mt-0.5">{c.race} · {c.class} · Nv. {c.level}</p>
                       </div>
-                      {/* Combat summary */}
-                      <div className="flex items-center gap-3 mb-3">
-                        {c.current_hp != null && (() => {
-                          const conMod = Math.floor(((stats.con ?? 10) - 10) / 2)
-                          const hitDie = (c.sheet_json as { hit_die?: number })?.hit_die ?? 8
-                          const maxHp = hitDie + conMod
-                          const hpPct = Math.max(0, Math.min((c.current_hp / maxHp) * 100, 100))
-                          return (
-                            <div className="flex items-center gap-1.5 flex-1">
-                              <span className="text-xs text-stone-500">PV</span>
-                              <div className="flex-1 h-1.5 bg-stone-700 rounded-full overflow-hidden">
-                                <div className={`h-full rounded-full ${hpPct > 50 ? 'bg-green-700' : hpPct > 25 ? 'bg-amber-600' : 'bg-red-700'}`} style={{ width: `${hpPct}%` }} />
-                              </div>
-                              <span className="text-xs font-mono text-stone-400">{c.current_hp}/{maxHp}</span>
+                      <span className="text-2xl">{icon}</span>
+                    </div>
+                    {/* HP bar — always visible */}
+                    {hpPct != null && (
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <span className="text-xs text-stone-500">PV</span>
+                        <div className="flex-1 h-1.5 bg-stone-700 rounded-full overflow-hidden">
+                          <div className={`h-full rounded-full ${hpPct > 50 ? 'bg-green-700' : hpPct > 25 ? 'bg-amber-600' : 'bg-red-700'}`} style={{ width: `${hpPct}%` }} />
+                        </div>
+                        {canSeeFullSheet
+                          ? <span className="text-xs font-mono text-stone-400">{c.current_hp}/{maxHp}</span>
+                          : <span className="text-xs text-stone-500">{hpPct > 50 ? 'bien' : hpPct > 25 ? 'herido' : 'crítico'}</span>
+                        }
+                        <span className="text-xs font-mono text-stone-500 bg-stone-800 px-1.5 py-0.5 rounded">CA {ac}</span>
+                      </div>
+                    )}
+                    {/* Full stats — only for GM or own character */}
+                    {canSeeFullSheet && (
+                      <>
+                        <div className="grid grid-cols-6 gap-1 mt-2">
+                          {STAT_KEYS.map(k => (
+                            <div key={k} className="text-center">
+                              <p className="text-xs text-stone-500">{ABILITY_LABELS[k]}</p>
+                              <p className="text-sm font-mono font-bold">{stats[k] ?? '—'}</p>
+                              <p className="text-xs text-amber-400">{stats[k] ? abilityModifier(stats[k]) : ''}</p>
                             </div>
-                          )
-                        })()}
-                        <span className="text-xs font-mono text-stone-500 bg-stone-800 px-1.5 py-0.5 rounded">
-                          CA {c.armor_class ?? (10 + Math.floor(((stats.dex ?? 10) - 10) / 2))}
-                        </span>
+                          ))}
+                        </div>
                         {(() => {
                           const currency = (c.sheet_json as { currency?: { gold: number } })?.currency
                           if (!currency?.gold) return null
-                          return <span className="text-xs font-mono text-amber-400">{currency.gold} PO</span>
+                          return <p className="text-xs font-mono text-amber-400 mt-1.5">{currency.gold} PO</p>
                         })()}
+                      </>
+                    )}
+                  </>
+                )
+
+                return (
+                  <li key={c.id}>
+                    {canSeeFullSheet ? (
+                      <Link
+                        to="/characters/$characterId"
+                        params={{ characterId: c.id }}
+                        className="block bg-stone-900 border border-stone-800 rounded-xl p-4 hover:bg-stone-800/50 transition-colors"
+                      >
+                        {cardInner}
+                      </Link>
+                    ) : (
+                      <div className="bg-stone-900 border border-stone-800 rounded-xl p-4">
+                        {cardInner}
                       </div>
-                      <div className="grid grid-cols-6 gap-1">
-                        {STAT_KEYS.map(k => (
-                          <div key={k} className="text-center">
-                            <p className="text-xs text-stone-500">{ABILITY_LABELS[k]}</p>
-                            <p className="text-sm font-mono font-bold">{stats[k] ?? '—'}</p>
-                            <p className="text-xs text-amber-400">{stats[k] ? abilityModifier(stats[k]) : ''}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </Link>
+                    )}
                   </li>
                 )
               })}

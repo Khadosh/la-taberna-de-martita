@@ -1074,74 +1074,65 @@ function CharacterSheet() {
         {/* Inventory */}
         <SheetRow className="border-t border-stone-600">
           <div className="flex-1 p-4">
+            {/* Header: título + barra de peso */}
             <div className="flex items-center gap-3 mb-3">
               <SheetLabel>Inventario</SheetLabel>
               <div className="flex-1" />
-              <span className="text-xs font-serif text-stone-500">{totalWeight.toFixed(1)} / {carryCapacity} lb</span>
+              <div className="flex items-center gap-2">
+                <div className="w-24 h-1.5 border border-stone-400/40 overflow-hidden" style={{ background: 'rgba(200,170,110,0.15)' }}>
+                  <div className={`h-full transition-all ${weightColor}`} style={{ width: `${weightPct}%` }} />
+                </div>
+                <span className="text-xs font-serif text-stone-500 whitespace-nowrap">{totalWeight.toFixed(1)} / {carryCapacity} lb</span>
+              </div>
             </div>
-            {/* Currency */}
-            <div className="flex gap-2 mb-4">
+
+            {/* Currency compacta */}
+            <div className="flex items-center gap-4 mb-4 pb-3 border-b border-stone-300/40">
               {([
-                { key: 'gold', label: 'PO', color: 'text-amber-700', border: 'border-amber-600/50', bg: 'rgba(200,140,20,0.12)' },
-                { key: 'silver', label: 'PP', color: 'text-stone-500', border: 'border-stone-400/60', bg: 'rgba(180,180,180,0.10)' },
-                { key: 'copper', label: 'PC', color: 'text-orange-700', border: 'border-orange-700/40', bg: 'rgba(180,100,40,0.10)' },
-              ] as const).map(({ key, label, color, border, bg }) => (
-                <div key={key} className={`flex-1 border ${border} px-2 py-2 text-center`} style={{ background: bg }}>
-                  <p className={`text-[10px] font-display tracking-widest uppercase ${color} mb-1`}>{label}</p>
+                { key: 'gold'   as const, label: 'PO', color: 'text-amber-700' },
+                { key: 'silver' as const, label: 'PP', color: 'text-stone-500' },
+                { key: 'copper' as const, label: 'PC', color: 'text-orange-700' },
+              ]).map(({ key, label, color }) => (
+                <div key={key} className="flex items-center gap-1">
+                  <span className={`text-[10px] font-serif tracking-wider uppercase ${color}`}>{label}</span>
+                  {isOwner && (
+                    <button
+                      onClick={() => patchCurrency({ [key]: Math.max(0, currency[key] - 1) })}
+                      className="w-4 h-4 text-[10px] border border-stone-400 text-stone-500 hover:bg-stone-200/50 leading-none font-mono">−</button>
+                  )}
                   {isOwner && editingCoin === key ? (
-                    <div className="space-y-1">
-                      <p className="text-base font-mono font-bold text-stone-700">{currency[key]}</p>
-                      <div className="flex items-center gap-0.5 justify-center">
-                        <input
-                          type="number"
-                          value={coinInput}
-                          onChange={e => setCoinInput(e.target.value)}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') {
-                              patchCurrency({ [key]: Math.max(0, currency[key] + (parseInt(coinInput) || 0)) })
-                              setEditingCoin(null); setCoinInput('')
-                            }
-                            if (e.key === 'Escape') { setEditingCoin(null); setCoinInput('') }
-                          }}
-                          autoFocus
-                          placeholder="±0"
-                          className="w-12 text-center text-sm font-mono border border-stone-400 bg-white/70 focus:outline-none py-0.5"
-                        />
-                        <button onClick={() => {
+                    <input
+                      type="number"
+                      value={coinInput}
+                      onChange={e => setCoinInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
                           patchCurrency({ [key]: Math.max(0, currency[key] + (parseInt(coinInput) || 0)) })
                           setEditingCoin(null); setCoinInput('')
-                        }} className="text-[10px] px-1 py-0.5 bg-stone-800 hover:bg-stone-700 text-amber-300 leading-none">OK</button>
-                        <button onClick={() => { setEditingCoin(null); setCoinInput('') }}
-                          className="text-stone-400 hover:text-stone-600 text-xs leading-none">✕</button>
-                      </div>
-                    </div>
+                        }
+                        if (e.key === 'Escape') { setEditingCoin(null); setCoinInput('') }
+                      }}
+                      onBlur={() => { setEditingCoin(null); setCoinInput('') }}
+                      autoFocus
+                      placeholder="±0"
+                      className="w-10 text-center text-xs font-mono border border-stone-400 bg-white/70 focus:outline-none py-0.5"
+                    />
                   ) : (
-                    <div>
-                      <p
-                        className={`text-base font-mono font-bold text-stone-700 mb-1 ${isOwner ? 'cursor-pointer hover:text-amber-800' : ''}`}
-                        title={isOwner ? 'Clic para sumar o restar' : undefined}
-                        onClick={() => { if (isOwner) { setCoinInput(''); setEditingCoin(key) } }}
-                      >
-                        {currency[key]}
-                      </p>
-                      {isOwner && (
-                        <div className="flex items-center justify-center gap-1">
-                          <button
-                            onClick={() => patchCurrency({ [key]: Math.max(0, currency[key] - 1) })}
-                            className="w-5 h-5 text-xs border border-stone-400 text-stone-500 hover:bg-stone-200/50 leading-none font-mono">−</button>
-                          <button
-                            onClick={() => patchCurrency({ [key]: currency[key] + 1 })}
-                            className="w-5 h-5 text-xs border border-stone-400 text-stone-500 hover:bg-stone-200/50 leading-none font-mono">+</button>
-                        </div>
-                      )}
-                    </div>
+                    <span
+                      className={`text-sm font-mono font-bold text-stone-700 min-w-[1.5rem] text-center ${isOwner ? 'cursor-pointer hover:text-amber-800' : ''}`}
+                      title={isOwner ? 'Clic para sumar o restar' : undefined}
+                      onClick={() => { if (isOwner) { setCoinInput(''); setEditingCoin(key) } }}
+                    >
+                      {currency[key]}
+                    </span>
+                  )}
+                  {isOwner && (
+                    <button
+                      onClick={() => patchCurrency({ [key]: currency[key] + 1 })}
+                      className="w-4 h-4 text-[10px] border border-stone-400 text-stone-500 hover:bg-stone-200/50 leading-none font-mono">+</button>
                   )}
                 </div>
               ))}
-            </div>
-
-            <div className="h-2 border border-stone-400 overflow-hidden mb-4" style={{ background: 'rgba(200,170,110,0.2)' }}>
-              <div className={`h-full transition-all ${weightColor}`} style={{ width: `${weightPct}%` }} />
             </div>
 
             {/* Equipped items — prominent section */}
@@ -1219,8 +1210,8 @@ function CharacterSheet() {
                         <td className="text-center">
                           <div className="flex items-center justify-center gap-1.5">
                             <button onClick={() => toggleEquip(item.id)}
-                              className={`text-[10px] px-1.5 py-0.5 border font-serif transition-colors ${equippedItemIds.has(item.id) ? 'border-amber-600/60 text-amber-800 bg-amber-100/40 hover:bg-amber-200/50' : 'border-stone-400 text-stone-500 hover:border-amber-700 hover:text-amber-700'}`}>
-                              {equippedItemIds.has(item.id) ? '✓ Equipado' : 'Equipar'}
+                              className={`text-[10px] px-1.5 py-0.5 border font-serif transition-colors whitespace-nowrap ${equippedItemIds.has(item.id) ? 'border-amber-600/60 text-amber-800 bg-amber-100/40 hover:bg-amber-200/50' : 'border-stone-400 text-stone-500 hover:border-amber-700 hover:text-amber-700'}`}>
+                              {equippedItemIds.has(item.id) ? '✓ Equip.' : 'Equipar'}
                             </button>
                             <button onClick={() => removeInventoryItem(item.id)} className="text-stone-300 hover:text-red-700 text-xs">✕</button>
                           </div>

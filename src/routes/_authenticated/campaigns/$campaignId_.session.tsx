@@ -91,10 +91,6 @@ function DmSession() {
   // Loot display
   const [lootOpenFor, setLootOpenFor] = useState<string | null>(null)
 
-  // Currency editing (per-character inline)
-  const [editingCurrency, setEditingCurrency] = useState<{ id: string; coin: 'gold' | 'silver' | 'copper' } | null>(null)
-  const [currencyInput, setCurrencyInput] = useState('')
-
   // Notes state
   const [noteTitle, setNoteTitle] = useState('')
   const [noteBody, setNoteBody] = useState('')
@@ -193,17 +189,6 @@ function DmSession() {
 
   const patchCharacter = async (id: string, patch: Record<string, unknown>) => {
     await supabase.from('characters').update(patch as never).eq('id', id)
-    queryClient.invalidateQueries({ queryKey: ['campaign-characters', campaignId] })
-  }
-
-  const patchCharacterCurrency = async (c: Character, patch: Partial<{ gold: number; silver: number; copper: number }>) => {
-    const current = c.sheet_json.currency ?? { gold: 0, silver: 0, copper: 0 }
-    const next = { ...current, ...patch }
-    // clamp to non-negative
-    next.gold = Math.max(0, next.gold)
-    next.silver = Math.max(0, next.silver)
-    next.copper = Math.max(0, next.copper)
-    await supabase.from('characters').update({ sheet_json: { ...c.sheet_json, currency: next } as never }).eq('id', c.id)
     queryClient.invalidateQueries({ queryKey: ['campaign-characters', campaignId] })
   }
 
@@ -579,64 +564,6 @@ function DmSession() {
                           {[0,1,2].map(i => (
                             <div key={i} className={`w-3 h-3 rounded-full border ${i < ds.failures ? 'bg-red-700 border-red-600' : 'border-stone-700'}`} />
                           ))}
-                        </div>
-                      </div>
-                    )
-                  })()}
-
-                  {/* Currency */}
-                  {(() => {
-                    const currency = c.sheet_json.currency ?? { gold: 0, silver: 0, copper: 0 }
-                    const coins = [
-                      { key: 'gold'   as const, label: 'PO', color: 'text-amber-400', bg: 'bg-amber-900/30', border: 'border-amber-800/50' },
-                      { key: 'silver' as const, label: 'PP', color: 'text-stone-400',  bg: 'bg-stone-800/40', border: 'border-stone-700/60' },
-                      { key: 'copper' as const, label: 'PC', color: 'text-orange-500', bg: 'bg-orange-900/20', border: 'border-orange-800/40' },
-                    ]
-                    return (
-                      <div className="pt-2 border-t border-stone-800">
-                        <p className="text-[10px] text-stone-600 uppercase tracking-widest font-serif mb-1.5">Monedas</p>
-                        <div className="flex gap-1.5">
-                          {coins.map(({ key, label, color, bg, border }) => {
-                            const isEditing = editingCurrency?.id === c.id && editingCurrency?.coin === key
-                            return (
-                              <div key={key} className={`flex-1 ${bg} border ${border} rounded px-1 py-1 text-center`}>
-                                <p className={`text-[9px] font-serif tracking-widest uppercase ${color} mb-0.5`}>{label}</p>
-                                <div className="flex items-center justify-center gap-0.5">
-                                  <button
-                                    onClick={() => patchCharacterCurrency(c, { [key]: currency[key] - 1 })}
-                                    className="w-3.5 h-3.5 text-[9px] border border-stone-700 text-stone-500 hover:bg-stone-800 rounded leading-none"
-                                  >−</button>
-                                  {isEditing ? (
-                                    <input
-                                      autoFocus
-                                      value={currencyInput}
-                                      onChange={e => setCurrencyInput(e.target.value)}
-                                      onBlur={() => {
-                                        patchCharacterCurrency(c, { [key]: parseInt(currencyInput) || 0 })
-                                        setEditingCurrency(null)
-                                      }}
-                                      onKeyDown={e => {
-                                        if (e.key === 'Enter') { patchCharacterCurrency(c, { [key]: parseInt(currencyInput) || 0 }); setEditingCurrency(null) }
-                                        if (e.key === 'Escape') setEditingCurrency(null)
-                                      }}
-                                      className="w-8 text-center text-xs font-mono bg-transparent border-b border-stone-500 focus:outline-none text-amber-300"
-                                    />
-                                  ) : (
-                                    <button
-                                      onClick={() => { setCurrencyInput(String(currency[key])); setEditingCurrency({ id: c.id, coin: key }) }}
-                                      className={`text-xs font-mono font-bold ${color} hover:opacity-80 min-w-[1.5rem] text-center`}
-                                    >
-                                      {currency[key]}
-                                    </button>
-                                  )}
-                                  <button
-                                    onClick={() => patchCharacterCurrency(c, { [key]: currency[key] + 1 })}
-                                    className="w-3.5 h-3.5 text-[9px] border border-stone-700 text-stone-500 hover:bg-stone-800 rounded leading-none"
-                                  >+</button>
-                                </div>
-                              </div>
-                            )
-                          })}
                         </div>
                       </div>
                     )
