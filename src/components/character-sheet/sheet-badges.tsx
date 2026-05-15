@@ -1,0 +1,150 @@
+import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { dndApi, dndKeys } from '../../lib/dnd-api'
+import type { SpellDetail, TraitDetail, SkillDetail, FeatureDetail } from '../../lib/dnd-api'
+import type { InfoModalData } from './types'
+import { parchmentStyle } from './sheet-primitives'
+
+// ── Info Modal ────────────────────────────────────────────────────────────────
+
+export function InfoModal({ modal, onClose }: { modal: InfoModalData; onClose: () => void }) {
+  let title = '', subtitle = '', body = ''
+  if (modal.kind === 'spell') {
+    const s = modal.data
+    title = s.name; subtitle = `Nivel ${s.level} · ${s.school.name} · ${s.casting_time}`; body = s.desc[0] ?? ''
+  } else if (modal.kind === 'trait') {
+    title = modal.data.name; subtitle = 'Rasgo racial'; body = modal.data.desc.join('\n\n')
+  } else if (modal.kind === 'feature') {
+    const f = modal.data
+    title = f.name
+    subtitle = `Nivel ${f.level} · ${f.subclass ? f.subclass.name : f.class.name}`
+    body = f.desc.join('\n\n')
+  } else {
+    const sk = modal.data; title = sk.name; subtitle = `Pericia · ${sk.ability_score.name}`; body = sk.desc.join('\n\n')
+  }
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div
+        className="border-4 border-double border-stone-700 max-w-md w-full p-6 space-y-3"
+        style={{ ...parchmentStyle, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between border-b border-stone-400 pb-3">
+          <div>
+            <h3 className="font-bold text-stone-800 font-serif text-lg">{title}</h3>
+            <p className="text-xs text-stone-500 font-serif italic mt-0.5">{subtitle}</p>
+          </div>
+          <button onClick={onClose} className="text-stone-400 hover:text-stone-700 text-lg font-serif">✕</button>
+        </div>
+        {modal.kind === 'spell' && (
+          <div className="grid grid-cols-2 gap-1 text-xs text-stone-500 font-serif">
+            <span>Alcance: {modal.data.range}</span>
+            <span>Duración: {modal.data.duration}</span>
+            <span>Componentes: {modal.data.components.join(', ')}</span>
+          </div>
+        )}
+        <p className="text-sm text-stone-700 leading-relaxed font-serif max-h-52 overflow-y-auto italic whitespace-pre-line">{body}</p>
+      </div>
+    </div>
+  )
+}
+
+// ── Spell Badge ───────────────────────────────────────────────────────────────
+
+export function SpellBadge({ index, onInfo }: { index: string; onInfo: (s: SpellDetail) => void }) {
+  const { data: spell } = useQuery({ queryKey: dndKeys.spell(index), queryFn: () => dndApi.spell(index) })
+  return (
+    <div className="flex items-center gap-1.5 border border-stone-400 px-3 py-2" style={{ background: 'rgba(200,170,110,0.15)' }}>
+      <span className="text-sm text-stone-700 flex-1 capitalize font-serif">{index.replace(/-/g, ' ')}</span>
+      {spell && (
+        <button onClick={() => onInfo(spell)}
+          className="text-[10px] px-1.5 py-0.5 border border-amber-700/60 text-amber-800 hover:bg-amber-100/50 font-serif transition-colors leading-none">
+          Ver
+        </button>
+      )}
+    </div>
+  )
+}
+
+// ── Trait Badge ───────────────────────────────────────────────────────────────
+
+export function TraitBadge({ index, name, isResistance, onInfo }: {
+  index: string; name: string; isResistance?: boolean; onInfo: (t: TraitDetail) => void
+}) {
+  const { data: trait } = useQuery({ queryKey: dndKeys.trait(index), queryFn: () => dndApi.trait(index) })
+  return (
+    <div
+      className={`flex items-center gap-1 border px-2 py-0.5 ${isResistance ? 'border-blue-500/50' : 'border-stone-400'}`}
+      style={{ background: isResistance ? 'rgba(59,130,246,0.08)' : 'rgba(200,170,110,0.15)' }}
+    >
+      {isResistance && <span className="text-blue-500 text-[10px]">🛡</span>}
+      <span className={`text-xs font-serif ${isResistance ? 'text-blue-800' : 'text-stone-600'}`}>{name}</span>
+      {trait && <button onClick={() => onInfo(trait)} className={`text-xs ml-0.5 ${isResistance ? 'text-blue-400 hover:text-blue-700' : 'text-stone-400 hover:text-amber-700'}`}>ℹ</button>}
+    </div>
+  )
+}
+
+// ── Skill Badge ───────────────────────────────────────────────────────────────
+
+export function SkillBadge({ index, onInfo }: { index: string; onInfo: (s: SkillDetail) => void }) {
+  const skillIndex = index.replace('skill-', '')
+  const { data: skill } = useQuery({ queryKey: dndKeys.skill(skillIndex), queryFn: () => dndApi.skill(skillIndex) })
+  return (
+    <div className="flex items-center gap-1 border border-amber-700/60 px-2 py-0.5 bg-amber-100/40">
+      <span className="text-xs text-amber-800 font-serif capitalize">{skillIndex.replace(/-/g, ' ')}</span>
+      {skill && <button onClick={() => onInfo(skill)} className="text-amber-500 hover:text-amber-900 text-xs ml-0.5">ℹ</button>}
+    </div>
+  )
+}
+
+// ── Feature Card ──────────────────────────────────────────────────────────────
+
+function featureActionTag(desc: string): string | null {
+  const d = desc.toLowerCase()
+  if (d.includes('bonus action')) return 'Acción bonus'
+  if (d.startsWith('as an action') || d.includes('you take the') && d.includes('action')) return 'Acción'
+  if (d.includes('reaction')) return 'Reacción'
+  return null
+}
+
+export function FeatureCard({ index, name, isNew, onInfo }: {
+  index: string; name: string; isNew: boolean; onInfo: (f: FeatureDetail) => void
+}) {
+  const [expanded, setExpanded] = useState(isNew)
+  const { data: feature } = useQuery({
+    queryKey: dndKeys.feature(index),
+    queryFn: () => dndApi.feature(index),
+    staleTime: Infinity,
+  })
+
+  const firstPara = feature?.desc[0] ?? ''
+  const actionTag = firstPara ? featureActionTag(firstPara) : null
+  const hasMore = feature && (feature.desc.length > 1 || firstPara.length > 200)
+
+  return (
+    <div
+      className={`border p-3 transition-colors ${isNew ? 'border-amber-600/50 bg-amber-50/30' : 'border-stone-300/70'}`}
+      style={{ background: isNew ? 'rgba(200,140,20,0.06)' : 'rgba(200,170,110,0.08)' }}
+    >
+      <div className="flex items-start justify-between gap-2 mb-1">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {isNew && <span className="text-[9px] px-1.5 py-px bg-amber-700 text-amber-100 font-serif uppercase tracking-wide leading-tight">Nuevo</span>}
+          {actionTag && <span className="text-[9px] px-1.5 py-px border border-blue-400/50 text-blue-700 font-serif leading-tight">{actionTag}</span>}
+          <p className="text-sm font-semibold text-stone-800 font-serif">{name}</p>
+        </div>
+        {feature && feature.desc.length > 0 && (
+          <button onClick={() => onInfo(feature)} className="text-stone-300 hover:text-amber-700 text-sm shrink-0 transition-colors" title="Ver descripción completa">ℹ</button>
+        )}
+      </div>
+      {firstPara && (
+        <p className={`text-xs text-stone-600 font-serif leading-relaxed ${expanded ? '' : 'line-clamp-2'}`}>{firstPara}</p>
+      )}
+      {hasMore && (
+        <button onClick={() => setExpanded(e => !e)} className="text-[10px] text-stone-400 hover:text-amber-700 mt-1 font-serif transition-colors">
+          {expanded ? '▲ menos' : '▼ ver más'}
+        </button>
+      )}
+      {!feature && <p className="text-xs text-stone-400 font-serif italic">Cargando...</p>}
+    </div>
+  )
+}
