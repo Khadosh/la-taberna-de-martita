@@ -218,12 +218,27 @@ function Taberna() {
   return (
     <main className="max-w-5xl mx-auto px-4 sm:px-8 py-8">
 
-      <div className="mb-5">
-        <h2 className="text-2xl font-display tracking-wide text-stone-900 mb-1">🍺 La Taberna</h2>
-        <p className="text-sm font-serif italic text-stone-600">
+      {/* Ambient Header Image */}
+      <div className="relative h-64 sm:h-80 w-full mb-8 overflow-hidden rounded-sm border border-stone-400/30 shadow-lg">
+        <img 
+          src="/assets/images/tavern_bg.png" 
+          alt="Ambiente de la Taberna" 
+          className="w-full h-full object-cover opacity-90 sepia-[0.2]"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-stone-100 via-transparent to-transparent opacity-60" />
+        <div className="absolute bottom-4 left-6">
+          <h2 className="text-3xl font-display tracking-widest text-stone-900 drop-shadow-sm uppercase">La Taberna de Martita</h2>
+          <p className="text-sm font-serif italic text-stone-800 bg-stone-100/40 backdrop-blur-sm px-2 inline-block rounded-sm">
+            Hogar de aventureros, rumores y comercio de contrabando.
+          </p>
+        </div>
+      </div>
+
+      <div className="mb-8 border-b border-stone-400/20 pb-4">
+        <p className="text-sm font-serif italic text-stone-600 max-w-2xl">
           {isGm
-            ? 'Gestioná la economía del party: comprá equipo o aceptá lo que quieran vender.'
-            : 'Comprá equipo para tu personaje o vendé lo que no necesités.'}
+            ? 'Gestioná la economía del party: comprá equipo o aceptá lo que quieran vender. El ambiente es cálido y el fuego crepita en el hogar.'
+            : 'Comprá equipo para tu personaje o vendé lo que no necesités. El tabernero te observa con curiosidad mientras limpias tu espada.'}
         </p>
       </div>
 

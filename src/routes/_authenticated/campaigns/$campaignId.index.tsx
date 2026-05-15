@@ -104,23 +104,8 @@ function CampaignHubLanding() {
 function GmView({ campaignId, characters, npcs }: { campaignId: string; characters: Character[]; npcs: any[] }) {
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-10">
-      <section>
-        <SectionHeader icon="🎯" label="Herramientas DM" />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {([
-            { to: '/campaigns/$campaignId/lucha', icon: '⚔️', label: 'Combate', hint: 'Iniciativa y encuentros' },
-            { to: '/campaigns/$campaignId/pnj', icon: '👤', label: 'PNJs', hint: 'Generar antagonistas' },
-            { to: '/campaigns/$campaignId/mapas', icon: '🗺️', label: 'Mapas', hint: 'Gestionar locaciones' },
-            { to: '/campaigns/$campaignId/taberna', icon: '🍺', label: 'Taberna', hint: 'Generador de ambiente' },
-          ] as { to: '/campaigns/$campaignId/lucha' | '/campaigns/$campaignId/pnj' | '/campaigns/$campaignId/mapas' | '/campaigns/$campaignId/taberna'; icon: string; label: string; hint: string }[]).map(tool => (
-            <Link key={tool.to} to={tool.to} params={{ campaignId }} className="block border border-stone-400/30 bg-amber-100/40 hover:bg-amber-100/70 transition-colors p-4 text-center">
-              <span className="text-2xl block mb-1">{tool.icon}</span>
-              <p className="text-sm font-display font-bold text-stone-900">{tool.label}</p>
-              <p className="text-[11px] italic text-stone-600 mt-0.5">{tool.hint}</p>
-            </Link>
-          ))}
-        </div>
-      </section>
+      {/* Characters and NPCs only, tools are in the top tabs */}
+
 
       <section>
         <SectionHeader icon="📜" label={`Party · ${characters.length} PJ${characters.length !== 1 ? 's' : ''}`} />
