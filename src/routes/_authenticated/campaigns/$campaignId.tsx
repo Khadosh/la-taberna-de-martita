@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
 import { useState } from 'react'
 import { supabase } from '../../../lib/supabase'
+import { DiceModule } from '../../../lib/dice'
 
 export const Route = createFileRoute('/_authenticated/campaigns/$campaignId')({
   component: CampaignLayout,
@@ -39,6 +40,7 @@ function CampaignLayout() {
   const { session } = Route.useRouteContext() as { session: Session }
   const matchRoute = useMatchRoute()
   const [copied, setCopied] = useState(false)
+  const [showDice, setShowDice] = useState(false)
 
   const { data: campaign, isLoading } = useQuery({
     queryKey: ['campaign', campaignId],
@@ -87,6 +89,12 @@ function CampaignLayout() {
             >
               {copied ? '¡Copiado!' : 'Copiar invite'}
             </button>
+            <button
+              onClick={() => setShowDice(true)}
+              className="px-3 py-1.5 text-xs sm:text-sm rounded bg-amber-900/40 hover:bg-amber-800/60 text-amber-200 transition-colors font-serif flex items-center gap-1.5 border border-amber-700/40"
+            >
+              <span>🎲</span> Dados
+            </button>
             <Link
               to="/campaigns/$campaignId/lucha"
               params={{ campaignId }}
@@ -128,6 +136,9 @@ function CampaignLayout() {
 
       {/* Outlet — child renders */}
       <Outlet />
+
+      {/* Dice Module Overlay */}
+      <DiceModule isOpen={showDice} onClose={() => setShowDice(false)} />
     </div>
   )
 }

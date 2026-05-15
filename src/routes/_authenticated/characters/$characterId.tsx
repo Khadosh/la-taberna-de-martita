@@ -11,7 +11,7 @@ import {
 } from '../../../lib/dnd-api'
 import type { SpellDetail, TraitDetail, SkillDetail, FeatureDetail } from '../../../lib/dnd-api'
 import { CONDITIONS, XP_THRESHOLDS, getSpellSlots, isWarlock } from '../../../lib/dnd-constants'
-
+import { DiceModule } from '../../../lib/dice'
 export const Route = createFileRoute('/_authenticated/characters/$characterId')({
   component: CharacterSheet,
 })
@@ -87,6 +87,9 @@ function CharacterSheet() {
   const [shortRestHd, setShortRestHd] = useState(1)
   const [shortRestHpInput, setShortRestHpInput] = useState('')
   const [showLongRestConfirm, setShowLongRestConfirm] = useState(false)
+
+  // Dice Module
+  const [showDice, setShowDice] = useState(false)
 
   // ── Queries ───────────────────────────────────────────────────────────────
 
@@ -554,10 +557,16 @@ function CharacterSheet() {
               <button onClick={() => setAssigningCampaign(false)} className="text-stone-500 hover:text-stone-300 text-sm">✕</button>
             </div>
           ) : (
-            <button onClick={() => { setAssigningCampaign(true); setSelectedCampaignId(character.campaign_id ?? '') }}
-              className="text-xs px-2.5 py-1 border border-stone-700 hover:border-stone-500 text-stone-400 hover:text-stone-200 transition-colors shrink-0 font-serif">
-              {character.campaign_id ? '✦ Campaña' : '+ Campaña'}
-            </button>
+            <div className="flex items-center gap-2 shrink-0">
+              <button onClick={() => setShowDice(true)}
+                className="text-xs px-2.5 py-1 border border-amber-800 hover:border-amber-600 text-amber-500 hover:text-amber-400 transition-colors font-serif bg-amber-900/20">
+                🎲 Dados
+              </button>
+              <button onClick={() => { setAssigningCampaign(true); setSelectedCampaignId(character.campaign_id ?? '') }}
+                className="text-xs px-2.5 py-1 border border-stone-700 hover:border-stone-500 text-stone-400 hover:text-stone-200 transition-colors font-serif">
+                {character.campaign_id ? '✦ Campaña' : '+ Campaña'}
+              </button>
+            </div>
           )
         )}
       </header>
@@ -1298,6 +1307,8 @@ function CharacterSheet() {
         )}
 
       </main>
+      
+      <DiceModule isOpen={showDice} onClose={() => setShowDice(false)} />
 
       {/* Level up modal */}
       {showLevelUpModal && (

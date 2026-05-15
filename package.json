@@ -17,6 +17,9 @@
   },
   "dependencies": {
     "@fal-ai/client": "^1.10.1",
+    "@react-three/cannon": "^6.6.0",
+    "@react-three/drei": "^10.7.7",
+    "@react-three/fiber": "^9.6.1",
     "@sentry/react": "^10.52.0",
     "@supabase/supabase-js": "^2.105.4",
     "@tailwindcss/vite": "^4.1.18",
@@ -26,10 +29,13 @@
     "@tanstack/react-router": "latest",
     "@tanstack/react-router-devtools": "latest",
     "@tanstack/router-plugin": "^1.132.0",
+    "cannon-es": "^0.20.0",
+    "framer-motion": "^12.38.0",
     "lucide-react": "^0.545.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "tailwindcss": "^4.1.18"
+    "tailwindcss": "^4.1.18",
+    "three": "^0.184.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.0.0",
