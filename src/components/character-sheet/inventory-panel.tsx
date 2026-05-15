@@ -1,11 +1,10 @@
 /**
  * InventoryPanel: Estética Baldur's Gate 3 (Grid oscuro).
- * Soporta 6 catálogos temáticos (96 iconos premium) con consistencia total.
+ * Soporta 7 catálogos temáticos (112 iconos premium) con consistencia total.
  */
 import { useState, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
-import { dndKeys } from '../../lib/dnd-api'
 import type { SheetJson } from './types'
 
 type InventoryItem = {
@@ -39,6 +38,7 @@ const PACKS = {
   ROGUE: '/assets/icons/rogue.png',
   SPELLS: '/assets/icons/spells.png',
   UTILITY: '/assets/icons/utility.png',
+  ARMOR: '/assets/icons/armor.png',
 }
 
 interface IconMapping {
@@ -66,6 +66,24 @@ const ICON_LIBRARY: IconMapping[] = [
   { keywords: ['flail', 'mangual'], pack: 'WEAPONS', x: 1, y: 3 },
   { keywords: ['quarterstaff', 'baston'], pack: 'WEAPONS', x: 2, y: 3 },
   { keywords: ['morningstar', 'lucero del alba'], pack: 'WEAPONS', x: 3, y: 3 },
+
+  // --- ARMOR (armor.png) ---
+  { keywords: ['cuero', 'leather', 'armadura acolchada'], pack: 'ARMOR', x: 0, y: 0 },
+  { keywords: ['cuero tachonado', 'studded leather'], pack: 'ARMOR', x: 1, y: 0 },
+  { keywords: ['camisote', 'chain shirt'], pack: 'ARMOR', x: 2, y: 0 },
+  { keywords: ['armadura escamas', 'scale mail'], pack: 'ARMOR', x: 3, y: 0 },
+  { keywords: ['pectoral', 'breastplate'], pack: 'ARMOR', x: 0, y: 1 },
+  { keywords: ['media placa', 'half plate'], pack: 'ARMOR', x: 1, y: 1 },
+  { keywords: ['cota de malla', 'chain mail'], pack: 'ARMOR', x: 2, y: 1 },
+  { keywords: ['placas completas', 'full plate', 'armadura pesada'], pack: 'ARMOR', x: 3, y: 1 },
+  { keywords: ['escudo acero', 'escudo', 'steel shield', 'shield'], pack: 'ARMOR', x: 0, y: 2 },
+  { keywords: ['escudo madera', 'wooden shield'], pack: 'ARMOR', x: 1, y: 2 },
+  { keywords: ['escudo torre', 'tower shield', 'gran escudo'], pack: 'ARMOR', x: 2, y: 2 },
+  { keywords: ['casco', 'helmet', 'celada'], pack: 'ARMOR', x: 3, y: 2 },
+  { keywords: ['guantelete', 'gauntlet'], pack: 'ARMOR', x: 0, y: 3 },
+  { keywords: ['botas placa', 'plate boots'], pack: 'ARMOR', x: 1, y: 3 },
+  { keywords: ['tunica', 'robe', 'mago'], pack: 'ARMOR', x: 2, y: 3 },
+  { keywords: ['armadura magica', 'glowing armor'], pack: 'ARMOR', x: 3, y: 3 },
 
   // --- POTIONS (potions.png) ---
   { keywords: ['salud', 'healing', 'vida', 'curacion'], pack: 'POTIONS', x: 0, y: 0 },
@@ -167,27 +185,27 @@ function ItemIcon({ name, notes, imageUrl }: { name: string, notes?: string | nu
   const searchName = normalize(name)
   const searchNotes = normalize(notes ?? '')
 
-  const icon = ICON_LIBRARY.find(item => 
+  const icon = ICON_LIBRARY.find(item =>
     item.keywords.some(k => searchName.includes(k) || searchNotes.includes(k))
   )
 
   if (!icon) return <span className="text-xl opacity-20">📦</span>
 
   // Ajuste de encuadre para los nuevos catálogos con marco de bronce
-  const size = 445 // Un poco más de zoom para limpiar el marco exterior
-  const margin = 2.0 
+  const size = 445 // Zoom de 445% para limpiar el marco exterior
+  const margin = 2.0
   const step = (100 - (margin * 2)) / 3
   const posX = margin + (icon.x * step)
   const posY = margin + (icon.y * step)
-  
+
   return (
-    <div className="w-full h-full bg-cover" 
+    <div className="w-full h-full bg-cover"
       style={{
         backgroundImage: `url(${PACKS[icon.pack]})`,
         backgroundPosition: `${posX}% ${posY}%`,
         backgroundSize: `${size}% ${size}%`,
         imageRendering: 'auto'
-      }} 
+      }}
     />
   )
 }
@@ -269,11 +287,11 @@ export function InventoryPanel({
           { key: 'silver' as const, color: 'text-stone-300' },
           { key: 'copper' as const, color: 'text-orange-700' },
         ].map(({ key, color }) => (
-          <div key={key} className="flex items-center gap-1.5 group cursor-pointer" onClick={() => { if(isOwner) { setEditingCoin(key); setCoinInput('') } }}>
+          <div key={key} className="flex items-center gap-1.5 group cursor-pointer" onClick={() => { if (isOwner) { setEditingCoin(key); setCoinInput('') } }}>
             <span className={`text-[10px] ${color}`}>●</span>
             {editingCoin === key ? (
               <input autoFocus className="bg-transparent w-8 outline-none border-b border-stone-600 text-xs font-mono" value={coinInput} onBlur={() => setEditingCoin(null)}
-                onKeyDown={e => { if(e.key==='Enter') { patchCurrency({[key]: currency[key] + (parseInt(coinInput)||0)}); setEditingCoin(null) } }}
+                onKeyDown={e => { if (e.key === 'Enter') { patchCurrency({ [key]: currency[key] + (parseInt(coinInput) || 0) }); setEditingCoin(null) } }}
                 onChange={e => setCoinInput(e.target.value)} />
             ) : <span className="text-xs font-mono font-bold group-hover:text-white transition-colors">{currency[key]}</span>}
           </div>
@@ -284,7 +302,7 @@ export function InventoryPanel({
         <p className="text-[9px] uppercase tracking-[0.2em] text-amber-600/60 font-bold mb-3 font-serif">Equipo Activo</p>
         <div className="flex flex-wrap gap-2.5">
           {displayEquipped.map(item => (
-            <div key={`eq-${item.id}`} 
+            <div key={`eq-${item.id}`}
               onClick={() => setSelectedItem(item)}
               className="w-12 h-12 bg-[#222] border border-amber-600/40 shadow-[inset_0_0_15px_rgba(217,119,6,0.15)] flex items-center justify-center relative cursor-pointer hover:bg-[#2a2a2a] group overflow-hidden rounded-sm">
               <ItemIcon name={item.name} notes={item.notes} imageUrl={item.image_url} />
@@ -326,19 +344,19 @@ export function InventoryPanel({
           </div>
           <div className="flex items-center justify-between mt-4 pt-3 border-t border-[#2a2a2a]">
             <div className="flex gap-2">
-               {isOwner && (
-                 <>
-                   <button onClick={() => toggleEquip(selectedItem.id)} className="text-[10px] uppercase font-bold px-3 py-1.5 bg-amber-900/30 border border-amber-900/50 text-amber-400 hover:bg-amber-900/50 transition-colors rounded-sm">
-                     {equippedItemIds.has(selectedItem.id) ? 'Quitar' : 'Equipar'}
-                   </button>
-                   <button onClick={() => removeInventoryItem(selectedItem.id)} className="text-[10px] uppercase font-bold px-3 py-1.5 bg-red-900/10 border border-red-900/30 text-red-500 hover:bg-red-900/30 rounded-sm">X</button>
-                 </>
-               )}
+              {isOwner && (
+                <>
+                  <button onClick={() => toggleEquip(selectedItem.id)} className="text-[10px] uppercase font-bold px-3 py-1.5 bg-amber-900/30 border border-amber-900/50 text-amber-400 hover:bg-amber-900/50 transition-colors rounded-sm">
+                    {equippedItemIds.has(selectedItem.id) ? 'Quitar' : 'Equipar'}
+                  </button>
+                  <button onClick={() => removeInventoryItem(selectedItem.id)} className="text-[10px] uppercase font-bold px-3 py-1.5 bg-red-900/10 border border-red-900/30 text-red-500 hover:bg-red-900/30 rounded-sm">X</button>
+                </>
+              )}
             </div>
             <div className="flex items-center gap-3 bg-[#121212] rounded-full px-2 py-1 border border-[#333]">
-               <button onClick={() => updateQty(selectedItem.id, -1, selectedItem.quantity)} className="w-5 h-5 text-stone-500 hover:text-white transition-colors">－</button>
-               <span className="text-[10px] font-mono font-bold text-stone-300 min-w-[12px] text-center">{selectedItem.quantity}</span>
-               <button onClick={() => updateQty(selectedItem.id, 1, selectedItem.quantity)} className="w-5 h-5 text-stone-500 hover:text-white transition-colors">＋</button>
+              <button onClick={() => updateQty(selectedItem.id, -1, selectedItem.quantity)} className="w-5 h-5 text-stone-500 hover:text-white transition-colors">－</button>
+              <span className="text-[10px] font-mono font-bold text-stone-300 min-w-[12px] text-center">{selectedItem.quantity}</span>
+              <button onClick={() => updateQty(selectedItem.id, 1, selectedItem.quantity)} className="w-5 h-5 text-stone-500 hover:text-white transition-colors">＋</button>
             </div>
           </div>
         </div>
@@ -346,31 +364,31 @@ export function InventoryPanel({
 
       {addingItem && (
         <div className="absolute inset-0 bg-black/90 z-40 p-8 flex flex-col justify-center animate-in fade-in zoom-in-95">
-           <div className="bg-[#1a1a1a] border border-[#444] p-6 space-y-4 shadow-2xl rounded-sm">
-             <p className="text-[10px] font-bold text-stone-500 uppercase tracking-widest text-center border-b border-[#333] pb-3 mb-4">Adquirir Nuevo Objeto</p>
-             <input placeholder="Nombre..." className="w-full bg-[#0d0d0d] border border-[#333] p-2.5 text-xs outline-none focus:border-amber-600 text-stone-300" value={newItemName} onChange={e => setNewItemName(e.target.value)} />
-             <div className="flex gap-3">
-               <div className="flex-1">
-                 <p className="text-[8px] text-stone-500 mb-1 ml-1 uppercase">Peso (lb)</p>
-                 <input type="number" className="w-full bg-[#0d0d0d] border border-[#333] p-2 text-xs outline-none" value={newItemWeight} onChange={e => setNewItemWeight(e.target.value)} />
-               </div>
-               <div className="flex-1">
-                 <p className="text-[8px] text-stone-500 mb-1 ml-1 uppercase">Cantidad</p>
-                 <input type="number" className="w-full bg-[#0d0d0d] border border-[#333] p-2 text-xs outline-none" value={newItemQty} onChange={e => setNewItemQty(e.target.value)} />
-               </div>
-             </div>
-             <div className="flex gap-3 pt-4">
-               <button onClick={addInventoryItem} className="flex-1 bg-amber-700 text-white py-2.5 text-[10px] font-bold uppercase tracking-widest hover:bg-amber-600 transition-colors rounded-sm shadow-lg">Añadir</button>
-               <button onClick={() => setAddingItem(false)} className="px-4 border border-[#444] text-[10px] uppercase font-bold text-stone-500 hover:text-stone-300">Cancelar</button>
-             </div>
-           </div>
+          <div className="bg-[#1a1a1a] border border-[#444] p-6 space-y-4 shadow-2xl rounded-sm">
+            <p className="text-[10px] font-bold text-stone-500 uppercase tracking-widest text-center border-b border-[#333] pb-3 mb-4">Adquirir Nuevo Objeto</p>
+            <input placeholder="Nombre..." className="w-full bg-[#0d0d0d] border border-[#333] p-2.5 text-xs outline-none focus:border-amber-600 text-stone-300" value={newItemName} onChange={e => setNewItemName(e.target.value)} />
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <p className="text-[8px] text-stone-500 mb-1 ml-1 uppercase">Peso (lb)</p>
+                <input type="number" className="w-full bg-[#0d0d0d] border border-[#333] p-2 text-xs outline-none" value={newItemWeight} onChange={e => setNewItemWeight(e.target.value)} />
+              </div>
+              <div className="flex-1">
+                <p className="text-[8px] text-stone-500 mb-1 ml-1 uppercase">Cantidad</p>
+                <input type="number" className="w-full bg-[#0d0d0d] border border-[#333] p-2 text-xs outline-none" value={newItemQty} onChange={e => setNewItemQty(e.target.value)} />
+              </div>
+            </div>
+            <div className="flex gap-3 pt-4">
+              <button onClick={addInventoryItem} className="flex-1 bg-amber-700 text-white py-2.5 text-[10px] font-bold uppercase tracking-widest hover:bg-amber-600 transition-colors rounded-sm shadow-lg">Añadir</button>
+              <button onClick={() => setAddingItem(false)} className="px-4 border border-[#444] text-[10px] uppercase font-bold text-stone-500 hover:text-stone-300">Cancelar</button>
+            </div>
+          </div>
         </div>
       )}
 
       <div className="px-5 py-4 bg-[#0a0a0a] border-t border-[#222]">
         <div className="flex justify-between items-center mb-2">
-           <span className="text-stone-600 text-xs">⚖</span>
-           <span className="text-[10px] font-mono font-bold text-stone-400 tracking-wider">{totalWeight.toFixed(1)} <span className="text-stone-700">/</span> {carryCapacity} <span className="text-stone-700 ml-1 italic opacity-60">lb</span></span>
+          <span className="text-stone-600 text-xs">⚖</span>
+          <span className="text-[10px] font-mono font-bold text-stone-400 tracking-wider">{totalWeight.toFixed(1)} <span className="text-stone-700">/</span> {carryCapacity} <span className="text-stone-700 ml-1 italic opacity-60">lb</span></span>
         </div>
         <div className="h-2 w-full bg-[#1a1a1a] rounded-full overflow-hidden flex shadow-inner border border-[#222]">
           <div className="h-full bg-gradient-to-r from-amber-900 to-amber-600 transition-all duration-1000 shadow-[0_0_12px_rgba(217,119,6,0.6)]" style={{ width: `${weightPct}%` }} />
