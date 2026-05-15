@@ -10,20 +10,21 @@ export const Route = createFileRoute('/_authenticated/campaigns/$campaignId')({
 
 type TabDef = {
   to:
-    | '/campaigns/$campaignId'
-    | '/campaigns/$campaignId/pnj'
-    | '/campaigns/$campaignId/hechizos'
-    | '/campaigns/$campaignId/objetos'
-    | '/campaigns/$campaignId/habilidades'
-    | '/campaigns/$campaignId/taberna'
-    | '/campaigns/$campaignId/lucha'
-    | '/campaigns/$campaignId/mapas'
+  | '/campaigns/$campaignId'
+  | '/campaigns/$campaignId/pnj'
+  | '/campaigns/$campaignId/hechizos'
+  | '/campaigns/$campaignId/objetos'
+  | '/campaigns/$campaignId/habilidades'
+  | '/campaigns/$campaignId/taberna'
+  | '/campaigns/$campaignId/lucha'
+  | '/campaigns/$campaignId/mapas'
   label: string
   icon: string
   exact?: boolean
 }
 
 const TABS: TabDef[] = [
+  { to: '/campaigns/$campaignId', label: 'Overview', icon: '📇' },
   { to: '/campaigns/$campaignId/pnj', label: 'Generador de PNJ', icon: '👤' },
   { to: '/campaigns/$campaignId/hechizos', label: 'Hechizos', icon: '✨' },
   { to: '/campaigns/$campaignId/objetos', label: 'Objetos', icon: '📦' },
@@ -111,11 +112,10 @@ function CampaignLayout() {
                 <Link
                   to={tab.to}
                   params={{ campaignId }}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs sm:text-sm font-serif transition-colors whitespace-nowrap ${
-                    isActive
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs sm:text-sm font-serif transition-colors whitespace-nowrap ${isActive
                       ? 'bg-amber-900/40 text-amber-200 border border-amber-700/40'
                       : 'text-stone-400 hover:text-stone-200 hover:bg-stone-800/60 border border-transparent'
-                  }`}
+                    }`}
                 >
                   <span className="text-sm leading-none">{tab.icon}</span>
                   <span>{tab.label}</span>

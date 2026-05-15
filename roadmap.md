@@ -27,16 +27,19 @@ Fase 1 ✅ terminada (2026-05-14) — layout con tab-bar, landing nueva con card
 
 Fase 2 ✅ terminada (2026-05-14) — tabla `npcs` + `npc_inventory` en prod, generador completo en `/campaigns/:id/pnj` con shape paralelo a `characters` (campos opcionales), render real en la landing, integración con `Lucha` vía botón **🎭 PNJ campaña** que copia el PNJ persistido al tracker de combate.
 
-### 🍺 Fase 3 — Taberna *(próximo paso)*
-- Catálogos: armería, pociones, objetos mágicos con precios y pesos.
-- Acción "vender al party": mueve oro y agrega items al inventario del PJ.
-- Definir si los catálogos son hardcodeados, traídos del 5e API (`/equipment-categories`), o una mezcla.
+### 🍺 Fase 3 — Taberna ✅ terminada (2026-05-14)
+- Catálogos hardcodeados: armería (armas + armaduras), pociones, objetos mágicos con precios SRD y pesos.
+- Tab "Comprar": el DM (o el jugador para su propio PJ) selecciona un ítem, elige el personaje y confirma → descuenta oro de `sheet_json.currency` e inserta en `character_inventory`.
+- Tab "Vender": muestra el inventario de cada PJ; el comerciante paga la mitad del precio de catálogo (mín. 1 PO) → item sale del inventario y se acredita el oro.
+- Búsqueda/filtro por nombre dentro de cada categoría.
 
-### 📦 Fase 4 — Objetos
-- Embeber `/equipment` del 5e API con filtros (arma / armadura / equipo).
-- Acción "dar a un PJ" → agregar al `sheet_json.items`.
+### 📦 Fase 4 — Objetos ✅ terminada (2026-05-14)
+- Catálogo del 5e API vía `/equipment-categories/{id}` con 4 filtros: Armas, Armaduras, Equipo, Herramientas.
+- Búsqueda por nombre client-side dentro de cada categoría.
+- Panel lateral con detalle del ítem (CA, peso, costo, descripción) y acción "Dar ítem" → inserta en `character_inventory` sin transacción de oro.
+- DM puede dar a cualquier PJ; jugadores solo a su propio personaje.
 
-### ✨ Fase 5 — Hechizos embed
+### ✨ Fase 5 — Hechizos embed *(próximo paso)*
 - Extraer `<SpellbookPage/>` a componente reusable y montarlo en el tab.
 
 ### 😊 Fase 6 — Habilidades

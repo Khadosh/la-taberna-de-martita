@@ -3,6 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { CLASS_ICONS } from '../../../lib/class-meta'
+import { dndApi, dndKeys } from '../../../lib/dnd-api'
 import type { Tables, TablesInsert } from '../../../lib/database.types'
 
 export const Route = createFileRoute('/_authenticated/campaigns/$campaignId/pnj')({
@@ -22,7 +23,6 @@ const ROLES = [
   { value: 'ally', label: 'Aliado', color: 'bg-green-900/20 border-green-800/40 text-green-900' },
   { value: 'neutral', label: 'Neutral', color: 'bg-stone-200 border-stone-400 text-stone-700' },
 ] as const
-const CLASS_OPTIONS = Object.keys(CLASS_ICONS)
 
 const DEFAULT_STATS: Stats = { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 }
 const EMPTY_FORM = (): NpcForm => ({
@@ -61,7 +61,7 @@ const toIntOrNull = (s: string): number | null => {
 const rollOneStat = () => {
   const rolls = [0, 0, 0, 0].map(() => 1 + Math.floor(Math.random() * 6))
   rolls.sort((a, b) => a - b)
-  return rolls[1] + rolls[2] + rolls[3] // drop lowest
+  return rolls[1] + rolls[2] + rolls[3]
 }
 const rollAllStats = (): Stats => ({
   str: rollOneStat(), dex: rollOneStat(), con: rollOneStat(),
@@ -75,6 +75,9 @@ function PnjGenerator() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+
+  const { data: races } = useQuery({ queryKey: dndKeys.races, queryFn: dndApi.races })
+  const { data: classes } = useQuery({ queryKey: dndKeys.classes, queryFn: dndApi.classes })
 
   const { data: npcs = [], isLoading } = useQuery({
     queryKey: ['campaign-npcs', campaignId],
@@ -131,7 +134,7 @@ function PnjGenerator() {
       const payload = {
         campaign_id: campaignId,
         name: form.name.trim(),
-        race: form.race.trim() || null,
+        race: form.race || null,
         class: form.class || null,
         level: form.level,
         role: form.role,
@@ -194,12 +197,16 @@ function PnjGenerator() {
                   />
                 </Field>
                 <Field label="Raza">
-                  <input
+                  <select
                     value={form.race}
                     onChange={e => patchForm('race', e.target.value)}
-                    placeholder="Humano, Goblin..."
                     className={inputClass}
-                  />
+                  >
+                    <option value="">— ninguna —</option>
+                    {races?.results.map(r => (
+                      <option key={r.index} value={r.index}>{r.name}</option>
+                    ))}
+                  </select>
                 </Field>
                 <Field label="Nivel">
                   <input
@@ -219,8 +226,10 @@ function PnjGenerator() {
                     className={inputClass}
                   >
                     <option value="">— ninguna —</option>
-                    {CLASS_OPTIONS.map(c => (
-                      <option key={c} value={c}>{CLASS_ICONS[c]} {c}</option>
+                    {classes?.results.map(c => (
+                      <option key={c.index} value={c.index}>
+                        {CLASS_ICONS[c.index] ?? ''} {c.name}
+                      </option>
                     ))}
                   </select>
                 </Field>

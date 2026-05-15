@@ -167,6 +167,8 @@ export const dndApi = {
   skill: (i: string) => get<SkillDetail>(`/skills/${i}`),
   equipment: () => get<{ count: number; results: ApiRef[] }>('/equipment'),
   equipmentDetail: (i: string) => get<EquipmentItem>(`/equipment/${i}`),
+  equipmentCategories: () => get<{ results: ApiRef[] }>('/equipment-categories'),
+  equipmentCategory: (i: string) => get<{ index: string; name: string; equipment: ApiRef[] }>(`/equipment-categories/${i}`),
   monsters: () => get<{ count: number; results: MonsterSummary[] }>('/monsters'),
   monster: (i: string) => get<MonsterDetail>(`/monsters/${i}`),
 }
@@ -186,6 +188,7 @@ export const dndKeys = {
   subclassFeatures: (i: string) => ['dnd', 'subclasses', i, 'features'] as const,
   skill: (i: string) => ['dnd', 'skills', i] as const,
   equipment: ['dnd', 'equipment'] as const,
+  equipmentCategory: (i: string) => ['dnd', 'equipment-category', i] as const,
   monsters: ['dnd', 'monsters'] as const,
   monster: (i: string) => ['dnd', 'monsters', i] as const,
 }

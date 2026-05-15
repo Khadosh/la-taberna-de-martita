@@ -138,11 +138,11 @@ const AuthenticatedCampaignsCampaignIdHabilidadesRoute =
   } as any)
 
 export interface FileRoutesByFullPath {
+  '/': typeof AuthenticatedIndexRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
   '/bestiary': typeof AuthenticatedBestiaryRoute
   '/spellbook': typeof AuthenticatedSpellbookRoute
-  '/': typeof AuthenticatedIndexRoute
   '/campaigns/$campaignId': typeof AuthenticatedCampaignsCampaignIdRouteWithChildren
   '/campaigns/new': typeof AuthenticatedCampaignsNewRoute
   '/characters/$characterId': typeof AuthenticatedCharactersCharacterIdRoute
@@ -201,11 +201,11 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/'
     | '/login'
     | '/reset-password'
     | '/bestiary'
     | '/spellbook'
-    | '/'
     | '/campaigns/$campaignId'
     | '/campaigns/new'
     | '/characters/$characterId'
@@ -286,7 +286,7 @@ declare module '@tanstack/react-router' {
     '/_authenticated': {
       id: '/_authenticated'
       path: ''
-      fullPath: ''
+      fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }

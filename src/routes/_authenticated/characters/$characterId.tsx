@@ -672,7 +672,7 @@ function CharacterSheet() {
           <QuickPill label="Iniciativa" value={dexMod >= 0 ? `+${dexMod}` : String(dexMod)} />
           <QuickPill label="Perc. pasiva" value={String(passivePerception)} title="Percepción Pasiva: 10 + mod. Sabiduría" />
           <QuickPill label="Bono prof." value={`+${profBonus}`} title="Bonus de competencia (se suma a ataques, pericias y salvaciones en las que tenés competencia)" />
-          {currency.gold > 0 && <QuickPill label="PO" value={String(currency.gold)} variant="gold" />}
+          {currency.gold > 0 && <QuickPill label="MO" value={String(currency.gold)} variant="gold" />}
           {classDetail?.saving_throws && classDetail.saving_throws.length > 0 && (
             <QuickPill
               label="Sal. prof."
@@ -1089,9 +1089,9 @@ function CharacterSheet() {
             {/* Currency compacta */}
             <div className="flex items-center gap-4 mb-4 pb-3 border-b border-stone-300/40">
               {([
-                { key: 'gold'   as const, label: 'PO', color: 'text-amber-700' },
-                { key: 'silver' as const, label: 'PP', color: 'text-stone-500' },
-                { key: 'copper' as const, label: 'PC', color: 'text-orange-700' },
+                { key: 'gold'   as const, label: 'MO', color: 'text-amber-700' },
+                { key: 'silver' as const, label: 'MP', color: 'text-stone-500' },
+                { key: 'copper' as const, label: 'MC', color: 'text-orange-700' },
               ]).map(({ key, label, color }) => (
                 <div key={key} className="flex items-center gap-1">
                   <span className={`text-[10px] font-serif tracking-wider uppercase ${color}`}>{label}</span>
