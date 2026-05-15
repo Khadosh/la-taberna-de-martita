@@ -6,14 +6,12 @@ import { supabase } from '../../../lib/supabase'
 import type { Database } from '../../../lib/database.types'
 import {
   dndApi, dndKeys,
-  abilityModifier, modifierColor,
-  ABILITY_LABELS,
 } from '../../../lib/dnd-api'
 import { XP_THRESHOLDS, getSpellSlots, isWarlock } from '../../../lib/dnd-constants'
 import { DiceModule } from '../../../lib/dice'
 
 // Components
-import { STAT_KEYS, type SheetJson, type InfoModalData } from '../../../components/character-sheet/types'
+import { type SheetJson, type InfoModalData } from '../../../components/character-sheet/types'
 import { parchmentStyle, sheetStyle, SheetLabel, SheetRow, SheetTabBar, type SheetTab } from '../../../components/character-sheet/sheet-primitives'
 import { InfoModal } from '../../../components/character-sheet/sheet-badges'
 import { LevelUpModal } from '../../../components/character-sheet/level-up-modal'
@@ -37,11 +35,8 @@ function CharacterSheet() {
   // UI State
   const [activeTab, setActiveTab] = useState<SheetTab>('resumen')
   const [modal, setModal] = useState<InfoModalData | null>(null)
-  const [assigningCampaign, setAssigningCampaign] = useState(false)
-  const [selectedCampaignId, setSelectedCampaignId] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [generatingPortrait, setGeneratingPortrait] = useState(false)
-  const [portraitError, setPortraitError] = useState('')
   const [showLevelUpModal, setShowLevelUpModal] = useState(false)
   const [showDice, setShowDice] = useState(false)
 
@@ -88,21 +83,6 @@ function CharacterSheet() {
       return data
     },
     enabled: !!character,
-  })
-
-  const { data: userCampaigns = [] } = useQuery({
-    queryKey: ['campaigns', 'all', session.user.id],
-    queryFn: async () => {
-      const [gm, player] = await Promise.all([
-        supabase.from('campaigns').select('id, name').eq('dm_id', session.user.id),
-        supabase.from('campaign_players').select('campaigns(id, name)').eq('user_id', session.user.id),
-      ])
-      const gmList = gm.data ?? []
-      const playerList = (player.data ?? []).flatMap(r => r.campaigns ? [r.campaigns as { id: string; name: string }] : [])
-      const seen = new Set<string>()
-      return [...gmList, ...playerList].filter(c => seen.has(c.id) ? false : (seen.add(c.id), true))
-    },
-    enabled: !!character && character.user_id === session.user.id,
   })
 
   const { data: campaign } = useQuery({
@@ -252,7 +232,7 @@ function CharacterSheet() {
       const { data, error } = await supabase.functions.invoke('generate-portrait', { body: { prompt } })
       if (!error && data?.url) await patchCharacter({ portrait_url: data.url })
     } catch (e) {
-      setPortraitError('Error al generar.')
+      console.error('Error generating portrait', e)
     } finally {
       setGeneratingPortrait(false)
     }
@@ -373,7 +353,7 @@ function CharacterSheet() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           
           {/* Main Content Area */}
-          <div className="lg:col-span-8 space-y-0" style={sheetStyle}>
+          <div className="lg:col-span-7 space-y-0" style={sheetStyle}>
             {/* Title Section */}
             <div className="p-6 text-center border-b border-stone-600 bg-stone-800/5">
               <h1 className="text-3xl font-bold text-stone-900 font-serif">{character.name}</h1>
@@ -452,7 +432,7 @@ function CharacterSheet() {
           </div>
 
           {/* Sidebar Area: Inventory */}
-          <div className="lg:col-span-4 space-y-4">
+          <div className="lg:col-span-5 space-y-4">
             <div style={sheetStyle} className="p-1">
                <InventoryPanel
                  characterId={characterId}
