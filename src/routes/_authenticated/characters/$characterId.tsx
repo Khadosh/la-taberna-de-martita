@@ -13,15 +13,15 @@ import { XP_THRESHOLDS, getSpellSlots, isWarlock } from '../../../lib/dnd-consta
 import { DiceModule } from '../../../lib/dice'
 
 // Components
-import { STAT_KEYS, type SheetJson, type InfoModalData } from '../../components/character-sheet/types'
-import { parchmentStyle, sheetStyle, SheetLabel, SheetRow, SheetTabBar, type SheetTab } from '../../components/character-sheet/sheet-primitives'
-import { InfoModal } from '../../components/character-sheet/sheet-badges'
-import { LevelUpModal } from '../../components/character-sheet/level-up-modal'
-import { TabResumen } from '../../components/character-sheet/tab-resumen'
-import { TabPericias } from '../../components/character-sheet/tab-pericias'
-import { TabCombate } from '../../components/character-sheet/tab-combate'
-import { TabHechizos } from '../../components/character-sheet/tab-hechizos'
-import { InventoryPanel } from '../../components/character-sheet/inventory-panel'
+import { STAT_KEYS, type SheetJson, type InfoModalData } from '../../../components/character-sheet/types'
+import { parchmentStyle, sheetStyle, SheetLabel, SheetRow, SheetTabBar, type SheetTab } from '../../../components/character-sheet/sheet-primitives'
+import { InfoModal } from '../../../components/character-sheet/sheet-badges'
+import { LevelUpModal } from '../../../components/character-sheet/level-up-modal'
+import { TabResumen } from '../../../components/character-sheet/tab-resumen'
+import { TabPericias } from '../../../components/character-sheet/tab-pericias'
+import { TabCombate } from '../../../components/character-sheet/tab-combate'
+import { TabHechizos } from '../../../components/character-sheet/tab-hechizos'
+import { InventoryPanel } from '../../../components/character-sheet/inventory-panel'
 
 export const Route = createFileRoute('/_authenticated/characters/$characterId')({
   component: CharacterSheet,
