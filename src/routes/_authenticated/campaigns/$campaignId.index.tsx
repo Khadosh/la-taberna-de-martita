@@ -57,6 +57,15 @@ function CampaignHubLanding() {
   const { campaignId } = Route.useParams()
   const { session } = Route.useRouteContext() as { session: Session }
 
+  const { data: campaign } = useQuery({
+    queryKey: ['campaign', campaignId],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('campaigns').select('*').eq('id', campaignId).single()
+      if (error) throw error
+      return data
+    },
+  })
+
   const { data: characters = [] } = useQuery({
     queryKey: ['campaign-characters', campaignId],
     queryFn: async () => {
@@ -82,37 +91,127 @@ function CampaignHubLanding() {
     },
   })
 
+  if (!campaign) return null
+
+  const isGm = campaign.dm_id === session.user.id
+
+  if (isGm) return <GmView campaignId={campaignId} characters={characters} npcs={npcs} />
+  return <PlayerView campaignId={campaignId} characters={characters} userId={session.user.id} />
+}
+
+// ── GM View ──────────────────────────────────────────────────────────────────
+
+function GmView({ campaignId, characters, npcs }: { campaignId: string; characters: Character[]; npcs: any[] }) {
   return (
     <main className="max-w-6xl mx-auto px-4 sm:px-8 py-8 space-y-10">
-
-      {/* PJs */}
       <section>
-        <SectionHeader icon="📜" label="PJs" />
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {characters.map(c => (
-            <CharacterCard key={c.id} character={c} isOwn={c.user_id === session.user.id} />
+        <SectionHeader icon="🎯" label="Herramientas DM" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {([
+            { to: '/campaigns/$campaignId/lucha', icon: '⚔️', label: 'Combate', hint: 'Iniciativa y encuentros' },
+            { to: '/campaigns/$campaignId/pnj', icon: '👤', label: 'PNJs', hint: 'Generar antagonistas' },
+            { to: '/campaigns/$campaignId/mapas', icon: '🗺️', label: 'Mapas', hint: 'Gestionar locaciones' },
+            { to: '/campaigns/$campaignId/taberna', icon: '🍺', label: 'Taberna', hint: 'Generador de ambiente' },
+          ] as { to: '/campaigns/$campaignId/lucha' | '/campaigns/$campaignId/pnj' | '/campaigns/$campaignId/mapas' | '/campaigns/$campaignId/taberna'; icon: string; label: string; hint: string }[]).map(tool => (
+            <Link key={tool.to} to={tool.to} params={{ campaignId }} className="block border border-stone-400/30 bg-amber-100/40 hover:bg-amber-100/70 transition-colors p-4 text-center">
+              <span className="text-2xl block mb-1">{tool.icon}</span>
+              <p className="text-sm font-display font-bold text-stone-900">{tool.label}</p>
+              <p className="text-[11px] italic text-stone-600 mt-0.5">{tool.hint}</p>
+            </Link>
           ))}
+        </div>
+      </section>
+
+      <section>
+        <SectionHeader icon="📜" label={`Party · ${characters.length} PJ${characters.length !== 1 ? 's' : ''}`} />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {characters.map(c => <CharacterCard key={c.id} character={c} isOwn={false} />)}
           <AddSlot label="+ agregar personaje" hint="Compartí el invite con tu party" />
         </div>
       </section>
 
-      {/* PNJs */}
       <section>
         <SectionHeader icon="😈" label={`PNJs · ${npcs.length}`} />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {npcs.map(npc => (
-            <NpcLandingCard key={npc.id} npc={npc} campaignId={campaignId} />
-          ))}
-          <AddSlot
-            label="+ generar PNJ"
-            hint="Crea antagonistas, aliados y neutrales"
-            to="/campaigns/$campaignId/pnj"
-            params={{ campaignId }}
-          />
+          {npcs.map((npc: any) => <NpcLandingCard key={npc.id} npc={npc} campaignId={campaignId} />)}
+          <AddSlot label="+ generar PNJ" hint="Crea antagonistas, aliados y neutrales" to="/campaigns/$campaignId/pnj" params={{ campaignId }} />
         </div>
       </section>
-
     </main>
+  )
+}
+
+// ── Player View ───────────────────────────────────────────────────────────────
+
+function PlayerView({ campaignId: _campaignId, characters, userId }: { campaignId: string; characters: Character[]; userId: string }) {
+  const myCharacter = characters.find(c => c.user_id === userId)
+  const partyMembers = characters.filter(c => c.user_id !== userId)
+
+  return (
+    <main className="max-w-5xl mx-auto px-4 sm:px-8 py-8">
+      <div className="flex gap-8 items-start">
+
+        {/* Left: my character */}
+        <div className="flex-1 min-w-0">
+          <SectionHeader icon="🧙" label="Mi Personaje" />
+          {myCharacter
+            ? <CharacterCard character={myCharacter} isOwn />
+            : (
+              <div className="border-2 border-dashed border-stone-500/40 flex flex-col items-center justify-center min-h-[120px] text-center px-4 py-8">
+                <p className="text-sm italic font-serif text-stone-700">Todavía no tenés un personaje en esta campaña</p>
+                <p className="text-xs text-stone-500 mt-1.5">Pedile al DM que te comparta el invite</p>
+              </div>
+            )
+          }
+        </div>
+
+        {/* Right: party vertical list */}
+        {partyMembers.length > 0 && (
+          <div className="w-64 shrink-0">
+            <SectionHeader icon="📜" label={`Party · ${partyMembers.length}`} />
+            <div className="flex flex-col gap-3">
+              {partyMembers.map(c => <PartyMemberCard key={c.id} character={c} />)}
+            </div>
+          </div>
+        )}
+
+      </div>
+    </main>
+  )
+}
+
+
+// ── Party Member Card (player-visible, HP bar only) ───────────────────────────
+
+function PartyMemberCard({ character }: { character: Character }) {
+  const { stats, level, class: cls, sheet_json: sheet } = character
+  const conMod = Math.floor(((stats.con ?? 10) - 10) / 2)
+  const hitDie = sheet.hit_die ?? 8
+  const estimatedMax = hitDie + conMod + (level - 1) * (Math.floor(hitDie / 2) + 1 + conMod)
+  const maxHp = sheet.max_hp ?? estimatedMax
+  const currentHp = character.current_hp ?? maxHp
+  const hpPct = Math.max(0, Math.min((currentHp / maxHp) * 100, 100))
+  return (
+    <Frame>
+      <div className="p-3 space-y-2">
+        <div className="flex items-center justify-between gap-2">
+          <div>
+            <h3 className="text-base font-display font-bold text-stone-900 leading-tight">{character.name}</h3>
+            <p className="text-xs italic text-stone-600 capitalize">{character.race} · {cls} · Nv. {level}</p>
+          </div>
+          <p className="text-[11px] text-stone-500 italic shrink-0">{character.profiles?.username ?? 'Jugador'}</p>
+        </div>
+        <div>
+          <div className="flex justify-between mb-1">
+            <p className="text-[10px] font-display tracking-widest text-stone-600 uppercase">PG</p>
+            <p className="text-xs font-mono text-stone-800">{currentHp} / {maxHp}</p>
+          </div>
+          <div className="h-1.5 bg-stone-300/60 rounded-sm overflow-hidden border border-stone-400/40">
+            <div className={`h-full ${hpPct > 50 ? 'bg-red-900' : hpPct > 25 ? 'bg-amber-700' : 'bg-red-700'}`} style={{ width: `${hpPct}%` }} />
+          </div>
+        </div>
+      </div>
+    </Frame>
   )
 }
 

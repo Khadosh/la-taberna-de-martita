@@ -24,15 +24,24 @@ type TabDef = {
   exact?: boolean
 }
 
-const TABS: TabDef[] = [
-  { to: '/campaigns/$campaignId', label: 'Overview', icon: '📇' },
-  { to: '/campaigns/$campaignId/pnj', label: 'Generador de PNJ', icon: '👤' },
+// Tabs que ve el GM (acceso completo a herramientas de dirección)
+const GM_TABS: TabDef[] = [
+  { to: '/campaigns/$campaignId', label: 'Overview', icon: '📇', exact: true },
+  { to: '/campaigns/$campaignId/pnj', label: 'PNJs', icon: '👤' },
+  { to: '/campaigns/$campaignId/lucha', label: 'Combate', icon: '⚔️' },
+  { to: '/campaigns/$campaignId/mapas', label: 'Mapas', icon: '🗺️' },
+  { to: '/campaigns/$campaignId/taberna', label: 'Taberna', icon: '🍺' },
   { to: '/campaigns/$campaignId/hechizos', label: 'Hechizos', icon: '✨' },
   { to: '/campaigns/$campaignId/objetos', label: 'Objetos', icon: '📦' },
   { to: '/campaigns/$campaignId/habilidades', label: 'Habilidades', icon: '😊' },
-  { to: '/campaigns/$campaignId/taberna', label: 'Taberna', icon: '🍺' },
-  { to: '/campaigns/$campaignId/lucha', label: 'Lucha', icon: '⚔️' },
-  { to: '/campaigns/$campaignId/mapas', label: 'Mapas', icon: '🗺️' },
+]
+
+// Tabs que ve el jugador (herramientas de referencia en mesa)
+const PLAYER_TABS: TabDef[] = [
+  { to: '/campaigns/$campaignId', label: 'Mi Party', icon: '📇', exact: true },
+  { to: '/campaigns/$campaignId/hechizos', label: 'Hechizos', icon: '✨' },
+  { to: '/campaigns/$campaignId/objetos', label: 'Objetos', icon: '📦' },
+  { to: '/campaigns/$campaignId/habilidades', label: 'Habilidades', icon: '😊' },
 ]
 
 function CampaignLayout() {
@@ -70,6 +79,7 @@ function CampaignLayout() {
   )
 
   const isGm = campaign.dm_id === session.user.id
+  const tabs = isGm ? GM_TABS : PLAYER_TABS
 
   return (
     <div className="min-h-screen text-stone-900" style={parchmentStyle}>
@@ -80,40 +90,51 @@ function CampaignLayout() {
           ← Dashboard
         </Link>
         <div className="w-px h-5 bg-stone-700 shrink-0" />
-        <h1 className="text-lg sm:text-xl font-display tracking-wide text-amber-100 flex-1 truncate">{campaign.name}</h1>
-        {isGm && (
-          <div className="flex gap-2 items-center">
+
+        {/* Campaign name + role badge */}
+        <div className="flex items-center gap-2 flex-1 min-w-0">
+          <h1 className="text-lg sm:text-xl font-display tracking-wide text-amber-100 truncate">{campaign.name}</h1>
+          {isGm ? (
+            <span className="shrink-0 px-2 py-0.5 text-[10px] font-serif tracking-widest uppercase bg-amber-900/50 border border-amber-700/50 text-amber-300 rounded">
+              DM
+            </span>
+          ) : (
+            <span className="shrink-0 px-2 py-0.5 text-[10px] font-serif tracking-widest uppercase bg-stone-800 border border-stone-700 text-stone-400 rounded">
+              Jugador
+            </span>
+          )}
+        </div>
+
+        {/* Header actions */}
+        <div className="flex gap-2 items-center">
+          {/* Dice: available to everyone */}
+          <button
+            onClick={() => setShowDice(true)}
+            className="px-3 py-1.5 text-xs sm:text-sm rounded bg-amber-900/40 hover:bg-amber-800/60 text-amber-200 transition-colors font-serif flex items-center gap-1.5 border border-amber-700/40"
+          >
+            <span>🎲</span> Dados
+          </button>
+
+          {/* GM-only: copy invite */}
+          {isGm && (
             <button
               onClick={copyInvite}
               className="hidden sm:block px-3 py-1.5 text-xs rounded bg-stone-800/80 hover:bg-stone-700 text-stone-300 transition-colors min-w-[110px] text-center font-serif"
             >
               {copied ? '¡Copiado!' : 'Copiar invite'}
             </button>
-            <button
-              onClick={() => setShowDice(true)}
-              className="px-3 py-1.5 text-xs sm:text-sm rounded bg-amber-900/40 hover:bg-amber-800/60 text-amber-200 transition-colors font-serif flex items-center gap-1.5 border border-amber-700/40"
-            >
-              <span>🎲</span> Dados
-            </button>
-            <Link
-              to="/campaigns/$campaignId/lucha"
-              params={{ campaignId }}
-              className="px-3 py-1.5 text-xs sm:text-sm rounded bg-gradient-to-b from-amber-900 to-amber-950 hover:from-amber-800 hover:to-amber-900 text-amber-100 transition-colors font-serif flex items-center gap-1.5 border border-amber-700/40 shadow-sm"
-            >
-              <span>📖</span> Pantalla DM
-            </Link>
-          </div>
-        )}
+          )}
+        </div>
       </header>
 
-      {/* Tab bar */}
+      {/* Tab bar — role-aware */}
       <nav className="border-b-2 border-stone-900 bg-stone-900 px-2 sm:px-6 py-1.5 overflow-x-auto">
         <ul className="flex items-center gap-1 min-w-max">
-          {TABS.map(tab => {
+          {tabs.map(tab => {
             const isActive = matchRoute({
               to: tab.to,
               params: { campaignId },
-              fuzzy: false,
+              fuzzy: !tab.exact,
             })
             return (
               <li key={tab.to}>
@@ -137,7 +158,7 @@ function CampaignLayout() {
       {/* Outlet — child renders */}
       <Outlet />
 
-      {/* Dice Module Overlay */}
+      {/* Dice Module — available to all */}
       <DiceModule isOpen={showDice} onClose={() => setShowDice(false)} />
     </div>
   )
