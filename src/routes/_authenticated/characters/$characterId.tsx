@@ -341,6 +341,7 @@ function CharacterSheet() {
   const xpForCurrent = XP_THRESHOLDS[level - 1] ?? 0
   const xpForNext = XP_THRESHOLDS[level] ?? null
   const xpPct = xpForNext ? Math.min(((xp - xpForCurrent) / (xpForNext - xpForCurrent)) * 100, 100) : 100
+  const canLevelUp = xpForNext !== null && xp >= xpForNext && level < 20
   const hpPct = Math.max(0, Math.min((currentHp / maxHp) * 100, 100))
   const hpColor = hpPct > 50 ? 'bg-green-700' : hpPct > 25 ? 'bg-amber-600' : 'bg-red-700'
   const maxSlots = getSpellSlots(character.class, level)
@@ -350,6 +351,10 @@ function CharacterSheet() {
     level: i + 1,
     features: classLevels.filter(l => l.level === i + 1).flatMap(l => l.features),
   })).filter(l => l.features.length > 0) : []
+
+  const equippedItemIds = new Set(sheet.equipped_items ?? [])
+  const equippedItems = inventory.filter(item => equippedItemIds.has(item.id))
+  const isSpellcaster = maxSlots.some(s => s > 0)
 
   return (
     <div className="min-h-screen text-stone-900 pb-12" style={parchmentStyle}>
