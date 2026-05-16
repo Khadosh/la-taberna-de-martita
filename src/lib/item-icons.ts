@@ -4,25 +4,62 @@ import { BG3_SPELL_MAP } from './bg3-spell-map'
 // URL format: https://game-icons.net/icons/{fg}/{bg}/1x1/{author}/{icon}.svg
 const G = (path: string) => `https://game-icons.net/icons/ffffff/000000/1x1/${path}.svg`
 
-// Normalize for matching: lowercase, no accents
-const n = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+// Normalize: lowercase, no accents, collapse whitespace
+const n = (s: string) =>
+  s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/\s+/g, ' ').trim()
+
+// Build all candidate lookup strings for a raw name.
+// Handles:
+//   "Crossbow, Hand"       → ["crossbow, hand", "hand crossbow", "crossbow hand"]
+//   "Leather Armor"        → ["leather armor", "leather armour"]
+function candidates(raw: string): string[] {
+  const base = n(raw)
+  const uk   = base.replace(/\barmo(u?)r/g, 'armour')
+  const us   = base.replace(/\barmo(u?)r/g, 'armor')
+  const set  = new Set<string>([base, uk, us])
+
+  // "Noun, Adjective(s)" → "adjective(s) noun" (D&D API / manual entries)
+  if (base.includes(',')) {
+    const parts    = base.split(',').map(p => p.trim()).filter(Boolean)
+    const reversed = [...parts].reverse().join(' ')
+    const noComma  = parts.join(' ')
+    for (const v of [reversed, noComma]) {
+      set.add(v)
+      set.add(v.replace(/\barmo(u?)r/g, 'armour'))
+      set.add(v.replace(/\barmo(u?)r/g, 'armor'))
+    }
+  }
+
+  return [...set]
+}
+
+// Word-set: returns true if every word in `needle` appears as a whole word in `haystack`
+function wordSetMatch(needle: string, haystack: string): boolean {
+  const hw = new Set(haystack.split(' '))
+  return needle.split(' ').every(w => hw.has(w))
+}
 
 export function getItemIconUrl(name: string): string | null {
-  const s = n(name)
-  // D&D API uses American "armor", BG3 wiki uses British "armour"
-  const sUK = s.replace(/armor/g, 'armour')
+  const s  = n(name)                     // base normalized form (used by all fallbacks below)
+  const cs = candidates(name)            // all spelling/order variants for BG3 lookup
 
-  // 1. BG3 exact match (try both spellings)
-  if (BG3_ICON_MAP[s])   return BG3_ICON_MAP[s]
-  if (BG3_ICON_MAP[sUK]) return BG3_ICON_MAP[sUK]
-
-  // 2. Item name is contained in a BG3 key (e.g. "Ring Mail" → "ring mail armour")
-  //    Use whole-word boundary: key starts with our term + space to avoid "club"→"greatclub"
-  for (const [key, url] of Object.entries(BG3_ICON_MAP)) {
-    if (key === s || key === sUK) return url
-    if (key.startsWith(s + ' ') || key.startsWith(sUK + ' ')) return url
-    if (s.includes(key) || sUK.includes(key)) return url
+  // 1. Exact match on any candidate
+  for (const c of cs) {
+    if (BG3_ICON_MAP[c]) return BG3_ICON_MAP[c]
   }
+
+  // 2. Key starts with candidate + space  →  "ring mail" → "ring mail armour"
+  //    OR candidate contains key          →  "leather armor studded" contains "leather armour"
+  //    OR word-set match (fallback)       →  "hand crossbow" ⊆ words of "rusty hand crossbow"
+  let wordSetResult: string | null = null
+  for (const [key, url] of Object.entries(BG3_ICON_MAP)) {
+    for (const c of cs) {
+      if (key.startsWith(c + ' ')) return url
+      if (c.includes(key))          return url
+      if (!wordSetResult && wordSetMatch(c, key)) wordSetResult = url
+    }
+  }
+  if (wordSetResult) return wordSetResult
 
   // ── WEAPONS ──────────────────────────────────────────────────────────────
   if (s.includes('longsword') || s.includes('espada larga')) return G('lorc/broadsword')
