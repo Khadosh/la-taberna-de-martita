@@ -9,13 +9,19 @@ const n = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''
 
 export function getItemIconUrl(name: string): string | null {
   const s = n(name)
+  // D&D API uses American "armor", BG3 wiki uses British "armour"
+  const sUK = s.replace(/armor/g, 'armour')
 
-  // BG3 exact match (highest priority — real game art)
-  if (BG3_ICON_MAP[s]) return BG3_ICON_MAP[s]
-  // BG3 partial match: item name contains a BG3 key (e.g. "Longsword +1" → "longsword")
-  // Only match key→name direction to avoid "club" matching "greatclub"
+  // 1. BG3 exact match (try both spellings)
+  if (BG3_ICON_MAP[s])   return BG3_ICON_MAP[s]
+  if (BG3_ICON_MAP[sUK]) return BG3_ICON_MAP[sUK]
+
+  // 2. Item name is contained in a BG3 key (e.g. "Ring Mail" → "ring mail armour")
+  //    Use whole-word boundary: key starts with our term + space to avoid "club"→"greatclub"
   for (const [key, url] of Object.entries(BG3_ICON_MAP)) {
-    if (s.includes(key)) return url
+    if (key === s || key === sUK) return url
+    if (key.startsWith(s + ' ') || key.startsWith(sUK + ' ')) return url
+    if (s.includes(key) || sUK.includes(key)) return url
   }
 
   // ── WEAPONS ──────────────────────────────────────────────────────────────
