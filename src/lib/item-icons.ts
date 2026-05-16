@@ -12,9 +12,10 @@ export function getItemIconUrl(name: string): string | null {
 
   // BG3 exact match (highest priority — real game art)
   if (BG3_ICON_MAP[s]) return BG3_ICON_MAP[s]
-  // BG3 partial match: find a BG3 key that's contained in the item name
+  // BG3 partial match: item name contains a BG3 key (e.g. "Longsword +1" → "longsword")
+  // Only match key→name direction to avoid "club" matching "greatclub"
   for (const [key, url] of Object.entries(BG3_ICON_MAP)) {
-    if (s.includes(key) || key.includes(s)) return url
+    if (s.includes(key)) return url
   }
 
   // ── WEAPONS ──────────────────────────────────────────────────────────────
