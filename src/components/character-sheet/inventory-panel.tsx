@@ -1,10 +1,7 @@
-/**
- * InventoryPanel: Estética Baldur's Gate 3 (Grid oscuro).
- * Soporta 7 catálogos temáticos (112 iconos premium) con consistencia total.
- */
 import { useState, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
+import { getItemIconUrl, getItemFallbackEmoji } from '../../lib/item-icons'
 import type { SheetJson } from './types'
 
 type InventoryItem = {
@@ -27,185 +24,33 @@ interface InventoryPanelProps {
   strScore: number
 }
 
-// ── CONFIGURACIÓN DE CATÁLOGOS ───────────────────────────────────────────────
-
-const PACKS = {
-  WEAPONS: '/assets/icons/weapons.png',
-  POTIONS: '/assets/icons/potions.png',
-  JEWELRY: '/assets/icons/jewelry.png',
-  ROGUE: '/assets/icons/rogue.png',
-  SPELLS: '/assets/icons/spells.png',
-  UTILITY: '/assets/icons/utility.png',
-  ARMOR: '/assets/icons/armor.png',
-}
-
-interface IconMapping {
-  keywords: string[]
-  pack: keyof typeof PACKS
-  x: number
-  y: number
-}
-
-const ICON_LIBRARY: IconMapping[] = [
-  // --- WEAPONS (weapons.png) ---
-  { keywords: ['longsword', 'espada larga'], pack: 'WEAPONS', x: 0, y: 0 },
-  { keywords: ['greatsword', 'espadon'], pack: 'WEAPONS', x: 1, y: 0 },
-  { keywords: ['dagger', 'daga', 'cuchillo'], pack: 'WEAPONS', x: 2, y: 0 },
-  { keywords: ['shortsword', 'espada corta'], pack: 'WEAPONS', x: 3, y: 0 },
-  { keywords: ['battleaxe', 'hacha de batalla'], pack: 'WEAPONS', x: 0, y: 1 },
-  { keywords: ['handaxe', 'hacha de mano'], pack: 'WEAPONS', x: 1, y: 1 },
-  { keywords: ['warhammer', 'martillo de guerra'], pack: 'WEAPONS', x: 2, y: 1 },
-  { keywords: ['mace', 'maza'], pack: 'WEAPONS', x: 3, y: 1 },
-  { keywords: ['spear', 'lanza'], pack: 'WEAPONS', x: 0, y: 2 },
-  { keywords: ['halberd', 'alabarda'], pack: 'WEAPONS', x: 1, y: 2 },
-  { keywords: ['longbow', 'arco largo'], pack: 'WEAPONS', x: 2, y: 2 },
-  { keywords: ['shortbow', 'arco corto'], pack: 'WEAPONS', x: 3, y: 2 },
-  { keywords: ['crossbow', 'ballesta'], pack: 'WEAPONS', x: 0, y: 3 },
-  { keywords: ['flail', 'mangual'], pack: 'WEAPONS', x: 1, y: 3 },
-  { keywords: ['quarterstaff', 'baston'], pack: 'WEAPONS', x: 2, y: 3 },
-  { keywords: ['morningstar', 'lucero del alba'], pack: 'WEAPONS', x: 3, y: 3 },
-
-  // --- ARMOR (armor.png) ---
-  { keywords: ['cuero', 'leather', 'armadura acolchada'], pack: 'ARMOR', x: 0, y: 0 },
-  { keywords: ['cuero tachonado', 'studded leather'], pack: 'ARMOR', x: 1, y: 0 },
-  { keywords: ['camisote', 'chain shirt'], pack: 'ARMOR', x: 2, y: 0 },
-  { keywords: ['armadura escamas', 'scale mail'], pack: 'ARMOR', x: 3, y: 0 },
-  { keywords: ['pectoral', 'breastplate'], pack: 'ARMOR', x: 0, y: 1 },
-  { keywords: ['media placa', 'half plate'], pack: 'ARMOR', x: 1, y: 1 },
-  { keywords: ['cota de malla', 'chain mail'], pack: 'ARMOR', x: 2, y: 1 },
-  { keywords: ['placas completas', 'full plate', 'armadura pesada'], pack: 'ARMOR', x: 3, y: 1 },
-  { keywords: ['escudo acero', 'escudo', 'steel shield', 'shield'], pack: 'ARMOR', x: 0, y: 2 },
-  { keywords: ['escudo madera', 'wooden shield'], pack: 'ARMOR', x: 1, y: 2 },
-  { keywords: ['escudo torre', 'tower shield', 'gran escudo'], pack: 'ARMOR', x: 2, y: 2 },
-  { keywords: ['casco', 'helmet', 'celada'], pack: 'ARMOR', x: 3, y: 2 },
-  { keywords: ['guantelete', 'gauntlet'], pack: 'ARMOR', x: 0, y: 3 },
-  { keywords: ['botas placa', 'plate boots'], pack: 'ARMOR', x: 1, y: 3 },
-  { keywords: ['tunica', 'robe', 'mago'], pack: 'ARMOR', x: 2, y: 3 },
-  { keywords: ['armadura magica', 'glowing armor'], pack: 'ARMOR', x: 3, y: 3 },
-
-  // --- POTIONS (potions.png) ---
-  { keywords: ['salud', 'healing', 'vida', 'curacion'], pack: 'POTIONS', x: 0, y: 0 },
-  { keywords: ['mana', 'magia', 'azul'], pack: 'POTIONS', x: 1, y: 0 },
-  { keywords: ['stamina', 'energia', 'verde'], pack: 'POTIONS', x: 2, y: 0 },
-  { keywords: ['antidoto', 'antidote', 'purificar'], pack: 'POTIONS', x: 3, y: 0 },
-  { keywords: ['invisibilidad', 'invisible'], pack: 'POTIONS', x: 0, y: 1 },
-  { keywords: ['fuego', 'fire', 'resistencia fuego'], pack: 'POTIONS', x: 1, y: 1 },
-  { keywords: ['frio', 'frost', 'hielo'], pack: 'POTIONS', x: 2, y: 1 },
-  { keywords: ['velocidad', 'speed', 'prisa'], pack: 'POTIONS', x: 3, y: 1 },
-  { keywords: ['fuerza', 'strength', 'poder'], pack: 'POTIONS', x: 0, y: 2 },
-  { keywords: ['barkskin', 'piel de roble', 'defensa'], pack: 'POTIONS', x: 1, y: 2 },
-  { keywords: ['aceite', 'oil', 'afilado'], pack: 'POTIONS', x: 2, y: 2 },
-  { keywords: ['veneno', 'poison', 'toxico'], pack: 'POTIONS', x: 3, y: 2 },
-  { keywords: ['sagrada', 'holy', 'bendita'], pack: 'POTIONS', x: 0, y: 3 },
-  { keywords: ['gigante', 'giant'], pack: 'POTIONS', x: 1, y: 3 },
-  { keywords: ['vuelo', 'flying', 'volar'], pack: 'POTIONS', x: 2, y: 3 },
-  { keywords: ['gaseoso', 'gaseous'], pack: 'POTIONS', x: 3, y: 3 },
-
-  // --- JEWELRY (jewelry.png) ---
-  { keywords: ['anillo oro', 'gold ring'], pack: 'JEWELRY', x: 0, y: 0 },
-  { keywords: ['anillo plata', 'silver ring'], pack: 'JEWELRY', x: 1, y: 0 },
-  { keywords: ['esmeralda', 'emerald', 'collar verde'], pack: 'JEWELRY', x: 2, y: 0 },
-  { keywords: ['rubi', 'ruby', 'collar rojo'], pack: 'JEWELRY', x: 3, y: 0 },
-  { keywords: ['zafiro', 'sapphire', 'amuleto'], pack: 'JEWELRY', x: 0, y: 1 },
-  { keywords: ['perla', 'pearl', 'pendiente'], pack: 'JEWELRY', x: 1, y: 1 },
-  { keywords: ['diamante', 'diamond', 'broche'], pack: 'JEWELRY', x: 2, y: 1 },
-  { keywords: ['corona', 'crown', 'rey'], pack: 'JEWELRY', x: 3, y: 1 },
-  { keywords: ['tiara', 'diadema'], pack: 'JEWELRY', x: 0, y: 2 },
-  { keywords: ['granate', 'garnet'], pack: 'JEWELRY', x: 1, y: 2 },
-  { keywords: ['jade'], pack: 'JEWELRY', x: 2, y: 2 },
-  { keywords: ['topacio', 'topaz'], pack: 'JEWELRY', x: 3, y: 2 },
-  { keywords: ['onice', 'onyx'], pack: 'JEWELRY', x: 0, y: 3 },
-  { keywords: ['lapislazuli', 'lapis'], pack: 'JEWELRY', x: 1, y: 3 },
-  { keywords: ['amatista', 'amethyst', 'brazalete'], pack: 'JEWELRY', x: 2, y: 3 },
-  { keywords: ['gema', 'gem', 'cristal'], pack: 'JEWELRY', x: 3, y: 3 },
-
-  // --- ROGUE (rogue.png) ---
-  { keywords: ['ganzua', 'thieves tools', 'herramientas ladron'], pack: 'ROGUE', x: 0, y: 0 },
-  { keywords: ['cerradura', 'lockpick'], pack: 'ROGUE', x: 1, y: 0 },
-  { keywords: ['vial veneno', 'poison vial'], pack: 'ROGUE', x: 2, y: 0 },
-  { keywords: ['bomba humo', 'smoke bomb'], pack: 'ROGUE', x: 3, y: 0 },
-  { keywords: ['abrojo', 'caltrop'], pack: 'ROGUE', x: 0, y: 1 },
-  { keywords: ['garfio', 'grappling hook'], pack: 'ROGUE', x: 1, y: 1 },
-  { keywords: ['cortavidrio', 'glass cutter'], pack: 'ROGUE', x: 2, y: 1 },
-  { keywords: ['disfraz', 'disguise'], pack: 'ROGUE', x: 3, y: 1 },
-  { keywords: ['falsificacion', 'forgery'], pack: 'ROGUE', x: 0, y: 2 },
-  { keywords: ['dados', 'dice', 'cargados'], pack: 'ROGUE', x: 1, y: 2 },
-  { keywords: ['cartas', 'cards', 'marcadas'], pack: 'ROGUE', x: 2, y: 2 },
-  { keywords: ['capa oscura', 'dark hood', 'capelina'], pack: 'ROGUE', x: 3, y: 2 },
-  { keywords: ['botas sigilo', 'silent boots'], pack: 'ROGUE', x: 0, y: 3 },
-  { keywords: ['bolsa monedas', 'money pouch', 'bolsa'], pack: 'ROGUE', x: 1, y: 3 },
-  { keywords: ['llave maestra', 'skeleton key'], pack: 'ROGUE', x: 2, y: 3 },
-  { keywords: ['hoja oculta', 'hidden blade'], pack: 'ROGUE', x: 3, y: 3 },
-
-  // --- SPELLS (spells.png) ---
-  { keywords: ['bola fuego', 'fireball'], pack: 'SPELLS', x: 0, y: 0 },
-  { keywords: ['curar', 'heal scroll'], pack: 'SPELLS', x: 1, y: 0 },
-  { keywords: ['escudo magico', 'shield scroll'], pack: 'SPELLS', x: 2, y: 0 },
-  { keywords: ['proyectil magico', 'magic missile'], pack: 'SPELLS', x: 3, y: 0 },
-  { keywords: ['volar', 'fly scroll'], pack: 'SPELLS', x: 0, y: 1 },
-  { keywords: ['teletransporte', 'teleport'], pack: 'SPELLS', x: 1, y: 1 },
-  { keywords: ['prisa', 'haste'], pack: 'SPELLS', x: 2, y: 1 },
-  { keywords: ['oscuridad', 'darkness'], pack: 'SPELLS', x: 3, y: 1 },
-  { keywords: ['telaraña', 'web scroll'], pack: 'SPELLS', x: 0, y: 2 },
-  { keywords: ['paso brumoso', 'misty step'], pack: 'SPELLS', x: 1, y: 2 },
-  { keywords: ['revivir', 'revivify'], pack: 'SPELLS', x: 2, y: 2 },
-  { keywords: ['contrahechizo', 'counterspell'], pack: 'SPELLS', x: 3, y: 2 },
-  { keywords: ['bendecir', 'bless'], pack: 'SPELLS', x: 0, y: 3 },
-  { keywords: ['perjuicio', 'bane'], pack: 'SPELLS', x: 1, y: 3 },
-  { keywords: ['polimorfia', 'polymorph'], pack: 'SPELLS', x: 2, y: 3 },
-  { keywords: ['grimorio', 'libro hechizos', 'grimoire'], pack: 'SPELLS', x: 3, y: 3 },
-
-  // --- UTILITY (utility.png) ---
-  { keywords: ['mochila', 'backpack', 'morral'], pack: 'UTILITY', x: 0, y: 0 },
-  { keywords: ['racion', 'rations', 'comida'], pack: 'UTILITY', x: 1, y: 0 },
-  { keywords: ['antorcha', 'torch'], pack: 'UTILITY', x: 2, y: 0 },
-  { keywords: ['bota agua', 'waterskin', 'odre'], pack: 'UTILITY', x: 3, y: 0 },
-  { keywords: ['cuerda', 'rope'], pack: 'UTILITY', x: 0, y: 1 },
-  { keywords: ['tinderbox', 'pedernal'], pack: 'UTILITY', x: 1, y: 1 },
-  { keywords: ['linterna', 'lantern'], pack: 'UTILITY', x: 2, y: 1 },
-  { keywords: ['martillo', 'hammer', 'piton', 'pitons'], pack: 'UTILITY', x: 3, y: 1 },
-  { keywords: ['saco dormir', 'bedroll'], pack: 'UTILITY', x: 0, y: 2 },
-  { keywords: ['cocina', 'cooking', 'olla'], pack: 'UTILITY', x: 1, y: 2 },
-  { keywords: ['estaca', 'spike', 'iron spikes'], pack: 'UTILITY', x: 2, y: 2 },
-  { keywords: ['espejo', 'mirror'], pack: 'UTILITY', x: 3, y: 2 },
-  { keywords: ['tiza', 'chalk'], pack: 'UTILITY', x: 0, y: 3 },
-  { keywords: ['reloj arena', 'hourglass'], pack: 'UTILITY', x: 1, y: 3 },
-  { keywords: ['tinta', 'ink', 'pluma'], pack: 'UTILITY', x: 2, y: 3 },
-  { keywords: ['vinito', 'vino', 'wine'], pack: 'UTILITY', x: 3, y: 3 },
-]
-
 // ── COMPONENTE ITEM ICON ─────────────────────────────────────────────────────
 
-function ItemIcon({ name, notes, imageUrl }: { name: string, notes?: string | null, imageUrl?: string }) {
-  if (imageUrl) return <img src={imageUrl} className="w-full h-full object-cover" />
+function ItemIcon({ name, imageUrl }: { name: string; imageUrl?: string }) {
+  if (imageUrl) {
+    return <img src={imageUrl} className="w-full h-full object-cover" alt={name} />
+  }
 
-  const normalize = (str: string) => str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-  const searchName = normalize(name)
-  const searchNotes = normalize(notes ?? '')
+  const url = getItemIconUrl(name)
+  if (url) {
+    return (
+      <img
+        src={url}
+        className="w-8 h-8 object-contain opacity-75"
+        alt={name}
+        onError={e => {
+          const t = e.currentTarget
+          t.style.display = 'none'
+          const span = document.createElement('span')
+          span.className = 'text-lg opacity-40'
+          span.textContent = getItemFallbackEmoji(name)
+          t.parentElement?.appendChild(span)
+        }}
+      />
+    )
+  }
 
-  const icon = ICON_LIBRARY.find(item =>
-    item.keywords.some(k => searchName.includes(k) || searchNotes.includes(k))
-  )
-
-  if (!icon) return <span className="text-xl opacity-20">📦</span>
-
-  // Ajuste de encuadre para los nuevos catálogos con marco de bronce
-  const size = 445 // Zoom de 445% para limpiar el marco exterior
-  const margin = 2.0
-  const step = (100 - (margin * 2)) / 3
-  const posX = margin + (icon.x * step)
-  const posY = margin + (icon.y * step)
-
-  return (
-    <div className="w-full h-full bg-cover"
-      style={{
-        backgroundImage: `url(${PACKS[icon.pack]})`,
-        backgroundPosition: `${posX}% ${posY}%`,
-        backgroundSize: `${size}% ${size}%`,
-        imageRendering: 'auto'
-      }}
-    />
-  )
+  return <span className="text-lg opacity-40">{getItemFallbackEmoji(name)}</span>
 }
 
 export function InventoryPanel({
@@ -303,7 +148,7 @@ export function InventoryPanel({
             <div key={`eq-${item.id}`}
               onClick={() => setSelectedItem(item)}
               className="w-12 h-12 bg-[#222] border border-amber-600/40 shadow-[inset_0_0_15px_rgba(217,119,6,0.15)] flex items-center justify-center relative cursor-pointer hover:bg-[#2a2a2a] group overflow-hidden rounded-sm">
-              <ItemIcon name={item.name} notes={item.notes} imageUrl={item.image_url} />
+              <ItemIcon name={item.name} imageUrl={item.image_url} />
               <div className="absolute inset-0 border border-amber-400/10 pointer-events-none group-hover:border-amber-400/30 transition-colors" />
             </div>
           ))}
@@ -319,7 +164,7 @@ export function InventoryPanel({
             <div key={`inv-${item.id}`}
               onClick={() => setSelectedItem(item)}
               className={`w-12 h-12 bg-[#1e1e1e] border border-[#333] flex items-center justify-center relative cursor-pointer hover:bg-[#2a2a2a] hover:border-[#555] transition-all group overflow-hidden rounded-sm ${selectedItem?.id === item.id ? 'ring-1 ring-amber-500 border-amber-500/50' : ''}`}>
-              <ItemIcon name={item.name} notes={item.notes} imageUrl={item.image_url} />
+              <ItemIcon name={item.name} imageUrl={item.image_url} />
               {item.quantity > 1 && (
                 <span className="absolute bottom-0.5 right-1 text-[9px] font-mono font-bold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{item.quantity}</span>
               )}
