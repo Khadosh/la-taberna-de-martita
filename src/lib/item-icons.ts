@@ -1,4 +1,5 @@
 import { BG3_ICON_MAP } from './bg3-icon-map'
+import { BG3_SPELL_MAP } from './bg3-spell-map'
 
 // URL format: https://game-icons.net/icons/{fg}/{bg}/1x1/{author}/{icon}.svg
 const G = (path: string) => `https://game-icons.net/icons/ffffff/000000/1x1/${path}.svg`
@@ -241,6 +242,11 @@ export function getItemIconUrl(name: string): string | null {
   if (s.includes('cube of force')) return G('lorc/magic-shield')
 
   return null
+}
+
+export function getSpellIconUrl(name: string): string | null {
+  const s = n(name)
+  return BG3_SPELL_MAP[s] ?? null
 }
 
 // Category emoji fallback when no URL matches

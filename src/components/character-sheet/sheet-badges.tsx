@@ -4,6 +4,7 @@ import { dndApi, dndKeys } from '../../lib/dnd-api'
 import type { SpellDetail, TraitDetail, SkillDetail, FeatureDetail } from '../../lib/dnd-api'
 import type { InfoModalData } from './types'
 import { parchmentStyle } from './sheet-primitives'
+import { getSpellIconUrl } from '../../lib/item-icons'
 
 // ── Info Modal ────────────────────────────────────────────────────────────────
 
@@ -58,8 +59,18 @@ export function SpellBadge({ index, onInfo }: { index: string; onInfo: (s: Spell
     staleTime: Infinity 
   })
   
+  const iconUrl = spell ? getSpellIconUrl(spell.name) : null
+
   return (
-    <div className="flex items-center gap-1.5 border border-stone-400 px-3 py-2" style={{ background: 'rgba(200,170,110,0.15)' }}>
+    <div className="flex items-center gap-2 border border-stone-400 px-2 py-1.5" style={{ background: 'rgba(200,170,110,0.15)' }}>
+      {/* Spell icon */}
+      <div className="w-8 h-8 shrink-0 flex items-center justify-center overflow-hidden rounded-sm bg-stone-900/10">
+        {iconUrl ? (
+          <img src={iconUrl} alt={spell?.name} className="w-full h-full object-cover" />
+        ) : (
+          <span className="text-base opacity-40">✨</span>
+        )}
+      </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-sm text-stone-700 capitalize font-serif truncate">{spell?.name ?? index.replace(/-/g, ' ')}</span>
@@ -73,7 +84,7 @@ export function SpellBadge({ index, onInfo }: { index: string; onInfo: (s: Spell
       </div>
       {spell && (
         <button onClick={() => onInfo(spell)}
-          className="text-[10px] px-1.5 py-0.5 border border-amber-700/60 text-amber-800 hover:bg-amber-100/50 font-serif transition-colors leading-none">
+          className="text-[10px] px-1.5 py-0.5 border border-amber-700/60 text-amber-800 hover:bg-amber-100/50 font-serif transition-colors leading-none shrink-0">
           Ver
         </button>
       )}

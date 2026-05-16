@@ -1,69 +1,53 @@
 #!/usr/bin/env node
 /**
- * Scrapes item thumbnails from bg3.wiki and outputs a TypeScript icon map.
- * Key strategy: extract name from href slug in td[0] (e.g. /wiki/Longsword → "longsword")
- * Usage: node scripts/scrape-bg3-icons.mjs
+ * Scrapes item/spell thumbnails from bg3.wiki.
+ * Handles two HTML patterns:
+ *   TABLE  — wikitable rows (armor, weapons)
+ *   LIST   — bg3wiki-icon spans inside <li> (spells, misc)
+ *
+ * Usage:
+ *   node scripts/scrape-bg3-icons.mjs items   → src/lib/bg3-icon-map.ts
+ *   node scripts/scrape-bg3-icons.mjs spells  → src/lib/bg3-spell-map.ts
+ *   node scripts/scrape-bg3-icons.mjs         → both
  */
 
 const BASE = 'https://bg3.wiki'
-const SIZE = 80 // px for the thumbnail
+const SIZE = 80
 
-const PAGES = [
+// ── Page definitions ────────────────────────────────────────────────────────
+
+const ITEM_PAGES = [
   '/wiki/Armour',
   '/wiki/List_of_martial_weapons',
   '/wiki/List_of_simple_weapons',
   '/wiki/List_of_ranged_weapons',
 ]
 
-// -------------------------------------------------------------------
+const LIST_PAGES = [
+  { url: '/wiki/List_of_all_spells',  output: 'spells' },
+  { url: '/wiki/Miscellaneous',       output: 'misc' },
+]
 
-function slugToName(slug) {
-  // /wiki/Longsword_%2B1 → "longsword +1"
-  return decodeURIComponent(slug.replace('/wiki/', ''))
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
+function slug2name(href) {
+  return decodeURIComponent(href.replace('/wiki/', ''))
     .replace(/_/g, ' ')
     .toLowerCase()
 }
 
-function upgradeSize(src) {
+function upgradeSrc(src) {
   return src.replace(/\/\d+px-/, `/${SIZE}px-`)
 }
 
-function extractRows(html) {
-  const items = []
-  const seen = new Set()
-
-  // Find every <tr> block
-  const trRegex = /<tr[\s>]([\s\S]*?)<\/tr>/gi
-  let trMatch
-
-  while ((trMatch = trRegex.exec(html)) !== null) {
-    const rowHtml = trMatch[1]
-
-    // img src — anywhere in the row
-    const imgMatch = rowHtml.match(/<img[^>]+src="([^"]+\/images\/thumb\/[^"]+)"/)
-    if (!imgMatch) continue
-
-    // href of the FIRST link in the row that points to a /wiki/ page (the item link)
-    // Usually in td[0]: <a href="/wiki/ItemName"><img .../></a>
-    const hrefMatch = rowHtml.match(/href="(\/wiki\/[^"#?]+)"/)
-    if (!hrefMatch) continue
-
-    const href = hrefMatch[1]
-    // Skip utility links like /wiki/Special: or /wiki/Category:
-    if (/\/(Special|Category|File|Help|Template):/.test(href)) continue
-    // Skip header row links that are just ability/property pages
-    // (they exist in every row but the main item link is always first)
-
-    const name = slugToName(href)
-    if (!name || name.length < 2) continue
-    if (seen.has(name)) continue
-    seen.add(name)
-
-    const imageUrl = BASE + upgradeSize(imgMatch[1])
-    items.push({ name, imageUrl })
-  }
-
-  return items
+// Get 2x (80px) URL from srcset attribute
+function bestFromSrcset(srcset) {
+  // srcset = "url1 1x, url2 1.5x, url3 2x"
+  const parts = srcset.split(',').map(s => s.trim())
+  // prefer 2x, then last entry
+  const twoX = parts.find(p => p.endsWith('2x'))
+  const chosen = twoX ?? parts[parts.length - 1]
+  return chosen.split(/\s+/)[0]
 }
 
 async function fetchPage(path) {
@@ -72,46 +56,135 @@ async function fetchPage(path) {
   const res = await fetch(url, {
     headers: { 'User-Agent': 'Mozilla/5.0 (compatible; taberna-icon-scraper/1.0)' }
   })
-  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`)
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.text()
 }
 
-// -------------------------------------------------------------------
+// ── TABLE extractor (armor/weapons wikitable) ────────────────────────────────
 
-async function main() {
-  const allItems = []
-  const globalSeen = new Set()
-
-  for (const page of PAGES) {
-    const html = await fetchPage(page)
-    const rows = extractRows(html)
-    process.stderr.write(`  → ${rows.length} items found\n`)
-
-    for (const row of rows) {
-      if (globalSeen.has(row.name)) continue
-      globalSeen.add(row.name)
-      allItems.push(row)
-    }
+function extractTableRows(html) {
+  const items = []
+  const seen = new Set()
+  const trRegex = /<tr[\s>]([\s\S]*?)<\/tr>/gi
+  let m
+  while ((m = trRegex.exec(html)) !== null) {
+    const row = m[1]
+    const imgM = row.match(/<img[^>]+src="([^"]+\/images\/thumb\/[^"]+)"/)
+    if (!imgM) continue
+    const hrefM = row.match(/href="(\/wiki\/[^"#?]+)"/)
+    if (!hrefM) continue
+    const href = hrefM[1]
+    if (/\/(Special|Category|File|Help|Template):/.test(href)) continue
+    const name = slug2name(href)
+    if (!name || name.length < 2 || seen.has(name)) continue
+    seen.add(name)
+    items.push({ name, imageUrl: BASE + upgradeSrc(imgM[1]) })
   }
-
-  process.stderr.write(`\nTotal unique items: ${allItems.length}\n`)
-
-  // Sample output for sanity check
-  process.stderr.write('\nSample (first 10):\n')
-  allItems.slice(0, 10).forEach(i =>
-    process.stderr.write(`  "${i.name}" → ${i.imageUrl}\n`)
-  )
-
-  // Output TypeScript
-  const lines = allItems.map(item =>
-    `  ${JSON.stringify(item.name)}: ${JSON.stringify(item.imageUrl)},`
-  )
-
-  console.log(`// Auto-generated by scripts/scrape-bg3-icons.mjs — ${new Date().toISOString().slice(0, 10)}`)
-  console.log(`// ${allItems.length} items scraped from bg3.wiki`)
-  console.log(`export const BG3_ICON_MAP: Record<string, string> = {`)
-  console.log(lines.join('\n'))
-  console.log(`}`)
+  return items
 }
 
-main().catch(e => { console.error(e); process.exit(1) })
+// ── LIST extractor (spells / misc — <picture> + <source srcset>) ─────────────
+
+function extractListItems(html) {
+  const items = []
+  const seen = new Set()
+
+  // Match every <li>...</li> block that contains a bg3wiki-icon
+  const liRegex = /<li>([\s\S]*?)<\/li>/gi
+  let liM
+  while ((liM = liRegex.exec(html)) !== null) {
+    const block = liM[1]
+    if (!block.includes('bg3wiki-icon')) continue
+
+    // We want the FIRST icon+link pair in the block (the item itself, not secondary icons)
+    // The first <a href="/wiki/..."> that wraps an <img class="mw-file-element">
+    const iconBlockRegex = /<a\s+href="(\/wiki\/[^"#?]+)"[^>]*>\s*<picture>([\s\S]*?)<\/picture>/g
+    const iconM = iconBlockRegex.exec(block)
+    if (!iconM) continue
+
+    const href = iconM[1]
+    if (/\/(Special|Category|File|Help|Template):/.test(href)) continue
+
+    const pictureHtml = iconM[2]
+
+    // Prefer srcset (has 80px variant) over src
+    const srcsetM = pictureHtml.match(/srcset="([^"]+)"/)
+    const srcM    = pictureHtml.match(/<img[^>]+src="([^"]+)"/)
+    if (!srcsetM && !srcM) continue
+
+    const rawUrl = srcsetM ? bestFromSrcset(srcsetM[1]) : srcM[1]
+    const imageUrl = BASE + rawUrl
+
+    // Name from img alt (most reliable)
+    const altM = pictureHtml.match(/alt="([^"]*)"/)
+    const name = (altM?.[1] ?? slug2name(href)).toLowerCase().trim()
+    if (!name || name.length < 2 || seen.has(name)) continue
+    seen.add(name)
+    items.push({ name, imageUrl })
+  }
+  return items
+}
+
+// ── Output ───────────────────────────────────────────────────────────────────
+
+function toTS(items, varName) {
+  const lines = items.map(i => `  ${JSON.stringify(i.name)}: ${JSON.stringify(i.imageUrl)},`)
+  return [
+    `// Auto-generated by scripts/scrape-bg3-icons.mjs — ${new Date().toISOString().slice(0, 10)}`,
+    `// ${items.length} items scraped from bg3.wiki`,
+    `export const ${varName}: Record<string, string> = {`,
+    lines.join('\n'),
+    `}`,
+  ].join('\n')
+}
+
+// ── Main ─────────────────────────────────────────────────────────────────────
+
+import { writeFileSync, mkdirSync } from 'fs'
+import { dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
+const OUT = `${__dirname}/../src/lib`
+
+const mode = process.argv[2] // 'items' | 'spells' | undefined (= both)
+
+async function scrapeItems() {
+  const all = [], seen = new Set()
+  for (const page of ITEM_PAGES) {
+    const html = await fetchPage(page)
+    const rows = extractTableRows(html)
+    process.stderr.write(`  → ${rows.length} items\n`)
+    for (const r of rows) {
+      if (!seen.has(r.name)) { seen.add(r.name); all.push(r) }
+    }
+  }
+  process.stderr.write(`Items total: ${all.length}\n`)
+  writeFileSync(`${OUT}/bg3-icon-map.ts`, toTS(all, 'BG3_ICON_MAP'))
+  process.stderr.write(`Wrote src/lib/bg3-icon-map.ts\n`)
+}
+
+async function scrapeSpells() {
+  const byOutput = {}
+  for (const { url, output } of LIST_PAGES) {
+    const html = await fetchPage(url)
+    const rows = extractListItems(html)
+    process.stderr.write(`  → ${rows.length} items\n`)
+    if (!byOutput[output]) byOutput[output] = []
+    byOutput[output].push(...rows)
+  }
+
+  // Merge spells + misc into one spell map
+  const all = [], seen = new Set()
+  for (const items of Object.values(byOutput)) {
+    for (const r of items) {
+      if (!seen.has(r.name)) { seen.add(r.name); all.push(r) }
+    }
+  }
+  process.stderr.write(`Spells+misc total: ${all.length}\n`)
+  writeFileSync(`${OUT}/bg3-spell-map.ts`, toTS(all, 'BG3_SPELL_MAP'))
+  process.stderr.write(`Wrote src/lib/bg3-spell-map.ts\n`)
+}
+
+if (!mode || mode === 'items')  await scrapeItems()
+if (!mode || mode === 'spells') await scrapeSpells()

@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { dndApi, dndKeys } from '../../../lib/dnd-api'
+import { getItemIconUrl } from '../../../lib/item-icons'
 
 export const Route = createFileRoute('/_authenticated/campaigns/$campaignId/taberna')({
   component: Taberna,
@@ -306,19 +307,28 @@ function Taberna() {
                 <p className="text-sm font-serif italic text-stone-500 py-8 text-center">Sin resultados.</p>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 max-h-[60vh] overflow-y-auto pr-1">
-                  {items.map(item => (
-                    <button
-                      key={item.index}
-                      onClick={() => handleSelect(item)}
-                      className={`text-left px-3 py-2 text-sm font-serif border transition-colors ${
-                        selected?.index === item.index
-                          ? 'bg-amber-900/20 border-amber-700 text-stone-900'
-                          : 'border-stone-400/30 hover:bg-amber-50/60 hover:border-stone-500/50 text-stone-800'
-                      }`}
-                    >
-                      {item.name}
-                    </button>
-                  ))}
+                  {items.map(item => {
+                    const iconUrl = getItemIconUrl(item.name)
+                    return (
+                      <button
+                        key={item.index}
+                        onClick={() => handleSelect(item)}
+                        className={`text-left flex items-center gap-2.5 px-2 py-1.5 text-sm font-serif border transition-colors ${
+                          selected?.index === item.index
+                            ? 'bg-amber-900/20 border-amber-700 text-stone-900'
+                            : 'border-stone-400/30 hover:bg-amber-50/60 hover:border-stone-500/50 text-stone-800'
+                        }`}
+                      >
+                        <div className="w-8 h-8 shrink-0 overflow-hidden rounded-sm bg-stone-800/8 flex items-center justify-center">
+                          {iconUrl
+                            ? <img src={iconUrl} alt="" className="w-full h-full object-cover" onError={e => { e.currentTarget.style.display = 'none' }} />
+                            : <span className="text-base opacity-30">📦</span>
+                          }
+                        </div>
+                        <span className="truncate">{item.name}</span>
+                      </button>
+                    )
+                  })}
                 </div>
               )}
             </div>
@@ -336,9 +346,18 @@ function Taberna() {
                     </div>
                   ) : itemDetail ? (
                     <>
-                      <div>
-                        <h3 className="font-display text-base text-stone-900 leading-tight pr-5">{itemDetail.name}</h3>
-                        <p className="text-[11px] font-serif italic text-stone-500 mt-0.5 capitalize">{itemDetail.equipment_category.name}</p>
+                      <div className="flex items-start gap-3">
+                        {(() => {
+                          const u = getItemIconUrl(itemDetail.name)
+                          return u ? (
+                            <img src={u} alt="" className="w-14 h-14 object-cover rounded-sm shrink-0 border border-stone-400/30 bg-stone-800/10"
+                              onError={e => { e.currentTarget.style.display = 'none' }} />
+                          ) : null
+                        })()}
+                        <div className="min-w-0 pt-0.5">
+                          <h3 className="font-display text-base text-stone-900 leading-tight pr-5">{itemDetail.name}</h3>
+                          <p className="text-[11px] font-serif italic text-stone-500 mt-0.5 capitalize">{itemDetail.equipment_category.name}</p>
+                        </div>
                       </div>
 
                       <div className="flex gap-4 text-xs font-mono text-stone-700">
