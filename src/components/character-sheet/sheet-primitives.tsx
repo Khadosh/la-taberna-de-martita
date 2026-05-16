@@ -84,13 +84,13 @@ export function SheetTabBar({
   onChange: (t: SheetTab) => void
 }) {
   return (
-    <div className="flex border-x border-t border-stone-600" style={{ background: 'rgba(180,145,80,0.12)' }}>
+    <div className="flex w-full border-x border-t border-stone-600" style={{ background: 'rgba(180,145,80,0.12)' }}>
       {TAB_DEFS.map(tab => (
         <button
           key={tab.id}
           onClick={() => onChange(tab.id)}
           className={`
-            flex items-center gap-1.5 px-4 py-2.5 text-xs font-serif tracking-wide transition-all border-r border-stone-600 last:border-r-0
+            flex-1 flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-serif tracking-wide transition-all border-r border-stone-600 last:border-r-0
             ${active === tab.id
               ? 'bg-amber-50/80 text-stone-800 font-semibold border-b-2 border-b-amber-700'
               : 'text-stone-500 hover:text-stone-700 hover:bg-amber-50/40 border-b border-b-stone-600'

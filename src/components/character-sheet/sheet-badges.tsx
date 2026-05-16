@@ -52,10 +52,25 @@ export function InfoModal({ modal, onClose }: { modal: InfoModalData; onClose: (
 // ── Spell Badge ───────────────────────────────────────────────────────────────
 
 export function SpellBadge({ index, onInfo }: { index: string; onInfo: (s: SpellDetail) => void }) {
-  const { data: spell } = useQuery({ queryKey: dndKeys.spell(index), queryFn: () => dndApi.spell(index) })
+  const { data: spell } = useQuery({ 
+    queryKey: dndKeys.spell(index), 
+    queryFn: () => dndApi.spell(index),
+    staleTime: Infinity 
+  })
+  
   return (
     <div className="flex items-center gap-1.5 border border-stone-400 px-3 py-2" style={{ background: 'rgba(200,170,110,0.15)' }}>
-      <span className="text-sm text-stone-700 flex-1 capitalize font-serif">{index.replace(/-/g, ' ')}</span>
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-stone-700 capitalize font-serif truncate">{spell?.name ?? index.replace(/-/g, ' ')}</span>
+          {spell && (
+            <span className="text-[9px] px-1 bg-stone-200 text-stone-500 font-mono border border-stone-300 rounded-sm">
+              Nv.{spell.level}
+            </span>
+          )}
+        </div>
+        {spell && <p className="text-[9px] text-stone-400 font-serif italic truncate">{spell.school.name}</p>}
+      </div>
       {spell && (
         <button onClick={() => onInfo(spell)}
           className="text-[10px] px-1.5 py-0.5 border border-amber-700/60 text-amber-800 hover:bg-amber-100/50 font-serif transition-colors leading-none">
@@ -107,39 +122,41 @@ function featureActionTag(desc: string): string | null {
   return null
 }
 
-export function FeatureCard({ index, name, isNew, onInfo }: {
-  index: string; name: string; isNew: boolean; onInfo: (f: FeatureDetail) => void
+export function FeatureCard({ index, name, isNew, onInfo, compact, maxLevel }: {
+  index: string; name: string; isNew: boolean; onInfo: (f: FeatureDetail) => void; compact?: boolean; maxLevel?: number
 }) {
-  const [expanded, setExpanded] = useState(isNew)
+  const [expanded, setExpanded] = useState(false)
   const { data: feature } = useQuery({
     queryKey: dndKeys.feature(index),
     queryFn: () => dndApi.feature(index),
     staleTime: Infinity,
   })
 
+  if (maxLevel && feature && feature.level > maxLevel) return null
+
   const firstPara = feature?.desc[0] ?? ''
   const actionTag = firstPara ? featureActionTag(firstPara) : null
-  const hasMore = feature && (feature.desc.length > 1 || firstPara.length > 200)
+  const hasMore = !compact && feature && (feature.desc.length > 1 || firstPara.length > 200)
 
   return (
     <div
       className={`border p-3 transition-colors ${isNew ? 'border-amber-600/50 bg-amber-50/30' : 'border-stone-300/70'}`}
       style={{ background: isNew ? 'rgba(200,140,20,0.06)' : 'rgba(200,170,110,0.08)' }}
     >
-      <div className="flex items-start justify-between gap-2 mb-1">
+      <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-1.5 flex-wrap">
           {isNew && <span className="text-[9px] px-1.5 py-px bg-amber-700 text-amber-100 font-serif uppercase tracking-wide leading-tight">Nuevo</span>}
           {actionTag && <span className="text-[9px] px-1.5 py-px border border-blue-400/50 text-blue-700 font-serif leading-tight">{actionTag}</span>}
           <p className="text-sm font-semibold text-stone-800 font-serif">{name}</p>
         </div>
         {feature && feature.desc.length > 0 && (
-          <button onClick={() => onInfo(feature)} className="text-stone-300 hover:text-amber-700 text-sm shrink-0 transition-colors" title="Ver descripción completa">ℹ</button>
+          <button onClick={() => onInfo(feature)} className="text-amber-700 hover:text-amber-900 text-sm shrink-0 transition-colors" title="Ver descripción completa">ℹ</button>
         )}
       </div>
-      {firstPara && (
-        <p className={`text-xs text-stone-600 font-serif leading-relaxed ${expanded ? '' : 'line-clamp-2'}`}>{firstPara}</p>
+      {!compact && firstPara && (
+        <p className={`text-xs text-stone-600 font-serif leading-relaxed mt-1 ${expanded ? '' : 'line-clamp-2'}`}>{firstPara}</p>
       )}
-      {hasMore && (
+      {!compact && hasMore && (
         <button onClick={() => setExpanded(e => !e)} className="text-[10px] text-stone-400 hover:text-amber-700 mt-1 font-serif transition-colors">
           {expanded ? '▲ menos' : '▼ ver más'}
         </button>

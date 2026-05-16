@@ -1,6 +1,5 @@
-/**
- * Tab "Hechizos": spell slots (toggle) + lista de hechizos preparados.
- */
+import { useQueries } from '@tanstack/react-query'
+import { dndApi, dndKeys } from '../../lib/dnd-api'
 import { SheetLabel, SheetRow } from './sheet-primitives'
 import { SpellBadge } from './sheet-badges'
 import type { SpellDetail } from '../../lib/dnd-api'
@@ -22,6 +21,15 @@ export function TabHechizos({
   spells, maxSlots, slotsUsed, characterClass,
   isOwner, isSpellcaster, setModal, toggleSlot,
 }: TabHechizosProps) {
+  // Fetch details for all spells to group them by level
+  const spellResults = useQueries({
+    queries: spells.map(index => ({
+      queryKey: dndKeys.spell(index),
+      queryFn: () => dndApi.spell(index),
+      staleTime: Infinity,
+    }))
+  })
+
   if (!isSpellcaster && spells.length === 0) {
     return (
       <SheetRow className="border-t border-stone-600">
@@ -32,6 +40,18 @@ export function TabHechizos({
       </SheetRow>
     )
   }
+
+  // Group spells by level
+  const spellsByLevel: Record<number, SpellDetail[]> = {}
+  spellResults.forEach(res => {
+    if (res.data) {
+      const lvl = res.data.level
+      if (!spellsByLevel[lvl]) spellsByLevel[lvl] = []
+      spellsByLevel[lvl].push(res.data)
+    }
+  })
+
+  const sortedLevels = Object.keys(spellsByLevel).map(Number).sort((a, b) => a - b)
 
   return (
     <div>
@@ -73,14 +93,27 @@ export function TabHechizos({
         </SheetRow>
       )}
 
-      {/* Prepared spells */}
-      {spells.length > 0 && (
+      {/* Prepared spells grouped by level */}
+      {sortedLevels.length > 0 && (
         <SheetRow className="border-t border-stone-600">
           <div className="flex-1 p-4">
-            <SheetLabel>Conjuros preparados · {spells.length}</SheetLabel>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
-              {spells.map(idx => (
-                <SpellBadge key={idx} index={idx} onInfo={(data: SpellDetail) => setModal({ kind: 'spell', data })} />
+            <SheetLabel>Conjuros preparados</SheetLabel>
+            <div className="mt-3 space-y-6">
+              {sortedLevels.map(lvl => (
+                <div key={lvl}>
+                  <p className="text-[10px] text-stone-400 font-serif tracking-widest uppercase border-b border-stone-300/60 pb-0.5 mb-2">
+                    {lvl === 0 ? 'Trucos (Cantrips)' : `Nivel ${lvl}`}
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {spellsByLevel[lvl].map(spell => (
+                      <SpellBadge 
+                        key={spell.index} 
+                        index={spell.index} 
+                        onInfo={(data: SpellDetail) => setModal({ kind: 'spell', data })} 
+                      />
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </div>

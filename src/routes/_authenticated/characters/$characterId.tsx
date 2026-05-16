@@ -12,7 +12,7 @@ import { DiceModule } from '../../../lib/dice'
 
 // Components
 import { type SheetJson, type InfoModalData } from '../../../components/character-sheet/types'
-import { parchmentStyle, sheetStyle, SheetLabel, SheetRow, SheetTabBar, type SheetTab } from '../../../components/character-sheet/sheet-primitives'
+import { parchmentStyle, sheetStyle, SheetLabel, SheetTabBar, type SheetTab } from '../../../components/character-sheet/sheet-primitives'
 import { InfoModal } from '../../../components/character-sheet/sheet-badges'
 import { LevelUpModal } from '../../../components/character-sheet/level-up-modal'
 import { TabResumen } from '../../../components/character-sheet/tab-resumen'
@@ -354,19 +354,41 @@ function CharacterSheet() {
           
           {/* Main Content Area */}
           <div className="lg:col-span-7 space-y-0" style={sheetStyle}>
-            {/* Title Section */}
-            <div className="p-6 text-center border-b border-stone-600 bg-stone-800/5">
-              <h1 className="text-3xl font-bold text-stone-900 font-serif">{character.name}</h1>
-              <p className="text-sm text-stone-500 font-serif italic mt-1 capitalize">
-                {character.race} · {character.class} {subclassDetail && `(${subclassDetail.name})`} · Nivel {level}
-              </p>
+            {/* Header: Identity + Portrait */}
+            <div className="flex items-center gap-6 p-6 border-b border-stone-600 bg-stone-800/10">
+              <div className="w-24 h-24 bg-stone-300/50 border border-stone-500 overflow-hidden shrink-0 shadow-md group relative">
+                {character.portrait_url ? (
+                  <img src={character.portrait_url} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-stone-400 text-3xl">⚔</div>
+                )}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                   <button onClick={() => fileInputRef.current?.click()} className="text-[10px] text-white underline font-serif">Subir</button>
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-3xl font-bold text-stone-900 font-serif truncate leading-none">{character.name}</h1>
+                <p className="text-sm text-stone-500 font-serif italic mt-2 capitalize">
+                  {character.race} · {character.class} {subclassDetail && `(${subclassDetail.name})`} · Nivel {level}
+                </p>
+                <div className="flex gap-2 mt-4">
+                  <button 
+                    onClick={generatePortrait} 
+                    disabled={generatingPortrait} 
+                    className="text-[10px] px-2.5 py-1 bg-amber-900/10 border border-amber-900/20 text-amber-900 hover:bg-amber-900/20 transition-colors font-serif disabled:opacity-50"
+                  >
+                    {generatingPortrait ? 'Hechizando...' : 'Retrato IA'}
+                  </button>
+                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePortraitUpload} />
+                </div>
+              </div>
             </div>
 
             {/* Tabs Bar */}
             <SheetTabBar active={activeTab} onChange={setActiveTab} />
 
             {/* Tab Content */}
-            <div className="min-h-[400px]">
+            <div className="min-h-[500px] relative">
               {activeTab === 'resumen' && (
                 <TabResumen
                   {...{
@@ -399,9 +421,10 @@ function CharacterSheet() {
                 <TabCombate
                   ac={ac} dexMod={dexMod} strMod={strMod} profBonus={profBonus}
                   raceDetailSpeed={raceDetail?.speed} hitDie={hitDie} hitDiceAvailable={hitDiceAvailable}
-                  level={level} equippedItems={equippedItems} equippedArmor={sheet.equipped_armor}
+                  level={level} equippedItems={equippedItems}
                   classFeaturesByLevel={classFeaturesByLevel} subclassDetail={subclassDetail}
                   subclassFeatureList={subclassFeatureList} setModal={setModal}
+                  currentHp={currentHp} maxHp={maxHp} hpColor={hpColor}
                 />
               )}
               {activeTab === 'hechizos' && (
@@ -412,23 +435,6 @@ function CharacterSheet() {
                 />
               )}
             </div>
-
-            {/* Portrait Section (at bottom of main sheet) */}
-            <SheetRow className="border-t border-stone-600">
-               <div className="flex-1 p-4 flex gap-4 items-center">
-                  <div className="w-20 h-20 bg-stone-300/50 border border-stone-500 overflow-hidden shrink-0">
-                    {character.portrait_url ? <img src={character.portrait_url} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-stone-400">⚔</div>}
-                  </div>
-                  <div className="flex-1">
-                    <SheetLabel>Retrato</SheetLabel>
-                    <div className="flex gap-2 mt-2">
-                      <button onClick={() => fileInputRef.current?.click()} className="text-[10px] px-2 py-1 border border-stone-400 font-serif">Subir</button>
-                      <button onClick={generatePortrait} disabled={generatingPortrait} className="text-[10px] px-2 py-1 bg-stone-800 text-amber-300 font-serif">{generatingPortrait ? '...' : 'Generar IA'}</button>
-                      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePortraitUpload} />
-                    </div>
-                  </div>
-               </div>
-            </SheetRow>
           </div>
 
           {/* Sidebar Area: Inventory */}
@@ -439,8 +445,6 @@ function CharacterSheet() {
                  inventory={inventory}
                  sheet={sheet}
                  isOwner={isOwner}
-                 ac={ac}
-                 dexMod={dexMod}
                  toggleEquip={toggleEquip}
                  patchCurrency={(p) => patchSheet({ currency: { ...(sheet.currency ?? { gold: 0, silver: 0, copper: 0 }), ...p } })}
                  currency={sheet.currency ?? { gold: 0, silver: 0, copper: 0 }}

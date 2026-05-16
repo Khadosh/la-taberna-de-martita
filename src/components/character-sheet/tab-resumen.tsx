@@ -29,17 +29,12 @@ interface TabResumenProps {
   // HP
   currentHp: number
   maxHp: number
-  hitDie: number
   hpPct: number
   hpColor: string
   editingHp: boolean
   hpInput: string
   setHpInput: (v: string) => void
   setEditingHp: (v: boolean) => void
-  editingMaxHp: boolean
-  maxHpInput: string
-  setMaxHpInput: (v: string) => void
-  setEditingMaxHp: (v: boolean) => void
   // AC / XP
   ac: number
   xp: number
@@ -60,21 +55,11 @@ interface TabResumenProps {
   dexMod: number
   profBonus: number
   passivePerception: number
-  hitDiceAvailable: number
   conditions: string[]
   deathSaves: { successes: number; failures: number }
   isStable: boolean
   isDead: boolean
   currency: { gold: number; silver: number; copper: number }
-  // Rest state
-  showRestPanel: boolean
-  setShowRestPanel: (v: boolean) => void
-  showLongRestConfirm: boolean
-  setShowLongRestConfirm: (v: boolean) => void
-  shortRestHd: number
-  setShortRestHd: (v: number) => void
-  shortRestHpInput: string
-  setShortRestHpInput: (v: string) => void
   showConditionPicker: boolean
   setShowConditionPicker: (v: (prev: boolean) => boolean) => void
   // Handlers
@@ -82,8 +67,6 @@ interface TabResumenProps {
   saveHp: () => void
   saveAc: () => void
   saveXp: () => void
-  shortRest: () => void
-  longRest: () => void
   toggleCondition: (c: string) => void
   toggleDeathSave: (kind: 'successes' | 'failures', i: number) => void
   patchSheet: (p: Partial<SheetJson>) => void
@@ -97,19 +80,16 @@ interface TabResumenProps {
 
 export function TabResumen(props: TabResumenProps) {
   const {
-    stats, sheet, character, raceDetail, isOwner, isGm,
-    currentHp, maxHp, hitDie, hpPct, hpColor,
+    stats, character, raceDetail, isOwner, isGm,
+    currentHp, maxHp, hpPct, hpColor,
     editingHp, hpInput, setHpInput, setEditingHp,
-    editingMaxHp, maxHpInput, setMaxHpInput, setEditingMaxHp,
     ac, xp, xpPct, level, xpForCurrent, xpForNext, canLevelUp,
     editingAc, acInput, setAcInput, setEditingAc,
     editingXp, xpInput, setXpInput, setEditingXp,
-    dexMod, profBonus, passivePerception, hitDiceAvailable,
+    dexMod, profBonus, passivePerception,
     conditions, deathSaves, isStable, isDead, currency,
-    showRestPanel, setShowRestPanel, showLongRestConfirm, setShowLongRestConfirm,
-    shortRestHd, setShortRestHd, shortRestHpInput, setShortRestHpInput,
     showConditionPicker, setShowConditionPicker,
-    adjustHp, saveHp, saveAc, saveXp, shortRest, longRest,
+    adjustHp, saveHp, saveAc, saveXp,
     toggleCondition, toggleDeathSave,
     setShowLevelUpModal, setLevelUpHpInput, setModal,
     classDetail, raceDetailSpeed,
@@ -331,54 +311,6 @@ export function TabResumen(props: TabResumenProps) {
                         ))}
                       </div>
                     )}
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {isOwner && (
-            <div>
-              <SheetLabel>Descanso</SheetLabel>
-              <div className="mt-3">
-                {showLongRestConfirm ? (
-                  <div className="flex items-center gap-3">
-                    <p className="text-xs text-stone-500 font-serif italic flex-1">¿Descanso largo? Se recuperan todos los PV, conjuros y dados de golpe.</p>
-                    <button onClick={longRest} className="px-3 py-1 text-xs bg-amber-800 hover:bg-amber-700 text-amber-100 font-serif">Confirmar</button>
-                    <button onClick={() => setShowLongRestConfirm(false)} className="text-xs text-stone-500 font-serif">✕</button>
-                  </div>
-                ) : showRestPanel ? (
-                  <div className="border border-stone-400 p-3 space-y-2" style={{ background: 'rgba(200,170,110,0.2)' }}>
-                    <div className="flex items-center gap-3">
-                      <p className="text-xs text-stone-600 font-serif">DG disponibles: <span className="font-bold">{hitDiceAvailable}</span> d{hitDie}</p>
-                      <div className="flex items-center gap-1 ml-auto">
-                        <button onClick={() => setShortRestHd(Math.max(1, shortRestHd - 1))} className="w-5 h-5 border border-stone-400 text-stone-600 text-xs leading-none">−</button>
-                        <span className="text-sm font-mono w-5 text-center">{shortRestHd}</span>
-                        <button onClick={() => setShortRestHd(Math.min(hitDiceAvailable, shortRestHd + 1))} className="w-5 h-5 border border-stone-400 text-stone-600 text-xs leading-none">+</button>
-                        <span className="text-xs text-stone-500 font-serif ml-1">DG a gastar</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <label className="text-xs text-stone-600 font-serif">PV recuperados (tirás físicamente):</label>
-                      <input type="number" min="0" value={shortRestHpInput} onChange={e => setShortRestHpInput(e.target.value)}
-                        className="w-16 px-2 py-0.5 text-sm border border-stone-400 bg-amber-50/80 font-mono focus:outline-none" placeholder="0" />
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={shortRest} disabled={hitDiceAvailable === 0}
-                        className="px-3 py-1 text-xs bg-stone-700 hover:bg-stone-600 disabled:opacity-40 text-amber-300 font-serif">Descansar</button>
-                      <button onClick={() => setShowRestPanel(false)} className="text-xs text-stone-500 font-serif">Cancelar</button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex gap-2">
-                    <button onClick={() => setShowRestPanel(true)} disabled={hitDiceAvailable === 0}
-                      className="px-3 py-1 text-xs border border-stone-400 text-stone-600 hover:bg-stone-200/50 disabled:opacity-40 font-serif transition-colors">
-                      ☽ Descanso corto
-                    </button>
-                    <button onClick={() => setShowLongRestConfirm(true)}
-                      className="px-3 py-1 text-xs border border-amber-700 text-amber-800 hover:bg-amber-100/50 font-serif transition-colors">
-                      ☀ Descanso largo
-                    </button>
                   </div>
                 )}
               </div>

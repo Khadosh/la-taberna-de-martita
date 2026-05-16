@@ -21,8 +21,6 @@ interface InventoryPanelProps {
   inventory: InventoryItem[]
   sheet: SheetJson
   isOwner: boolean
-  ac: number
-  dexMod: number
   toggleEquip: (id: string) => Promise<void>
   patchCurrency: (patch: Partial<{ gold: number; silver: number; copper: number }>) => void
   currency: { gold: number; silver: number; copper: number }
@@ -211,7 +209,7 @@ function ItemIcon({ name, notes, imageUrl }: { name: string, notes?: string | nu
 }
 
 export function InventoryPanel({
-  characterId, inventory, sheet, isOwner, ac, dexMod,
+  characterId, inventory, sheet, isOwner,
   toggleEquip, patchCurrency, currency, strScore,
 }: InventoryPanelProps) {
   const queryClient = useQueryClient()
