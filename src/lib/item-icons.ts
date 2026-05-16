@@ -1,3 +1,5 @@
+import { BG3_ICON_MAP } from './bg3-icon-map'
+
 // URL format: https://game-icons.net/icons/{fg}/{bg}/1x1/{author}/{icon}.svg
 const G = (path: string) => `https://game-icons.net/icons/ffffff/000000/1x1/${path}.svg`
 
@@ -6,6 +8,13 @@ const n = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, ''
 
 export function getItemIconUrl(name: string): string | null {
   const s = n(name)
+
+  // BG3 exact match (highest priority — real game art)
+  if (BG3_ICON_MAP[s]) return BG3_ICON_MAP[s]
+  // BG3 partial match: find a BG3 key that's contained in the item name
+  for (const [key, url] of Object.entries(BG3_ICON_MAP)) {
+    if (s.includes(key) || key.includes(s)) return url
+  }
 
   // ── WEAPONS ──────────────────────────────────────────────────────────────
   if (s.includes('longsword') || s.includes('espada larga')) return G('lorc/broadsword')
