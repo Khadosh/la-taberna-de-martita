@@ -6,7 +6,7 @@ import type { RaceDetail } from '../../lib/dnd-api'
 import { ABILITY_LABELS, abilityModifier, modifierColor } from '../../lib/dnd-api'
 import { CONDITIONS } from '../../lib/dnd-constants'
 import type { SheetJson } from './types'
-import { SheetLabel, SheetRow, QuickPill } from './sheet-primitives'
+import { SheetLabel, SheetRow } from './sheet-primitives'
 import { TraitBadge } from './sheet-badges'
 import type { InfoModalData } from './types'
 
@@ -51,6 +51,12 @@ interface TabResumenProps {
   xpInput: string
   setXpInput: (v: string) => void
   setEditingXp: (v: boolean) => void
+  // Max HP editable
+  editingMaxHp: boolean
+  maxHpInput: string
+  setMaxHpInput: (v: string) => void
+  setEditingMaxHp: (v: boolean) => void
+  saveMaxHp: () => void
   // Derived
   dexMod: number
   profBonus: number
@@ -83,47 +89,29 @@ export function TabResumen(props: TabResumenProps) {
     stats, character, raceDetail, isOwner, isGm,
     currentHp, maxHp, hpPct, hpColor,
     editingHp, hpInput, setHpInput, setEditingHp,
-    ac, xp, xpPct, level, xpForCurrent, xpForNext, canLevelUp,
+    editingMaxHp, maxHpInput, setMaxHpInput, setEditingMaxHp, saveMaxHp,
+    ac, xp, xpPct, level, xpForNext, canLevelUp,
     editingAc, acInput, setAcInput, setEditingAc,
     editingXp, xpInput, setXpInput, setEditingXp,
-    dexMod, profBonus, passivePerception,
-    conditions, deathSaves, isStable, isDead, currency,
+    conditions, deathSaves, isStable, isDead,
     showConditionPicker, setShowConditionPicker,
     adjustHp, saveHp, saveAc, saveXp,
     toggleCondition, toggleDeathSave,
     setShowLevelUpModal, setLevelUpHpInput, setModal,
-    classDetail, raceDetailSpeed,
   } = props
 
   return (
     <div>
-      {/* Quick stats strip */}
-      <div className="border-t border-stone-500/40 px-4 sm:px-6 py-2 flex flex-wrap items-center gap-x-4 gap-y-1.5" style={{ background: 'rgba(180,145,80,0.1)' }}>
-        <QuickPill label="Velocidad" value={`${raceDetailSpeed ?? 30} ft`} />
-        <QuickPill label="Iniciativa" value={dexMod >= 0 ? `+${dexMod}` : String(dexMod)} />
-        <QuickPill label="Perc. pasiva" value={String(passivePerception)} title="Percepción Pasiva: 10 + mod. Sabiduría" />
-        <QuickPill label="Bono prof." value={`+${profBonus}`} title="Bonus de competencia" />
-        {currency.gold > 0 && <QuickPill label="MO" value={String(currency.gold)} variant="gold" />}
-        {classDetail?.saving_throws && classDetail.saving_throws.length > 0 && (
-          <QuickPill
-            label="Sal. prof."
-            value={classDetail.saving_throws.map(st => ABILITY_LABELS[st.index]).join(', ')}
-            variant="save"
-            title={`Tiradas de salvación con competencia: ${classDetail.saving_throws.map(st => st.name).join(', ')}`}
-          />
-        )}
-      </div>
-
-      {/* Stats grid */}
-      <SheetRow className="border-t border-stone-600">
+      {/* Stats grid — primero */}
+      <SheetRow>
         <div className="flex-1 p-4">
           <SheetLabel>Características</SheetLabel>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-3">
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 mt-3">
             {STAT_KEYS.map(k => (
-              <div key={k} className="border border-stone-500 text-center py-2 px-1" style={{ background: 'rgba(200,170,110,0.15)' }}>
-                <p className="text-xs text-stone-500 font-serif tracking-widest uppercase">{ABILITY_LABELS[k]}</p>
-                <p className="text-2xl sm:text-3xl font-bold text-stone-900 my-0.5" style={{ fontFamily: 'Georgia, serif' }}>{stats[k] ?? '—'}</p>
-                <div className="border-t border-stone-400 pt-0.5">
+              <div key={k} className="text-center py-1.5 px-1" style={{ background: 'rgba(200,170,110,0.18)', border: '1px solid rgba(109,85,48,0.35)' }}>
+                <p className="text-[10px] text-stone-500 font-serif tracking-widest uppercase">{ABILITY_LABELS[k]}</p>
+                <p className="text-xl sm:text-2xl font-bold text-stone-900 my-0.5" style={{ fontFamily: 'Georgia, serif' }}>{stats[k] ?? '—'}</p>
+                <div className="pt-0.5" style={{ borderTop: '1px solid rgba(109,85,48,0.25)' }}>
                   <p className={`text-sm font-bold font-mono ${stats[k] ? modifierColor(stats[k]) : 'text-stone-400'}`}>
                     {stats[k] ? abilityModifier(stats[k]) : ''}
                   </p>
@@ -135,38 +123,58 @@ export function TabResumen(props: TabResumenProps) {
       </SheetRow>
 
       {/* HP + AC + XP */}
-      <SheetRow className="border-t border-stone-600">
+      <SheetRow className="border-t border-stone-500/30">
         {/* HP */}
-        <div className="flex-1 border-b sm:border-b-0 sm:border-r border-stone-600 p-4">
+        <div className="flex-1 p-4" style={{ borderRight: '1px solid rgba(109,85,48,0.3)' }}>
           <SheetLabel>Puntos de Vida</SheetLabel>
           <div className="mt-3 space-y-2">
-            <div className="h-3 border border-stone-500 overflow-hidden bg-stone-200/40">
+            <div className="h-3 border border-stone-500/60 overflow-hidden bg-stone-200/40">
               <div className={`h-full transition-all ${hpColor}`} style={{ width: `${hpPct}%` }} />
             </div>
+            {/* 3 grupos: [decrementar] [HP / maxHP PV] [incrementar] */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1">
                 {isOwner && <button onClick={() => adjustHp(-5)} className="w-7 h-6 text-xs border border-red-700/60 text-red-700 hover:bg-red-100/30 leading-none font-mono" title="−5 daño">-5</button>}
                 {isOwner && <button onClick={() => adjustHp(-1)} className="w-6 h-6 text-sm border border-stone-500 text-stone-600 hover:bg-stone-200/50 leading-none font-mono">−</button>}
+              </div>
+
+              <div className="flex items-baseline gap-1">
                 {editingHp ? (
                   <input autoFocus value={hpInput} onChange={e => setHpInput(e.target.value)}
                     onBlur={saveHp} onKeyDown={e => e.key === 'Enter' && saveHp()}
-                    className="w-14 text-center text-lg font-bold font-mono border-b border-stone-600 bg-transparent focus:outline-none" />
+                    className="w-12 text-center text-lg font-bold font-mono border-b border-stone-600 bg-transparent focus:outline-none" />
                 ) : (
                   <button onClick={() => { setEditingHp(true); setHpInput(String(currentHp)) }}
-                    className="text-lg font-bold font-mono text-stone-800 px-1 hover:text-amber-800 transition-colors min-w-[2rem]">
+                    className="text-xl font-bold font-mono text-stone-800 hover:text-amber-800 transition-colors">
                     {currentHp === 0 ? <span className="text-red-700">0</span> : currentHp}
                   </button>
                 )}
+                <span className="text-stone-400 text-sm font-serif">/</span>
+                {editingMaxHp && isOwner ? (
+                  <input autoFocus value={maxHpInput} onChange={e => setMaxHpInput(e.target.value)}
+                    onBlur={saveMaxHp} onKeyDown={e => e.key === 'Enter' && saveMaxHp()}
+                    className="w-10 text-center text-sm font-mono border-b border-amber-600 bg-transparent focus:outline-none" />
+                ) : (
+                  <button
+                    onClick={() => { if (isOwner) { setEditingMaxHp(true); setMaxHpInput(String(maxHp)) } }}
+                    className={`text-sm font-mono text-stone-500 leading-none ${isOwner ? 'hover:text-amber-700 transition-colors' : ''}`}
+                    title={isOwner ? 'Click para editar PV máximos' : undefined}
+                  >
+                    {maxHp}
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1">
                 {isOwner && <button onClick={() => adjustHp(1)} className="w-6 h-6 text-sm border border-stone-500 text-stone-600 hover:bg-stone-200/50 leading-none font-mono">+</button>}
                 {isOwner && <button onClick={() => adjustHp(5)} className="w-7 h-6 text-xs border border-green-700/60 text-green-700 hover:bg-green-100/30 leading-none font-mono" title="+5 curar">+5</button>}
               </div>
-              <span className="text-xs text-stone-500 font-serif">/ {maxHp} PV</span>
             </div>
           </div>
         </div>
 
         {/* AC */}
-        <div className="sm:w-32 border-b sm:border-b-0 sm:border-r border-stone-600 p-4 text-center">
+        <div className="sm:w-28 p-4 text-center" style={{ borderRight: '1px solid rgba(109,85,48,0.3)' }}>
           <SheetLabel>CA</SheetLabel>
           <div className="mt-3">
             {editingAc && isOwner ? (
@@ -179,42 +187,43 @@ export function TabResumen(props: TabResumenProps) {
                 {ac}
               </button>
             )}
-            <p className="text-xs text-stone-400 font-serif italic mt-1">Clase de Armadura</p>
+            <p className="text-[10px] text-stone-400 font-serif mt-1">Armadura</p>
           </div>
         </div>
 
-        {/* XP */}
+        {/* XP — barra alineada con HP (labels debajo) */}
         <div className="flex-1 p-4">
           <SheetLabel>Experiencia</SheetLabel>
-          <div className="mt-3 space-y-2">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] text-stone-400 font-serif">Nv. {level} — {xpForCurrent.toLocaleString()} XP</span>
-              {xpForNext && <span className="text-[10px] text-stone-400 font-serif">Nv. {level + 1} — {xpForNext.toLocaleString()} XP</span>}
-            </div>
-            <div className="h-3 border border-stone-500 overflow-hidden bg-stone-200/40">
+          <div className="mt-3 space-y-1.5">
+            {/* Barra primero, alineada con la de HP */}
+            <div className="h-3 border border-stone-500/60 overflow-hidden bg-stone-200/40">
               <div className="h-full bg-amber-700 transition-all" style={{ width: `${xpPct}%` }} />
             </div>
+            {/* Valor actual + acción GM */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-mono text-stone-700">{xp.toLocaleString()} XP</span>
-                {editingXp && isGm ? (
-                  <div className="flex items-center gap-1">
-                    <span className="text-xs text-stone-500 font-serif">+</span>
-                    <input autoFocus value={xpInput} onChange={e => setXpInput(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && saveXp()} placeholder="0"
-                      className="w-16 text-sm font-mono border-b border-stone-600 bg-transparent focus:outline-none text-center" />
-                    <button onClick={saveXp} className="text-[10px] px-1.5 py-0.5 bg-amber-800 hover:bg-amber-700 text-amber-100 font-serif transition-colors leading-none">OK</button>
-                    <button onClick={() => { setEditingXp(false); setXpInput('') }} className="text-stone-500 hover:text-stone-300 text-xs">✕</button>
-                  </div>
-                ) : isGm ? (
+                {(isGm && !editingXp) && (
                   <button onClick={() => { setEditingXp(true); setXpInput('') }}
                     className="text-[10px] px-1.5 py-0.5 border border-stone-500 hover:border-amber-700 text-stone-500 hover:text-amber-700 font-serif transition-colors leading-none">
-                    + otorgar XP
+                    + XP
                   </button>
-                ) : null}
+                )}
               </div>
-              {xpForNext && <span className="text-xs text-stone-400 font-serif">→ {xpForNext.toLocaleString()}</span>}
+              {xpForNext && <span className="text-[10px] text-stone-400 font-serif">Nv. {level + 1} — {xpForNext.toLocaleString()}</span>}
             </div>
+            {
+              (isGm && editingXp) && (
+                <div className="flex items-center gap-1 w-full">
+                  <span className="text-xs text-stone-500 font-serif">+</span>
+                  <input autoFocus value={xpInput} onChange={e => setXpInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && saveXp()} placeholder="0"
+                    className="w-full text-sm font-mono border-b border-stone-600 bg-transparent focus:outline-none text-center" />
+                  <button onClick={saveXp} className="text-[10px] px-1.5 py-0.5 bg-amber-800 hover:bg-amber-700 text-amber-100 font-serif transition-colors leading-none">OK</button>
+                  <button onClick={() => { setEditingXp(false); setXpInput('') }} className="text-stone-500 text-xs">✕</button>
+                </div>
+              )
+            }
             {canLevelUp && (isGm || isOwner) && (
               <button onClick={() => { setShowLevelUpModal(true); setLevelUpHpInput('') }}
                 className="w-full text-xs py-1 bg-amber-800 hover:bg-amber-700 text-amber-100 font-serif transition-colors animate-pulse">
@@ -256,17 +265,32 @@ export function TabResumen(props: TabResumenProps) {
 
       {/* Racial traits */}
       {raceDetail && (
-        <SheetRow className="border-t border-stone-600">
+        <SheetRow className="border-t border-stone-500/30">
           <div className="flex-1 p-4 space-y-3">
             <SheetLabel>Rasgos raciales · <span className="capitalize">{character.race}</span></SheetLabel>
             {raceDetail.ability_bonuses.filter(b => b.bonus !== 0).length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 {raceDetail.ability_bonuses.filter(b => b.bonus !== 0).map(b => (
-                  <span key={b.ability_score.index} className="px-2 py-0.5 text-xs border border-amber-600/60 text-amber-900 font-serif font-semibold" style={{ background: 'rgba(200,140,40,0.13)' }}>
-                    {ABILITY_LABELS[b.ability_score.index]} +{b.bonus}
+                  <span
+                    key={b.ability_score.index}
+                    className="px-3 py-1 text-xs border-2 border-amber-700/65 text-amber-900 font-serif font-bold tracking-wide"
+                    style={{
+                      background: 'rgba(200,140,40,0.22)',
+                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3), 0 2px 4px rgba(0,0,0,0.12)',
+                    }}
+                  >
+                    {ABILITY_LABELS[b.ability_score.index]} {b.bonus > 0 ? '+' : ''}{b.bonus}
                   </span>
                 ))}
-                <span className="px-2 py-0.5 text-xs border border-stone-400 text-stone-500 font-serif">{raceDetail.speed} ft</span>
+                <span
+                  className="px-3 py-1 text-xs border-2 border-stone-500/50 text-stone-600 font-serif font-semibold"
+                  style={{
+                    background: 'rgba(160,140,100,0.15)',
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 4px rgba(0,0,0,0.08)',
+                  }}
+                >
+                  {raceDetail.speed} ft
+                </span>
               </div>
             )}
             {raceDetail.traits.length > 0 && (
@@ -283,16 +307,26 @@ export function TabResumen(props: TabResumenProps) {
       )}
 
       {/* Conditions + Rest */}
-      <SheetRow className="border-t border-stone-600">
+      <SheetRow className="border-t border-stone-500/30">
         <div className="flex-1 p-4 space-y-4">
           {(conditions.length > 0 || isOwner) && (
             <div>
               <SheetLabel>Condiciones activas</SheetLabel>
               <div className="flex flex-wrap gap-1.5 mt-3">
                 {conditions.map(c => (
-                  <span key={c} className="flex items-center gap-1 px-2 py-0.5 text-xs border border-red-700 bg-red-100/60 text-red-800 font-serif">
+                  <span
+                    key={c}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs border-2 border-red-700/65 rounded-full text-red-900 font-serif font-semibold"
+                    style={{
+                      background: 'rgba(200,50,30,0.1)',
+                      boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.2), 0 2px 5px rgba(140,20,10,0.18)',
+                    }}
+                  >
+                    <span className="text-red-500 text-[10px] leading-none">⚑</span>
                     {c}
-                    {isOwner && <button onClick={() => toggleCondition(c)} className="text-red-600 hover:text-red-900 ml-0.5">✕</button>}
+                    {isOwner && (
+                      <button onClick={() => toggleCondition(c)} className="text-red-500 hover:text-red-900 ml-0.5 font-bold text-xs leading-none">✕</button>
+                    )}
                   </span>
                 ))}
                 {isOwner && (

@@ -51,6 +51,31 @@ Fase 2 ✅ terminada (2026-05-14) — tabla `npcs` + `npc_inventory` en prod, ge
 
 ---
 
+## ⚗️ Ítems personalizados por campaña *(feature GM)*
+
+El DM puede crear ítems únicos atados a una campaña específica (no del catálogo SRD):
+- Nombre, descripción, peso, precio, imagen custom
+- **Propiedades especiales**: modificadores a stats (+2 STR, etc.), resistencias, bonus de CA, daño adicional, efectos de texto libre
+- Disponibles en la Taberna de esa campaña y en el sistema de compraventa
+- Persistidos en una tabla `campaign_items` (`campaign_id`, `name`, `description`, `weight_lbs`, `price_gp`, `properties` JSON, `image_url`)
+- Los jugadores los ven como cualquier otro ítem del catálogo
+
+---
+
+## 🛒 Sistema de compraventa con aprobación del DM *(feature aparte, alta prioridad)*
+
+El DM habilita un "Modo Tienda" en el inventario de un jugador. El flujo:
+1. El jugador ve los items del catálogo (Taberna, Fase 3) disponibles para comprar.
+2. Al seleccionar un item, envía una **solicitud de compra** al DM (precio ofrecido, cantidad).
+3. El DM ve la solicitud en tiempo real en su pantalla → puede **aceptar** (transfiere oro + agrega item), **rechazar** (con mensaje), o **contra-proponer** precio (regateo).
+4. El jugador ve el estado de su solicitud en vivo: pendiente / aceptado / rechazado / nuevo precio.
+
+**Tabla nueva necesaria:** `purchase_requests` con campos `character_id`, `campaign_id`, `item_name`, `price_offered`, `quantity`, `status` (pending/accepted/rejected/countered), `dm_counter_price`, `dm_message`.
+
+**Vinculado con Fase 3 (Taberna)** — los catálogos de la taberna alimentan la tienda del inventario.
+
+---
+
 ## Otros pendientes (Sesión 2 feedback)
 
 Bugs y mejoras independientes del hub:

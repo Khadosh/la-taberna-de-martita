@@ -270,7 +270,7 @@ export function InventoryPanel({
   }
 
   return (
-    <div className="flex flex-col h-[700px] bg-[#1a1a1a] text-stone-300 border border-[#3a3a3a] shadow-2xl overflow-hidden font-serif">
+    <div className="flex flex-col h-full bg-[#1a1a1a] text-stone-300 overflow-hidden font-serif">
       <div className="p-3 bg-[#121212] border-b border-[#333] flex items-center justify-between">
         <div className="flex items-center gap-2 bg-[#2a2a2a] border border-[#444] rounded-full px-3 py-1 flex-1 max-w-[200px]">
           <span className="text-stone-500 text-xs">🔍</span>

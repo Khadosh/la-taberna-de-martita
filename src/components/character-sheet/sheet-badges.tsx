@@ -89,12 +89,26 @@ export function TraitBadge({ index, name, isResistance, onInfo }: {
   const { data: trait } = useQuery({ queryKey: dndKeys.trait(index), queryFn: () => dndApi.trait(index) })
   return (
     <div
-      className={`flex items-center gap-1 border px-2 py-0.5 ${isResistance ? 'border-blue-500/50' : 'border-stone-400'}`}
-      style={{ background: isResistance ? 'rgba(59,130,246,0.08)' : 'rgba(200,170,110,0.15)' }}
+      className={`flex items-center gap-1.5 border-2 px-3 py-1 rounded-full ${
+        isResistance
+          ? 'border-blue-600/55 text-blue-900'
+          : 'border-amber-700/55 text-stone-700'
+      }`}
+      style={{
+        background: isResistance ? 'rgba(59,130,246,0.1)' : 'rgba(200,148,40,0.16)',
+        boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.25), 0 2px 5px rgba(0,0,0,0.12)',
+      }}
     >
-      {isResistance && <span className="text-blue-500 text-[10px]">🛡</span>}
-      <span className={`text-xs font-serif ${isResistance ? 'text-blue-800' : 'text-stone-600'}`}>{name}</span>
-      {trait && <button onClick={() => onInfo(trait)} className={`text-xs ml-0.5 ${isResistance ? 'text-blue-400 hover:text-blue-700' : 'text-stone-400 hover:text-amber-700'}`}>ℹ</button>}
+      {isResistance && <span className="text-blue-500 text-xs">🛡</span>}
+      <span className={`text-xs font-serif font-medium ${isResistance ? 'text-blue-800' : 'text-stone-700'}`}>{name}</span>
+      {trait && (
+        <button
+          onClick={() => onInfo(trait)}
+          className={`text-[11px] font-bold leading-none ${isResistance ? 'text-blue-400 hover:text-blue-700' : 'text-amber-600 hover:text-amber-900'}`}
+        >
+          ℹ
+        </button>
+      )}
     </div>
   )
 }

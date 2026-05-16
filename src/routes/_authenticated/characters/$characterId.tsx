@@ -5,20 +5,21 @@ import { useRef, useState, useEffect } from 'react'
 import { supabase } from '../../../lib/supabase'
 import type { Database } from '../../../lib/database.types'
 import {
-  dndApi, dndKeys,
+  dndApi, dndKeys, ABILITY_LABELS,
 } from '../../../lib/dnd-api'
 import { XP_THRESHOLDS, getSpellSlots, isWarlock } from '../../../lib/dnd-constants'
 import { DiceModule } from '../../../lib/dice'
 
 // Components
 import { type SheetJson, type InfoModalData } from '../../../components/character-sheet/types'
-import { parchmentStyle, sheetStyle, SheetLabel, SheetTabBar, type SheetTab } from '../../../components/character-sheet/sheet-primitives'
+import { parchmentStyle, mapBgStyle, sheetStyle, darkFrameStyle, QuickPill, SheetTabBar, type SheetTab } from '../../../components/character-sheet/sheet-primitives'
 import { InfoModal } from '../../../components/character-sheet/sheet-badges'
 import { LevelUpModal } from '../../../components/character-sheet/level-up-modal'
 import { TabResumen } from '../../../components/character-sheet/tab-resumen'
 import { TabPericias } from '../../../components/character-sheet/tab-pericias'
 import { TabCombate } from '../../../components/character-sheet/tab-combate'
 import { TabHechizos } from '../../../components/character-sheet/tab-hechizos'
+import { TabHistoria } from '../../../components/character-sheet/tab-historia'
 import { InventoryPanel } from '../../../components/character-sheet/inventory-panel'
 
 export const Route = createFileRoute('/_authenticated/characters/$characterId')({
@@ -153,6 +154,15 @@ function CharacterSheet() {
     const val = parseInt(hpInput)
     if (!isNaN(val)) await patchCharacter({ current_hp: val })
     setEditingHp(false)
+  }
+
+  const saveMaxHp = async () => {
+    const val = parseInt(maxHpInput)
+    if (!isNaN(val) && val > 0) {
+      await patchSheet({ max_hp: val })
+      if (currentHp > val) await patchCharacter({ current_hp: val })
+    }
+    setEditingMaxHp(false)
   }
 
   const saveAc = async () => {
@@ -337,9 +347,9 @@ function CharacterSheet() {
   const isSpellcaster = maxSlots.some(s => s > 0)
 
   return (
-    <div className="min-h-screen text-stone-900 pb-12" style={parchmentStyle}>
+    <div className="h-screen flex flex-col overflow-hidden text-stone-900" style={mapBgStyle}>
       {/* Header */}
-      <header className="border-b-2 border-stone-800 bg-stone-900 px-4 sm:px-8 py-2.5 flex items-center gap-3 sticky top-0 z-30">
+      <header className="flex-shrink-0 border-b-2 border-stone-800 bg-stone-900 px-4 sm:px-8 py-2.5 flex items-center gap-3 z-30">
         <button onClick={() => window.history.back()} className="text-amber-400 hover:text-amber-200 text-sm font-serif">← Volver</button>
         <div className="w-px h-4 bg-stone-700 mx-2" />
         <div className="flex-1 truncate">
@@ -349,39 +359,65 @@ function CharacterSheet() {
         <button onClick={() => setShowDice(true)} className="px-3 py-1 border border-amber-800 text-amber-500 text-xs font-serif bg-amber-900/20">🎲 Dados</button>
       </header>
 
-      <main className="max-w-5xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          
+      <main className="flex-1 min-h-0 w-full max-w-5xl mx-auto px-6 py-8 overflow-hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full items-stretch">
+
           {/* Main Content Area */}
-          <div className="lg:col-span-7 space-y-0" style={sheetStyle}>
-            {/* Header: Identity + Portrait */}
-            <div className="flex items-center gap-6 p-6 border-b border-stone-600 bg-stone-800/10">
-              <div className="w-24 h-24 bg-stone-300/50 border border-stone-500 overflow-hidden shrink-0 shadow-md group relative">
+          <div className="lg:col-span-7 overflow-y-auto" style={sheetStyle}>
+            {/* Header: Identity + Portrait — Image #6 style */}
+            <div className="flex items-stretch relative overflow-hidden" style={{ minHeight: '120px', borderBottom: '1px solid rgba(109,85,48,0.4)' }}>
+              {/* Portrait */}
+              <div className="w-[108px] flex-shrink-0 relative overflow-hidden group" style={{ background: 'rgba(60,40,15,0.15)' }}>
                 {character.portrait_url ? (
                   <img src={character.portrait_url} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-stone-400 text-3xl">⚔</div>
+                  <div className="w-full h-full flex items-center justify-center text-stone-400 text-4xl">⚔</div>
                 )}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                   <button onClick={() => fileInputRef.current?.click()} className="text-[10px] text-white underline font-serif">Subir</button>
+                {/* Gradiente sutil en el borde derecho */}
+                <div className="absolute inset-y-0 right-0 w-4 pointer-events-none" style={{ background: 'linear-gradient(to right, transparent, rgba(244,232,190,0.4))' }} />
+                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                  <button onClick={() => fileInputRef.current?.click()} className="text-[10px] text-white/90 font-serif underline">Subir</button>
                 </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <h1 className="text-3xl font-bold text-stone-900 font-serif truncate leading-none">{character.name}</h1>
-                <p className="text-sm text-stone-500 font-serif italic mt-2 capitalize">
-                  {character.race} · {character.class} {subclassDetail && `(${subclassDetail.name})`} · Nivel {level}
+
+              {/* Identity */}
+              <div className="flex-1 px-5 py-4 flex flex-col justify-center min-w-0">
+                <h1 className="text-[26px] font-bold text-stone-900 font-serif leading-none truncate">{character.name}</h1>
+                <p className="text-sm font-serif text-stone-600 mt-2 capitalize">
+                  {character.race}
+                  <span className="mx-1.5 text-amber-700 font-bold">•</span>
+                  {character.class}{subclassDetail ? ` (${subclassDetail.name})` : ''}
                 </p>
-                <div className="flex gap-2 mt-4">
-                  <button 
-                    onClick={generatePortrait} 
-                    disabled={generatingPortrait} 
-                    className="text-[10px] px-2.5 py-1 bg-amber-900/10 border border-amber-900/20 text-amber-900 hover:bg-amber-900/20 transition-colors font-serif disabled:opacity-50"
-                  >
-                    {generatingPortrait ? 'Hechizando...' : 'Retrato IA'}
-                  </button>
-                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePortraitUpload} />
-                </div>
+                <p className="text-[11px] text-stone-400 font-serif tracking-widest uppercase mt-1">Nivel {level}</p>
+                <button
+                  onClick={generatePortrait}
+                  disabled={generatingPortrait}
+                  className="mt-3 self-start text-[10px] px-2.5 py-1 bg-amber-900/10 border border-amber-900/25 text-amber-900 hover:bg-amber-900/20 transition-colors font-serif disabled:opacity-50"
+                >
+                  {generatingPortrait ? 'Hechizando...' : 'Retrato IA'}
+                </button>
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePortraitUpload} />
               </div>
+
+              {/* Decorativo */}
+              <span className="absolute top-3 right-4 text-amber-600/25 text-xl select-none pointer-events-none">◆</span>
+            </div>
+
+            {/* Quick Stats — compartidas en todos los tabs */}
+            <div className="px-4 py-2 flex flex-wrap gap-x-3 gap-y-1" style={{ background: 'rgba(160,125,60,0.1)', borderBottom: '1px solid rgba(109,85,48,0.25)' }}>
+              <QuickPill label="Vel." value={`${raceDetail?.speed ?? 30} ft`} />
+              <QuickPill label="Ini." value={dexMod >= 0 ? `+${dexMod}` : String(dexMod)} />
+              <QuickPill label="Perc. pas." value={String(passivePerception)} title="Percepción Pasiva" />
+              <QuickPill label="Prof." value={`+${profBonus}`} title="Bonus de competencia" />
+              {(sheet.currency?.gold ?? 0) > 0 && <QuickPill label="MO" value={String(sheet.currency?.gold ?? 0)} variant="gold" />}
+              {classDetail?.saving_throws && classDetail.saving_throws.length > 0 && (
+                <QuickPill
+                  label="Sal."
+                  value={classDetail.saving_throws.map((st: { index: string; name: string }) => ABILITY_LABELS[st.index]).join(', ')}
+                  variant="save"
+                  title={`Salvaciones con competencia: ${classDetail.saving_throws.map((st: { name: string }) => st.name).join(', ')}`}
+                />
+              )}
             </div>
 
             {/* Tabs Bar */}
@@ -400,7 +436,7 @@ function CharacterSheet() {
                     isDead: currentHp === 0 && deathSaves.failures >= 3, currency: sheet.currency ?? { gold: 0, silver: 0, copper: 0 },
                     showRestPanel, setShowRestPanel, showLongRestConfirm, setShowLongRestConfirm, shortRestHd, setShortRestHd,
                     shortRestHpInput, setShortRestHpInput, showConditionPicker, setShowConditionPicker,
-                    adjustHp, saveHp, saveAc, saveXp, shortRest, longRest, toggleCondition, toggleDeathSave,
+                    adjustHp, saveHp, saveMaxHp, saveAc, saveXp, shortRest, longRest, toggleCondition, toggleDeathSave,
                     setShowLevelUpModal, setLevelUpHpInput, setModal, classDetail, raceDetailSpeed: raceDetail?.speed
                   }}
                   patchSheet={patchSheet}
@@ -434,45 +470,30 @@ function CharacterSheet() {
                   setModal={setModal} toggleSlot={toggleSlot}
                 />
               )}
+              {activeTab === 'historia' && (
+                <TabHistoria
+                  backstory={character.backstory}
+                  isOwner={isOwner}
+                  confirmDelete={confirmDelete}
+                  setConfirmDelete={setConfirmDelete}
+                  onDelete={async () => { await supabase.from('characters').delete().eq('id', characterId); navigate({ to: '/' }) }}
+                />
+              )}
             </div>
           </div>
 
           {/* Sidebar Area: Inventory */}
-          <div className="lg:col-span-5 space-y-4">
-            <div style={sheetStyle} className="p-1">
-               <InventoryPanel
-                 characterId={characterId}
-                 inventory={inventory}
-                 sheet={sheet}
-                 isOwner={isOwner}
-                 toggleEquip={toggleEquip}
-                 patchCurrency={(p) => patchSheet({ currency: { ...(sheet.currency ?? { gold: 0, silver: 0, copper: 0 }), ...p } })}
-                 currency={sheet.currency ?? { gold: 0, silver: 0, copper: 0 }}
-                 strScore={stats.str ?? 10}
-               />
-            </div>
-
-            {/* Backstory (if exists) */}
-            {character.backstory && (
-              <div style={sheetStyle} className="p-4">
-                <SheetLabel>Historia</SheetLabel>
-                <p className="text-xs text-stone-600 font-serif italic mt-3 leading-relaxed whitespace-pre-wrap">{character.backstory}</p>
-              </div>
-            )}
-            
-            {/* Delete button */}
-            {isOwner && !confirmDelete && (
-              <button onClick={() => setConfirmDelete(true)} className="w-full py-2 text-xs text-stone-400 hover:text-red-700 font-serif italic transition-colors">Eliminar personaje</button>
-            )}
-            {confirmDelete && (
-              <div className="p-3 border border-red-900/30 bg-red-900/5 text-center space-y-2">
-                <p className="text-xs text-red-900 font-serif">¿Seguro?</p>
-                <div className="flex gap-2">
-                  <button onClick={() => setConfirmDelete(false)} className="flex-1 py-1 text-xs border border-stone-400 font-serif">No</button>
-                  <button onClick={async () => { await supabase.from('characters').delete().eq('id', characterId); navigate({ to: '/' }) }} className="flex-1 py-1 text-xs bg-red-900 text-white font-serif">Sí, borrar</button>
-                </div>
-              </div>
-            )}
+          <div className="lg:col-span-5 h-full min-h-0 overflow-hidden" style={darkFrameStyle}>
+            <InventoryPanel
+              characterId={characterId}
+              inventory={inventory}
+              sheet={sheet}
+              isOwner={isOwner}
+              toggleEquip={toggleEquip}
+              patchCurrency={(p) => patchSheet({ currency: { ...(sheet.currency ?? { gold: 0, silver: 0, copper: 0 }), ...p } })}
+              currency={sheet.currency ?? { gold: 0, silver: 0, copper: 0 }}
+              strScore={stats.str ?? 10}
+            />
           </div>
 
         </div>
