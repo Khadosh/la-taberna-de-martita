@@ -12,7 +12,6 @@
  */
 
 const BASE = 'https://bg3.wiki'
-const SIZE = 80
 
 // ── Page definitions ────────────────────────────────────────────────────────
 
@@ -36,17 +35,13 @@ function slug2name(href) {
     .toLowerCase()
 }
 
-function upgradeSrc(src) {
-  return src.replace(/\/\d+px-/, `/${SIZE}px-`)
-}
-
-// Get 2x (80px) URL from srcset attribute
+// Get 1.5x (60px for spells) URL from srcset — that size IS pre-cached by MediaWiki
 function bestFromSrcset(srcset) {
-  // srcset = "url1 1x, url2 1.5x, url3 2x"
+  // srcset = "url1, url2 1.5x, url3 2x"
   const parts = srcset.split(',').map(s => s.trim())
-  // prefer 2x, then last entry
-  const twoX = parts.find(p => p.endsWith('2x'))
-  const chosen = twoX ?? parts[parts.length - 1]
+  // prefer 1.5x (middle size — always pre-generated); fall back to first entry
+  const oneAndHalf = parts.find(p => p.includes('1.5x'))
+  const chosen = oneAndHalf ?? parts[0]
   return chosen.split(/\s+/)[0]
 }
 
@@ -78,7 +73,8 @@ function extractTableRows(html) {
     const name = slug2name(href)
     if (!name || name.length < 2 || seen.has(name)) continue
     seen.add(name)
-    items.push({ name, imageUrl: BASE + upgradeSrc(imgM[1]) })
+    // Keep the original src size (50px) — MediaWiki only pre-caches sizes used in the page
+    items.push({ name, imageUrl: BASE + imgM[1] })
   }
   return items
 }
