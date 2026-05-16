@@ -49,6 +49,16 @@ function ItemIcon({ name, imageUrl }: { name: string; imageUrl?: string }) {
   return <span className="text-lg opacity-40">{getItemFallbackEmoji(name)}</span>
 }
 
+// ── Quick filters ─────────────────────────────────────────────────────────────
+
+const QUICK_FILTERS = [
+  { label: 'Armas',     index: 'weapon',             emoji: '⚔' },
+  { label: 'Armaduras', index: 'armor',               emoji: '🛡' },
+  { label: 'Aventura',  index: 'adventuring-gear',    emoji: '🎒' },
+  { label: 'Herramientas', index: 'tools',            emoji: '🔧' },
+  { label: 'Monturas',  index: 'mounts-and-vehicles', emoji: '🐴' },
+] as const
+
 // ── Add Item Modal ─────────────────────────────────────────────────────────────
 
 function AddItemModal({ onAdd, onClose }: {
@@ -57,6 +67,7 @@ function AddItemModal({ onAdd, onClose }: {
 }) {
   const [tab, setTab] = useState<'catalog' | 'custom'>('catalog')
   const [search, setSearch] = useState('')
+  const [activeFilter, setActiveFilter] = useState<string | null>(null)
   const [selected, setSelected] = useState<ApiRef | null>(null)
   const [qty, setQty] = useState(1)
   const [adding, setAdding] = useState(false)
@@ -78,11 +89,25 @@ function AddItemModal({ onAdd, onClose }: {
     staleTime: Infinity,
   })
 
+  const { data: categoryData } = useQuery({
+    queryKey: dndKeys.equipmentCategory(activeFilter ?? ''),
+    queryFn: () => dndApi.equipmentCategory(activeFilter!),
+    enabled: !!activeFilter,
+    staleTime: Infinity,
+  })
+
+  const categorySet = useMemo(
+    () => categoryData ? new Set(categoryData.equipment.map(e => e.index)) : null,
+    [categoryData]
+  )
+
   const filtered = useMemo(() => {
     if (!equipList) return []
     const q = search.toLowerCase()
-    return equipList.results.filter(e => e.name.toLowerCase().includes(q))
-  }, [equipList, search])
+    let list = equipList.results.filter(e => e.name.toLowerCase().includes(q))
+    if (categorySet) list = list.filter(e => categorySet.has(e.index))
+    return list
+  }, [equipList, search, categorySet])
 
   const handleAddCatalog = async () => {
     if (!selected || adding) return
@@ -129,7 +154,7 @@ function AddItemModal({ onAdd, onClose }: {
       {tab === 'catalog' ? (
         <>
           {/* Buscador */}
-          <div className="px-3 py-2 bg-[#0a0a0a] border-b border-[#1a1a1a] shrink-0">
+          <div className="px-3 pt-2 pb-0 bg-[#0a0a0a] shrink-0">
             <input
               autoFocus
               placeholder="Buscar en el catálogo D&D..."
@@ -137,11 +162,31 @@ function AddItemModal({ onAdd, onClose }: {
               onChange={e => { setSearch(e.target.value); setSelected(null) }}
               className="w-full bg-[#1a1a1a] border border-[#333] px-3 py-2 text-xs outline-none focus:border-amber-700/60 text-stone-300 rounded-sm"
             />
-            {equipList && (
-              <p className="text-[9px] text-stone-700 mt-1 px-1">
-                {filtered.length} de {equipList.results.length} objetos
-              </p>
-            )}
+          </div>
+
+          {/* Quick filters */}
+          <div className="bg-[#0a0a0a] border-b border-[#1a1a1a] shrink-0 px-3 py-2 flex gap-1.5 overflow-x-auto scrollbar-none">
+            <button
+              onClick={() => { setActiveFilter(null); setSelected(null) }}
+              className={`shrink-0 px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border transition-colors ${
+                !activeFilter
+                  ? 'bg-amber-800/60 border-amber-700/60 text-amber-300'
+                  : 'border-[#333] text-stone-600 hover:text-stone-400 hover:border-[#444]'
+              }`}>
+              Todos
+            </button>
+            {QUICK_FILTERS.map(f => (
+              <button key={f.index}
+                onClick={() => { setActiveFilter(activeFilter === f.index ? null : f.index); setSelected(null) }}
+                className={`shrink-0 flex items-center gap-1 px-3 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border transition-colors ${
+                  activeFilter === f.index
+                    ? 'bg-amber-800/60 border-amber-700/60 text-amber-300'
+                    : 'border-[#333] text-stone-600 hover:text-stone-400 hover:border-[#444]'
+                }`}>
+                <span className="text-[11px]">{f.emoji}</span>
+                {f.label}
+              </button>
+            ))}
           </div>
 
           {/* Lista de items */}
