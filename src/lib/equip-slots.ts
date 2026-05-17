@@ -7,13 +7,13 @@ export const SLOT_LABELS: Record<SlotKey, string> = {
   head:      'Cabeza',
   cloak:     'Capa',
   chest:     'Pecho',
-  gloves:    'Manos',
-  boots:     'Pies',
+  gloves:    'Guantes',
+  boots:     'Botas',
   amulet:    'Amuleto',
   ring_1:    'Anillo I',
   ring_2:    'Anillo II',
-  main_hand: 'Mano principal',
-  off_hand:  'Mano secundaria',
+  main_hand: 'Arma',
+  off_hand:  'Escudo',
   ranged:    'A distancia',
 }
 
