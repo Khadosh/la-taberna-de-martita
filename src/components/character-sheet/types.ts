@@ -11,6 +11,7 @@ export type SheetJson = {
   hit_dice_used?: number
   subclass?: string
   equipped_items?: string[]
+  equipped_slots?: Partial<Record<import('../../lib/equip-slots').SlotKey, string>>
   equipped_armor?: {
     name: string
     base: number

@@ -21,6 +21,7 @@ import { TabCombate } from '../../../components/character-sheet/tab-combate'
 import { TabHechizos } from '../../../components/character-sheet/tab-hechizos'
 import { TabHistoria } from '../../../components/character-sheet/tab-historia'
 import { InventoryPanel } from '../../../components/character-sheet/inventory-panel'
+import { inferSlot, type SlotKey } from '../../../lib/equip-slots'
 
 export const Route = createFileRoute('/_authenticated/characters/$characterId')({
   component: CharacterSheet,
@@ -257,13 +258,30 @@ function CharacterSheet() {
   }
 
   const toggleEquip = async (itemId: string) => {
-    const current = sheet.equipped_items ?? []
-    const isEquipping = !current.includes(itemId)
-    const newEquipped = isEquipping ? [...current, itemId] : current.filter(id => id !== itemId)
-    const item = inventory.find(i => i.id === itemId)
+    const current      = sheet.equipped_items ?? []
+    const currentSlots = (sheet.equipped_slots ?? {}) as Partial<Record<SlotKey, string>>
+    const isEquipping  = !current.includes(itemId)
+    const item         = inventory.find(i => i.id === itemId)
+
+    const newEquipped = isEquipping
+      ? [...current, itemId]
+      : current.filter(id => id !== itemId)
+
+    // Update slot map
+    let newSlots: Partial<Record<SlotKey, string>>
+    if (isEquipping && item) {
+      const slot = inferSlot(item.name, currentSlots)
+      newSlots = slot
+        ? { ...currentSlots, [slot]: itemId }
+        : currentSlots
+    } else {
+      newSlots = Object.fromEntries(
+        Object.entries(currentSlots).filter(([, v]) => v !== itemId)
+      ) as Partial<Record<SlotKey, string>>
+    }
 
     if (!isEquipping && sheet.equipped_armor && item?.name === sheet.equipped_armor.name) {
-      await patchSheet({ equipped_items: newEquipped, equipped_armor: undefined })
+      await patchSheet({ equipped_items: newEquipped, equipped_slots: newSlots, equipped_armor: undefined })
       await patchCharacter({ armor_class: 10 + dexMod })
       return
     }
@@ -278,6 +296,7 @@ function CharacterSheet() {
         const dexBonus = hasDex ? (maxBonus ? Math.min(dexMod, maxBonus) : dexMod) : 0
         await patchSheet({
           equipped_items: newEquipped,
+          equipped_slots: newSlots,
           equipped_armor: { name: item.name, base, dex_bonus: hasDex, max_bonus: maxBonus, category: !hasDex ? 'Pesada' : maxBonus ? 'Media' : 'Ligera' },
         })
         await patchCharacter({ armor_class: base + dexBonus })
@@ -288,12 +307,12 @@ function CharacterSheet() {
     if (isEquipping && item?.notes?.startsWith('Escudo')) {
       const shieldMatch = item.notes.match(/\+(\d+)/)
       const shieldBonus = shieldMatch ? parseInt(shieldMatch[1]) : 2
-      await patchSheet({ equipped_items: newEquipped })
+      await patchSheet({ equipped_items: newEquipped, equipped_slots: newSlots })
       await patchCharacter({ armor_class: ac + shieldBonus })
       return
     }
 
-    await patchSheet({ equipped_items: newEquipped })
+    await patchSheet({ equipped_items: newEquipped, equipped_slots: newSlots })
   }
 
   // ── Realtime ──────────────────────────────────────────────────────────────
@@ -489,6 +508,7 @@ function CharacterSheet() {
               inventory={inventory}
               sheet={sheet}
               isOwner={isOwner}
+              ac={ac}
               toggleEquip={toggleEquip}
               patchCurrency={(p) => patchSheet({ currency: { ...(sheet.currency ?? { gold: 0, silver: 0, copper: 0 }), ...p } })}
               currency={sheet.currency ?? { gold: 0, silver: 0, copper: 0 }}

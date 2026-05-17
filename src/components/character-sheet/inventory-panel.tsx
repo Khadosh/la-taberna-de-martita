@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabase'
 import { dndApi, dndKeys, type ApiRef } from '../../lib/dnd-api'
 import { getItemIconUrl, getItemFallbackEmoji } from '../../lib/item-icons'
 import type { SheetJson } from './types'
+import { PaperDoll } from './paper-doll'
 
 type InventoryItem = {
   id: string
@@ -19,6 +20,7 @@ interface InventoryPanelProps {
   inventory: InventoryItem[]
   sheet: SheetJson
   isOwner: boolean
+  ac: number
   toggleEquip: (id: string) => Promise<void>
   patchCurrency: (patch: Partial<{ gold: number; silver: number; copper: number }>) => void
   currency: { gold: number; silver: number; copper: number }
@@ -323,7 +325,7 @@ function AddItemModal({ onAdd, onClose }: {
 // ── Inventory Panel ───────────────────────────────────────────────────────────
 
 export function InventoryPanel({
-  characterId, inventory, sheet, isOwner,
+  characterId, inventory, sheet, isOwner, ac,
   toggleEquip, patchCurrency, currency, strScore,
 }: InventoryPanelProps) {
   const queryClient = useQueryClient()
@@ -334,18 +336,16 @@ export function InventoryPanel({
 
   const equippedItemIds = useMemo(() => new Set(sheet.equipped_items ?? []), [sheet.equipped_items])
 
-  const { displayEquipped, displayInventory } = useMemo(() => {
-    const eq: InventoryItem[] = []
+  const displayInventory = useMemo(() => {
     const inv: InventoryItem[] = []
     for (const item of inventory) {
       if (equippedItemIds.has(item.id)) {
-        eq.push({ ...item, quantity: 1 })
         if (item.quantity > 1) inv.push({ ...item, quantity: item.quantity - 1 })
       } else {
         inv.push(item)
       }
     }
-    return { displayEquipped: eq, displayInventory: inv }
+    return inv
   }, [inventory, equippedItemIds])
 
   const totalWeight = inventory.reduce((s, i) => s + (Number(i.weight_lbs) || 0) * i.quantity, 0)
@@ -420,22 +420,19 @@ export function InventoryPanel({
         ))}
       </div>
 
-      {/* Equipo activo */}
-      <div className="p-4 bg-[#141414] border-b border-[#222] shrink-0">
-        <p className="text-[9px] uppercase tracking-[0.2em] text-amber-600/60 font-bold mb-3 font-serif">Equipo Activo</p>
-        <div className="flex flex-wrap gap-2.5">
-          {displayEquipped.map(item => (
-            <div key={`eq-${item.id}`}
-              onClick={() => setSelectedItem(item)}
-              className="w-12 h-12 bg-[#222] border border-amber-600/40 shadow-[inset_0_0_15px_rgba(217,119,6,0.15)] flex items-center justify-center relative cursor-pointer hover:bg-[#2a2a2a] group overflow-hidden rounded-sm">
-              <ItemIcon name={item.name} imageUrl={item.image_url} />
-              <div className="absolute inset-0 border border-amber-400/10 pointer-events-none group-hover:border-amber-400/30 transition-colors" />
-            </div>
-          ))}
-          {displayEquipped.length === 0 && (
-            <div className="w-12 h-12 border border-[#222] bg-[#0d0d0d] flex items-center justify-center text-[#222] text-xl">⚔</div>
-          )}
-        </div>
+      {/* Paper Doll */}
+      <div className="bg-[#0f0f0f] border-b border-[#222] shrink-0 px-1">
+        <PaperDoll
+          equippedSlots={sheet.equipped_slots ?? {}}
+          inventory={inventory}
+          selectedItemId={selectedItem?.id}
+          ac={ac}
+          onSelectItem={slim => {
+            if (!slim) { setSelectedItem(null); return }
+            const full = inventory.find(i => i.id === slim.id) ?? null
+            setSelectedItem(full)
+          }}
+        />
       </div>
 
       {/* Grid de inventario */}
