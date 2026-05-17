@@ -1,10 +1,18 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  DndContext, DragOverlay,
+  PointerSensor, useSensor, useSensors,
+  type DragStartEvent, type DragEndEvent,
+  useDraggable, useDroppable,
+} from '@dnd-kit/core'
+import { CSS } from '@dnd-kit/utilities'
 import { supabase } from '../../lib/supabase'
 import { dndApi, dndKeys, type ApiRef } from '../../lib/dnd-api'
 import { getItemIconUrl, getItemFallbackEmoji } from '../../lib/item-icons'
 import type { SheetJson } from './types'
-import { PaperDoll } from './paper-doll'
+import { inferSlot, type SlotKey, SLOT_LABELS, SLOT_EMPTY_HINT } from '../../lib/equip-slots'
+import { PaperDoll, type ActiveDrag } from './paper-doll'
 
 type InventoryItem = {
   id: string
@@ -22,6 +30,8 @@ interface InventoryPanelProps {
   isOwner: boolean
   ac: number
   toggleEquip: (id: string) => Promise<void>
+  equipToSlot: (itemId: string, slot: SlotKey) => Promise<void>
+  moveEquipSlot: (itemId: string, fromSlot: SlotKey, toSlot: SlotKey) => Promise<void>
   patchCurrency: (patch: Partial<{ gold: number; silver: number; copper: number }>) => void
   currency: { gold: number; silver: number; copper: number }
   strScore: number
@@ -49,6 +59,46 @@ function ItemIcon({ name, imageUrl }: { name: string; imageUrl?: string }) {
     )
   }
   return <span className="text-lg opacity-40">{getItemFallbackEmoji(name)}</span>
+}
+
+// ── Draggable inventory grid item ─────────────────────────────────────────────
+
+function DraggableItem({
+  item, isSelected, onClick, onDoubleClick,
+}: {
+  item: InventoryItem
+  isSelected: boolean
+  onClick: () => void
+  onDoubleClick: () => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `inventory-${item.id}`,
+    data: { kind: 'inventory', itemId: item.id, itemName: item.name },
+  })
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), opacity: isDragging ? 0.3 : 1 }}
+      {...listeners}
+      {...attributes}
+      onClick={onClick}
+      onDoubleClick={onDoubleClick}
+      className={[
+        'w-12 h-12 bg-[#1e1e1e] border border-[#333] flex items-center justify-center',
+        'relative cursor-grab active:cursor-grabbing hover:bg-[#2a2a2a] hover:border-[#555]',
+        'transition-all group overflow-hidden rounded-sm touch-none',
+        isSelected ? 'ring-1 ring-amber-500 border-amber-500/50' : '',
+      ].join(' ')}
+    >
+      <ItemIcon name={item.name} imageUrl={item.image_url} />
+      {item.quantity > 1 && (
+        <span className="absolute bottom-0.5 right-1 text-[9px] font-mono font-bold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
+          {item.quantity}
+        </span>
+      )}
+    </div>
+  )
 }
 
 // ── Quick filters ─────────────────────────────────────────────────────────────
@@ -322,17 +372,58 @@ function AddItemModal({ onAdd, onClose }: {
   )
 }
 
+// ── Slot picker modal — shown when item has no inferable slot ─────────────────
+
+const ALL_SLOTS: SlotKey[] = ['head', 'cloak', 'chest', 'gloves', 'boots', 'amulet', 'ring_1', 'ring_2', 'main_hand', 'off_hand', 'ranged']
+
+function SlotPickerModal({ itemName, onPick, onClose }: {
+  itemName: string
+  onPick: (slot: SlotKey) => void
+  onClose: () => void
+}) {
+  return (
+    <div className="absolute inset-0 bg-black/85 z-50 flex flex-col items-center justify-center p-4 animate-in fade-in">
+      <div className="bg-[#0f0f0f] border border-[#2a2a2a] rounded-sm p-5 w-full shadow-2xl">
+        <p className="text-[9px] text-stone-500 uppercase tracking-widest font-bold text-center mb-1">¿En qué slot equipar?</p>
+        <p className="text-xs text-amber-400 font-serif text-center mb-4 truncate px-2">{itemName}</p>
+        <div className="grid grid-cols-3 gap-2">
+          {ALL_SLOTS.map(slot => (
+            <button key={slot} onClick={() => onPick(slot)}
+              className="flex flex-col items-center gap-1 p-2.5 bg-[#181510] border border-[#2a2a2a] rounded-sm hover:border-amber-700/50 hover:bg-[#1e1a10] transition-all group">
+              <span className="text-base leading-none">{SLOT_EMPTY_HINT[slot]}</span>
+              <span className="text-[8px] text-stone-500 group-hover:text-amber-400 transition-colors uppercase tracking-wider font-bold leading-tight text-center">
+                {SLOT_LABELS[slot]}
+              </span>
+            </button>
+          ))}
+        </div>
+        <button onClick={onClose}
+          className="mt-4 w-full text-[9px] text-stone-700 hover:text-stone-400 uppercase tracking-widest font-bold py-1.5 transition-colors">
+          Cancelar
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ── Inventory Panel ───────────────────────────────────────────────────────────
 
 export function InventoryPanel({
   characterId, inventory, sheet, isOwner, ac,
-  toggleEquip, patchCurrency, currency, strScore,
+  toggleEquip, equipToSlot, moveEquipSlot,
+  patchCurrency, currency, strScore,
 }: InventoryPanelProps) {
   const queryClient = useQueryClient()
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
   const [addingItem, setAddingItem] = useState(false)
   const [editingCoin, setEditingCoin] = useState<'gold' | 'silver' | 'copper' | null>(null)
   const [coinInput, setCoinInput] = useState('')
+  const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null)
+  const [slotPickerItem, setSlotPickerItem] = useState<InventoryItem | null>(null)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
+  )
 
   const equippedItemIds = useMemo(() => new Set(sheet.equipped_items ?? []), [sheet.equipped_items])
 
@@ -351,6 +442,68 @@ export function InventoryPanel({
   const totalWeight = inventory.reduce((s, i) => s + (Number(i.weight_lbs) || 0) * i.quantity, 0)
   const carryCapacity = strScore * 15
   const weightPct = Math.min((totalWeight / carryCapacity) * 100, 100)
+
+  // ── Equip with slot fallback ────────────────────────────────────────────────
+
+  const handleEquip = useCallback((item: InventoryItem) => {
+    if (equippedItemIds.has(item.id)) {
+      // Already equipped → unequip directly
+      toggleEquip(item.id)
+      return
+    }
+    const inferred = inferSlot(item.name)
+    if (!inferred) {
+      // Can't determine slot → ask user
+      setSlotPickerItem(item)
+    } else {
+      toggleEquip(item.id)
+    }
+  }, [equippedItemIds, toggleEquip])
+
+  // ── Drag handlers ───────────────────────────────────────────────────────────
+
+  const handleDragStart = useCallback((e: DragStartEvent) => {
+    const d = e.active.data.current
+    if (!d) return
+    if (d.kind === 'inventory') {
+      const item = inventory.find(i => i.id === d.itemId)
+      if (item) setActiveDrag({ kind: 'inventory', itemId: item.id, itemName: item.name })
+    } else if (d.kind === 'slot') {
+      const item = inventory.find(i => i.id === d.itemId)
+      if (item) setActiveDrag({ kind: 'slot', itemId: item.id, itemName: item.name, fromSlot: d.fromSlot as SlotKey })
+    }
+  }, [inventory])
+
+  const handleDragEnd = useCallback((e: DragEndEvent) => {
+    setActiveDrag(null)
+    const { over, active } = e
+    if (!over) return
+    const drag = active.data.current
+    const drop = over.data.current
+    if (!drag || !drop) return
+
+    if (drag.kind === 'inventory' && drop.kind === 'slot') {
+      // Only equip if compatible slot (or item has no inferred slot → allow any)
+      const inferred = inferSlot(drag.itemName as string)
+      if (!inferred || inferred === drop.slot) {
+        equipToSlot(drag.itemId as string, drop.slot as SlotKey)
+      }
+    } else if (drag.kind === 'slot' && drop.kind === 'slot' && drag.fromSlot !== drop.slot) {
+      moveEquipSlot(drag.itemId as string, drag.fromSlot as SlotKey, drop.slot as SlotKey)
+    } else if (drag.kind === 'slot' && drop.kind === 'inventory') {
+      // Unequip by dragging to inventory zone
+      toggleEquip(drag.itemId as string)
+    }
+  }, [equipToSlot, moveEquipSlot, toggleEquip])
+
+  // ── Droppable inventory zone ─────────────────────────────────────────────────
+
+  const { setNodeRef: setInventoryZoneRef, isOver: isOverInventory } = useDroppable({
+    id: 'inventory-zone',
+    data: { kind: 'inventory' },
+  })
+
+  // ── DB helpers ───────────────────────────────────────────────────────────────
 
   const addInventoryItem = async (item: { name: string; weight_lbs: number; quantity: number; notes?: string }) => {
     await supabase.from('character_inventory').insert({
@@ -377,144 +530,186 @@ export function InventoryPanel({
     queryClient.invalidateQueries({ queryKey: ['inventory', characterId] })
   }
 
+  // ── Drag overlay item ────────────────────────────────────────────────────────
+
+  const dragOverlayItem = activeDrag ? inventory.find(i => i.id === activeDrag.itemId) : null
+
   return (
-    <div className="flex flex-col h-full bg-[#1a1a1a] text-stone-300 overflow-hidden font-serif relative">
-      {/* Barra superior */}
-      <div className="p-3 bg-[#121212] border-b border-[#333] flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-2 bg-[#2a2a2a] border border-[#444] rounded-full px-3 py-1 flex-1 max-w-[200px]">
-          <span className="text-stone-500 text-xs">🔍</span>
-          <input placeholder="Filtrar morral..." className="bg-transparent border-none outline-none text-[10px] w-full text-stone-400 font-serif" />
+    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <div className="flex flex-col h-full bg-[#1a1a1a] text-stone-300 overflow-hidden font-serif relative">
+        {/* Barra superior */}
+        <div className="p-3 bg-[#121212] border-b border-[#333] flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-2 bg-[#2a2a2a] border border-[#444] rounded-full px-3 py-1 flex-1 max-w-[200px]">
+            <span className="text-stone-500 text-xs">🔍</span>
+            <input placeholder="Filtrar morral..." className="bg-transparent border-none outline-none text-[10px] w-full text-stone-400 font-serif" />
+          </div>
+          {isOwner && (
+            <button onClick={() => setAddingItem(true)} className="text-stone-500 hover:text-amber-500 text-lg transition-colors ml-2">＋</button>
+          )}
         </div>
-        {isOwner && (
-          <button onClick={() => setAddingItem(true)} className="text-stone-500 hover:text-amber-500 text-lg transition-colors ml-2">＋</button>
+
+        {/* Monedas */}
+        <div className="px-4 py-2 bg-[#0d0d0d] border-b border-[#222] flex justify-around items-center shrink-0">
+          {[
+            { key: 'gold' as const, color: 'text-amber-500', label: 'PO' },
+            { key: 'silver' as const, color: 'text-stone-300', label: 'PP' },
+            { key: 'copper' as const, color: 'text-orange-700', label: 'PC' },
+          ].map(({ key, color, label }) => (
+            <div key={key} className="flex items-center gap-1.5 group cursor-pointer"
+              onClick={() => { if (isOwner) { setEditingCoin(key); setCoinInput('') } }}>
+              <span className={`text-[10px] ${color}`}>●</span>
+              {editingCoin === key ? (
+                <input autoFocus className="bg-transparent w-8 outline-none border-b border-stone-600 text-xs font-mono text-stone-200"
+                  value={coinInput}
+                  onBlur={() => setEditingCoin(null)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      patchCurrency({ [key]: currency[key] + (parseInt(coinInput) || 0) })
+                      setEditingCoin(null)
+                    }
+                  }}
+                  onChange={e => setCoinInput(e.target.value)}
+                />
+              ) : (
+                <span className="text-xs font-mono font-bold group-hover:text-white transition-colors">{currency[key]}</span>
+              )}
+              <span className={`text-[8px] ${color} opacity-60`}>{label}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Paper Doll */}
+        <div className="bg-[#0f0f0f] border-b border-[#222] shrink-0 px-1">
+          <PaperDoll
+            equippedSlots={sheet.equipped_slots ?? {}}
+            inventory={inventory}
+            selectedItemId={selectedItem?.id}
+            ac={ac}
+            activeDrag={activeDrag}
+            onSelectItem={slim => {
+              if (!slim) { setSelectedItem(null); return }
+              const full = inventory.find(i => i.id === slim.id) ?? null
+              setSelectedItem(full)
+            }}
+            onUnequip={itemId => toggleEquip(itemId)}
+          />
+        </div>
+
+        {/* Grid de inventario — droppable zone */}
+        <div
+          ref={setInventoryZoneRef}
+          className={[
+            'flex-1 overflow-y-auto p-4 transition-colors',
+            isOverInventory && activeDrag?.kind === 'slot'
+              ? 'bg-[#1a1610]'
+              : 'bg-[#121212]',
+          ].join(' ')}
+        >
+          {/* Hint when slot drag is over inventory */}
+          {isOverInventory && activeDrag?.kind === 'slot' && (
+            <p className="text-[9px] text-amber-600/70 text-center mb-2 font-serif italic tracking-wide">
+              Soltar para desequipar
+            </p>
+          )}
+          <div className="grid grid-cols-5 gap-2">
+            {displayInventory.map(item => (
+              <DraggableItem
+                key={`inv-${item.id}`}
+                item={item}
+                isSelected={selectedItem?.id === item.id}
+                onClick={() => setSelectedItem(item)}
+                onDoubleClick={() => isOwner && handleEquip(item)}
+              />
+            ))}
+            {Array.from({ length: Math.max(0, 30 - displayInventory.length) }).map((_, i) => (
+              <div key={`empty-${i}`} className="w-12 h-12 bg-[#0d0d0d] border border-[#1a1a1a] opacity-30 rounded-sm" />
+            ))}
+          </div>
+        </div>
+
+        {/* Panel del item seleccionado */}
+        {selectedItem && (
+          <div className="p-4 bg-[#1a1a1a] border-t border-[#3a3a3a] shadow-[0_-10px_30px_rgba(0,0,0,0.5)] z-10 animate-in fade-in slide-in-from-bottom-4 shrink-0">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex gap-3 items-start flex-1 min-w-0">
+                <div className="w-10 h-10 shrink-0 bg-[#0d0d0d] border border-[#333] flex items-center justify-center rounded-sm overflow-hidden">
+                  <ItemIcon name={selectedItem.name} imageUrl={selectedItem.image_url} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold text-amber-500 tracking-wide uppercase">{selectedItem.name}</p>
+                  {selectedItem.weight_lbs != null && selectedItem.weight_lbs > 0 && (
+                    <p className="text-[9px] text-stone-600 font-mono mt-0.5">⚖ {selectedItem.weight_lbs} lb</p>
+                  )}
+                  <p className="text-[10px] text-stone-500 italic mt-1 leading-relaxed line-clamp-2">
+                    {selectedItem.notes || 'Sin descripción.'}
+                  </p>
+                </div>
+              </div>
+              <button onClick={() => setSelectedItem(null)} className="text-stone-600 hover:text-stone-300 ml-2 shrink-0">✕</button>
+            </div>
+            <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#2a2a2a]">
+              <div className="flex gap-2">
+                {isOwner && (
+                  <>
+                    <button onClick={() => handleEquip(selectedItem)}
+                      className="text-[10px] uppercase font-bold px-3 py-1.5 bg-amber-900/30 border border-amber-900/50 text-amber-400 hover:bg-amber-900/50 transition-colors rounded-sm">
+                      {equippedItemIds.has(selectedItem.id) ? 'Quitar' : 'Equipar'}
+                    </button>
+                    <button onClick={() => removeInventoryItem(selectedItem.id)}
+                      className="text-[10px] uppercase font-bold px-3 py-1.5 bg-red-900/10 border border-red-900/30 text-red-500 hover:bg-red-900/30 rounded-sm">
+                      ✕
+                    </button>
+                  </>
+                )}
+              </div>
+              <div className="flex items-center gap-3 bg-[#121212] rounded-full px-2 py-1 border border-[#333]">
+                <button onClick={() => updateQty(selectedItem.id, -1, selectedItem.quantity)} className="w-5 h-5 text-stone-500 hover:text-white transition-colors">－</button>
+                <span className="text-[10px] font-mono font-bold text-stone-300 min-w-[12px] text-center">{selectedItem.quantity}</span>
+                <button onClick={() => updateQty(selectedItem.id, 1, selectedItem.quantity)} className="w-5 h-5 text-stone-500 hover:text-white transition-colors">＋</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Barra de carga */}
+        <div className="px-5 py-4 bg-[#0a0a0a] border-t border-[#222] shrink-0">
+          <div className="flex justify-between items-center mb-2">
+            <span className="text-stone-600 text-xs">⚖</span>
+            <span className="text-[10px] font-mono font-bold text-stone-400 tracking-wider">
+              {totalWeight.toFixed(1)} <span className="text-stone-700">/</span> {carryCapacity} <span className="text-stone-700 ml-1 italic opacity-60">lb</span>
+            </span>
+          </div>
+          <div className="h-2 w-full bg-[#1a1a1a] rounded-full overflow-hidden flex shadow-inner border border-[#222]">
+            <div className="h-full bg-gradient-to-r from-amber-900 to-amber-600 transition-all duration-1000 shadow-[0_0_12px_rgba(217,119,6,0.6)]" style={{ width: `${weightPct}%` }} />
+          </div>
+        </div>
+
+        {/* Modal de agregar item */}
+        {addingItem && (
+          <AddItemModal onAdd={addInventoryItem} onClose={() => setAddingItem(false)} />
+        )}
+
+        {/* Modal de selección de slot */}
+        {slotPickerItem && (
+          <SlotPickerModal
+            itemName={slotPickerItem.name}
+            onPick={async slot => {
+              await equipToSlot(slotPickerItem.id, slot)
+              setSlotPickerItem(null)
+            }}
+            onClose={() => setSlotPickerItem(null)}
+          />
         )}
       </div>
 
-      {/* Monedas */}
-      <div className="px-4 py-2 bg-[#0d0d0d] border-b border-[#222] flex justify-around items-center shrink-0">
-        {[
-          { key: 'gold' as const, color: 'text-amber-500', label: 'PO' },
-          { key: 'silver' as const, color: 'text-stone-300', label: 'PP' },
-          { key: 'copper' as const, color: 'text-orange-700', label: 'PC' },
-        ].map(({ key, color, label }) => (
-          <div key={key} className="flex items-center gap-1.5 group cursor-pointer"
-            onClick={() => { if (isOwner) { setEditingCoin(key); setCoinInput('') } }}>
-            <span className={`text-[10px] ${color}`}>●</span>
-            {editingCoin === key ? (
-              <input autoFocus className="bg-transparent w-8 outline-none border-b border-stone-600 text-xs font-mono text-stone-200"
-                value={coinInput}
-                onBlur={() => setEditingCoin(null)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') {
-                    patchCurrency({ [key]: currency[key] + (parseInt(coinInput) || 0) })
-                    setEditingCoin(null)
-                  }
-                }}
-                onChange={e => setCoinInput(e.target.value)}
-              />
-            ) : (
-              <span className="text-xs font-mono font-bold group-hover:text-white transition-colors">{currency[key]}</span>
-            )}
-            <span className={`text-[8px] ${color} opacity-60`}>{label}</span>
+      {/* Drag overlay — ícono flotante mientras arrastrás */}
+      <DragOverlay dropAnimation={null}>
+        {dragOverlayItem && (
+          <div className="w-12 h-12 bg-[#1e1a10] border-2 border-amber-500 rounded-sm flex items-center justify-center shadow-[0_0_20px_rgba(217,119,6,0.6)] opacity-95 pointer-events-none">
+            <ItemIcon name={dragOverlayItem.name} imageUrl={dragOverlayItem.image_url} />
           </div>
-        ))}
-      </div>
-
-      {/* Paper Doll */}
-      <div className="bg-[#0f0f0f] border-b border-[#222] shrink-0 px-1">
-        <PaperDoll
-          equippedSlots={sheet.equipped_slots ?? {}}
-          inventory={inventory}
-          selectedItemId={selectedItem?.id}
-          ac={ac}
-          onSelectItem={slim => {
-            if (!slim) { setSelectedItem(null); return }
-            const full = inventory.find(i => i.id === slim.id) ?? null
-            setSelectedItem(full)
-          }}
-        />
-      </div>
-
-      {/* Grid de inventario */}
-      <div className="flex-1 overflow-y-auto p-4 bg-[#121212]">
-        <div className="grid grid-cols-5 gap-2">
-          {displayInventory.map(item => (
-            <div key={`inv-${item.id}`}
-              onClick={() => setSelectedItem(item)}
-              className={`w-12 h-12 bg-[#1e1e1e] border border-[#333] flex items-center justify-center relative cursor-pointer hover:bg-[#2a2a2a] hover:border-[#555] transition-all group overflow-hidden rounded-sm ${selectedItem?.id === item.id ? 'ring-1 ring-amber-500 border-amber-500/50' : ''}`}>
-              <ItemIcon name={item.name} imageUrl={item.image_url} />
-              {item.quantity > 1 && (
-                <span className="absolute bottom-0.5 right-1 text-[9px] font-mono font-bold text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">{item.quantity}</span>
-              )}
-            </div>
-          ))}
-          {Array.from({ length: Math.max(0, 30 - displayInventory.length) }).map((_, i) => (
-            <div key={`empty-${i}`} className="w-12 h-12 bg-[#0d0d0d] border border-[#1a1a1a] opacity-30 rounded-sm" />
-          ))}
-        </div>
-      </div>
-
-      {/* Panel del item seleccionado */}
-      {selectedItem && (
-        <div className="p-4 bg-[#1a1a1a] border-t border-[#3a3a3a] shadow-[0_-10px_30px_rgba(0,0,0,0.5)] z-10 animate-in fade-in slide-in-from-bottom-4 shrink-0">
-          <div className="flex justify-between items-start mb-3">
-            <div className="flex gap-3 items-start flex-1 min-w-0">
-              <div className="w-10 h-10 shrink-0 bg-[#0d0d0d] border border-[#333] flex items-center justify-center rounded-sm overflow-hidden">
-                <ItemIcon name={selectedItem.name} imageUrl={selectedItem.image_url} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-amber-500 tracking-wide uppercase">{selectedItem.name}</p>
-                {selectedItem.weight_lbs != null && selectedItem.weight_lbs > 0 && (
-                  <p className="text-[9px] text-stone-600 font-mono mt-0.5">⚖ {selectedItem.weight_lbs} lb</p>
-                )}
-                <p className="text-[10px] text-stone-500 italic mt-1 leading-relaxed line-clamp-2">
-                  {selectedItem.notes || 'Sin descripción.'}
-                </p>
-              </div>
-            </div>
-            <button onClick={() => setSelectedItem(null)} className="text-stone-600 hover:text-stone-300 ml-2 shrink-0">✕</button>
-          </div>
-          <div className="flex items-center justify-between mt-3 pt-3 border-t border-[#2a2a2a]">
-            <div className="flex gap-2">
-              {isOwner && (
-                <>
-                  <button onClick={() => toggleEquip(selectedItem.id)}
-                    className="text-[10px] uppercase font-bold px-3 py-1.5 bg-amber-900/30 border border-amber-900/50 text-amber-400 hover:bg-amber-900/50 transition-colors rounded-sm">
-                    {equippedItemIds.has(selectedItem.id) ? 'Quitar' : 'Equipar'}
-                  </button>
-                  <button onClick={() => removeInventoryItem(selectedItem.id)}
-                    className="text-[10px] uppercase font-bold px-3 py-1.5 bg-red-900/10 border border-red-900/30 text-red-500 hover:bg-red-900/30 rounded-sm">
-                    ✕
-                  </button>
-                </>
-              )}
-            </div>
-            <div className="flex items-center gap-3 bg-[#121212] rounded-full px-2 py-1 border border-[#333]">
-              <button onClick={() => updateQty(selectedItem.id, -1, selectedItem.quantity)} className="w-5 h-5 text-stone-500 hover:text-white transition-colors">－</button>
-              <span className="text-[10px] font-mono font-bold text-stone-300 min-w-[12px] text-center">{selectedItem.quantity}</span>
-              <button onClick={() => updateQty(selectedItem.id, 1, selectedItem.quantity)} className="w-5 h-5 text-stone-500 hover:text-white transition-colors">＋</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Barra de carga */}
-      <div className="px-5 py-4 bg-[#0a0a0a] border-t border-[#222] shrink-0">
-        <div className="flex justify-between items-center mb-2">
-          <span className="text-stone-600 text-xs">⚖</span>
-          <span className="text-[10px] font-mono font-bold text-stone-400 tracking-wider">
-            {totalWeight.toFixed(1)} <span className="text-stone-700">/</span> {carryCapacity} <span className="text-stone-700 ml-1 italic opacity-60">lb</span>
-          </span>
-        </div>
-        <div className="h-2 w-full bg-[#1a1a1a] rounded-full overflow-hidden flex shadow-inner border border-[#222]">
-          <div className="h-full bg-gradient-to-r from-amber-900 to-amber-600 transition-all duration-1000 shadow-[0_0_12px_rgba(217,119,6,0.6)]" style={{ width: `${weightPct}%` }} />
-        </div>
-      </div>
-
-      {/* Modal de agregar item */}
-      {addingItem && (
-        <AddItemModal onAdd={addInventoryItem} onClose={() => setAddingItem(false)} />
-      )}
-    </div>
+        )}
+      </DragOverlay>
+    </DndContext>
   )
 }

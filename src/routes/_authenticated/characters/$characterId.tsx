@@ -141,7 +141,14 @@ function CharacterSheet() {
   const patchSheet = async (sheetPatch: Partial<SheetJson>) => {
     if (!character) return
     const current = character.sheet_json as SheetJson
-    await supabase.from('characters').update({ sheet_json: { ...current, ...sheetPatch } as never }).eq('id', characterId)
+    const newSheet = { ...current, ...sheetPatch }
+
+    // Optimistic update — instant UI response before DB roundtrip
+    queryClient.setQueryData(['character', characterId], (old: typeof character | undefined) =>
+      old ? { ...old, sheet_json: newSheet } : old
+    )
+
+    await supabase.from('characters').update({ sheet_json: newSheet as never }).eq('id', characterId)
     queryClient.invalidateQueries({ queryKey: ['character', characterId] })
   }
 
@@ -271,9 +278,8 @@ function CharacterSheet() {
     let newSlots: Partial<Record<SlotKey, string>>
     if (isEquipping && item) {
       const slot = inferSlot(item.name, currentSlots)
-      newSlots = slot
-        ? { ...currentSlots, [slot]: itemId }
-        : currentSlots
+      if (!slot) return  // can't infer slot — caller must use equipToSlot with explicit slot
+      newSlots = { ...currentSlots, [slot]: itemId }
     } else {
       newSlots = Object.fromEntries(
         Object.entries(currentSlots).filter(([, v]) => v !== itemId)
@@ -313,6 +319,42 @@ function CharacterSheet() {
     }
 
     await patchSheet({ equipped_items: newEquipped, equipped_slots: newSlots })
+  }
+
+  const equipToSlot = async (itemId: string, slot: SlotKey) => {
+    const currentSlots = (sheet.equipped_slots ?? {}) as Partial<Record<SlotKey, string>>
+    const current = sheet.equipped_items ?? []
+
+    // Add to equipped list if not already there
+    let newEquipped = current.includes(itemId) ? current : [...current, itemId]
+
+    // Displace item already occupying this slot
+    const displaced = currentSlots[slot]
+    if (displaced && displaced !== itemId) {
+      newEquipped = newEquipped.filter(id => id !== displaced)
+    }
+
+    // Build new slot map: remove item from any previous slot, set in new slot
+    const newSlots: Partial<Record<SlotKey, string>> = {}
+    for (const [k, v] of Object.entries(currentSlots)) {
+      if (v !== itemId && v !== displaced) newSlots[k as SlotKey] = v
+    }
+    newSlots[slot] = itemId
+
+    await patchSheet({ equipped_items: newEquipped, equipped_slots: newSlots })
+  }
+
+  const moveEquipSlot = async (itemId: string, fromSlot: SlotKey, toSlot: SlotKey) => {
+    const currentSlots = (sheet.equipped_slots ?? {}) as Partial<Record<SlotKey, string>>
+    const newSlots: Partial<Record<SlotKey, string>> = { ...currentSlots }
+
+    // Swap: what's in toSlot goes back to fromSlot
+    const displaced = currentSlots[toSlot]
+    delete newSlots[fromSlot]
+    if (displaced && displaced !== itemId) newSlots[fromSlot] = displaced
+    newSlots[toSlot] = itemId
+
+    await patchSheet({ equipped_slots: newSlots })
   }
 
   // ── Realtime ──────────────────────────────────────────────────────────────
@@ -510,6 +552,8 @@ function CharacterSheet() {
               isOwner={isOwner}
               ac={ac}
               toggleEquip={toggleEquip}
+              equipToSlot={equipToSlot}
+              moveEquipSlot={moveEquipSlot}
               patchCurrency={(p) => patchSheet({ currency: { ...(sheet.currency ?? { gold: 0, silver: 0, copper: 0 }), ...p } })}
               currency={sheet.currency ?? { gold: 0, silver: 0, copper: 0 }}
               strScore={stats.str ?? 10}
