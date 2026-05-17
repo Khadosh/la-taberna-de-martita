@@ -4,6 +4,50 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 
 ---
 
+## [1.0.0] — 2026-05-17 · Paper Doll, Inventario BG3 y Visual Overhaul
+
+El mayor salto visual y de UX desde el MVP. La hoja de personaje pasa de funcional a inmersiva.
+
+### 🎨 Visual Overhaul — Estética BG3/Pergamino
+- **Fondo papiro real**: textura `papiro.png` con `background-blend-mode: multiply` sobre base cálida; 105% zoom para ocultar bordes negros del PNG
+- **Marco metálico**: múltiples `box-shadow` concéntricos simulan un marco de latón/cobre que "agarra" el pergamino
+- **Tab bar de cuero**: gradiente marrón oscuro (#3a2410 → #271608) con tachones de latón en extremos via `radial-gradient` en `backgroundImage`; tab activo con subrayado dorado
+- **Cajas de estadísticas metálicas**: efecto de chapa/latón embossed con bevel (inset box-shadow claro arriba-izq, oscuro abajo-der); escala de gris-marrón del cuerpo basada en el valor del stat (mayor valor = más cálido/claro); badge del modificador con color rojo→gris→verde según el valor
+- **Frame de retrato**: triple borde inset tipo marco de cuadro + esquinas decorativas SVG en dorado
+- **Sellos de cera SVG**: cada condición de D&D 5e tiene un sello único con color propio, ícono SVG embossed, brillo specular en 3 capas y sombra exterior; tooltip al hover, botón de quitar
+- **SheetLabel mejorado**: texto e líneas en marrón cálido coherente con la paleta pergamino
+
+### 🗂️ Paper Doll — Inventario Visual
+- **Humanoid SVG**: figura dibujada con line-art en el panel de inventario derecho
+- **11 slots de equipo**: cabeza, cuello, hombros, pecho, manos, cinturón, piernas, pies, anillo ×2, arma principal, offhand; iconos SVG propios por slot vacío
+- **Drag & drop completo** (`@dnd-kit/core`): arrastrar item del inventario a slot del paper doll y viceversa; `PointerSensor` con distancia mínima 6px
+- **Compatibilidad de slots**: durante el drag se destacan solo los slots compatibles con el ítem; slots incompatibles se opacan
+- **SlotPickerModal**: cuando `inferSlot()` no puede determinar el slot, muestra un modal con los 11 slots para que el usuario elija; evita items que "desaparecen" del inventario
+- **Desplazamiento de ítems**: equipar en un slot ocupado mueve el ítem existente a la mano contraria (si aplica) o lo desequipa
+- **CA en paper doll**: muestra la CA actual del personaje sobre la figura
+- **Doble-click**: toggle equip/desequip desde el inventario
+
+### 🗃️ Catálogo de Equipo BG3
+- **675 iconos BG3** descargados localmente desde `bg3.wiki` (3.4 MB)
+- **Matching robusto**: normalización de nombres con comas invertidas, variantes `armor/armour`, word-boundary matching para evitar falsos positivos
+- **Quick filters** por categoría (Armas, Armaduras, Equipo, Herramientas) en el catálogo
+- **Buscar + agregar**: filtro client-side en tiempo real, agregar al inventario con un click
+
+### 🗂️ Reorganización de Tabs
+- **Fusión Resumen + Combate**: tab Combate eliminado; su contenido útil absorbido en Resumen
+  - Fila de stats rápidos debajo de características: Ini | Vel | GACO | Perc. Pas. | Prof. | Sal.
+  - GACO calculado como `profBonus + max(strMod, dexMod)`
+  - Eliminados: "Dado de golpe", "DG disponibles" (redundantes)
+- **Habilidades de clase con tabs por nivel**: en lugar de lista cascada, pestañas [Nv.1] [Nv.2 ★] [Subclase] que muestran solo el nivel seleccionado
+- **Rasgos raciales**: removidos los badges de modificadores de habilidad (+2 CHA, etc.); conservados Darkvision y otros rasgos narrativos
+
+### 🧹 Limpieza
+- `tab-combate.tsx` eliminado (ya no existe el tab)
+- Import huérfano `SkillDetail` removido de `tab-pericias.tsx`
+- `QuickPill` y `ABILITY_LABELS` removidos de `$characterId.tsx` (ya no usados ahí)
+
+---
+
 ## [0.9.0] — 2026-05-14 · Generador de PNJ Persistente
 
 Los PNJ ahora son entidades persistentes de campaña, no estado efímero del tracker de combate.
@@ -41,13 +85,12 @@ Rediseño de `/campaigns/:id` como hub del DM con barra de pestañas dedicadas p
 - **Sección PNJs**: Slot vacío en la landing con CTA al generador (placeholder hasta Fase 2).
 
 ### 🗂 Pestañas (rutas hijas, deep-linkables)
-- `Lucha` — migración de la pantalla DM (1100+ líneas: iniciativa, NPCs, bestiary picker, notas, calc. de ataque, descansos) desde `/campaigns/:id/session` a `/campaigns/:id/lucha`.
-- `Generador de PNJ`, `Hechizos`, `Objetos`, `Habilidades`, `Taberna`, `Mapas` — skeletons navegables con tarjeta "Próximamente" + descripción del roadmap.
+- `Lucha` — migración de la pantalla DM desde `/campaigns/:id/session`.
+- `Generador de PNJ`, `Hechizos`, `Objetos`, `Habilidades`, `Taberna`, `Mapas` — skeletons navegables.
 - **Hechizos** ya enlaza al `/spellbook` global como atajo.
 
 ### 🧹 Limpieza
 - Eliminado `$campaignId_.session.tsx` (ruta huérfana sin layout compartido).
-- Header propio de la pantalla DM reducido a action bar (descanso largo + combate); la navegación la aporta el layout.
 
 ---
 
@@ -56,84 +99,79 @@ Rediseño de `/campaigns/:id` como hub del DM con barra de pestañas dedicadas p
 Basado en el feedback de la primera sesión de juego real con el party.
 
 ### 📖 Compendio y Bestiario
-- **Bestiario completo**: Nueva sección `/bestiary` con búsqueda de monstruos de D&D 5e API y visualización de stat blocks (HP, CA, acciones, habilidades).
-- **Spellbook (Libro de Hechizos)**: Buscador global de conjuros con filtros por nivel, clase y escuela en `/spellbook`.
-- **Integración en Combate**: Posibilidad de añadir monstruos directamente desde el bestiario al tracker de iniciativa del DM.
+- **Bestiario completo**: Nueva sección `/bestiary` con búsqueda de monstruos y stat blocks.
+- **Spellbook**: Buscador global de conjuros con filtros por nivel, clase y escuela en `/spellbook`.
+- **Integración en Combate**: Añadir monstruos desde el bestiario al tracker de iniciativa.
 
-### 🛡️ Pantalla de DM (Mejoras)
-- **Calculadora de Ataque**: Indicador del d20 mínimo necesario para impactar basado en el bono de ataque del NPC vs CA del objetivo.
+### 🛡️ Pantalla de DM
+- **Calculadora de Ataque**: d20 mínimo necesario para impactar.
 - **Gestión de Monedas**: Tracking de tesoro y loot (CP, SP, GP, PP) para NPCs.
-- **NPCs Personalizados**: Formulario extendido para crear NPCs con stats, tipo de criatura y loot específico.
-- **Visibilidad**: Fix de privacidad en notas y limpieza de interfaz para el GM.
+- **NPCs Personalizados**: Form extendido con stats, tipo de criatura y loot específico.
 
-### 🧙 Hoja de Personaje & Wizard
-- **Habilidades de Clase**: Rediseño total con `FeatureCard` expandible para leer detalles de rasgos y subclases.
-- **Inventario Compacto**: Nueva vista de inventario optimizada con sistema de monedas integrado.
-- **Botones Rápidos**: Acceso directo para curar o dañar HP sin abrir el modal.
-- **Wizard V2**: Añadido paso de trasfondo (Background) y modo de entrada manual de estadísticas (Standard Array / Point Buy / Manual).
+### 🧙 Hoja de Personaje
+- **Habilidades de Clase**: Rediseño total con `FeatureCard` expandible.
+- **Inventario Compacto**: Nueva vista con sistema de monedas integrado.
+- **Botones Rápidos**: -5/-1/+1/+5 HP sin abrir modal.
+- **Wizard V2**: Paso de trasfondo + modo entrada manual de estadísticas.
 
 ---
 
 ## [0.6.0] — 2026-05-14 · Rebranding & Mecánicas Core
 
-### 🎨 Rebranding Atmosférico
-- **Nueva Identidad**: El proyecto pasa de ser una app genérica a "La Taberna de Martita".
-- **Visuales**: Reemplazo de iconos genéricos por señales de taberna colgantes, favicons personalizados y estética de madera/hierro.
-- **UX Móvil**: Primera ronda de ajustes responsivos para que la hoja sea usable en teléfonos.
+### 🎨 Rebranding
+- El proyecto pasa a ser "La Taberna de Martita" con estética de taberna medieval.
 
-### 🎲 Sistemas de Juego Avanzados
-- **Realtime Sync**: Sincronización instantánea de HP y condiciones entre DM y Jugadores vía Supabase Realtime (adiós al polling).
-- **Spell Slots**: Sistema de tracking de espacios de conjuro (niveles 1-9) con persistencia en DB.
-- **Mecánicas de Descanso**: Implementación de botones para Descanso Corto y Largo, automatizando la recuperación de HP y slots.
-- **Death Saves**: Tracker de tiradas de salvación contra la muerte funcional cuando el personaje cae a 0 HP.
+### 🎲 Sistemas de Juego
+- **Realtime Sync**: HP y condiciones sincronizados instantáneamente vía Supabase Realtime.
+- **Spell Slots**: Tracking de espacios de conjuro (niveles 1-9) con persistencia.
+- **Death Saves**: Tracker funcional con persistencia en `sheet_json`.
+- **Descanso**: Botones para descanso corto (dados de golpe) y largo (recuperación total).
 
 ---
 
 ## [0.5.0] — 2026-05-13 · Producción & Dominio Custom
 
-- **Deploy en Vercel**: Configuración de entorno de producción (`la-taberna-de-martita.quest`).
-- **Dominio & Email**: Integración con Porkbun y Resend para emails transaccionales (SPF, DKIM, DMARC).
-- **Auth Pro**: Flujo de recuperación de contraseña (password reset) completamente funcional vía email.
-- **Infra**: Fix de SPA 404 en refresh mediante `vercel.json` con rewrites.
+- **Deploy en Vercel**: `la-taberna-de-martita.quest`.
+- **Dominio & Email**: Porkbun + Resend (SPF, DKIM, DMARC).
+- **Auth Pro**: Password reset completo vía email.
+- **SPA 404**: Fix via `vercel.json` rewrites.
 
 ---
 
 ## [0.4.0] — 2026-05-13 · Pantalla de DM
 
-- **Ruta de Sesión**: Panel exclusivo para el Game Master con vista de party completa.
-- **Tracker de Iniciativa**: Sistema de orden dinámico, resaltado de turno actual y soporte para NPCs rápidos.
-- **Notas de Sesión**: Editor con autoguardado (debounce 1.5s) persistente por campaña.
-- **HP Optimista**: Sincronización de daño/cura con feedback inmediato en la pantalla del DM.
+- **Tracker de Iniciativa**: Orden dinámico, turno actual, NPCs rápidos.
+- **Notas de Sesión**: Autoguardado con debounce por campaña.
+- **HP Optimista**: Daño/cura con feedback inmediato.
 
 ---
 
 ## [0.3.0] — 2026-05-13 · Hoja de Personaje Completa
 
-- **Estética de Pergamino**: Rediseño visual con bordes quemados, fondo crema y tipografía serif.
-- **Retratos con IA**: Integración con `fal.ai` (Flux) vía Supabase Edge Functions para generar retratos basados en raza/clase.
-- **Gestión de Combate**: HP, CA, Condiciones (17 estados en español) y barra de XP con umbrales de nivel (1-20).
-- **Inventario**: Sistema de peso (`STR x 15`) y búsqueda en catálogo oficial de equipo.
+- **Estética de Pergamino**: Bordes quemados, fondo crema, tipografía serif.
+- **Retratos con IA**: `fal.ai` (Flux) vía Supabase Edge Functions.
+- **Gestión de Combate**: HP, CA, Condiciones (17 estados en español), barra de XP.
+- **Inventario**: Sistema de peso (`STR x 15`) y búsqueda en catálogo oficial.
 
 ---
 
 ## [0.2.0] — 2026-05-13 · Campañas & Personajes Base
 
-- **Sistema de Campañas**: Creación de campañas y links de invitación (`/join/:id`).
-- **Gestión de Miembros**: Los jugadores pueden unir sus personajes a campañas.
-- **Seguridad (RLS)**: El DM tiene permisos de escritura sobre HP/Condiciones de los personajes de su campaña.
+- **Campañas**: Crear y unirse por link de invitación (`/join/:id`).
+- **RLS**: DM con permisos de escritura sobre HP/Condiciones de PJs de su campaña.
 
 ---
 
 ## [0.1.0] — 2026-05-13 · Wizard de Creación de Personaje
 
-- **Wizard Multi-paso**: Flujo guiado consultando la D&D 5e API para traer razas, rasgos, clases y equipo inicial.
-- **JSON Flexible**: Implementación de `sheet_json` para guardar el estado complejo del personaje sin sobrecargar el esquema relacional.
+- **Wizard Multi-paso**: Flujo guiado con D&D 5e API (razas, clases, trasfondo, equipo inicial).
+- **sheet_json**: JSONB flexible para estado complejo sin sobrecargar el schema relacional.
 
 ---
 
 ## [0.0.1] — 2026-05-12 · Auth & Setup
 
-- **Stack Inicial**: React 19, TanStack Router (file-based), TanStack Query y Tailwind v4.
-- **Supabase**: Cliente singleton, generación de tipos de TypeScript y políticas RLS base.
-- **Dev Workflow**: Configuración de Husky y Commitlint para estandarizar Conventional Commits.
-- **Esquema DB**: Tablas iniciales para perfiles, campañas y personajes.
+- **Stack**: React 19, TanStack Router, TanStack Query, Tailwind v4.
+- **Supabase**: Cliente singleton, tipos TS generados, RLS base.
+- **Dev Workflow**: Husky + Commitlint (Conventional Commits).
+- **Schema DB**: Tablas iniciales para perfiles, campañas y personajes.

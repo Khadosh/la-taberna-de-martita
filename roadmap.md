@@ -1,6 +1,6 @@
 # Roadmap — La Taberna de Martita
 
-> Estado actual: MVP funcional en producción (`la-taberna-de-martita.quest`)
+> Estado actual: v1.0.0 en producción (`la-taberna-de-martita.quest`)
 
 ---
 
@@ -11,167 +11,110 @@
 | Auth (login, registro, recovery) | ✅ |
 | Dashboard | ✅ |
 | Creación de personaje (wizard D&D 5e API) | ✅ |
-| Hoja de personaje (stats, hechizos, rasgos, pericias) | ✅ |
+| Hoja de personaje — stats, hechizos, pericias, historia | ✅ |
 | Inventario con peso | ✅ |
-| Estado de combate (HP optimista, CA, XP, condiciones) | ✅ |
+| Paper doll con 11 slots y drag & drop | ✅ |
+| Catálogo D&D con iconos BG3 (675 iconos) | ✅ |
+| Estado de combate (HP, CA, XP, condiciones wax seal) | ✅ |
 | Retrato (subir o generar con IA) | ✅ |
 | Campañas (crear, unirse por invite) | ✅ |
+| Hub de campaña con tab-bar DM | ✅ |
 | Pantalla DM (iniciativa, NPCs, notas de sesión) | ✅ |
+| Generador de PNJs persistentes | ✅ |
+| Bestiario + Spellbook | ✅ |
+| Taberna (compraventa entre PJs) | ✅ |
+| Tirador de dados flotante | ✅ |
+| Visual overhaul: papiro, cuero, latón, wax seals | ✅ |
+| Realtime sync (HP, condiciones) | ✅ |
 | Deploy producción + dominio custom + email | ✅ |
 
 ---
 
-## 🎯 Prioridad actual: completar el Hub de Campaña
+## 🎯 Próximas prioridades
 
-Fase 1 ✅ terminada (2026-05-14) — layout con tab-bar, landing nueva con cards detalladas de PJs/PNJs, migración de la Pantalla DM a la pestaña `Lucha`, skeletons de las 6 pestañas restantes.
+### 🎨 Visual — Pulido pendiente (corto plazo)
+Continuación del overhaul visual iniciado en v1.0.0:
+- **Ajuste fino del papiro**: balance entre textura visible y legibilidad en todos los tabs
+- **Wax seals**: mejorar detalle de íconos, posible variación de tamaño por severidad de condición
+- **Tab Pericias**: aplicar el mismo lenguaje visual (stat boxes, legibilidad sobre papiro)
+- **Tab Hechizos**: aplicar lenguaje visual + integrar spell slots con el sistema de paper doll
+- **Inventario**: mejoras en la legibilidad del grid y peso total visible
 
-Fase 2 ✅ terminada (2026-05-14) — tabla `npcs` + `npc_inventory` en prod, generador completo en `/campaigns/:id/pnj` con shape paralelo a `characters` (campos opcionales), render real en la landing, integración con `Lucha` vía botón **🎭 PNJ campaña** que copia el PNJ persistido al tracker de combate.
+### 📦 Features de juego (mediano plazo)
 
-### 🍺 Fase 3 — Taberna ✅ terminada (2026-05-14)
-- Catálogos hardcodeados: armería (armas + armaduras), pociones, objetos mágicos con precios SRD y pesos.
-- Tab "Comprar": el DM (o el jugador para su propio PJ) selecciona un ítem, elige el personaje y confirma → descuenta oro de `sheet_json.currency` e inserta en `character_inventory`.
-- Tab "Vender": muestra el inventario de cada PJ; el comerciante paga la mitad del precio de catálogo (mín. 1 PO) → item sale del inventario y se acredita el oro.
-- Búsqueda/filtro por nombre dentro de cada categoría.
+#### Dado compartido en sesión
+El tirador flotante existe pero las tiradas no son visibles para el resto de la mesa.
+- Historial de tiradas visible para todos los conectados a la campaña (Supabase Realtime)
+- El DM ve las tiradas del party en la pantalla DM
+- Tiradas con etiqueta: "Ataque +3", "Salvación DES", etc.
 
-### 📦 Fase 4 — Objetos ✅ terminada (2026-05-14)
-- Catálogo del 5e API vía `/equipment-categories/{id}` con 4 filtros: Armas, Armaduras, Equipo, Herramientas.
-- Búsqueda por nombre client-side dentro de cada categoría.
-- Panel lateral con detalle del ítem (CA, peso, costo, descripción) y acción "Dar ítem" → inserta en `character_inventory` sin transacción de oro.
-- DM puede dar a cualquier PJ; jugadores solo a su propio personaje.
+#### Spell slots integrados al paper doll
+- Mostrar slots disponibles/usados desde el panel de inventario
+- Click en un slot de hechizo para marcarlo como usado
+- Reset en descanso largo (ya existe el handler)
 
-### ✨ Fase 5 — Hechizos embed *(próximo paso)*
-- Extraer `<SpellbookPage/>` a componente reusable y montarlo en el tab.
+#### Items personalizados por campaña
+El DM puede crear ítems únicos atados a la campaña:
+- Nombre, descripción, peso, precio, propiedades especiales (`properties` JSON)
+- Disponibles en la Taberna de esa campaña
+- Tabla `campaign_items` (`campaign_id`, `name`, `properties` JSON)
 
-### 😊 Fase 6 — Habilidades
-- Referencia rápida para el DM: 18 skills, saving throws, `CONDITIONS`, descansos.
+#### Sistema de compraventa con aprobación del DM
+- Jugador envía solicitud de compra → DM acepta/rechaza/contra-propone
+- Tabla `purchase_requests` con status (pending/accepted/rejected/countered)
 
-### 🗺 Fase 7 — Mapas
-- v1: Supabase Storage + upload + display de imagen como mapa de sesión.
-- v2 (post-MVP): tokens drag-and-drop, fog of war.
+### 🔧 Bugs y UX pendientes (Sesión 2 feedback)
 
----
+| Item | Prioridad |
+|------|-----------|
+| Al salir del personaje: volver a la campaña, no al dashboard | Alta |
+| XP: sumar al valor actual (no reemplazar) | Alta |
+| Objetos: cantidad con +/- (no input directo) | Media |
+| Peso al agregar ítem desde catálogo | Media |
+| Level up: accesible desde la hoja del jugador sin XP | Media |
+| Borrar campañas y personajes desde el dashboard | Media |
+| Navegación: "volver" consistente en todas las pantallas | Baja |
+| Feedback de guardado en la hoja (actualmente solo HP lo tiene) | Baja |
 
-## ⚗️ Ítems personalizados por campaña *(feature GM)*
+### 🗺 Features más grandes (largo plazo)
 
-El DM puede crear ítems únicos atados a una campaña específica (no del catálogo SRD):
-- Nombre, descripción, peso, precio, imagen custom
-- **Propiedades especiales**: modificadores a stats (+2 STR, etc.), resistencias, bonus de CA, daño adicional, efectos de texto libre
-- Disponibles en la Taberna de esa campaña y en el sistema de compraventa
-- Persistidos en una tabla `campaign_items` (`campaign_id`, `name`, `description`, `weight_lbs`, `price_gp`, `properties` JSON, `image_url`)
-- Los jugadores los ven como cualquier otro ítem del catálogo
+#### Mapas de sesión
+- Subir imagen como mapa visible por el party
+- Solo el DM puede cambiarla
+- v2 (post-MVP): tokens drag-and-drop, fog of war
 
----
-
-## 🛒 Sistema de compraventa con aprobación del DM *(feature aparte, alta prioridad)*
-
-El DM habilita un "Modo Tienda" en el inventario de un jugador. El flujo:
-1. El jugador ve los items del catálogo (Taberna, Fase 3) disponibles para comprar.
-2. Al seleccionar un item, envía una **solicitud de compra** al DM (precio ofrecido, cantidad).
-3. El DM ve la solicitud en tiempo real en su pantalla → puede **aceptar** (transfiere oro + agrega item), **rechazar** (con mensaje), o **contra-proponer** precio (regateo).
-4. El jugador ve el estado de su solicitud en vivo: pendiente / aceptado / rechazado / nuevo precio.
-
-**Tabla nueva necesaria:** `purchase_requests` con campos `character_id`, `campaign_id`, `item_name`, `price_offered`, `quantity`, `status` (pending/accepted/rejected/countered), `dm_counter_price`, `dm_message`.
-
-**Vinculado con Fase 3 (Taberna)** — los catálogos de la taberna alimentan la tienda del inventario.
-
----
-
-## Otros pendientes (Sesión 2 feedback)
-
-Bugs y mejoras independientes del hub:
-- Al salir del personaje vuelve al dashboard en vez de a la campaña.
-- Peso de objetos no aparece en la hoja de algunos PJs.
-- Características: mostrar "Bonus de tirada" en vez de repetir el nombre.
-- Oro cerca de las características (quick stats strip).
-- XP: botón Enter al escribir, sumar al valor actual en vez de reemplazar.
-- Objetos: cantidad con +/- (no input directo), peso al agregar.
-- PG gestionable desde la pantalla DM (ya parcial).
-- Level up: botón accesible desde la hoja del jugador.
-- Slots de conjuros: restar al usar conjuro, botón de detalle más visible.
-- Borrar campañas y personajes.
-
----
-
-## Próximo paso lógico: lo que más duele ahora
-
-### 🎲 Tirador de dados (prioridad alta)
-No hay dados. Es una app de D&D sin dados — el gap más obvio.
-- Tirador flotante: d4, d6, d8, d10, d12, d20, d100
-- Historial de tiradas visible para todos en sesión (via Supabase Realtime)
-- El GM ve las tiradas del party en la pantalla DM
-- Tiradas con nombre ("Ataque con espada larga 1d20+5")
-
-### 🔄 Realtime en sesión (prioridad alta)
-Ahora el HP se sincroniza cada 5 segundos con polling.
-- Reemplazar `refetchInterval: 5000` por Supabase Realtime channels
-- GM ajusta HP → jugador ve el cambio al instante en su hoja
-- Base para el chat y el dado compartido
-
-### 💀 Spell slots (prioridad media)
-Los personajes con magia no tienen dónde trackear sus slots.
-- Slots por nivel (1–9) con contador de usados / disponibles
-- Botón de descanso corto / largo para recuperarlos
-- Guardado en `characters.sheet_json` (ya existe el campo)
-
-### ⚔️ Descanso corto / largo (prioridad media)
-Mecánica core de D&D 5e que falta completamente.
-- Descanso corto: recuperar slots de Brujo, Dados de Golpe
-- Descanso largo: recuperar todo el HP y slots
-- Disponible desde la hoja de personaje y desde la pantalla DM
-
-### 💀 Tiradas de muerte (prioridad media)
-Cuando HP llega a 0:
-- Modal con 3 círculos de éxito / 3 de fallo
-- Guardado en `characters.sheet_json`
-- GM lo ve en la pantalla DM
-
----
-
-## Mejoras UX que no requieren backend
-
-- **Onboarding**: pantalla de bienvenida para usuarios nuevos (sin personajes/campañas)
-- **Móvil**: la hoja de personaje no está pensada para pantalla chica
-- **Skeleton loaders**: reemplazar "Cargando..." por placeholders animados
-- **Error boundaries**: si una query falla, mostrar mensaje útil en lugar de pantalla rota
-- **"Sign out" → "Cerrar sesión"**: el botón está en inglés
-- **Navegación**: falta botón "volver" en pantalla DM y en wizard
-- **Feedback de guardado**: la hoja no avisa cuándo guardó (solo el HP tiene indicador)
-
----
-
-## Features más grandes (post-MVP)
-
-### 🗺 Mapas
-- Subir imagen como mapa de sesión
-- Visible para el party (solo GM puede cambiarla)
-
-### 📖 Bestiario
-- Buscar monstruos de D&D 5e API ("Goblin", "Dragon Rojo")
-- Agregar al tracker de iniciativa desde el resultado con un click
-- Reemplaza el input manual "Goblin 25"
-
-### 💬 Chat de sesión
-- Canal de texto por sesión
-- GM puede hacer anuncios destacados
-- Las tiradas de dado aparecen acá automáticamente
-
-### 📜 Historial de sesiones
+#### Historial de sesiones
 - Lista de sesiones pasadas por campaña
-- Las notas de sesión quedan archivadas y son consultables
+- Notas archivadas y consultables
 
-### 🎒 Distribución de loot
-- GM crea un "tesoro" con items del catálogo
-- Jugadores pueden tomar items y van directo a su inventario
+#### Distribución de loot
+- DM crea un "tesoro" con ítems del catálogo
+- Jugadores toman ítems → van directo a su inventario
 
-### 📄 Export PDF
-- Hoja de personaje exportable como PDF estilo D&D
+#### Chat de sesión
+- Canal de texto por campaña
+- Tiradas de dado aparecen automáticamente
+- GM puede hacer anuncios destacados
+
+#### Export PDF
+- Hoja de personaje como PDF estilo D&D oficial
 
 ---
 
 ## Deuda técnica
 
-- `CONDITIONS_ES` / `CONDITIONS` duplicado en character sheet y session screen → extraer a `lib/dnd-constants.ts`
-- `XP_THRESHOLDS` hardcodeado → mover al mismo lugar
-- Sin tests (ni unit ni e2e)
-- Sin Sentry (error monitoring — estaba en el roadmap original)
-- Sin GitHub Actions CI (deploy es manual via push a main)
+| Item | Urgencia |
+|------|----------|
+| Sin tests (unit ni e2e) | Media |
+| Sin Sentry / error monitoring | Media |
+| Sin GitHub Actions CI (deploy manual via push main) | Baja |
+| Componentes de hoja grandes (`$characterId.tsx` > 500 líneas) | Baja |
+| `agents.md` desactualizado (refleja estado inicial del proyecto) | Baja |
+
+---
+
+## Descartado / ya no aplica
+
+- SSR / TanStack Start → app 100% autenticada, sin SEO, SPA es suficiente
+- Drizzle en runtime → Supabase client directo con tipos generados
+- `CONDITIONS_ES` duplicado → ya centralizado en `lib/dnd-constants.ts`

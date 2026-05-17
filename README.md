@@ -1,193 +1,91 @@
-Welcome to your new TanStack Start app! 
+# La Taberna de Martita
 
-# Getting Started
+App companion para sesiones de Dungeons & Dragons 5e. Pensada para jugar en mesa con el DM y los jugadores cada uno en su dispositivo.
 
-To run this application:
+**Producción:** [la-taberna-de-martita.quest](https://la-taberna-de-martita.quest)
+
+---
+
+## Qué hace
+
+### Para los jugadores
+- Hoja de personaje completa con pergamino interactivo (stats, HP, CA, XP, condiciones, hechizos, pericias)
+- Inventario visual estilo BG3 con paper doll drag & drop y 11 slots de equipo
+- Iconos de equipo del catálogo oficial de D&D 5e
+- Condiciones representadas con sellos de cera SVG
+- Level up, death saves, spell slots, descansos
+
+### Para el Dungeon Master
+- Hub de campaña con pestañas dedicadas
+- Tracker de iniciativa en tiempo real con NPCs y bestiary integrado
+- Generador de PNJs persistentes por campaña
+- Calculadora de ataque (d20 mínimo necesario vs CA objetivo)
+- Taberna con sistema de compraventa (dar ítems a personajes)
+- Notas de sesión con autoguardado
+- Vista del party completo con HP/condiciones de todos los PJs
+
+### Compartido
+- Sincronización en tiempo real vía Supabase Realtime
+- Tirador de dados flotante (d4 a d100)
+- Compendio: bestiario y grimorio buscables con datos de la API oficial de D&D 5e
+
+---
+
+## Stack
+
+| | |
+|---|---|
+| Framework | React 19, SPA pura |
+| Router | TanStack Router v1 (file-based) |
+| Data | TanStack Query v5 + Supabase JS |
+| Auth + DB | Supabase (Auth + Postgres + RLS + Realtime) |
+| Estilos | Tailwind CSS v4 |
+| Build | Vite |
+| Deploy | Vercel |
+| D&D data | [dnd5eapi.co](https://www.dnd5eapi.co) |
+
+---
+
+## Correr localmente
 
 ```bash
 pnpm install
-pnpm dev
+pnpm dev          # localhost:5173
 ```
 
-# Building For Production
+Variables de entorno necesarias en `.env.local`:
 
-To build this application for production:
-
-```bash
-pnpm build
+```env
+VITE_SUPABASE_URL=https://...supabase.co
+VITE_SUPABASE_ANON_KEY=...
 ```
 
-## Testing
+---
 
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
+## Estructura
 
-```bash
-pnpm test
+```
+src/
+├── lib/
+│   ├── supabase.ts          # cliente singleton
+│   ├── dnd-api.ts           # wrappers fetch + query keys
+│   ├── dnd-constants.ts     # XP thresholds, CONDITIONS, spell slots
+│   ├── equip-slots.ts       # SlotKey, inferSlot(), SLOT_LABELS
+│   └── dice/                # módulo de dados (rollDice)
+├── routes/
+│   ├── _authenticated/      # todas las rutas protegidas
+│   │   ├── index.tsx        # dashboard
+│   │   ├── characters/      # hoja de personaje
+│   │   └── campaigns/       # hub de campaña + pantalla DM
+│   └── auth/                # login, registro
+└── components/
+    └── character-sheet/     # todos los componentes de la hoja
 ```
 
-## Styling
+---
 
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
+## Documentación interna
 
-### Removing Tailwind CSS
-
-If you prefer not to use Tailwind CSS:
-
-1. Remove the demo pages in `src/routes/demo/`
-2. Replace the Tailwind import in `src/styles.css` with your own styles
-3. Remove `tailwindcss()` from the plugins array in `vite.config.ts`
-4. Uninstall the packages: `pnpm add @tailwindcss/vite tailwindcss --dev`
-
-
-
-## Routing
-
-This project uses [TanStack Router](https://tanstack.com/router) with file-based routing. Routes are managed as files in `src/routes`.
-
-### Adding A Route
-
-To add a new route to your application just add a new file in the `./src/routes` directory.
-
-TanStack will automatically generate the content of the route file for you.
-
-Now that you have two routes you can use a `Link` component to navigate between them.
-
-### Adding Links
-
-To use SPA (Single Page Application) navigation you will need to import the `Link` component from `@tanstack/react-router`.
-
-```tsx
-import { Link } from "@tanstack/react-router";
-```
-
-Then anywhere in your JSX you can use it like so:
-
-```tsx
-<Link to="/about">About</Link>
-```
-
-This will create a link that will navigate to the `/about` route.
-
-More information on the `Link` component can be found in the [Link documentation](https://tanstack.com/router/v1/docs/framework/react/api/router/linkComponent).
-
-### Using A Layout
-
-In the File Based Routing setup the layout is located in `src/routes/__root.tsx`. Anything you add to the root route will appear in all the routes. The route content will appear in the JSX where you render `{children}` in the `shellComponent`.
-
-Here is an example layout that includes a header:
-
-```tsx
-import { HeadContent, Scripts, createRootRoute } from '@tanstack/react-router'
-
-export const Route = createRootRoute({
-  head: () => ({
-    meta: [
-      { charSet: 'utf-8' },
-      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'My App' },
-    ],
-  }),
-  shellComponent: ({ children }) => (
-    <html lang="en">
-      <head>
-        <HeadContent />
-      </head>
-      <body>
-        <header>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/about">About</Link>
-          </nav>
-        </header>
-        {children}
-        <Scripts />
-      </body>
-    </html>
-  ),
-})
-```
-
-More information on layouts can be found in the [Layouts documentation](https://tanstack.com/router/latest/docs/framework/react/guide/routing-concepts#layouts).
-
-## Server Functions
-
-TanStack Start provides server functions that allow you to write server-side code that seamlessly integrates with your client components.
-
-```tsx
-import { createServerFn } from '@tanstack/react-start'
-
-const getServerTime = createServerFn({
-  method: 'GET',
-}).handler(async () => {
-  return new Date().toISOString()
-})
-
-// Use in a component
-function MyComponent() {
-  const [time, setTime] = useState('')
-  
-  useEffect(() => {
-    getServerTime().then(setTime)
-  }, [])
-  
-  return <div>Server time: {time}</div>
-}
-```
-
-## API Routes
-
-You can create API routes by using the `server` property in your route definitions:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-import { json } from '@tanstack/react-start'
-
-export const Route = createFileRoute('/api/hello')({
-  server: {
-    handlers: {
-      GET: () => json({ message: 'Hello, World!' }),
-    },
-  },
-})
-```
-
-## Data Fetching
-
-There are multiple ways to fetch data in your application. You can use TanStack Query to fetch data from a server. But you can also use the `loader` functionality built into TanStack Router to load the data for a route before it's rendered.
-
-For example:
-
-```tsx
-import { createFileRoute } from '@tanstack/react-router'
-
-export const Route = createFileRoute('/people')({
-  loader: async () => {
-    const response = await fetch('https://swapi.dev/api/people')
-    return response.json()
-  },
-  component: PeopleComponent,
-})
-
-function PeopleComponent() {
-  const data = Route.useLoaderData()
-  return (
-    <ul>
-      {data.results.map((person) => (
-        <li key={person.name}>{person.name}</li>
-      ))}
-    </ul>
-  )
-}
-```
-
-Loaders simplify your data fetching logic dramatically. Check out more information in the [Loader documentation](https://tanstack.com/router/latest/docs/framework/react/guide/data-loading#loader-parameters).
-
-# Demo files
-
-Files prefixed with `demo` can be safely deleted. They are there to provide a starting point for you to play around with the features you've installed.
-
-# Learn More
-
-You can learn more about all of the offerings from TanStack in the [TanStack documentation](https://tanstack.com).
-
-For TanStack Start specific documentation, visit [TanStack Start](https://tanstack.com/start).
+- [`CLAUDE.md`](./CLAUDE.md) — instrucciones para Claude Code (stack, gotchas, convenciones)
+- [`CHANGELOG.md`](./CHANGELOG.md) — historial de cambios por versión
+- [`roadmap.md`](./roadmap.md) — estado actual y próximos pasos
