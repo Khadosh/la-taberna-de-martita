@@ -17,7 +17,6 @@ import { InfoModal } from '../../../components/character-sheet/sheet-badges'
 import { LevelUpModal } from '../../../components/character-sheet/level-up-modal'
 import { TabResumen } from '../../../components/character-sheet/tab-resumen'
 import { TabPericias } from '../../../components/character-sheet/tab-pericias'
-import { TabCombate } from '../../../components/character-sheet/tab-combate'
 import { TabHechizos } from '../../../components/character-sheet/tab-hechizos'
 import { TabHistoria } from '../../../components/character-sheet/tab-historia'
 import { InventoryPanel } from '../../../components/character-sheet/inventory-panel'
@@ -403,8 +402,6 @@ function CharacterSheet() {
     features: classLevels.filter(l => l.level === i + 1).flatMap(l => l.features),
   })).filter(l => l.features.length > 0) : []
 
-  const equippedItemIds = new Set(sheet.equipped_items ?? [])
-  const equippedItems = inventory.filter(item => equippedItemIds.has(item.id))
   const isSpellcaster = maxSlots.some(s => s > 0)
 
   return (
@@ -492,13 +489,14 @@ function CharacterSheet() {
                     stats, sheet, character, raceDetail, isOwner, isGm, currentHp, maxHp, hitDie, hpPct, hpColor,
                     editingHp, hpInput, setHpInput, setEditingHp, editingMaxHp, maxHpInput, setMaxHpInput, setEditingMaxHp,
                     ac, xp, xpPct, level, xpForCurrent, xpForNext, canLevelUp, editingAc, acInput, setAcInput, setEditingAc,
-                    editingXp, xpInput, setXpInput, setEditingXp, dexMod, profBonus, passivePerception, hitDiceAvailable,
+                    editingXp, xpInput, setXpInput, setEditingXp, dexMod, strMod, profBonus, passivePerception, hitDiceAvailable,
                     conditions: (character.conditions as string[]) ?? [], deathSaves, isStable: currentHp === 0 && deathSaves.successes >= 3,
                     isDead: currentHp === 0 && deathSaves.failures >= 3, currency: sheet.currency ?? { gold: 0, silver: 0, copper: 0 },
                     showRestPanel, setShowRestPanel, showLongRestConfirm, setShowLongRestConfirm, shortRestHd, setShortRestHd,
                     shortRestHpInput, setShortRestHpInput, showConditionPicker, setShowConditionPicker,
                     adjustHp, saveHp, saveMaxHp, saveAc, saveXp, shortRest, longRest, toggleCondition, toggleDeathSave,
-                    setShowLevelUpModal, setLevelUpHpInput, setModal, classDetail, raceDetailSpeed: raceDetail?.speed
+                    setShowLevelUpModal, setLevelUpHpInput, setModal, classDetail, raceDetailSpeed: raceDetail?.speed,
+                    classFeaturesByLevel, subclassDetail, subclassFeatureList,
                   }}
                   patchSheet={patchSheet}
                   patchCharacter={patchCharacter}
@@ -512,16 +510,6 @@ function CharacterSheet() {
                   profBonus={profBonus}
                   savingThrows={sheet.saving_throws ?? []}
                   setModal={setModal}
-                />
-              )}
-              {activeTab === 'combate' && (
-                <TabCombate
-                  ac={ac} dexMod={dexMod} strMod={strMod} profBonus={profBonus}
-                  raceDetailSpeed={raceDetail?.speed} hitDie={hitDie} hitDiceAvailable={hitDiceAvailable}
-                  level={level} equippedItems={equippedItems}
-                  classFeaturesByLevel={classFeaturesByLevel} subclassDetail={subclassDetail}
-                  subclassFeatureList={subclassFeatureList} setModal={setModal}
-                  currentHp={currentHp} maxHp={maxHp} hpColor={hpColor}
                 />
               )}
               {activeTab === 'hechizos' && (

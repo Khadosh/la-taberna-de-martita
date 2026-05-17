@@ -2,27 +2,25 @@
  * Tab "Resumen": stats, rasgos raciales, condiciones y descanso.
  * El grueso del estado y los handlers vienen del padre (CharacterSheet).
  */
-import type { RaceDetail } from '../../lib/dnd-api'
+import type { RaceDetail, FeatureDetail } from '../../lib/dnd-api'
 import { ABILITY_LABELS, abilityModifier, modifierColor } from '../../lib/dnd-api'
 import { CONDITIONS } from '../../lib/dnd-constants'
-import type { SheetJson } from './types'
+import type { SheetJson, InfoModalData } from './types'
 import { SheetLabel, SheetRow } from './sheet-primitives'
-import { TraitBadge } from './sheet-badges'
-import type { InfoModalData } from './types'
+import { TraitBadge, FeatureCard } from './sheet-badges'
 
 const STAT_KEYS = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const
+function fmtMod(m: number) { return m >= 0 ? `+${m}` : String(m) }
+
+interface ClassFeatureLevel {
+  level: number
+  features: { index: string; name: string }[]
+}
 
 interface TabResumenProps {
   stats: Record<string, number>
   sheet: SheetJson
-  character: {
-    race: string
-    class: string
-    level: number
-    current_hp: number | null
-    campaign_id: string | null
-    conditions?: string[] | null
-  }
+  character: { race: string }
   raceDetail?: RaceDetail
   isOwner: boolean
   isGm: boolean
@@ -82,6 +80,13 @@ interface TabResumenProps {
   setModal: (m: InfoModalData) => void
   classDetail?: { saving_throws?: { index: string; name: string }[] }
   raceDetailSpeed?: number
+  // Combate
+  strMod: number
+  hitDie: number
+  hitDiceAvailable: number
+  classFeaturesByLevel: ClassFeatureLevel[]
+  subclassDetail?: { name: string; subclass_flavor?: string }
+  subclassFeatureList?: { results: { index: string; name: string }[] }
 }
 
 export function TabResumen(props: TabResumenProps) {
@@ -97,7 +102,10 @@ export function TabResumen(props: TabResumenProps) {
     showConditionPicker, setShowConditionPicker,
     adjustHp, saveHp, saveAc, saveXp,
     toggleCondition, toggleDeathSave,
+    dexMod, profBonus, raceDetailSpeed,
     setShowLevelUpModal, setLevelUpHpInput, setModal,
+    strMod, hitDie, hitDiceAvailable,
+    classFeaturesByLevel, subclassDetail, subclassFeatureList,
   } = props
 
   return (
@@ -263,48 +271,97 @@ export function TabResumen(props: TabResumenProps) {
         </SheetRow>
       )}
 
-      {/* Racial traits */}
-      {raceDetail && (
-        <SheetRow className="border-t border-stone-500/30">
-          <div className="flex-1 p-4 space-y-3">
-            <SheetLabel>Rasgos raciales · <span className="capitalize">{character.race}</span></SheetLabel>
-            {raceDetail.ability_bonuses.filter(b => b.bonus !== 0).length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {raceDetail.ability_bonuses.filter(b => b.bonus !== 0).map(b => (
-                  <span
-                    key={b.ability_score.index}
-                    className="px-3 py-1 text-xs border-2 border-amber-700/65 text-amber-900 font-serif font-bold tracking-wide"
-                    style={{
-                      background: 'rgba(200,140,40,0.22)',
-                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.3), 0 2px 4px rgba(0,0,0,0.12)',
-                    }}
-                  >
-                    {ABILITY_LABELS[b.ability_score.index]} {b.bonus > 0 ? '+' : ''}{b.bonus}
-                  </span>
-                ))}
-                <span
-                  className="px-3 py-1 text-xs border-2 border-stone-500/50 text-stone-600 font-serif font-semibold"
-                  style={{
-                    background: 'rgba(160,140,100,0.15)',
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.2), 0 2px 4px rgba(0,0,0,0.08)',
-                  }}
-                >
-                  {raceDetail.speed} ft
-                </span>
-              </div>
+
+      {/* Habilidades de clase */}
+      <SheetRow className="border-t border-stone-500/30">
+        <div className="flex-1 p-4">
+          <SheetLabel>
+            Habilidades de clase
+            {subclassDetail && <span className="font-serif normal-case tracking-normal ml-1 text-amber-700">· {subclassDetail.name}</span>}
+          </SheetLabel>
+          <div className="mt-3 space-y-4">
+            {classFeaturesByLevel.length === 0 && (
+              <p className="text-stone-400 text-xs font-serif italic">Cargando habilidades...</p>
             )}
-            {raceDetail.traits.length > 0 && (
-              <div className="flex flex-wrap gap-1.5">
-                {raceDetail.traits.map(t => (
-                  <TraitBadge key={t.index} index={t.index} name={t.name}
-                    isResistance={t.index.includes('resistance') || t.index.includes('immunity') || t.index.includes('resilience')}
-                    onInfo={data => setModal({ kind: 'trait', data })} />
-                ))}
+            {classFeaturesByLevel.map(({ level: lvl, features }) => (
+              <div key={lvl}>
+                <p className="text-[10px] text-stone-400 font-serif tracking-widest uppercase border-b border-stone-300/60 pb-0.5 mb-2">
+                  Nivel {lvl}{lvl === level && <span className="ml-2 text-amber-600">★ Nivel actual</span>}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {features.map(f => (
+                    <FeatureCard key={f.index} index={f.index} name={f.name}
+                      isNew={lvl === level} compact maxLevel={level}
+                      onInfo={(data: FeatureDetail) => setModal({ kind: 'feature', data })} />
+                  ))}
+                </div>
+              </div>
+            ))}
+            {subclassFeatureList && subclassFeatureList.results.length > 0 && (
+              <div className="mt-4">
+                <p className="text-[10px] text-stone-400 font-serif tracking-widest uppercase border-b border-amber-600/30 pb-0.5 mb-2">
+                  {subclassDetail?.subclass_flavor ?? 'Subclase'} · {subclassDetail?.name}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  {subclassFeatureList.results.map(f => (
+                    <FeatureCard key={f.index} index={f.index} name={f.name}
+                      isNew={false} compact maxLevel={level}
+                      onInfo={(data: FeatureDetail) => setModal({ kind: 'feature', data })} />
+                  ))}
+                </div>
               </div>
             )}
           </div>
+        </div>
+      </SheetRow>
+
+      {/* Rasgos raciales — sin modificadores de estadística */}
+      {raceDetail && raceDetail.traits.length > 0 && (
+        <SheetRow className="border-t border-stone-500/30">
+          <div className="flex-1 p-4 space-y-3">
+            <SheetLabel>Rasgos raciales · <span className="capitalize">{character.race}</span></SheetLabel>
+            <div className="flex flex-wrap gap-1.5">
+              {raceDetail.traits.map(t => (
+                <TraitBadge key={t.index} index={t.index} name={t.name}
+                  isResistance={t.index.includes('resistance') || t.index.includes('immunity') || t.index.includes('resilience')}
+                  onInfo={data => setModal({ kind: 'trait', data })} />
+              ))}
+            </div>
+          </div>
         </SheetRow>
       )}
+
+      {/* Atributos de combate */}
+      <SheetRow className="border-t border-stone-500/30">
+        <div className="flex-1 p-4">
+          <SheetLabel>Atributos de combate</SheetLabel>
+          <div className="grid grid-cols-3 gap-3 mt-3">
+            {[
+              { label: 'GACO', value: fmtMod(profBonus + Math.max(strMod, dexMod)), caption: 'Bono de ataque' },
+              { label: 'Iniciativa', value: fmtMod(dexMod), caption: 'Orden de turnos' },
+              { label: 'Velocidad', value: `${raceDetailSpeed ?? 30} ft`, caption: 'Por turno' },
+            ].map(stat => (
+              <div key={stat.label} className="border border-stone-400 text-center py-3 px-2" style={{ background: 'rgba(200,170,110,0.15)' }}>
+                <p className="text-[10px] font-serif uppercase tracking-widest text-stone-500">{stat.label}</p>
+                <p className="text-2xl font-bold font-mono text-stone-900 my-0.5" style={{ fontFamily: 'Georgia, serif' }}>{stat.value}</p>
+                <p className="text-[10px] italic text-stone-400 font-serif">{stat.caption}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-3 flex gap-3">
+            {[
+              { label: 'Dado de golpe', value: `d${hitDie}` },
+              { label: 'DG disponibles', value: `${hitDiceAvailable}/${level}` },
+              { label: 'Bono Prof.', value: `+${profBonus}` },
+            ].map(s => (
+              <div key={s.label} className="border border-stone-400 px-3 py-2 text-center" style={{ background: 'rgba(200,170,110,0.12)' }}>
+                <p className="text-[10px] font-serif uppercase tracking-widest text-stone-500">{s.label}</p>
+                <p className="text-lg font-bold font-mono text-stone-800">{s.value}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </SheetRow>
 
       {/* Conditions + Rest */}
       <SheetRow className="border-t border-stone-500/30">

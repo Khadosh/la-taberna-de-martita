@@ -95,12 +95,11 @@ export function QuickPill({
 
 // ── Sheet tab bar ─────────────────────────────────────────────────────────────
 
-export type SheetTab = 'resumen' | 'pericias' | 'combate' | 'hechizos' | 'historia'
+export type SheetTab = 'resumen' | 'pericias' | 'hechizos' | 'historia'
 
 const TAB_DEFS: { id: SheetTab; label: string; icon: string }[] = [
-  { id: 'resumen', label: 'Resumen', icon: '📋' },
+  { id: 'resumen',  label: 'Resumen',  icon: '📋' },
   { id: 'pericias', label: 'Pericias', icon: '🎯' },
-  { id: 'combate', label: 'Combate', icon: '⚔️' },
   { id: 'hechizos', label: 'Hechizos', icon: '✨' },
   { id: 'historia', label: 'Historia', icon: '📜' },
 ]

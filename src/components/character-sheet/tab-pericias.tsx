@@ -5,7 +5,6 @@
 import { ABILITY_LABELS } from '../../lib/dnd-api'
 import { SheetLabel, SheetRow } from './sheet-primitives'
 import type { InfoModalData } from './types'
-import type { SkillDetail } from '../../lib/dnd-api'
 
 // D&D 5e: skill → governing ability
 const SKILL_TO_ABILITY: Record<string, string> = {
