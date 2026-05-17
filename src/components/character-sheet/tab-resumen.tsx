@@ -2,11 +2,12 @@
  * Tab "Resumen": stats, rasgos raciales, condiciones y descanso.
  * El grueso del estado y los handlers vienen del padre (CharacterSheet).
  */
+import { useState } from 'react'
 import type { RaceDetail, FeatureDetail } from '../../lib/dnd-api'
 import { ABILITY_LABELS, abilityModifier, modifierColor } from '../../lib/dnd-api'
 import { CONDITIONS } from '../../lib/dnd-constants'
 import type { SheetJson, InfoModalData } from './types'
-import { SheetLabel, SheetRow } from './sheet-primitives'
+import { SheetLabel, SheetRow, QuickPill } from './sheet-primitives'
 import { TraitBadge, FeatureCard } from './sheet-badges'
 
 const STAT_KEYS = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const
@@ -57,6 +58,7 @@ interface TabResumenProps {
   saveMaxHp: () => void
   // Derived
   dexMod: number
+  strMod: number
   profBonus: number
   passivePerception: number
   conditions: string[]
@@ -80,10 +82,9 @@ interface TabResumenProps {
   setModal: (m: InfoModalData) => void
   classDetail?: { saving_throws?: { index: string; name: string }[] }
   raceDetailSpeed?: number
-  // Combate
-  strMod: number
-  hitDie: number
-  hitDiceAvailable: number
+  // Clase
+  hitDie?: number
+  hitDiceAvailable?: number
   classFeaturesByLevel: ClassFeatureLevel[]
   subclassDetail?: { name: string; subclass_flavor?: string }
   subclassFeatureList?: { results: { index: string; name: string }[] }
@@ -102,15 +103,17 @@ export function TabResumen(props: TabResumenProps) {
     showConditionPicker, setShowConditionPicker,
     adjustHp, saveHp, saveAc, saveXp,
     toggleCondition, toggleDeathSave,
-    dexMod, profBonus, raceDetailSpeed,
+    dexMod, strMod, profBonus, passivePerception, raceDetailSpeed,
     setShowLevelUpModal, setLevelUpHpInput, setModal,
-    strMod, hitDie, hitDiceAvailable,
-    classFeaturesByLevel, subclassDetail, subclassFeatureList,
+    classDetail, classFeaturesByLevel, subclassDetail, subclassFeatureList,
   } = props
+
+  const hasSubclass = !!(subclassFeatureList && subclassFeatureList.results.length > 0)
+  const [activeFeatLevel, setActiveFeatLevel] = useState<number | 'subclass'>(level)
 
   return (
     <div>
-      {/* Stats grid — primero */}
+      {/* Stats grid */}
       <SheetRow>
         <div className="flex-1 p-4">
           <SheetLabel>Características</SheetLabel>
@@ -130,6 +133,25 @@ export function TabResumen(props: TabResumenProps) {
         </div>
       </SheetRow>
 
+      {/* Quick stats — Ini, Vel, GACO, Perc. Pas., Prof., Sal. */}
+      <SheetRow className="border-t border-stone-500/30">
+        <div className="flex-1 px-4 py-2.5 flex flex-wrap gap-x-4 gap-y-1.5" style={{ background: 'rgba(160,125,60,0.08)' }}>
+          <QuickPill label="Ini." value={fmtMod(dexMod)} title="Iniciativa" />
+          <QuickPill label="Vel." value={`${raceDetailSpeed ?? 30} ft`} title="Velocidad por turno" />
+          <QuickPill label="GACO" value={fmtMod(profBonus + Math.max(strMod, dexMod))} title="Bono de ataque con competencia" />
+          <QuickPill label="Perc. pas." value={String(passivePerception)} title="Percepción Pasiva" />
+          <QuickPill label="Prof." value={`+${profBonus}`} title="Bono de competencia" />
+          {classDetail?.saving_throws && classDetail.saving_throws.length > 0 && (
+            <QuickPill
+              label="Sal."
+              value={classDetail.saving_throws.map((st: { index: string }) => ABILITY_LABELS[st.index]).join(', ')}
+              variant="save"
+              title={`Salvaciones con competencia: ${classDetail.saving_throws.map((st: { name: string }) => st.name).join(', ')}`}
+            />
+          )}
+        </div>
+      </SheetRow>
+
       {/* HP + AC + XP */}
       <SheetRow className="border-t border-stone-500/30">
         {/* HP */}
@@ -139,13 +161,11 @@ export function TabResumen(props: TabResumenProps) {
             <div className="h-3 border border-stone-500/60 overflow-hidden bg-stone-200/40">
               <div className={`h-full transition-all ${hpColor}`} style={{ width: `${hpPct}%` }} />
             </div>
-            {/* 3 grupos: [decrementar] [HP / maxHP PV] [incrementar] */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-1">
                 {isOwner && <button onClick={() => adjustHp(-5)} className="w-7 h-6 text-xs border border-red-700/60 text-red-700 hover:bg-red-100/30 leading-none font-mono" title="−5 daño">-5</button>}
                 {isOwner && <button onClick={() => adjustHp(-1)} className="w-6 h-6 text-sm border border-stone-500 text-stone-600 hover:bg-stone-200/50 leading-none font-mono">−</button>}
               </div>
-
               <div className="flex items-baseline gap-1">
                 {editingHp ? (
                   <input autoFocus value={hpInput} onChange={e => setHpInput(e.target.value)}
@@ -172,7 +192,6 @@ export function TabResumen(props: TabResumenProps) {
                   </button>
                 )}
               </div>
-
               <div className="flex items-center gap-1">
                 {isOwner && <button onClick={() => adjustHp(1)} className="w-6 h-6 text-sm border border-stone-500 text-stone-600 hover:bg-stone-200/50 leading-none font-mono">+</button>}
                 {isOwner && <button onClick={() => adjustHp(5)} className="w-7 h-6 text-xs border border-green-700/60 text-green-700 hover:bg-green-100/30 leading-none font-mono" title="+5 curar">+5</button>}
@@ -181,7 +200,7 @@ export function TabResumen(props: TabResumenProps) {
           </div>
         </div>
 
-        {/* AC */}
+        {/* CA */}
         <div className="sm:w-28 p-4 text-center" style={{ borderRight: '1px solid rgba(109,85,48,0.3)' }}>
           <SheetLabel>CA</SheetLabel>
           <div className="mt-3">
@@ -199,15 +218,13 @@ export function TabResumen(props: TabResumenProps) {
           </div>
         </div>
 
-        {/* XP — barra alineada con HP (labels debajo) */}
+        {/* XP */}
         <div className="flex-1 p-4">
           <SheetLabel>Experiencia</SheetLabel>
           <div className="mt-3 space-y-1.5">
-            {/* Barra primero, alineada con la de HP */}
             <div className="h-3 border border-stone-500/60 overflow-hidden bg-stone-200/40">
               <div className="h-full bg-amber-700 transition-all" style={{ width: `${xpPct}%` }} />
             </div>
-            {/* Valor actual + acción GM */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="text-sm font-mono text-stone-700">{xp.toLocaleString()} XP</span>
@@ -220,18 +237,16 @@ export function TabResumen(props: TabResumenProps) {
               </div>
               {xpForNext && <span className="text-[10px] text-stone-400 font-serif">Nv. {level + 1} — {xpForNext.toLocaleString()}</span>}
             </div>
-            {
-              (isGm && editingXp) && (
-                <div className="flex items-center gap-1 w-full">
-                  <span className="text-xs text-stone-500 font-serif">+</span>
-                  <input autoFocus value={xpInput} onChange={e => setXpInput(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && saveXp()} placeholder="0"
-                    className="w-full text-sm font-mono border-b border-stone-600 bg-transparent focus:outline-none text-center" />
-                  <button onClick={saveXp} className="text-[10px] px-1.5 py-0.5 bg-amber-800 hover:bg-amber-700 text-amber-100 font-serif transition-colors leading-none">OK</button>
-                  <button onClick={() => { setEditingXp(false); setXpInput('') }} className="text-stone-500 text-xs">✕</button>
-                </div>
-              )
-            }
+            {(isGm && editingXp) && (
+              <div className="flex items-center gap-1 w-full">
+                <span className="text-xs text-stone-500 font-serif">+</span>
+                <input autoFocus value={xpInput} onChange={e => setXpInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && saveXp()} placeholder="0"
+                  className="w-full text-sm font-mono border-b border-stone-600 bg-transparent focus:outline-none text-center" />
+                <button onClick={saveXp} className="text-[10px] px-1.5 py-0.5 bg-amber-800 hover:bg-amber-700 text-amber-100 font-serif transition-colors leading-none">OK</button>
+                <button onClick={() => { setEditingXp(false); setXpInput('') }} className="text-stone-500 text-xs">✕</button>
+              </div>
+            )}
             {canLevelUp && (isGm || isOwner) && (
               <button onClick={() => { setShowLevelUpModal(true); setLevelUpHpInput('') }}
                 className="w-full text-xs py-1 bg-amber-800 hover:bg-amber-700 text-amber-100 font-serif transition-colors animate-pulse">
@@ -271,46 +286,62 @@ export function TabResumen(props: TabResumenProps) {
         </SheetRow>
       )}
 
-
-      {/* Habilidades de clase */}
+      {/* Habilidades de clase con tabs por nivel */}
       <SheetRow className="border-t border-stone-500/30">
         <div className="flex-1 p-4">
           <SheetLabel>
             Habilidades de clase
             {subclassDetail && <span className="font-serif normal-case tracking-normal ml-1 text-amber-700">· {subclassDetail.name}</span>}
           </SheetLabel>
-          <div className="mt-3 space-y-4">
+
+          {/* Tabs por nivel */}
+          {classFeaturesByLevel.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-3 pb-2" style={{ borderBottom: '1px solid rgba(109,85,48,0.25)' }}>
+              {classFeaturesByLevel.map(({ level: lvl }) => (
+                <button
+                  key={lvl}
+                  onClick={() => setActiveFeatLevel(lvl)}
+                  className="px-2 py-0.5 text-[10px] font-serif border transition-colors"
+                  style={activeFeatLevel === lvl
+                    ? { background: '#78350f', color: '#fef3c7', border: '1px solid #92400e' }
+                    : { background: 'transparent', color: '#78716c', border: '1px solid rgba(109,85,48,0.4)' }
+                  }
+                >
+                  Nv. {lvl}{lvl === level ? ' ★' : ''}
+                </button>
+              ))}
+              {hasSubclass && (
+                <button
+                  onClick={() => setActiveFeatLevel('subclass')}
+                  className="px-2 py-0.5 text-[10px] font-serif border transition-colors"
+                  style={activeFeatLevel === 'subclass'
+                    ? { background: '#78350f', color: '#fef3c7', border: '1px solid #92400e' }
+                    : { background: 'transparent', color: '#b45309', border: '1px solid rgba(180,83,9,0.5)' }
+                  }
+                >
+                  {subclassDetail?.name ?? 'Subclase'}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Features del nivel/subclase activo */}
+          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
             {classFeaturesByLevel.length === 0 && (
-              <p className="text-stone-400 text-xs font-serif italic">Cargando habilidades...</p>
+              <p className="text-stone-400 text-xs font-serif italic col-span-2">Cargando habilidades...</p>
             )}
-            {classFeaturesByLevel.map(({ level: lvl, features }) => (
-              <div key={lvl}>
-                <p className="text-[10px] text-stone-400 font-serif tracking-widest uppercase border-b border-stone-300/60 pb-0.5 mb-2">
-                  Nivel {lvl}{lvl === level && <span className="ml-2 text-amber-600">★ Nivel actual</span>}
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {features.map(f => (
-                    <FeatureCard key={f.index} index={f.index} name={f.name}
-                      isNew={lvl === level} compact maxLevel={level}
-                      onInfo={(data: FeatureDetail) => setModal({ kind: 'feature', data })} />
-                  ))}
-                </div>
-              </div>
-            ))}
-            {subclassFeatureList && subclassFeatureList.results.length > 0 && (
-              <div className="mt-4">
-                <p className="text-[10px] text-stone-400 font-serif tracking-widest uppercase border-b border-amber-600/30 pb-0.5 mb-2">
-                  {subclassDetail?.subclass_flavor ?? 'Subclase'} · {subclassDetail?.name}
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {subclassFeatureList.results.map(f => (
-                    <FeatureCard key={f.index} index={f.index} name={f.name}
-                      isNew={false} compact maxLevel={level}
-                      onInfo={(data: FeatureDetail) => setModal({ kind: 'feature', data })} />
-                  ))}
-                </div>
-              </div>
-            )}
+            {activeFeatLevel === 'subclass'
+              ? subclassFeatureList?.results.map(f => (
+                  <FeatureCard key={f.index} index={f.index} name={f.name}
+                    isNew={false} compact maxLevel={level}
+                    onInfo={(data: FeatureDetail) => setModal({ kind: 'feature', data })} />
+                ))
+              : classFeaturesByLevel.find(l => l.level === activeFeatLevel)?.features.map(f => (
+                  <FeatureCard key={f.index} index={f.index} name={f.name}
+                    isNew={activeFeatLevel === level} compact maxLevel={level}
+                    onInfo={(data: FeatureDetail) => setModal({ kind: 'feature', data })} />
+                ))
+            }
           </div>
         </div>
       </SheetRow>
@@ -331,39 +362,7 @@ export function TabResumen(props: TabResumenProps) {
         </SheetRow>
       )}
 
-      {/* Atributos de combate */}
-      <SheetRow className="border-t border-stone-500/30">
-        <div className="flex-1 p-4">
-          <SheetLabel>Atributos de combate</SheetLabel>
-          <div className="grid grid-cols-3 gap-3 mt-3">
-            {[
-              { label: 'GACO', value: fmtMod(profBonus + Math.max(strMod, dexMod)), caption: 'Bono de ataque' },
-              { label: 'Iniciativa', value: fmtMod(dexMod), caption: 'Orden de turnos' },
-              { label: 'Velocidad', value: `${raceDetailSpeed ?? 30} ft`, caption: 'Por turno' },
-            ].map(stat => (
-              <div key={stat.label} className="border border-stone-400 text-center py-3 px-2" style={{ background: 'rgba(200,170,110,0.15)' }}>
-                <p className="text-[10px] font-serif uppercase tracking-widest text-stone-500">{stat.label}</p>
-                <p className="text-2xl font-bold font-mono text-stone-900 my-0.5" style={{ fontFamily: 'Georgia, serif' }}>{stat.value}</p>
-                <p className="text-[10px] italic text-stone-400 font-serif">{stat.caption}</p>
-              </div>
-            ))}
-          </div>
-          <div className="mt-3 flex gap-3">
-            {[
-              { label: 'Dado de golpe', value: `d${hitDie}` },
-              { label: 'DG disponibles', value: `${hitDiceAvailable}/${level}` },
-              { label: 'Bono Prof.', value: `+${profBonus}` },
-            ].map(s => (
-              <div key={s.label} className="border border-stone-400 px-3 py-2 text-center" style={{ background: 'rgba(200,170,110,0.12)' }}>
-                <p className="text-[10px] font-serif uppercase tracking-widest text-stone-500">{s.label}</p>
-                <p className="text-lg font-bold font-mono text-stone-800">{s.value}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </SheetRow>
-
-      {/* Conditions + Rest */}
+      {/* Conditions */}
       <SheetRow className="border-t border-stone-500/30">
         <div className="flex-1 p-4 space-y-4">
           {(conditions.length > 0 || isOwner) && (
@@ -374,10 +373,7 @@ export function TabResumen(props: TabResumenProps) {
                   <span
                     key={c}
                     className="flex items-center gap-1.5 px-3 py-1.5 text-xs border-2 border-red-700/65 rounded-full text-red-900 font-serif font-semibold"
-                    style={{
-                      background: 'rgba(200,50,30,0.1)',
-                      boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.2), 0 2px 5px rgba(140,20,10,0.18)',
-                    }}
+                    style={{ background: 'rgba(200,50,30,0.1)', boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.2), 0 2px 5px rgba(140,20,10,0.18)' }}
                   >
                     <span className="text-red-500 text-[10px] leading-none">⚑</span>
                     {c}

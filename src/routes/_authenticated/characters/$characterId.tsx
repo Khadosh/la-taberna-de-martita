@@ -5,14 +5,14 @@ import { useRef, useState, useEffect } from 'react'
 import { supabase } from '../../../lib/supabase'
 import type { Database } from '../../../lib/database.types'
 import {
-  dndApi, dndKeys, ABILITY_LABELS,
+  dndApi, dndKeys,
 } from '../../../lib/dnd-api'
 import { XP_THRESHOLDS, getSpellSlots, isWarlock } from '../../../lib/dnd-constants'
 import { DiceModule } from '../../../lib/dice'
 
 // Components
 import { type SheetJson, type InfoModalData } from '../../../components/character-sheet/types'
-import { parchmentStyle, mapBgStyle, sheetStyle, darkFrameStyle, QuickPill, SheetTabBar, type SheetTab } from '../../../components/character-sheet/sheet-primitives'
+import { parchmentStyle, mapBgStyle, sheetStyle, darkFrameStyle, SheetTabBar, type SheetTab } from '../../../components/character-sheet/sheet-primitives'
 import { InfoModal } from '../../../components/character-sheet/sheet-badges'
 import { LevelUpModal } from '../../../components/character-sheet/level-up-modal'
 import { TabResumen } from '../../../components/character-sheet/tab-resumen'
@@ -459,23 +459,6 @@ function CharacterSheet() {
 
               {/* Decorativo */}
               <span className="absolute top-3 right-4 text-amber-600/25 text-xl select-none pointer-events-none">◆</span>
-            </div>
-
-            {/* Quick Stats — compartidas en todos los tabs */}
-            <div className="px-4 py-2 flex flex-wrap gap-x-3 gap-y-1" style={{ background: 'rgba(160,125,60,0.1)', borderBottom: '1px solid rgba(109,85,48,0.25)' }}>
-              <QuickPill label="Vel." value={`${raceDetail?.speed ?? 30} ft`} />
-              <QuickPill label="Ini." value={dexMod >= 0 ? `+${dexMod}` : String(dexMod)} />
-              <QuickPill label="Perc. pas." value={String(passivePerception)} title="Percepción Pasiva" />
-              <QuickPill label="Prof." value={`+${profBonus}`} title="Bonus de competencia" />
-              {(sheet.currency?.gold ?? 0) > 0 && <QuickPill label="MO" value={String(sheet.currency?.gold ?? 0)} variant="gold" />}
-              {classDetail?.saving_throws && classDetail.saving_throws.length > 0 && (
-                <QuickPill
-                  label="Sal."
-                  value={classDetail.saving_throws.map((st: { index: string; name: string }) => ABILITY_LABELS[st.index]).join(', ')}
-                  variant="save"
-                  title={`Salvaciones con competencia: ${classDetail.saving_throws.map((st: { name: string }) => st.name).join(', ')}`}
-                />
-              )}
             </div>
 
             {/* Tabs Bar */}
