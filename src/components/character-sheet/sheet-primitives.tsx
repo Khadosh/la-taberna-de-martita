@@ -14,20 +14,23 @@ export const mapBgStyle: React.CSSProperties = {
   backgroundAttachment: 'fixed',
 }
 
-// Hoja de pergamino sobre la mesa
+// Hoja de pergamino sobre la mesa — con textura de papiro real
 export const sheetStyle: React.CSSProperties = {
-  backgroundColor: 'rgba(248, 238, 200, 0.97)',
-  backgroundImage: `repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 23px,
-    rgba(90,50,10,0.022) 23px,
-    rgba(90,50,10,0.022) 24px
-  )`,
-  border: '1px solid #6d5530',
+  // Base clara para que multiply no oscurezca demasiado;
+  // el papiro tiene bordes negros que con cover quedan en los extremos (bajo el marco metálico)
+  backgroundColor: '#f0e4c8',
+  backgroundImage: `url('/assets/images/papiro.png')`,
+  backgroundSize: '105% auto',
+  backgroundPosition: 'center top',
+  backgroundRepeat: 'no-repeat',
+  backgroundBlendMode: 'multiply',
+  border: '2px solid transparent',
+  borderImage: 'linear-gradient(145deg, #c8a050, #7a5020, #c8a050, #7a5020) 1',
   boxShadow: `
-    inset 0 0 100px rgba(90, 45, 5, 0.38),
-    inset 0 0 40px rgba(70, 30, 0, 0.2),
+    0 0 0 1px rgba(80,50,15,0.8),
+    0 0 0 3px rgba(160,110,40,0.5),
+    0 0 0 4px rgba(60,35,10,0.7),
+    inset 0 0 50px rgba(80, 40, 0, 0.1),
     0 30px 80px rgba(0,0,0,0.8),
     0 12px 35px rgba(0,0,0,0.6),
     0 4px 12px rgba(0,0,0,0.4)
@@ -50,9 +53,9 @@ export const darkFrameStyle: React.CSSProperties = {
 export function SheetLabel({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex items-center gap-2">
-      <div className="flex-1 h-px bg-stone-500/40" />
-      <p className="text-xs tracking-widest text-stone-500 uppercase font-serif whitespace-nowrap">{children}</p>
-      <div className="flex-1 h-px bg-stone-500/40" />
+      <div className="flex-1 h-px" style={{ background: 'rgba(100,70,30,0.45)' }} />
+      <p className="text-xs tracking-widest uppercase font-serif whitespace-nowrap" style={{ color: '#6b4c24', letterSpacing: '0.13em' }}>{children}</p>
+      <div className="flex-1 h-px" style={{ background: 'rgba(100,70,30,0.45)' }} />
     </div>
   )
 }
@@ -87,7 +90,7 @@ export function QuickPill({
         : 'border-stone-400/70 text-stone-700'
   return (
     <div className="flex items-center gap-1.5 text-xs font-serif" title={title}>
-      <span className="text-stone-400">{label}</span>
+      <span style={{ color: '#7a5828' }}>{label}</span>
       <span className={`px-1.5 py-px border font-mono ${cls}`}>{value}</span>
     </div>
   )
@@ -112,23 +115,45 @@ export function SheetTabBar({
   onChange: (t: SheetTab) => void
 }) {
   return (
-    <div className="flex w-full" style={{ background: 'rgba(180,145,80,0.12)', borderBottom: '1px solid rgba(109,85,48,0.4)' }}>
-      {TAB_DEFS.map(tab => (
-        <button
-          key={tab.id}
-          onClick={() => onChange(tab.id)}
-          className={`
-            flex-1 flex items-center justify-center gap-1 px-2 py-2.5 text-xs font-serif tracking-wide transition-all
-            ${active === tab.id
-              ? 'bg-amber-50/80 text-stone-800 font-semibold border-b-2 border-b-amber-700'
-              : 'text-stone-500 hover:text-stone-700 hover:bg-amber-50/40 border-b-2 border-b-transparent'
-            }
-          `}
-        >
-          <span className="text-sm leading-none">{tab.icon}</span>
-          <span className="hidden md:inline">{tab.label}</span>
-        </button>
-      ))}
+    <div
+      className="flex w-full relative"
+      style={{
+        background: 'linear-gradient(180deg, #3a2410 0%, #271608 100%)',
+        borderTop: '1px solid #6a4020',
+        borderBottom: '2px solid #180e04',
+        // Tachones de latón en los bordes con background-image
+        backgroundImage: `
+          radial-gradient(circle 3.5px at 10px 50%, #d4a030 0%, #9a6c18 55%, transparent 56%),
+          radial-gradient(circle 3.5px at calc(100% - 10px) 50%, #d4a030 0%, #9a6c18 55%, transparent 56%),
+          linear-gradient(180deg, #3a2410 0%, #271608 100%)
+        `,
+      }}
+    >
+      {TAB_DEFS.map(tab => {
+        const isActive = active === tab.id
+        return (
+          <button
+            key={tab.id}
+            onClick={() => onChange(tab.id)}
+            className="flex-1 flex items-center justify-center gap-1 px-2 py-2.5 text-xs font-serif tracking-wide transition-all"
+            style={isActive ? {
+              background: 'linear-gradient(180deg, #5a3820 0%, #3e2410 100%)',
+              color: '#f0d898',
+              fontWeight: 600,
+              borderBottom: '2px solid #c8900a',
+              borderTop: '1px solid rgba(220,160,40,0.3)',
+              boxShadow: 'inset 0 1px 0 rgba(220,160,40,0.15)',
+            } : {
+              background: 'transparent',
+              color: '#8a6840',
+              borderBottom: '2px solid transparent',
+            }}
+          >
+            <span className="text-sm leading-none" style={{ opacity: isActive ? 1 : 0.65 }}>{tab.icon}</span>
+            <span className="hidden md:inline">{tab.label}</span>
+          </button>
+        )
+      })}
     </div>
   )
 }

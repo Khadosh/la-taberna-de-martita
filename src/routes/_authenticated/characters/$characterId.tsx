@@ -424,29 +424,56 @@ function CharacterSheet() {
           <div className="lg:col-span-7 overflow-y-auto" style={sheetStyle}>
             {/* Header: Identity + Portrait — Image #6 style */}
             <div className="flex items-stretch relative overflow-hidden" style={{ minHeight: '120px', borderBottom: '1px solid rgba(109,85,48,0.4)' }}>
-              {/* Portrait */}
-              <div className="w-[108px] flex-shrink-0 relative overflow-hidden group" style={{ background: 'rgba(60,40,15,0.15)' }}>
-                {character.portrait_url ? (
-                  <img src={character.portrait_url} className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-stone-400 text-4xl">⚔</div>
-                )}
-                {/* Gradiente sutil en el borde derecho */}
-                <div className="absolute inset-y-0 right-0 w-4 pointer-events-none" style={{ background: 'linear-gradient(to right, transparent, rgba(244,232,190,0.4))' }} />
-                <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                  <button onClick={() => fileInputRef.current?.click()} className="text-[10px] text-white/90 font-serif underline">Subir</button>
+              {/* Portrait con frame ornamental */}
+              <div
+                className="w-[108px] flex-shrink-0 relative group"
+                style={{ background: 'rgba(30,18,6,0.85)' }}
+              >
+                {/* Imagen */}
+                <div className="absolute inset-2 overflow-hidden">
+                  {character.portrait_url ? (
+                    <img src={character.portrait_url} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-stone-500 text-4xl"
+                      style={{ background: 'rgba(30,18,6,0.5)' }}>⚔</div>
+                  )}
+                </div>
+                {/* Frame ornamental (overlay sobre la imagen) */}
+                <div className="absolute inset-2 pointer-events-none" style={{
+                  boxShadow: `
+                    inset 0 0 0 1px rgba(200,150,50,0.7),
+                    inset 0 0 0 3px rgba(20,10,4,0.8),
+                    inset 0 0 0 4px rgba(160,110,35,0.5)
+                  `,
+                }} />
+                {/* Frame exterior */}
+                <div className="absolute inset-0 pointer-events-none" style={{
+                  border: '2px solid rgba(160,110,35,0.8)',
+                  boxShadow: 'inset 0 0 12px rgba(0,0,0,0.6)',
+                }} />
+                {/* Esquinas decorativas */}
+                {[['top-1 left-1', ''], ['top-1 right-1', 'rotate-90'], ['bottom-1 left-1', '-rotate-90'], ['bottom-1 right-1', 'rotate-180']].map(([pos, rot], i) => (
+                  <svg key={i} className={`absolute ${pos} ${rot}`} width="12" height="12" viewBox="0 0 12 12">
+                    <path d="M1 6V1h5" stroke="rgba(210,160,50,0.9)" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
+                  </svg>
+                ))}
+                {/* Hover para subir */}
+                <div className="absolute inset-0 flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100"
+                  style={{ background: 'rgba(0,0,0,0.55)' }}>
+                  <button onClick={() => fileInputRef.current?.click()}
+                    className="text-[10px] font-serif underline" style={{ color: '#f0dfc0' }}>Subir</button>
                 </div>
               </div>
 
               {/* Identity */}
               <div className="flex-1 px-5 py-4 flex flex-col justify-center min-w-0">
-                <h1 className="text-[26px] font-bold text-stone-900 font-serif leading-none truncate">{character.name}</h1>
-                <p className="text-sm font-serif text-stone-600 mt-2 capitalize">
+                <h1 className="text-[26px] font-bold font-serif leading-none truncate" style={{ color: '#2c1a08' }}>{character.name}</h1>
+                <p className="text-sm font-serif mt-2 capitalize" style={{ color: '#5c3d18' }}>
                   {character.race}
-                  <span className="mx-1.5 text-amber-700 font-bold">•</span>
+                  <span className="mx-1.5 font-bold" style={{ color: '#b06820' }}>•</span>
                   {character.class}{subclassDetail ? ` (${subclassDetail.name})` : ''}
                 </p>
-                <p className="text-[11px] text-stone-400 font-serif tracking-widest uppercase mt-1">Nivel {level}</p>
+                <p className="text-[11px] font-serif tracking-widest uppercase mt-1" style={{ color: '#b06820' }}>Nivel {level}</p>
                 <button
                   onClick={generatePortrait}
                   disabled={generatingPortrait}

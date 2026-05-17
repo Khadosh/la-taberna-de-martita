@@ -4,14 +4,37 @@
  */
 import { useState } from 'react'
 import type { RaceDetail, FeatureDetail } from '../../lib/dnd-api'
-import { ABILITY_LABELS, abilityModifier, modifierColor } from '../../lib/dnd-api'
+import { ABILITY_LABELS, abilityModifier } from '../../lib/dnd-api'
 import { CONDITIONS } from '../../lib/dnd-constants'
 import type { SheetJson, InfoModalData } from './types'
 import { SheetLabel, SheetRow, QuickPill } from './sheet-primitives'
 import { TraitBadge, FeatureCard } from './sheet-badges'
+import { WaxSeal } from './condition-seals'
 
 const STAT_KEYS = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const
 function fmtMod(m: number) { return m >= 0 ? `+${m}` : String(m) }
+
+// ── Helpers de color para stat boxes ─────────────────────────────────────────
+
+// Cuerpo del box: escala de gris-marrón según valor de la habilidad
+function statBodyRgb(val: number): [number, number, number] {
+  const t = Math.max(0, Math.min(1, (val - 6) / 14)) // 6-20 → 0-1
+  return [
+    Math.round(24 + t * 32),  // 24 → 56
+    Math.round(16 + t * 22),  // 16 → 38
+    Math.round(6 + t * 10),   // 6 → 16
+  ]
+}
+
+// Badge del modificador: rojo → gris → verde
+function modBadgeColors(mod: number): { bg: string; border: string; text: string } {
+  if (mod >= 4)  return { bg: '#0c2c12', border: '#186030', text: '#22c55e' }
+  if (mod >= 2)  return { bg: '#142810', border: '#204c1e', text: '#4ade80' }
+  if (mod >= 1)  return { bg: '#222e10', border: '#304618', text: '#86efac' }
+  if (mod === 0) return { bg: '#232018', border: '#363028', text: '#9ca3af' }
+  if (mod >= -1) return { bg: '#341a08', border: '#502c10', text: '#fb923c' }
+  return           { bg: '#2e0c0c', border: '#4a1818', text: '#f87171' }
+}
 
 interface ClassFeatureLevel {
   level: number
@@ -117,18 +140,78 @@ export function TabResumen(props: TabResumenProps) {
       <SheetRow>
         <div className="flex-1 p-4">
           <SheetLabel>Características</SheetLabel>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 mt-3">
-            {STAT_KEYS.map(k => (
-              <div key={k} className="text-center py-1.5 px-1" style={{ background: 'rgba(200,170,110,0.18)', border: '1px solid rgba(109,85,48,0.35)' }}>
-                <p className="text-[10px] text-stone-500 font-serif tracking-widest uppercase">{ABILITY_LABELS[k]}</p>
-                <p className="text-xl sm:text-2xl font-bold text-stone-900 my-0.5" style={{ fontFamily: 'Georgia, serif' }}>{stats[k] ?? '—'}</p>
-                <div className="pt-0.5" style={{ borderTop: '1px solid rgba(109,85,48,0.25)' }}>
-                  <p className={`text-sm font-bold font-mono ${stats[k] ? modifierColor(stats[k]) : 'text-stone-400'}`}>
-                    {stats[k] ? abilityModifier(stats[k]) : ''}
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-3">
+            {STAT_KEYS.map(k => {
+              const val = stats[k] ?? 10
+              const mod = Math.floor((val - 10) / 2)
+              const [r, g, b] = statBodyRgb(val)
+              const badge = modBadgeColors(mod)
+              return (
+                <div
+                  key={k}
+                  className="text-center relative select-none"
+                  style={{
+                    borderRadius: 6,
+                    background: `linear-gradient(145deg, rgb(${r+14},${g+10},${b+4}) 0%, rgb(${r},${g},${b}) 45%, rgb(${r-6},${g-4},${b-2}) 100%)`,
+                    border: '1px solid rgba(170,120,45,0.65)',
+                    boxShadow: `
+                      inset 0 1px 0 rgba(220,175,60,0.38),
+                      inset 1px 0 0 rgba(200,155,50,0.18),
+                      inset 0 -1px 0 rgba(0,0,0,0.5),
+                      inset -1px 0 0 rgba(0,0,0,0.28),
+                      0 3px 6px rgba(0,0,0,0.45)
+                    `,
+                    padding: '8px 4px 6px',
+                  }}
+                >
+                  {/* Label */}
+                  <p style={{
+                    fontSize: 9,
+                    letterSpacing: '0.14em',
+                    fontFamily: 'Georgia, serif',
+                    color: '#c09858',
+                    textTransform: 'uppercase',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.6)',
+                  }}>
+                    {ABILITY_LABELS[k]}
                   </p>
+
+                  {/* Valor */}
+                  <p style={{
+                    fontSize: 28,
+                    fontWeight: 700,
+                    fontFamily: 'Georgia, serif',
+                    color: '#f0e2c0',
+                    lineHeight: 1.15,
+                    textShadow: '0 2px 4px rgba(0,0,0,0.6)',
+                    margin: '2px 0 5px',
+                  }}>
+                    {val}
+                  </p>
+
+                  {/* Badge de modificador */}
+                  <div style={{
+                    display: 'inline-block',
+                    padding: '1px 8px',
+                    borderRadius: 4,
+                    background: badge.bg,
+                    border: `1px solid ${badge.border}`,
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), 0 1px 2px rgba(0,0,0,0.35)',
+                    minWidth: 34,
+                  }}>
+                    <span style={{
+                      fontSize: 12,
+                      fontWeight: 700,
+                      fontFamily: 'monospace',
+                      color: badge.text,
+                      textShadow: `0 0 6px ${badge.text}50`,
+                    }}>
+                      {abilityModifier(val)}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </SheetRow>
@@ -362,37 +445,46 @@ export function TabResumen(props: TabResumenProps) {
         </SheetRow>
       )}
 
-      {/* Conditions */}
+      {/* Conditions — wax seals */}
       <SheetRow className="border-t border-stone-500/30">
-        <div className="flex-1 p-4 space-y-4">
+        <div className="flex-1 p-4">
           {(conditions.length > 0 || isOwner) && (
-            <div>
+            <>
               <SheetLabel>Condiciones activas</SheetLabel>
-              <div className="flex flex-wrap gap-1.5 mt-3">
+              <div className="flex flex-wrap gap-3 mt-4 items-center">
                 {conditions.map(c => (
-                  <span
+                  <WaxSeal
                     key={c}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs border-2 border-red-700/65 rounded-full text-red-900 font-serif font-semibold"
-                    style={{ background: 'rgba(200,50,30,0.1)', boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.2), 0 2px 5px rgba(140,20,10,0.18)' }}
-                  >
-                    <span className="text-red-500 text-[10px] leading-none">⚑</span>
-                    {c}
-                    {isOwner && (
-                      <button onClick={() => toggleCondition(c)} className="text-red-500 hover:text-red-900 ml-0.5 font-bold text-xs leading-none">✕</button>
-                    )}
-                  </span>
+                    condition={c}
+                    canRemove={isOwner}
+                    onRemove={() => toggleCondition(c)}
+                  />
                 ))}
                 {isOwner && (
                   <div className="relative">
-                    <button onClick={() => setShowConditionPicker(v => !v)}
-                      className="px-2 py-0.5 text-xs border border-stone-400 text-stone-500 hover:border-amber-700 hover:text-amber-800 font-serif transition-colors">
+                    <button
+                      onClick={() => setShowConditionPicker(v => !v)}
+                      className="text-xs font-serif transition-colors"
+                      style={{
+                        padding: '4px 10px',
+                        border: '1px solid rgba(120,80,30,0.5)',
+                        color: '#8a6840',
+                        background: 'rgba(80,50,15,0.1)',
+                      }}
+                    >
                       + condición
                     </button>
                     {showConditionPicker && (
-                      <div className="absolute left-0 top-7 z-20 w-48 border border-stone-500 bg-amber-50 shadow-lg max-h-52 overflow-y-auto">
+                      <div
+                        className="absolute left-0 top-9 z-20 w-48 shadow-lg max-h-52 overflow-y-auto"
+                        style={{ border: '1px solid rgba(120,80,30,0.5)', background: '#f0e4c0' }}
+                      >
                         {CONDITIONS.filter(c => !conditions.includes(c)).map(c => (
-                          <button key={c} onClick={() => { toggleCondition(c); setShowConditionPicker(() => false) }}
-                            className="block w-full text-left px-3 py-1.5 text-xs font-serif text-stone-700 hover:bg-amber-200 transition-colors">
+                          <button
+                            key={c}
+                            onClick={() => { toggleCondition(c); setShowConditionPicker(() => false) }}
+                            className="block w-full text-left px-3 py-1.5 text-xs font-serif text-stone-700 hover:bg-amber-200 transition-colors"
+                          >
                             {c}
                           </button>
                         ))}
@@ -401,7 +493,7 @@ export function TabResumen(props: TabResumenProps) {
                   </div>
                 )}
               </div>
-            </div>
+            </>
           )}
         </div>
       </SheetRow>
