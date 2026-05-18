@@ -153,8 +153,10 @@ export function TabResumen(props: TabResumenProps) {
             {STAT_KEYS.map(k => {
               const val = stats[k] ?? 10
               const mod = Math.floor((val - 10) / 2)
+              const hasSave = classDetail?.saving_throws?.some((st: { index: string }) => st.index === k)
+              const displayMod = mod + (hasSave ? profBonus : 0)
               const [r, g, b] = statBodyRgb(val)
-              const textColor = modTextColor(mod)
+              const textColor = modTextColor(displayMod)
               // Colores derivados del latón base
               const hi = `rgb(${r + 26},${g + 19},${b + 7})`   // brillo top-left
               const mid = `rgb(${r + 10},${g + 7},${b + 2})`     // medio
@@ -241,18 +243,20 @@ export function TabResumen(props: TabResumenProps) {
                       color: textColor,
                       textShadow: '0 1px 3px rgba(0,0,0,0.9)',
                       letterSpacing: '0.04em',
+                      lineHeight: hasSave ? 1.2 : undefined,
                     }}>
-                      {fmtMod(mod)}
+                      {fmtMod(displayMod)}{hasSave && `★`}
                     </span>
                   </div>
                 </div>
               )
             })}
           </div>
+
         </div>
       </SheetRow>
 
-      {/* Quick stats — Ini, Vel, GACO, Perc. Pas., Prof., Sal. */}
+      {/* Quick stats — Ini, Vel, GACO, Perc. Pas., Prof. */}
       <SheetRow className="border-t border-stone-500/30">
         <div className="flex-1 px-4 py-2.5 flex flex-wrap gap-x-4 gap-y-1.5" style={{ background: 'rgba(160,125,60,0.08)' }}>
           <QuickPill label="Ini." value={fmtMod(dexMod)} title="Iniciativa" />
@@ -269,14 +273,6 @@ export function TabResumen(props: TabResumenProps) {
           />
           <QuickPill label="Perc. pas." value={String(passivePerception)} title="Percepción Pasiva" />
           <QuickPill label="Prof." value={`+${profBonus}`} title="Bono de competencia" />
-          {classDetail?.saving_throws && classDetail.saving_throws.length > 0 && (
-            <QuickPill
-              label="Sal."
-              value={classDetail.saving_throws.map((st: { index: string }) => ABILITY_LABELS[st.index]).join(', ')}
-              variant="save"
-              title={`Salvaciones con competencia: ${classDetail.saving_throws.map((st: { name: string }) => st.name).join(', ')}`}
-            />
-          )}
         </div>
       </SheetRow>
 
@@ -332,7 +328,14 @@ export function TabResumen(props: TabResumenProps) {
         <div className="sm:w-28 p-4 text-center" style={{ borderRight: '1px solid rgba(109,85,48,0.3)' }}>
           <SheetLabel>
             {(!armorProficient || !shieldProfOk)
-              ? <span title={`Sin competencia con ${!armorProficient ? 'este tipo de armadura' : 'el escudo'} — desventaja en tiradas de ataque y salvaciones de FUE/DES, no puede lanzar hechizos`}>⚠ CA</span>
+              ? <span className="inline-flex items-center gap-1" title={`Sin competencia con ${!armorProficient ? 'este tipo de armadura' : 'el escudo'} — desventaja en tiradas de ataque y salvaciones de FUE/DES, no puede lanzar hechizos`}>
+                <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M6 1L11 10.5H1Z" />
+                  <line x1="6" y1="5" x2="6" y2="7.5" />
+                  <circle cx="6" cy="9" r="0.65" fill="currentColor" stroke="none" />
+                </svg>
+                CA
+              </span>
               : 'CA'
             }
           </SheetLabel>
@@ -377,13 +380,20 @@ export function TabResumen(props: TabResumenProps) {
                   onKeyDown={e => e.key === 'Enter' && saveXp()} placeholder="0"
                   className="w-full text-sm font-mono border-b border-stone-600 bg-transparent focus:outline-none text-center" />
                 <button onClick={saveXp} className="text-[10px] px-1.5 py-0.5 bg-amber-800 hover:bg-amber-700 text-amber-100 font-serif transition-colors leading-none">OK</button>
-                <button onClick={() => { setEditingXp(false); setXpInput('') }} className="text-stone-500 text-xs">✕</button>
+                <button onClick={() => { setEditingXp(false); setXpInput('') }} className="text-stone-400 hover:text-stone-700 transition-colors leading-none">
+                  <svg width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                    <line x1="1.5" y1="1.5" x2="8.5" y2="8.5" /><line x1="8.5" y1="1.5" x2="1.5" y2="8.5" />
+                  </svg>
+                </button>
               </div>
             )}
             {canLevelUp && (isGm || isOwner) && (
               <button onClick={() => { setShowLevelUpModal(true); setLevelUpHpInput('') }}
                 className="w-full text-xs py-1 bg-amber-800 hover:bg-amber-700 text-amber-100 font-serif transition-colors animate-pulse">
-                ⬆ Subir al nivel {level + 1}
+                <svg width="11" height="11" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="inline-block mr-1">
+                  <line x1="5" y1="8" x2="5" y2="2" /><polyline points="2,5 5,2 8,5" />
+                </svg>
+                Subir al nivel {level + 1}
               </button>
             )}
           </div>
@@ -410,8 +420,22 @@ export function TabResumen(props: TabResumenProps) {
                 </div>
               ))}
               <div className="self-end pb-0.5">
-                {isStable && <p className="text-sm text-green-700 font-serif">✓ Estable</p>}
-                {isDead && <p className="text-sm text-red-700 font-serif">✕ Muerto</p>}
+                {isStable && (
+                  <p className="text-sm font-serif flex items-center gap-1" style={{ color: '#15803d' }}>
+                    <svg width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="1,5 4,8 9,2" />
+                    </svg>
+                    Estable
+                  </p>
+                )}
+                {isDead && (
+                  <p className="text-sm font-serif flex items-center gap-1" style={{ color: '#b91c1c' }}>
+                    <svg width="12" height="12" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round">
+                      <line x1="1.5" y1="1.5" x2="8.5" y2="8.5" /><line x1="8.5" y1="1.5" x2="1.5" y2="8.5" />
+                    </svg>
+                    Muerto
+                  </p>
+                )}
                 {!isStable && !isDead && <p className="text-xs text-stone-500 font-serif italic">Inconsciente</p>}
               </div>
             </div>

@@ -1,4 +1,4 @@
-import { SheetLabel } from './sheet-primitives'
+import { SheetLabel, SheetRow } from './sheet-primitives'
 
 interface TabHistoriaProps {
   backstory: string | null | undefined
@@ -10,37 +10,48 @@ interface TabHistoriaProps {
 
 export function TabHistoria({ backstory, isOwner, confirmDelete, setConfirmDelete, onDelete }: TabHistoriaProps) {
   return (
-    <div className="p-6 space-y-4">
-      <SheetLabel>Historia del Personaje</SheetLabel>
-      {backstory ? (
-        <p className="text-sm text-stone-700 font-serif italic leading-relaxed whitespace-pre-wrap mt-2">{backstory}</p>
-      ) : (
-        <p className="text-stone-600 font-serif italic text-sm text-center py-10">Sin historia registrada.</p>
-      )}
-
-      {isOwner && (
-        <div className="pt-6 border-t border-stone-500/30">
-          {!confirmDelete ? (
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="text-xs text-stone-500 hover:text-red-600 font-serif italic transition-colors"
-            >
-              Eliminar personaje...
-            </button>
+    <div>
+      <SheetRow>
+        <div className="flex-1 p-5">
+          <SheetLabel>Historia del Personaje</SheetLabel>
+          {backstory ? (
+            <p className="text-sm font-serif italic leading-relaxed whitespace-pre-wrap mt-4" style={{ color: '#3d2510' }}>{backstory}</p>
           ) : (
-            <div className="p-3 border border-red-900/30 bg-red-900/5 text-center space-y-2">
-              <p className="text-xs text-red-900 font-serif">¿Eliminar a este personaje? No hay vuelta atrás.</p>
-              <div className="flex gap-2 mt-2">
-                <button onClick={() => setConfirmDelete(false)} className="flex-1 py-1.5 text-xs border border-stone-400 font-serif hover:bg-stone-100/30 transition-colors">
-                  Cancelar
-                </button>
-                <button onClick={onDelete} className="flex-1 py-1.5 text-xs bg-red-900 text-white font-serif hover:bg-red-800 transition-colors">
-                  Sí, borrar
-                </button>
-              </div>
-            </div>
+            <p className="font-serif italic text-sm text-center py-10" style={{ color: '#7a5828' }}>Sin historia registrada.</p>
           )}
         </div>
+      </SheetRow>
+
+      {isOwner && (
+        <SheetRow className="border-t border-stone-500/30">
+          <div className="flex-1 p-4">
+            {!confirmDelete ? (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="text-xs font-serif italic transition-colors"
+                style={{ color: '#a09080' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#dc2626')}
+                onMouseLeave={e => (e.currentTarget.style.color = '#a09080')}
+              >
+                Eliminar personaje...
+              </button>
+            ) : (
+              <div className="p-3 text-center space-y-2" style={{ border: '1px solid rgba(127,29,29,0.3)', background: 'rgba(127,29,29,0.04)' }}>
+                <p className="text-xs font-serif" style={{ color: '#7f1d1d' }}>¿Eliminar a este personaje? No hay vuelta atrás.</p>
+                <div className="flex gap-2 mt-2">
+                  <button onClick={() => setConfirmDelete(false)} className="flex-1 py-1.5 text-xs font-serif transition-colors"
+                    style={{ border: '1px solid rgba(109,85,48,0.4)', color: '#5c3d18' }}>
+                    Cancelar
+                  </button>
+                  <button onClick={onDelete} className="flex-1 py-1.5 text-xs font-serif transition-colors"
+                    style={{ background: '#7f1d1d', color: '#fef2f2' }}>
+                    Sí, borrar
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </SheetRow>
       )}
     </div>
   )

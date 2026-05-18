@@ -16,30 +16,16 @@ export const mapBgStyle: React.CSSProperties = {
 
 // Hoja de pergamino sobre la mesa — con textura de papiro real
 export const sheetStyle: React.CSSProperties = {
-  backgroundColor: '#f5ead2',
   backgroundImage: `url('/assets/images/papiro.png')`,
-  backgroundSize: '105% 105%',
-  backgroundPosition: 'center center',
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
   backgroundRepeat: 'no-repeat',
-  backgroundBlendMode: 'multiply',
-  border: '2px solid transparent',
-  borderImage: 'linear-gradient(145deg, #c8a050, #7a5020, #c8a050, #7a5020) 1',
-  boxShadow: `
-    0 0 0 1px rgba(80,50,15,0.8),
-    0 0 0 3px rgba(160,110,40,0.5),
-    0 0 0 4px rgba(60,35,10,0.7),
-    inset 0 0 50px rgba(80, 40, 0, 0.1),
-    0 30px 80px rgba(0,0,0,0.8),
-    0 12px 35px rgba(0,0,0,0.6),
-    0 4px 12px rgba(0,0,0,0.4)
-  `,
 }
 
 // Versión mobile: sin bordes ni sombras (va edge-to-edge)
 export const sheetStyleMobile: React.CSSProperties = {
-  backgroundColor: '#f5ead2',
   backgroundImage: `url('/assets/images/papiro.png')`,
-  backgroundSize: '105% 105%',
+  backgroundSize: '100% 100%',
   backgroundPosition: 'center center',
   backgroundRepeat: 'no-repeat',
   backgroundBlendMode: 'multiply',
@@ -69,7 +55,7 @@ export function SheetLabel({ children }: { children: React.ReactNode }) {
 }
 
 export function SheetRow({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return <div className={`flex flex-col sm:flex-row ${className}`} style={{ borderLeft: '1px solid rgba(109,85,48,0.3)', borderRight: '1px solid rgba(109,85,48,0.3)' }}>{children}</div>
+  return <div className={`flex flex-col sm:flex-row ${className}`}>{children}</div>
 }
 
 export function StatBlock({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
@@ -110,11 +96,46 @@ export function QuickPill({
 
 export type SheetTab = 'resumen' | 'pericias' | 'hechizos' | 'historia'
 
-const TAB_DEFS: { id: SheetTab; label: string; icon: string }[] = [
-  { id: 'resumen', label: 'Resumen', icon: '📋' },
-  { id: 'pericias', label: 'Pericias', icon: '🎯' },
-  { id: 'hechizos', label: 'Hechizos', icon: '✨' },
-  { id: 'historia', label: 'Historia', icon: '📜' },
+function TabSvgList() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
+      <rect x="1.5" y="1" width="9" height="10" rx="1" />
+      <line x1="3.5" y1="4" x2="8.5" y2="4" />
+      <line x1="3.5" y1="6.5" x2="8.5" y2="6.5" />
+      <line x1="3.5" y1="9" x2="6.5" y2="9" />
+    </svg>
+  )
+}
+function TabSvgShield() {
+  return (
+    <svg width="12" height="13" viewBox="0 0 12 13" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 1.5L10.5 3V7C10.5 10 6 12 6 12S1.5 10 1.5 7V3Z" />
+      <circle cx="6" cy="6.5" r="1.5" fill="currentColor" stroke="none" />
+    </svg>
+  )
+}
+function TabSvgStar() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+      <path d="M6 1L7.4 4.6H11.2L8.1 6.9L9.2 10.7L6 8.4L2.8 10.7L3.9 6.9L0.8 4.6H4.6Z" />
+    </svg>
+  )
+}
+function TabSvgFeather() {
+  return (
+    <svg width="11" height="13" viewBox="0 0 11 13" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10 1C6 1 1 4.5 1 12" />
+      <path d="M10 1C10 6 6 10 1 12" />
+      <line x1="3.5" y1="9.5" x2="1" y2="13" />
+    </svg>
+  )
+}
+
+const TAB_DEFS: { id: SheetTab; label: string; icon: React.ReactNode }[] = [
+  { id: 'resumen', label: 'Resumen', icon: <TabSvgList /> },
+  { id: 'pericias', label: 'Pericias', icon: <TabSvgShield /> },
+  { id: 'hechizos', label: 'Hechizos', icon: <TabSvgStar /> },
+  { id: 'historia', label: 'Historia', icon: <TabSvgFeather /> },
 ]
 
 function TabStitch({ side }: { side: 'left' | 'right' }) {

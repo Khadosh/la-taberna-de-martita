@@ -35,7 +35,11 @@ export function InfoModal({ modal, onClose }: { modal: InfoModalData; onClose: (
             <h3 className="font-bold text-stone-800 font-serif text-lg">{title}</h3>
             <p className="text-xs text-stone-500 font-serif italic mt-0.5">{subtitle}</p>
           </div>
-          <button onClick={onClose} className="text-stone-400 hover:text-stone-700 text-lg font-serif">✕</button>
+          <button onClick={onClose} className="text-stone-400 hover:text-stone-700 transition-colors leading-none">
+            <svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+              <line x1="2" y1="2" x2="10" y2="10" /><line x1="10" y1="2" x2="2" y2="10" />
+            </svg>
+          </button>
         </div>
         {modal.kind === 'spell' && (
           <div className="grid grid-cols-2 gap-1 text-xs text-stone-500 font-serif">
@@ -68,7 +72,9 @@ export function SpellBadge({ index, onInfo }: { index: string; onInfo: (s: Spell
         {iconUrl ? (
           <img src={iconUrl} alt={spell?.name} className="w-full h-full object-cover" />
         ) : (
-          <span className="text-base opacity-40">✨</span>
+          <svg width="18" height="18" viewBox="0 0 12 12" fill="currentColor" style={{ opacity: 0.35, color: '#b45309' }}>
+            <path d="M6 1L7.2 4.8H11L7.9 7L9.1 10.8L6 8.6L2.9 10.8L4.1 7L1 4.8H4.8Z" />
+          </svg>
         )}
       </div>
       <div className="flex-1 min-w-0">
@@ -109,14 +115,23 @@ export function TraitBadge({ index, name, isResistance, onInfo }: {
         boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.25), 0 2px 5px rgba(0,0,0,0.12)',
       }}
     >
-      {isResistance && <span className="text-blue-500 text-xs">🛡</span>}
+      {isResistance && (
+        <svg width="11" height="12" viewBox="0 0 12 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400 shrink-0">
+          <path d="M6 1.5L11 3V8C11 11 6 13 6 13S1 11 1 8V3Z" />
+        </svg>
+      )}
       <span className={`text-xs font-serif font-medium ${isResistance ? 'text-blue-800' : 'text-stone-700'}`}>{name}</span>
       {trait && (
         <button
           onClick={() => onInfo(trait)}
-          className={`text-[11px] font-bold leading-none ${isResistance ? 'text-blue-400 hover:text-blue-700' : 'text-amber-600 hover:text-amber-900'}`}
+          className={`leading-none transition-colors ${isResistance ? 'text-blue-400 hover:text-blue-700' : 'text-amber-600 hover:text-amber-900'}`}
+          title="Info"
         >
-          ℹ
+          <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
+            <circle cx="6" cy="6" r="5" />
+            <line x1="6" y1="5.5" x2="6" y2="9" />
+            <circle cx="6" cy="3.2" r="0.65" fill="currentColor" stroke="none" />
+          </svg>
         </button>
       )}
     </div>
@@ -131,7 +146,15 @@ export function SkillBadge({ index, onInfo }: { index: string; onInfo: (s: Skill
   return (
     <div className="flex items-center gap-1 border border-amber-700/60 px-2 py-0.5 bg-amber-100/40">
       <span className="text-xs text-amber-800 font-serif capitalize">{skillIndex.replace(/-/g, ' ')}</span>
-      {skill && <button onClick={() => onInfo(skill)} className="text-amber-500 hover:text-amber-900 text-xs ml-0.5">ℹ</button>}
+      {skill && (
+        <button onClick={() => onInfo(skill)} className="text-amber-500 hover:text-amber-900 transition-colors leading-none ml-0.5" title="Info">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
+            <circle cx="6" cy="6" r="5" />
+            <line x1="6" y1="5.5" x2="6" y2="9" />
+            <circle cx="6" cy="3.2" r="0.65" fill="currentColor" stroke="none" />
+          </svg>
+        </button>
+      )}
     </div>
   )
 }
@@ -164,8 +187,14 @@ export function FeatureCard({ index, name, isNew, onInfo, compact, maxLevel }: {
 
   return (
     <div
-      className={`border p-3 transition-colors ${isNew ? 'border-amber-600/50 bg-amber-50/30' : 'border-stone-300/70'}`}
-      style={{ background: isNew ? 'rgba(200,140,20,0.06)' : 'rgba(200,170,110,0.08)' }}
+      className="p-3"
+      style={{
+        borderRadius: 3,
+        background: isNew ? 'rgba(200,140,20,0.07)' : 'rgba(200,170,110,0.09)',
+        boxShadow: isNew
+          ? 'inset 0 0 0 1px rgba(180,100,15,0.42), 0 2px 5px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,210,100,0.14)'
+          : 'inset 0 0 0 1px rgba(109,85,48,0.2), 0 1px 3px rgba(0,0,0,0.08)',
+      }}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-1.5 flex-wrap">
@@ -174,7 +203,13 @@ export function FeatureCard({ index, name, isNew, onInfo, compact, maxLevel }: {
           <p className="text-sm font-semibold text-stone-800 font-serif">{name}</p>
         </div>
         {feature && feature.desc.length > 0 && (
-          <button onClick={() => onInfo(feature)} className="text-amber-700 hover:text-amber-900 text-sm shrink-0 transition-colors" title="Ver descripción completa">ℹ</button>
+          <button onClick={() => onInfo(feature)} className="text-amber-700 hover:text-amber-900 shrink-0 transition-colors leading-none" title="Ver descripción">
+            <svg width="14" height="14" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
+              <circle cx="6" cy="6" r="5" />
+              <line x1="6" y1="5.5" x2="6" y2="9" />
+              <circle cx="6" cy="3.2" r="0.65" fill="currentColor" stroke="none" />
+            </svg>
+          </button>
         )}
       </div>
       {!compact && firstPara && (

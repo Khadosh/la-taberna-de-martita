@@ -478,8 +478,24 @@ function CharacterSheet() {
   const shieldProfOk = hasEquippedShield ? isShieldProficient(classProfIndexes) : true
 
   const mobileTabs = [
-    { id: 'personaje' as const, label: 'Personaje', icon: '⚔' },
-    { id: 'inventario' as const, label: 'Inventario', icon: '🎒' },
+    {
+      id: 'personaje' as const, label: 'Personaje', icon: (
+        <svg width="14" height="18" viewBox="0 0 14 18" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="7" y1="1" x2="7" y2="11" />
+          <line x1="3" y1="8" x2="11" y2="8" />
+          <path d="M5 11 L7 16 L9 11" strokeWidth="1.7" />
+        </svg>
+      )
+    },
+    {
+      id: 'inventario' as const, label: 'Inventario', icon: (
+        <svg width="16" height="16" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M4.5 5 Q4.5 2 7 2 Q9.5 2 9.5 5" />
+          <rect x="1" y="5" width="12" height="8" rx="1.5" />
+          <line x1="4.5" y1="9" x2="9.5" y2="9" />
+        </svg>
+      )
+    },
   ]
 
   return (
@@ -492,7 +508,16 @@ function CharacterSheet() {
           <p className="text-amber-200 font-serif font-semibold text-sm truncate">{character.name}</p>
           <p className="text-stone-500 font-serif text-xs truncate capitalize">{character.race} · {character.class} · Nv. {level}</p>
         </div>
-        <button onClick={() => setShowDice(true)} className="px-3 py-1 border border-amber-800 text-amber-500 text-xs font-serif bg-amber-900/20">🎲 Dados</button>
+        <button onClick={() => setShowDice(true)} className="px-3 py-1 border border-amber-800 text-amber-500 text-xs font-serif bg-amber-900/20 flex items-center gap-1.5">
+          <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="1" y="1" width="10" height="10" rx="1.5" />
+            <circle cx="4" cy="4" r="0.9" fill="currentColor" />
+            <circle cx="8" cy="4" r="0.9" fill="currentColor" />
+            <circle cx="4" cy="8" r="0.9" fill="currentColor" />
+            <circle cx="8" cy="8" r="0.9" fill="currentColor" />
+          </svg>
+          Dados
+        </button>
       </header>
 
       {/* Mobile section switcher — solo en pantallas pequeñas */}
@@ -522,7 +547,7 @@ function CharacterSheet() {
       </div>
 
       <main className="flex-1 min-h-0 overflow-hidden">
-        <div className="h-full lg:max-w-5xl lg:mx-auto lg:px-6 lg:py-8">
+        <div className="h-full lg:max-w-5xl lg:mx-auto lg:px-6 lg:py-8 ">
           <div className="h-full lg:grid lg:grid-cols-12 lg:gap-6 lg:items-stretch">
 
             {/* Hoja de personaje */}
@@ -531,72 +556,78 @@ function CharacterSheet() {
               style={isMobile ? sheetStyleMobile : sheetStyle}
             >
               {/* Header: Identidad + Retrato — no scrolleable */}
-              <div className="flex items-stretch flex-shrink-0 mb-2 relative overflow-hidden" style={{ minHeight: '120px' }}>
-                {/* Portrait con frame ornamental */}
-                <div
-                  className="w-[108px] flex-shrink-0 relative group"
-                  style={{ background: 'rgba(30,18,6,0.85)' }}
-                >
-                  <div className="absolute inset-2 overflow-hidden">
-                    {character.portrait_url ? (
-                      <img src={character.portrait_url} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-stone-500 text-4xl"
-                        style={{ background: 'rgba(30,18,6,0.5)' }}>⚔</div>
-                    )}
-                  </div>
-                  <div className="absolute inset-2 pointer-events-none" style={{
-                    boxShadow: `
+              <div className="w-full flex flex-row items-center justify-center pt-2">
+                <div className="flex items-stretch flex-shrink-0 mb-2 relative overflow-hidden" style={{ minHeight: '120px' }}>
+                  {/* Portrait con frame ornamental */}
+                  <div
+                    className="w-[108px] flex-shrink-0 relative group"
+                    style={{ background: 'rgba(30,18,6,0.85)' }}
+                  >
+                    <div className="absolute inset-2 overflow-hidden">
+                      {character.portrait_url ? (
+                        <img src={character.portrait_url} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center"
+                          style={{ background: 'rgba(30,18,6,0.5)', color: 'rgba(180,130,60,0.4)' }}>
+                          <svg width="28" height="36" viewBox="0 0 14 20" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                            <line x1="7" y1="1" x2="7" y2="13" />
+                            <line x1="3" y1="10" x2="11" y2="10" />
+                            <path d="M5 13 L7 18.5 L9 13" strokeWidth="1.8" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                    <div className="absolute inset-2 pointer-events-none" style={{
+                      boxShadow: `
                       inset 0 0 0 1px rgba(200,150,50,0.7),
                       inset 0 0 0 3px rgba(20,10,4,0.8),
                       inset 0 0 0 4px rgba(160,110,35,0.5)
                     `,
-                  }} />
-                  <div className="absolute inset-0 pointer-events-none" style={{
-                    border: '2px solid rgba(160,110,35,0.8)',
-                    boxShadow: 'inset 0 0 12px rgba(0,0,0,0.6)',
-                  }} />
-                  {[['top-1 left-1', ''], ['top-1 right-1', 'rotate-90'], ['bottom-1 left-1', '-rotate-90'], ['bottom-1 right-1', 'rotate-180']].map(([pos, rot], i) => (
-                    <svg key={i} className={`absolute ${pos} ${rot}`} width="12" height="12" viewBox="0 0 12 12">
-                      <path d="M1 6V1h5" stroke="rgba(210,160,50,0.9)" strokeWidth="1.2" fill="none" strokeLinecap="round" />
-                    </svg>
-                  ))}
-                  <div className="absolute inset-0 flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100"
-                    style={{ background: 'rgba(0,0,0,0.55)' }}>
-                    <button onClick={() => fileInputRef.current?.click()}
-                      className="text-[10px] font-serif underline" style={{ color: '#f0dfc0' }}>Subir</button>
+                    }} />
+                    <div className="absolute inset-0 pointer-events-none" style={{
+                      border: '2px solid rgba(160,110,35,0.8)',
+                      boxShadow: 'inset 0 0 12px rgba(0,0,0,0.6)',
+                    }} />
+                    {[['top-1 left-1', ''], ['top-1 right-1', 'rotate-90'], ['bottom-1 left-1', '-rotate-90'], ['bottom-1 right-1', 'rotate-180']].map(([pos, rot], i) => (
+                      <svg key={i} className={`absolute ${pos} ${rot}`} width="12" height="12" viewBox="0 0 12 12">
+                        <path d="M1 6V1h5" stroke="rgba(210,160,50,0.9)" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+                      </svg>
+                    ))}
+                    <div className="absolute inset-0 flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100"
+                      style={{ background: 'rgba(0,0,0,0.55)' }}>
+                      <button onClick={() => fileInputRef.current?.click()}
+                        className="text-[10px] font-serif underline" style={{ color: '#f0dfc0' }}>Subir</button>
+                    </div>
+                  </div>
+
+                  {/* Identity */}
+                  <div className="flex-1 px-5 py-4 flex flex-col justify-center min-w-0">
+                    <h1 className="text-[26px] font-bold font-serif leading-none truncate" style={{ color: '#2c1a08' }}>{character.name}</h1>
+                    <p className="text-sm font-serif mt-2 capitalize" style={{ color: '#5c3d18' }}>
+                      {character.race}
+                      <span className="mx-1.5 font-bold" style={{ color: '#b06820' }}>•</span>
+                      {character.class}{subclassDetail ? ` (${subclassDetail.name})` : ''}
+                    </p>
+                    <p className="text-[11px] font-serif tracking-widest uppercase mt-1" style={{ color: '#b06820' }}>Nivel {level}</p>
+                    <button
+                      onClick={generatePortrait}
+                      disabled={generatingPortrait}
+                      className="mt-3 self-start text-[10px] px-2.5 py-1 bg-amber-900/10 border border-amber-900/25 text-amber-900 hover:bg-amber-900/20 transition-colors font-serif disabled:opacity-50"
+                    >
+                      {generatingPortrait ? 'Hechizando...' : 'Retrato IA'}
+                    </button>
+                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePortraitUpload} />
                   </div>
                 </div>
-
-                {/* Identity */}
-                <div className="flex-1 px-5 py-4 flex flex-col justify-center min-w-0">
-                  <h1 className="text-[26px] font-bold font-serif leading-none truncate" style={{ color: '#2c1a08' }}>{character.name}</h1>
-                  <p className="text-sm font-serif mt-2 capitalize" style={{ color: '#5c3d18' }}>
-                    {character.race}
-                    <span className="mx-1.5 font-bold" style={{ color: '#b06820' }}>•</span>
-                    {character.class}{subclassDetail ? ` (${subclassDetail.name})` : ''}
-                  </p>
-                  <p className="text-[11px] font-serif tracking-widest uppercase mt-1" style={{ color: '#b06820' }}>Nivel {level}</p>
-                  <button
-                    onClick={generatePortrait}
-                    disabled={generatingPortrait}
-                    className="mt-3 self-start text-[10px] px-2.5 py-1 bg-amber-900/10 border border-amber-900/25 text-amber-900 hover:bg-amber-900/20 transition-colors font-serif disabled:opacity-50"
-                  >
-                    {generatingPortrait ? 'Hechizando...' : 'Retrato IA'}
-                  </button>
-                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePortraitUpload} />
-                </div>
-
-                <span className="absolute top-3 right-4 text-amber-600/25 text-xl select-none pointer-events-none">◆</span>
               </div>
 
               {/* Tabs Bar — no scrolleable */}
-              <div className='my-3 py-2 border-t-2 border-oklch(44.5% 0.038 45.635)'>
+              <div className="mx-0 my-0 py-2" style={{ borderTop: '2px solid rgba(109,85,48,0.55)' }}>
                 <SheetTabBar active={activeTab} onChange={setActiveTab} />
               </div>
 
               {/* Tab Content — único área scrolleable */}
-              <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
+              <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-2">
                 {activeTab === 'resumen' && (
                   <TabResumen
                     {...{
@@ -623,7 +654,6 @@ function CharacterSheet() {
                     skillProficiencies={sheet.skill_proficiencies ?? []}
                     weaponProficiencies={sheet.weapon_proficiencies ?? []}
                     profBonus={profBonus}
-                    savingThrows={sheet.saving_throws ?? []}
                     setModal={setModal}
                   />
                 )}

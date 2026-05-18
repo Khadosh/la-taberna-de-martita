@@ -34,7 +34,6 @@ interface TabPericiasProps {
   skillProficiencies: string[]
   weaponProficiencies: string[]
   profBonus: number
-  savingThrows: string[]
   setModal: (m: InfoModalData) => void
 }
 
@@ -58,12 +57,11 @@ function abilityMod(score: number) { return Math.floor((score - 10) / 2) }
 function fmtMod(m: number) { return m >= 0 ? `+${m}` : String(m) }
 
 export function TabPericias({
-  stats, skillProficiencies, weaponProficiencies, profBonus, savingThrows,
+  stats, skillProficiencies, weaponProficiencies, profBonus,
 }: TabPericiasProps) {
   const [openProf, setOpenProf] = useState<string | null>(null)
   // Normalize proficiency keys (may come as "skill-acrobatics" or "acrobatics")
   const profSet = new Set(skillProficiencies.map(p => p.replace(/^skill-/, '')))
-  const saveSet = new Set(savingThrows)
 
   // Group skills by ability
   const byAbility = ABILITY_ORDER.map(ability => {
@@ -81,48 +79,33 @@ export function TabPericias({
 
   return (
     <div>
-      {/* Saving throws */}
-      <SheetRow>
-        <div className="flex-1 p-4">
-          <SheetLabel>Tiradas de Salvación</SheetLabel>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-3">
-            {ABILITY_ORDER.map(ab => {
-              const score = stats[ab] ?? 10
-              const mod = abilityMod(score)
-              const hasSave = saveSet.has(ab)
-              const total = mod + (hasSave ? profBonus : 0)
-              return (
-                <div key={ab} className={`text-center border py-2 px-1 ${hasSave ? 'border-amber-600 bg-amber-50/40' : 'border-stone-600/40'}`}>
-                  <p className="text-[10px] font-serif uppercase tracking-widest text-stone-500">{ABILITY_LABELS[ab]}</p>
-                  <p className={`text-lg font-bold font-mono mt-0.5 ${hasSave ? 'text-amber-800' : 'text-stone-600'}`}>{fmtMod(total)}</p>
-                  {hasSave && <p className="text-[9px] text-amber-600 font-serif">✦ prof.</p>}
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </SheetRow>
-
       {/* Skills by ability */}
-      <SheetRow className="border-t border-stone-600">
+      <SheetRow>
         <div className="flex-1 p-4">
           <SheetLabel>Pericias</SheetLabel>
           <div className="mt-3 space-y-4">
             {byAbility.map(({ ability, score, skills }) => (
               <div key={ability}>
-                <p className="text-[10px] font-serif uppercase tracking-widest text-stone-800 border-b border-stone-300/60 pb-0.5 mb-2">
+                <p className="text-[10px] font-serif uppercase tracking-widest pb-0.5 mb-2" style={{ color: '#6b4c24', borderBottom: '1px solid rgba(109,85,48,0.35)' }}>
                   {ABILITY_LABELS[ability]} ({fmtMod(abilityMod(score))})
                 </p>
-                <div className="space-y-1">
+                <div className="space-y-0.5">
                   {skills.map(({ skillIndex, mod, hasProficiency }) => (
-                    <div key={skillIndex} className={`flex items-center gap-2 px-2 py-1 ${hasProficiency ? 'bg-amber-50/50 border-l-2 border-amber-600' : ''}`}>
-                      <span className={`text-[10px] font-serif ${hasProficiency ? 'text-amber-600' : 'text-stone-700'}`}>
-                        {hasProficiency ? '★' : '○'}
-                      </span>
-                      <span className="text-xs font-serif text-stone-700 flex-1">
+                    <div key={skillIndex} className="flex items-center gap-2 px-2 py-1"
+                      style={hasProficiency ? { background: 'rgba(180,100,15,0.07)', borderLeft: '2px solid rgba(180,100,15,0.5)' } : {}}>
+                      {hasProficiency ? (
+                        <svg width="8" height="8" viewBox="0 0 8 8" fill="#b45309" className="shrink-0">
+                          <path d="M4 0L8 4L4 8L0 4Z"/>
+                        </svg>
+                      ) : (
+                        <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.5" className="shrink-0" style={{ color: '#9ca3af' }}>
+                          <circle cx="4" cy="4" r="2.5"/>
+                        </svg>
+                      )}
+                      <span className="text-xs font-serif flex-1" style={{ color: hasProficiency ? '#4a2e0c' : '#57534e' }}>
                         {SKILL_NAMES_ES[skillIndex] ?? skillIndex}
                       </span>
-                      <span className={`text-xs font-mono font-bold ${hasProficiency ? 'text-amber-800' : 'text-stone-600'}`}>
+                      <span className="text-xs font-mono font-bold" style={{ color: hasProficiency ? '#92400e' : '#78716c' }}>
                         {fmtMod(mod)}
                       </span>
                     </div>
@@ -136,7 +119,7 @@ export function TabPericias({
 
       {/* Weapon proficiencies */}
       {weaponProficiencies.length > 0 && (
-        <SheetRow className="border-t border-stone-600">
+        <SheetRow className="border-t border-stone-500/30">
           <div className="flex-1 p-4">
             <SheetLabel>Competencias con armas</SheetLabel>
             <div className="flex flex-wrap gap-1.5 mt-3">

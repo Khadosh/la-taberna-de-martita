@@ -79,7 +79,12 @@ export function LevelUpModal({
         onClick={e => e.stopPropagation()}
       >
         <div className="border-b-2 border-stone-600 pb-3">
-          <h3 className="font-bold text-stone-800 font-serif text-xl">⬆ Subir al nivel {nextLevel}</h3>
+          <h3 className="font-bold text-stone-800 font-serif text-xl flex items-center gap-2">
+            <svg width="16" height="16" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="5" y1="8.5" x2="5" y2="1.5"/><polyline points="2,4.5 5,1.5 8,4.5"/>
+            </svg>
+            Subir al nivel {nextLevel}
+          </h3>
           <p className="text-sm text-stone-500 font-serif italic mt-1">{character.name} · {character.class} · d{hitDie}</p>
         </div>
 
@@ -166,7 +171,10 @@ export function LevelUpModal({
           </button>
           <button onClick={onConfirm} disabled={!canConfirm}
             className="flex-1 px-3 py-2 text-sm bg-amber-800 hover:bg-amber-700 disabled:opacity-40 text-amber-100 font-serif transition-colors font-semibold">
-            ⬆ Confirmar nivel {nextLevel}
+            <svg width="13" height="13" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="inline-block mr-1">
+              <line x1="5" y1="8.5" x2="5" y2="1.5"/><polyline points="2,4.5 5,1.5 8,4.5"/>
+            </svg>
+            Confirmar nivel {nextLevel}
           </button>
         </div>
       </div>

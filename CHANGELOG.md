@@ -21,6 +21,16 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 - Panel de inventario: monedas compactas en borde superior, barra de filtro rediseñada, botón `+` metálico, barra de carga sin fondo sólido
 - Paper doll: altura aumentada a 340px, bottom row con flex simétrico para CA badge centrado, slot extra vacío eliminado
 - Tab Resumen: botón de nivel inactivo con texto y borde más oscuros para mayor contraste
+- Fondo papiro visible al 100% (corregido el recorte de 105% que ocultaba el marco)
+- Tab content con padding lateral para respirar dentro del marco del papiro
+- Tiradas de salvación integradas en la chapa metálica de cada stat (modificador con proficiency + indicador ★ sal)
+- Tiradas de salvación eliminadas del tab Pericias (unificadas en Resumen)
+- FeatureCards: borde naranja reemplazado por box-shadow con profundidad
+- Tab Pericias: indicadores de proficiencia como SVGs (diamante/círculo), colores cálidos, bordes unificados
+- Tab Hechizos: spell slots con gradiente latón, colores de sección cálidos, bordes unificados
+- Tab Historia: envuelto en SheetRow para consistencia visual con el resto
+- SheetRow: bordes laterales eliminados (innecesarios con el nuevo padding del contenedor)
+- Todos los emojis reemplazados por SVGs inline acordes al lenguaje visual del pergamino (tabs, dados, espada, bolsa, info, cierre, flecha, etc.)
 
 ### chore
 - Eliminado `routeTree.gen.ts` auto-generado del repo
