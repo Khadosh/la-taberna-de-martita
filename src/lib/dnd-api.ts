@@ -100,9 +100,16 @@ export interface EquipmentItem {
   weight: number
   cost: { quantity: number; unit: string }
   equipment_category: ApiRef
+  // Armor
   armor_category?: string
   armor_class?: { base: number; dex_bonus: boolean; max_bonus?: number }
   desc?: string[]
+  // Weapon
+  weapon_category?: string                        // 'Simple' | 'Martial'
+  weapon_range?: string                           // 'Melee' | 'Ranged'
+  category_range?: string                         // 'Simple Melee', etc.
+  properties?: { index: string; name: string }[]  // 'finesse', 'thrown', 'light', …
+  damage?: { damage_dice: string; damage_type: ApiRef }
 }
 
 export interface MonsterSummary {
@@ -188,6 +195,7 @@ export const dndKeys = {
   subclassFeatures: (i: string) => ['dnd', 'subclasses', i, 'features'] as const,
   skill: (i: string) => ['dnd', 'skills', i] as const,
   equipment: ['dnd', 'equipment'] as const,
+  equipmentDetail: (i: string) => ['dnd', 'equipment', i] as const,
   equipmentCategory: (i: string) => ['dnd', 'equipment-category', i] as const,
   monsters: ['dnd', 'monsters'] as const,
   monster: (i: string) => ['dnd', 'monsters', i] as const,

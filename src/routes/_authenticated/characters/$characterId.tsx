@@ -21,6 +21,7 @@ import { TabHechizos } from '../../../components/character-sheet/tab-hechizos'
 import { TabHistoria } from '../../../components/character-sheet/tab-historia'
 import { InventoryPanel } from '../../../components/character-sheet/inventory-panel'
 import { inferSlot, type SlotKey } from '../../../lib/equip-slots'
+import { calcAttackBonus, isArmorProficient, isShieldProficient, guessWeaponSlug } from '../../../lib/weapon-utils'
 
 export const Route = createFileRoute('/_authenticated/characters/$characterId')({
   component: CharacterSheet,
@@ -405,6 +406,21 @@ function CharacterSheet() {
     return () => { supabase.removeChannel(channel) }
   }, [characterId, queryClient])
 
+  // ── Weapon API fetch (antes de early returns para cumplir reglas de hooks) ────
+  // Derivamos el slug del arma desde los datos crudos del personaje (pueden ser null)
+  const _rawSlots = (character?.sheet_json as SheetJson | undefined)?.equipped_slots ?? {}
+  const _weaponId = _rawSlots.main_hand ?? _rawSlots.ranged
+  const _weaponName = _weaponId ? inventory.find(i => i.id === _weaponId)?.name : undefined
+  const _weaponSlug = _weaponName ? guessWeaponSlug(_weaponName) : null
+
+  const { data: weaponApiData } = useQuery({
+    queryKey: dndKeys.equipmentDetail(_weaponSlug ?? ''),
+    queryFn: () => dndApi.equipmentDetail(_weaponSlug!),
+    enabled: !!_weaponSlug,
+    staleTime: Infinity,
+    retry: false,
+  })
+
   // ── Derived ───────────────────────────────────────────────────────────────
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center" style={parchmentStyle}><p className="text-stone-600 font-serif italic">Consultando los pergaminos...</p></div>
@@ -440,6 +456,26 @@ function CharacterSheet() {
   })).filter(l => l.features.length > 0) : []
 
   const isSpellcaster = maxSlots.some(s => s > 0)
+
+  // Proficiencias de clase
+  const classProfIndexes = (classDetail?.proficiencies ?? []).map((p: { index: string }) => p.index)
+
+  // Arma equipada (ya calculada antes de los early returns)
+  const equippedWeaponName = _weaponName
+
+  // Escudo en off_hand
+  const _offHandId = (sheet.equipped_slots ?? {}).off_hand
+  const _offHandItem = _offHandId ? inventory.find(i => i.id === _offHandId) : undefined
+  const hasEquippedShield = !!(_offHandItem?.notes?.startsWith('Escudo') || /\bshield\b/i.test(_offHandItem?.name ?? ''))
+
+  // Resultados de proficiencia — usan datos reales de la API
+  const gacoResult = equippedWeaponName
+    ? calcAttackBonus(equippedWeaponName, weaponApiData, strMod, dexMod, profBonus, classProfIndexes, sheet.weapon_proficiencies ?? [])
+    : null
+  const armorProficient = sheet.equipped_armor
+    ? isArmorProficient(sheet.equipped_armor.category, classProfIndexes)
+    : true
+  const shieldProfOk = hasEquippedShield ? isShieldProficient(classProfIndexes) : true
 
   const mobileTabs = [
     { id: 'personaje' as const, label: 'Personaje', icon: '⚔' },
@@ -575,6 +611,7 @@ function CharacterSheet() {
                       adjustHp, saveHp, saveMaxHp, saveAc, saveXp, shortRest, longRest, toggleCondition, toggleDeathSave,
                       setShowLevelUpModal, setLevelUpHpInput, setModal, classDetail, raceDetailSpeed: raceDetail?.speed,
                       classFeaturesByLevel, subclassDetail, subclassFeatureList,
+                      gacoResult, armorProficient, shieldProfOk,
                     }}
                     patchSheet={patchSheet}
                     patchCharacter={patchCharacter}

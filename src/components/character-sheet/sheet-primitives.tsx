@@ -86,7 +86,7 @@ export function QuickPill({
 }: {
   label: string
   value: string
-  variant?: 'racial' | 'save' | 'gold'
+  variant?: 'racial' | 'save' | 'gold' | 'warn'
   title?: string
 }) {
   const cls = variant === 'racial'
@@ -95,7 +95,9 @@ export function QuickPill({
       ? 'border-green-600/60 text-green-900 bg-green-50/50'
       : variant === 'gold'
         ? 'border-amber-500/80 text-amber-800 bg-amber-50/70 font-semibold'
-        : 'border-stone-400/70 text-stone-700'
+        : variant === 'warn'
+          ? 'border-red-700/60 text-red-900 bg-red-50/60 font-semibold'
+          : 'border-stone-400/70 text-stone-700'
   return (
     <div className="flex items-center gap-1.5 text-xs font-serif" title={title}>
       <span style={{ color: '#7a5828' }}>{label}</span>

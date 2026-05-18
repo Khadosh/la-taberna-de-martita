@@ -10,6 +10,7 @@ import type { SheetJson, InfoModalData } from './types'
 import { SheetLabel, SheetRow, QuickPill } from './sheet-primitives'
 import { TraitBadge, FeatureCard } from './sheet-badges'
 import { WaxSeal } from './condition-seals'
+import type { AttackBonusResult } from '../../lib/weapon-utils'
 
 const STAT_KEYS = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const
 function fmtMod(m: number) { return m >= 0 ? `+${m}` : String(m) }
@@ -103,7 +104,10 @@ interface TabResumenProps {
   setShowLevelUpModal: (v: boolean) => void
   setLevelUpHpInput: (v: string) => void
   setModal: (m: InfoModalData) => void
-  classDetail?: { saving_throws?: { index: string; name: string }[] }
+  classDetail?: {
+    saving_throws?: { index: string; name: string }[]
+    proficiencies?: { index: string; name: string }[]
+  }
   raceDetailSpeed?: number
   // Clase
   hitDie?: number
@@ -111,6 +115,10 @@ interface TabResumenProps {
   classFeaturesByLevel: ClassFeatureLevel[]
   subclassDetail?: { name: string; subclass_flavor?: string }
   subclassFeatureList?: { results: { index: string; name: string }[] }
+  // Ataque y proficiencia
+  gacoResult?: AttackBonusResult | null
+  armorProficient?: boolean
+  shieldProfOk?: boolean
 }
 
 export function TabResumen(props: TabResumenProps) {
@@ -129,6 +137,7 @@ export function TabResumen(props: TabResumenProps) {
     dexMod, strMod, profBonus, passivePerception, raceDetailSpeed,
     setShowLevelUpModal, setLevelUpHpInput, setModal,
     classDetail, classFeaturesByLevel, subclassDetail, subclassFeatureList,
+    gacoResult, armorProficient = true, shieldProfOk = true,
   } = props
 
   const hasSubclass = !!(subclassFeatureList && subclassFeatureList.results.length > 0)
@@ -248,7 +257,16 @@ export function TabResumen(props: TabResumenProps) {
         <div className="flex-1 px-4 py-2.5 flex flex-wrap gap-x-4 gap-y-1.5" style={{ background: 'rgba(160,125,60,0.08)' }}>
           <QuickPill label="Ini." value={fmtMod(dexMod)} title="Iniciativa" />
           <QuickPill label="Vel." value={`${raceDetailSpeed ?? 30} ft`} title="Velocidad por turno" />
-          <QuickPill label="GACO" value={fmtMod(profBonus + Math.max(strMod, dexMod))} title="Bono de ataque con competencia" />
+          <QuickPill
+            label="GACO"
+            value={gacoResult ? fmtMod(gacoResult.bonus) : fmtMod(profBonus + Math.max(strMod, dexMod))}
+            variant={gacoResult && !gacoResult.proficient ? 'warn' : undefined}
+            title={
+              gacoResult
+                ? `${gacoResult.weaponName} — usa ${gacoResult.abilityUsed === 'str' ? 'FUE' : 'DES'}${gacoResult.proficient ? ' + competencia' : ' (sin competencia con este tipo de arma)'}${!gacoResult.known ? ' · arma no reconocida, asumiendo melee FUE' : ''}`
+                : 'Bono de ataque estimado (sin arma equipada)'
+            }
+          />
           <QuickPill label="Perc. pas." value={String(passivePerception)} title="Percepción Pasiva" />
           <QuickPill label="Prof." value={`+${profBonus}`} title="Bono de competencia" />
           {classDetail?.saving_throws && classDetail.saving_throws.length > 0 && (
@@ -312,7 +330,12 @@ export function TabResumen(props: TabResumenProps) {
 
         {/* CA */}
         <div className="sm:w-28 p-4 text-center" style={{ borderRight: '1px solid rgba(109,85,48,0.3)' }}>
-          <SheetLabel>CA</SheetLabel>
+          <SheetLabel>
+            {(!armorProficient || !shieldProfOk)
+              ? <span title={`Sin competencia con ${!armorProficient ? 'este tipo de armadura' : 'el escudo'} — desventaja en tiradas de ataque y salvaciones de FUE/DES, no puede lanzar hechizos`}>⚠ CA</span>
+              : 'CA'
+            }
+          </SheetLabel>
           <div className="mt-3">
             {editingAc && isOwner ? (
               <input autoFocus value={acInput} onChange={e => setAcInput(e.target.value)}

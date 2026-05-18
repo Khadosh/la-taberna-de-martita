@@ -2,6 +2,7 @@
  * Tab "Pericias": todos los skills agrupados por stat con modificador calculado.
  * Inspirado en el panel izquierdo de BG3.
  */
+import { useState } from 'react'
 import { ABILITY_LABELS } from '../../lib/dnd-api'
 import { SheetLabel, SheetRow } from './sheet-primitives'
 import type { InfoModalData } from './types'
@@ -37,12 +38,29 @@ interface TabPericiasProps {
   setModal: (m: InfoModalData) => void
 }
 
+// D&D 5e SRD — armas incluidas en cada categoría amplia
+const PROF_WEAPONS: Record<string, string[]> = {
+  'simple-weapons': [
+    'Club', 'Dagger', 'Greatclub', 'Handaxe', 'Javelin',
+    'Light Hammer', 'Mace', 'Quarterstaff', 'Sickle', 'Spear',
+    'Dart', 'Light Crossbow', 'Shortbow', 'Sling',
+  ],
+  'martial-weapons': [
+    'Battleaxe', 'Flail', 'Glaive', 'Greataxe', 'Greatsword',
+    'Halberd', 'Lance', 'Longsword', 'Maul', 'Morningstar',
+    'Pike', 'Rapier', 'Scimitar', 'Shortsword', 'Trident',
+    'War Pick', 'Warhammer', 'Whip',
+    'Blowgun', 'Hand Crossbow', 'Heavy Crossbow', 'Longbow', 'Net',
+  ],
+}
+
 function abilityMod(score: number) { return Math.floor((score - 10) / 2) }
 function fmtMod(m: number) { return m >= 0 ? `+${m}` : String(m) }
 
 export function TabPericias({
   stats, skillProficiencies, weaponProficiencies, profBonus, savingThrows,
 }: TabPericiasProps) {
+  const [openProf, setOpenProf] = useState<string | null>(null)
   // Normalize proficiency keys (may come as "skill-acrobatics" or "acrobatics")
   const profSet = new Set(skillProficiencies.map(p => p.replace(/^skill-/, '')))
   const saveSet = new Set(savingThrows)
@@ -122,11 +140,56 @@ export function TabPericias({
           <div className="flex-1 p-4">
             <SheetLabel>Competencias con armas</SheetLabel>
             <div className="flex flex-wrap gap-1.5 mt-3">
-              {weaponProficiencies.map(p => (
-                <span key={p} className="px-2 py-0.5 text-xs border border-stone-400 text-stone-600 font-serif capitalize" style={{ background: 'rgba(200,170,110,0.15)' }}>
-                  {p.replace(/-/g, ' ')}
-                </span>
-              ))}
+              {weaponProficiencies.map(p => {
+                const weapons = PROF_WEAPONS[p]
+                const isOpen = openProf === p
+                return (
+                  <div key={p} className="relative">
+                    <button
+                      onClick={() => setOpenProf(isOpen ? null : p)}
+                      className="px-2 py-0.5 text-xs font-serif capitalize transition-colors"
+                      style={{
+                        border: '1px solid rgba(109,85,48,0.55)',
+                        color: '#4a2e0c',
+                        background: isOpen ? 'rgba(200,160,80,0.28)' : 'rgba(200,170,110,0.15)',
+                      }}
+                    >
+                      {p.replace(/-/g, ' ')}
+                      <span style={{ marginLeft: 4, fontSize: 8, opacity: 0.6 }}>{isOpen ? '▲' : '▼'}</span>
+                    </button>
+                    {isOpen && (
+                      <div
+                        className="absolute left-0 z-20 mt-1"
+                        style={{
+                          background: '#f0e4c0',
+                          border: '1px solid rgba(109,85,48,0.4)',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+                          padding: '8px 10px',
+                          minWidth: 200,
+                          maxWidth: 280,
+                        }}
+                      >
+                        {weapons ? (
+                          <>
+                            <p className="text-[9px] uppercase tracking-widest font-serif mb-1.5" style={{ color: '#7a5828' }}>
+                              {p === 'simple-weapons' ? 'Armas simples (14)' : `Armas marciales (${weapons.length})`}
+                            </p>
+                            <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                              {weapons.map(w => (
+                                <span key={w} className="text-[10px] font-serif" style={{ color: '#3a2010' }}>{w}</span>
+                              ))}
+                            </div>
+                          </>
+                        ) : (
+                          <p className="text-xs font-serif italic" style={{ color: '#5a3a14' }}>
+                            {p.replace(/-/g, ' ')}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
             </div>
           </div>
         </SheetRow>
