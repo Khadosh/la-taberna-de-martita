@@ -82,7 +82,7 @@ export function TabPericias({
   return (
     <div>
       {/* Saving throws */}
-      <SheetRow className="border-t border-stone-600">
+      <SheetRow>
         <div className="flex-1 p-4">
           <SheetLabel>Tiradas de Salvación</SheetLabel>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-3">
@@ -92,7 +92,7 @@ export function TabPericias({
               const hasSave = saveSet.has(ab)
               const total = mod + (hasSave ? profBonus : 0)
               return (
-                <div key={ab} className={`text-center border py-2 px-1 ${hasSave ? 'border-amber-600/60 bg-amber-50/40' : 'border-stone-400/40'}`}>
+                <div key={ab} className={`text-center border py-2 px-1 ${hasSave ? 'border-amber-600 bg-amber-50/40' : 'border-stone-600/40'}`}>
                   <p className="text-[10px] font-serif uppercase tracking-widest text-stone-500">{ABILITY_LABELS[ab]}</p>
                   <p className={`text-lg font-bold font-mono mt-0.5 ${hasSave ? 'text-amber-800' : 'text-stone-600'}`}>{fmtMod(total)}</p>
                   {hasSave && <p className="text-[9px] text-amber-600 font-serif">✦ prof.</p>}
@@ -110,13 +110,13 @@ export function TabPericias({
           <div className="mt-3 space-y-4">
             {byAbility.map(({ ability, score, skills }) => (
               <div key={ability}>
-                <p className="text-[10px] font-serif uppercase tracking-widest text-stone-500 border-b border-stone-300/60 pb-0.5 mb-2">
+                <p className="text-[10px] font-serif uppercase tracking-widest text-stone-800 border-b border-stone-300/60 pb-0.5 mb-2">
                   {ABILITY_LABELS[ability]} ({fmtMod(abilityMod(score))})
                 </p>
                 <div className="space-y-1">
                   {skills.map(({ skillIndex, mod, hasProficiency }) => (
                     <div key={skillIndex} className={`flex items-center gap-2 px-2 py-1 ${hasProficiency ? 'bg-amber-50/50 border-l-2 border-amber-600' : ''}`}>
-                      <span className={`text-[10px] font-serif ${hasProficiency ? 'text-amber-600' : 'text-stone-400'}`}>
+                      <span className={`text-[10px] font-serif ${hasProficiency ? 'text-amber-600' : 'text-stone-700'}`}>
                         {hasProficiency ? '★' : '○'}
                       </span>
                       <span className="text-xs font-serif text-stone-700 flex-1">
