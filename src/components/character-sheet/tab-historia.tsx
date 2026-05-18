@@ -23,7 +23,7 @@ export function TabHistoria({ backstory, isOwner, confirmDelete, setConfirmDelet
           {!confirmDelete ? (
             <button
               onClick={() => setConfirmDelete(true)}
-              className="text-xs text-stone-400/70 hover:text-red-600 font-serif italic transition-colors"
+              className="text-xs text-stone-500 hover:text-red-600 font-serif italic transition-colors"
             >
               Eliminar personaje...
             </button>

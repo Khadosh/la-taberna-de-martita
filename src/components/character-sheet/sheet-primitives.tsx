@@ -16,12 +16,10 @@ export const mapBgStyle: React.CSSProperties = {
 
 // Hoja de pergamino sobre la mesa — con textura de papiro real
 export const sheetStyle: React.CSSProperties = {
-  // Base clara para que multiply no oscurezca demasiado;
-  // el papiro tiene bordes negros que con cover quedan en los extremos (bajo el marco metálico)
-  backgroundColor: '#f0e4c8',
+  backgroundColor: '#f5ead2',
   backgroundImage: `url('/assets/images/papiro.png')`,
-  backgroundSize: '105% auto',
-  backgroundPosition: 'center top',
+  backgroundSize: '105% 105%',
+  backgroundPosition: 'center center',
   backgroundRepeat: 'no-repeat',
   backgroundBlendMode: 'multiply',
   border: '2px solid transparent',
@@ -35,6 +33,16 @@ export const sheetStyle: React.CSSProperties = {
     0 12px 35px rgba(0,0,0,0.6),
     0 4px 12px rgba(0,0,0,0.4)
   `,
+}
+
+// Versión mobile: sin bordes ni sombras (va edge-to-edge)
+export const sheetStyleMobile: React.CSSProperties = {
+  backgroundColor: '#f5ead2',
+  backgroundImage: `url('/assets/images/papiro.png')`,
+  backgroundSize: '105% 105%',
+  backgroundPosition: 'center center',
+  backgroundRepeat: 'no-repeat',
+  backgroundBlendMode: 'multiply',
 }
 
 // Marco oscuro para el panel de inventario (no parchment)

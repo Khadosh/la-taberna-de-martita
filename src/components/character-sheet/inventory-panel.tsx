@@ -427,6 +427,22 @@ export function InventoryPanel({
 
   const equippedItemIds = useMemo(() => new Set(sheet.equipped_items ?? []), [sheet.equipped_items])
 
+  // Backward compat: si hay equipped_items pero no equipped_slots (datos viejos),
+  // reconstruye el mapa de slots para que el paper doll muestre los ítems correctamente
+  const displayEquippedSlots = useMemo(() => {
+    const slots = sheet.equipped_slots ?? {}
+    if (Object.keys(slots).length > 0) return slots
+    const equippedIds = sheet.equipped_items ?? []
+    const rebuilt: Partial<Record<SlotKey, string>> = {}
+    for (const itemId of equippedIds) {
+      const item = inventory.find(i => i.id === itemId)
+      if (!item) continue
+      const slot = inferSlot(item.name, rebuilt)
+      if (slot) rebuilt[slot] = itemId
+    }
+    return rebuilt
+  }, [sheet.equipped_slots, sheet.equipped_items, inventory])
+
   const displayInventory = useMemo(() => {
     const inv: InventoryItem[] = []
     for (const item of inventory) {
@@ -581,7 +597,7 @@ export function InventoryPanel({
         {/* Paper Doll */}
         <div className="bg-[#0f0f0f] border-b border-[#222] shrink-0 px-1">
           <PaperDoll
-            equippedSlots={sheet.equipped_slots ?? {}}
+            equippedSlots={displayEquippedSlots}
             inventory={inventory}
             selectedItemId={selectedItem?.id}
             ac={ac}

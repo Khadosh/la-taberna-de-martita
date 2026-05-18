@@ -34,8 +34,8 @@ export function TabHechizos({
     return (
       <SheetRow className="border-t border-stone-600">
         <div className="flex-1 p-6 text-center">
-          <p className="text-stone-400 font-serif italic text-sm">Esta clase no tiene acceso a magia.</p>
-          <p className="text-stone-400 font-serif text-xs mt-1">(Algunas subclases pueden otorgarlo a nivel 3)</p>
+          <p className="text-stone-800 font-serif italic text-sm">Esta clase no tiene acceso a magia.</p>
+          <p className="text-stone-800 font-serif text-xs mt-1">(Algunas subclases pueden otorgarlo a nivel 3)</p>
         </div>
       </SheetRow>
     )
@@ -77,11 +77,11 @@ export function TabHechizos({
                           className={`w-5 h-5 border-2 rounded-full transition-colors ${i < available
                             ? 'bg-amber-700 border-amber-600 hover:bg-amber-600'
                             : 'bg-transparent border-stone-500 hover:border-amber-700'
-                          }`}
+                            }`}
                         />
                       ))}
                     </div>
-                    <span className="text-xs text-stone-400 font-serif">{available}/{max}</span>
+                    <span className="text-xs text-stone-800 font-serif">{available}/{max}</span>
                   </div>
                 )
               })}
@@ -101,15 +101,15 @@ export function TabHechizos({
             <div className="mt-3 space-y-6">
               {sortedLevels.map(lvl => (
                 <div key={lvl}>
-                  <p className="text-[10px] text-stone-400 font-serif tracking-widest uppercase border-b border-stone-300/60 pb-0.5 mb-2">
+                  <p className="text-[10px] text-stone-800 font-serif tracking-widest uppercase border-b border-stone-300/60 pb-0.5 mb-2">
                     {lvl === 0 ? 'Trucos (Cantrips)' : `Nivel ${lvl}`}
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {spellsByLevel[lvl].map(spell => (
-                      <SpellBadge 
-                        key={spell.index} 
-                        index={spell.index} 
-                        onInfo={(data: SpellDetail) => setModal({ kind: 'spell', data })} 
+                      <SpellBadge
+                        key={spell.index}
+                        index={spell.index}
+                        onInfo={(data: SpellDetail) => setModal({ kind: 'spell', data })}
                       />
                     ))}
                   </div>
@@ -123,8 +123,8 @@ export function TabHechizos({
       {isSpellcaster && spells.length === 0 && (
         <SheetRow className="border-t border-stone-600">
           <div className="flex-1 p-4 text-center">
-            <p className="text-stone-400 font-serif italic text-sm">No hay conjuros preparados.</p>
-            <p className="text-stone-400 font-serif text-xs mt-1">Agregá conjuros desde la pantalla de creación o pedíselos al DM.</p>
+            <p className="text-stone-800 font-serif italic text-sm">No hay conjuros preparados.</p>
+            <p className="text-stone-800 font-serif text-xs mt-1">Agregá conjuros desde la pantalla de creación o pedíselos al DM.</p>
           </div>
         </SheetRow>
       )}

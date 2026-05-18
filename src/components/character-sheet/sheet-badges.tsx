@@ -53,16 +53,16 @@ export function InfoModal({ modal, onClose }: { modal: InfoModalData; onClose: (
 // ── Spell Badge ───────────────────────────────────────────────────────────────
 
 export function SpellBadge({ index, onInfo }: { index: string; onInfo: (s: SpellDetail) => void }) {
-  const { data: spell } = useQuery({ 
-    queryKey: dndKeys.spell(index), 
+  const { data: spell } = useQuery({
+    queryKey: dndKeys.spell(index),
     queryFn: () => dndApi.spell(index),
-    staleTime: Infinity 
+    staleTime: Infinity
   })
-  
+
   const iconUrl = spell ? getSpellIconUrl(spell.name) : null
 
   return (
-    <div className="flex items-center gap-2 border border-stone-400 px-2 py-1.5" style={{ background: 'rgba(200,170,110,0.15)' }}>
+    <div className="flex items-center gap-2 border border-stone-500 px-2 py-1.5" style={{ background: 'rgba(200,170,110,0.15)' }}>
       {/* Spell icon */}
       <div className="w-8 h-8 shrink-0 flex items-center justify-center overflow-hidden rounded-sm bg-stone-900/10">
         {iconUrl ? (
@@ -73,14 +73,14 @@ export function SpellBadge({ index, onInfo }: { index: string; onInfo: (s: Spell
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm text-stone-700 capitalize font-serif truncate">{spell?.name ?? index.replace(/-/g, ' ')}</span>
+          <span className="text-sm text-stone-800 capitalize font-serif truncate">{spell?.name ?? index.replace(/-/g, ' ')}</span>
           {spell && (
-            <span className="text-[9px] px-1 bg-stone-200 text-stone-500 font-mono border border-stone-300 rounded-sm">
+            <span className="text-[9px] px-1 bg-stone-100 text-stone-400 font-mono border border-stone-300 rounded-sm">
               Nv.{spell.level}
             </span>
           )}
         </div>
-        {spell && <p className="text-[9px] text-stone-400 font-serif italic truncate">{spell.school.name}</p>}
+        {spell && <p className="text-[9px] text-stone-600 font-serif italic truncate">{spell.school.name}</p>}
       </div>
       {spell && (
         <button onClick={() => onInfo(spell)}
@@ -100,11 +100,10 @@ export function TraitBadge({ index, name, isResistance, onInfo }: {
   const { data: trait } = useQuery({ queryKey: dndKeys.trait(index), queryFn: () => dndApi.trait(index) })
   return (
     <div
-      className={`flex items-center gap-1.5 border-2 px-3 py-1 rounded-full ${
-        isResistance
-          ? 'border-blue-600/55 text-blue-900'
-          : 'border-amber-700/55 text-stone-700'
-      }`}
+      className={`flex items-center gap-1.5 border-2 px-3 py-1 rounded-full ${isResistance
+        ? 'border-blue-600/55 text-blue-900'
+        : 'border-amber-700/55 text-stone-700'
+        }`}
       style={{
         background: isResistance ? 'rgba(59,130,246,0.1)' : 'rgba(200,148,40,0.16)',
         boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.25), 0 2px 5px rgba(0,0,0,0.12)',

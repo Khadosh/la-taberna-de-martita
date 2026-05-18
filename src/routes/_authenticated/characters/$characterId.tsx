@@ -12,7 +12,7 @@ import { DiceModule } from '../../../lib/dice'
 
 // Components
 import { type SheetJson, type InfoModalData } from '../../../components/character-sheet/types'
-import { parchmentStyle, mapBgStyle, sheetStyle, darkFrameStyle, SheetTabBar, type SheetTab } from '../../../components/character-sheet/sheet-primitives'
+import { parchmentStyle, mapBgStyle, sheetStyle, sheetStyleMobile, darkFrameStyle, SheetTabBar, type SheetTab } from '../../../components/character-sheet/sheet-primitives'
 import { InfoModal } from '../../../components/character-sheet/sheet-badges'
 import { LevelUpModal } from '../../../components/character-sheet/level-up-modal'
 import { TabResumen } from '../../../components/character-sheet/tab-resumen'
@@ -35,6 +35,8 @@ function CharacterSheet() {
 
   // UI State
   const [activeTab, setActiveTab] = useState<SheetTab>('resumen')
+  const [mobileSection, setMobileSection] = useState<'personaje' | 'inventario'>('personaje')
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 1024)
   const [modal, setModal] = useState<InfoModalData | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [generatingPortrait, setGeneratingPortrait] = useState(false)
@@ -269,7 +271,7 @@ function CharacterSheet() {
     const isEquipping  = !current.includes(itemId)
     const item         = inventory.find(i => i.id === itemId)
 
-    const newEquipped = isEquipping
+    let newEquipped = isEquipping
       ? [...current, itemId]
       : current.filter(id => id !== itemId)
 
@@ -278,6 +280,11 @@ function CharacterSheet() {
     if (isEquipping && item) {
       const slot = inferSlot(item.name, currentSlots)
       if (!slot) return  // can't infer slot — caller must use equipToSlot with explicit slot
+      // Remove displaced item from equipped list if the slot was already occupied
+      const displaced = currentSlots[slot]
+      if (displaced && displaced !== itemId) {
+        newEquipped = newEquipped.filter(id => id !== displaced)
+      }
       newSlots = { ...currentSlots, [slot]: itemId }
     } else {
       newSlots = Object.fromEntries(
@@ -356,6 +363,36 @@ function CharacterSheet() {
     await patchSheet({ equipped_slots: newSlots })
   }
 
+  // ── Migración de datos: equipped_items → equipped_slots (datos viejos) ──────
+
+  useEffect(() => {
+    if (!character || inventory.length === 0) return
+    const s = character.sheet_json as SheetJson
+    const equippedIds = s.equipped_items ?? []
+    const existingSlots = s.equipped_slots ?? {}
+    if (equippedIds.length === 0 || Object.keys(existingSlots).length > 0) return
+
+    const rebuilt: Partial<Record<SlotKey, string>> = {}
+    for (const itemId of equippedIds) {
+      const item = inventory.find(i => i.id === itemId)
+      if (!item) continue
+      const slot = inferSlot(item.name, rebuilt)
+      if (slot) rebuilt[slot] = itemId
+    }
+    if (Object.keys(rebuilt).length > 0) {
+      patchSheet({ equipped_slots: rebuilt })
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [character?.id, inventory.length])
+
+  // ── isMobile ─────────────────────────────────────────────────────────────
+
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 1024)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+
   // ── Realtime ──────────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -404,6 +441,11 @@ function CharacterSheet() {
 
   const isSpellcaster = maxSlots.some(s => s > 0)
 
+  const mobileTabs = [
+    { id: 'personaje' as const, label: 'Personaje', icon: '⚔' },
+    { id: 'inventario' as const, label: 'Inventario', icon: '🎒' },
+  ]
+
   return (
     <div className="h-screen flex flex-col overflow-hidden text-stone-900" style={mapBgStyle}>
       {/* Header */}
@@ -417,147 +459,175 @@ function CharacterSheet() {
         <button onClick={() => setShowDice(true)} className="px-3 py-1 border border-amber-800 text-amber-500 text-xs font-serif bg-amber-900/20">🎲 Dados</button>
       </header>
 
-      <main className="flex-1 min-h-0 w-full max-w-5xl mx-auto px-6 py-8 overflow-hidden">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full items-stretch">
+      {/* Mobile section switcher — solo en pantallas pequeñas */}
+      <div
+        className="lg:hidden flex shrink-0"
+        style={{ background: 'linear-gradient(180deg, #3a2410 0%, #271608 100%)', borderBottom: '2px solid #180e04' }}
+      >
+        {mobileTabs.map(tab => {
+          const isActive = mobileSection === tab.id
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setMobileSection(tab.id)}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-xs font-serif tracking-wide transition-all"
+              style={isActive ? {
+                background: 'linear-gradient(180deg, #5a3820 0%, #3e2410 100%)',
+                color: '#f0d898',
+                fontWeight: 600,
+                borderBottom: '2px solid #c8900a',
+              } : { color: '#8a6840' }}
+            >
+              <span style={{ opacity: isActive ? 1 : 0.65 }}>{tab.icon}</span>
+              {tab.label}
+            </button>
+          )
+        })}
+      </div>
 
-          {/* Main Content Area */}
-          <div className="lg:col-span-7 overflow-y-auto" style={sheetStyle}>
-            {/* Header: Identity + Portrait — Image #6 style */}
-            <div className="flex items-stretch relative overflow-hidden" style={{ minHeight: '120px', borderBottom: '1px solid rgba(109,85,48,0.4)' }}>
-              {/* Portrait con frame ornamental */}
-              <div
-                className="w-[108px] flex-shrink-0 relative group"
-                style={{ background: 'rgba(30,18,6,0.85)' }}
-              >
-                {/* Imagen */}
-                <div className="absolute inset-2 overflow-hidden">
-                  {character.portrait_url ? (
-                    <img src={character.portrait_url} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-stone-500 text-4xl"
-                      style={{ background: 'rgba(30,18,6,0.5)' }}>⚔</div>
-                  )}
-                </div>
-                {/* Frame ornamental (overlay sobre la imagen) */}
-                <div className="absolute inset-2 pointer-events-none" style={{
-                  boxShadow: `
-                    inset 0 0 0 1px rgba(200,150,50,0.7),
-                    inset 0 0 0 3px rgba(20,10,4,0.8),
-                    inset 0 0 0 4px rgba(160,110,35,0.5)
-                  `,
-                }} />
-                {/* Frame exterior */}
-                <div className="absolute inset-0 pointer-events-none" style={{
-                  border: '2px solid rgba(160,110,35,0.8)',
-                  boxShadow: 'inset 0 0 12px rgba(0,0,0,0.6)',
-                }} />
-                {/* Esquinas decorativas */}
-                {[['top-1 left-1', ''], ['top-1 right-1', 'rotate-90'], ['bottom-1 left-1', '-rotate-90'], ['bottom-1 right-1', 'rotate-180']].map(([pos, rot], i) => (
-                  <svg key={i} className={`absolute ${pos} ${rot}`} width="12" height="12" viewBox="0 0 12 12">
-                    <path d="M1 6V1h5" stroke="rgba(210,160,50,0.9)" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
-                  </svg>
-                ))}
-                {/* Hover para subir */}
-                <div className="absolute inset-0 flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100"
-                  style={{ background: 'rgba(0,0,0,0.55)' }}>
-                  <button onClick={() => fileInputRef.current?.click()}
-                    className="text-[10px] font-serif underline" style={{ color: '#f0dfc0' }}>Subir</button>
-                </div>
-              </div>
+      <main className="flex-1 min-h-0 overflow-hidden">
+        <div className="h-full lg:max-w-5xl lg:mx-auto lg:px-6 lg:py-8">
+          <div className="h-full lg:grid lg:grid-cols-12 lg:gap-6 lg:items-stretch">
 
-              {/* Identity */}
-              <div className="flex-1 px-5 py-4 flex flex-col justify-center min-w-0">
-                <h1 className="text-[26px] font-bold font-serif leading-none truncate" style={{ color: '#2c1a08' }}>{character.name}</h1>
-                <p className="text-sm font-serif mt-2 capitalize" style={{ color: '#5c3d18' }}>
-                  {character.race}
-                  <span className="mx-1.5 font-bold" style={{ color: '#b06820' }}>•</span>
-                  {character.class}{subclassDetail ? ` (${subclassDetail.name})` : ''}
-                </p>
-                <p className="text-[11px] font-serif tracking-widest uppercase mt-1" style={{ color: '#b06820' }}>Nivel {level}</p>
-                <button
-                  onClick={generatePortrait}
-                  disabled={generatingPortrait}
-                  className="mt-3 self-start text-[10px] px-2.5 py-1 bg-amber-900/10 border border-amber-900/25 text-amber-900 hover:bg-amber-900/20 transition-colors font-serif disabled:opacity-50"
+            {/* Hoja de personaje */}
+            <div
+              className={`lg:col-span-7 h-full flex flex-col overflow-hidden ${mobileSection === 'inventario' ? 'hidden lg:flex' : ''}`}
+              style={isMobile ? sheetStyleMobile : sheetStyle}
+            >
+              {/* Header: Identidad + Retrato — no scrolleable */}
+              <div className="flex items-stretch flex-shrink-0 relative overflow-hidden" style={{ minHeight: '120px', borderBottom: '1px solid rgba(109,85,48,0.4)' }}>
+                {/* Portrait con frame ornamental */}
+                <div
+                  className="w-[108px] flex-shrink-0 relative group"
+                  style={{ background: 'rgba(30,18,6,0.85)' }}
                 >
-                  {generatingPortrait ? 'Hechizando...' : 'Retrato IA'}
-                </button>
-                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePortraitUpload} />
+                  <div className="absolute inset-2 overflow-hidden">
+                    {character.portrait_url ? (
+                      <img src={character.portrait_url} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-stone-500 text-4xl"
+                        style={{ background: 'rgba(30,18,6,0.5)' }}>⚔</div>
+                    )}
+                  </div>
+                  <div className="absolute inset-2 pointer-events-none" style={{
+                    boxShadow: `
+                      inset 0 0 0 1px rgba(200,150,50,0.7),
+                      inset 0 0 0 3px rgba(20,10,4,0.8),
+                      inset 0 0 0 4px rgba(160,110,35,0.5)
+                    `,
+                  }} />
+                  <div className="absolute inset-0 pointer-events-none" style={{
+                    border: '2px solid rgba(160,110,35,0.8)',
+                    boxShadow: 'inset 0 0 12px rgba(0,0,0,0.6)',
+                  }} />
+                  {[['top-1 left-1', ''], ['top-1 right-1', 'rotate-90'], ['bottom-1 left-1', '-rotate-90'], ['bottom-1 right-1', 'rotate-180']].map(([pos, rot], i) => (
+                    <svg key={i} className={`absolute ${pos} ${rot}`} width="12" height="12" viewBox="0 0 12 12">
+                      <path d="M1 6V1h5" stroke="rgba(210,160,50,0.9)" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
+                    </svg>
+                  ))}
+                  <div className="absolute inset-0 flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100"
+                    style={{ background: 'rgba(0,0,0,0.55)' }}>
+                    <button onClick={() => fileInputRef.current?.click()}
+                      className="text-[10px] font-serif underline" style={{ color: '#f0dfc0' }}>Subir</button>
+                  </div>
+                </div>
+
+                {/* Identity */}
+                <div className="flex-1 px-5 py-4 flex flex-col justify-center min-w-0">
+                  <h1 className="text-[26px] font-bold font-serif leading-none truncate" style={{ color: '#2c1a08' }}>{character.name}</h1>
+                  <p className="text-sm font-serif mt-2 capitalize" style={{ color: '#5c3d18' }}>
+                    {character.race}
+                    <span className="mx-1.5 font-bold" style={{ color: '#b06820' }}>•</span>
+                    {character.class}{subclassDetail ? ` (${subclassDetail.name})` : ''}
+                  </p>
+                  <p className="text-[11px] font-serif tracking-widest uppercase mt-1" style={{ color: '#b06820' }}>Nivel {level}</p>
+                  <button
+                    onClick={generatePortrait}
+                    disabled={generatingPortrait}
+                    className="mt-3 self-start text-[10px] px-2.5 py-1 bg-amber-900/10 border border-amber-900/25 text-amber-900 hover:bg-amber-900/20 transition-colors font-serif disabled:opacity-50"
+                  >
+                    {generatingPortrait ? 'Hechizando...' : 'Retrato IA'}
+                  </button>
+                  <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePortraitUpload} />
+                </div>
+
+                <span className="absolute top-3 right-4 text-amber-600/25 text-xl select-none pointer-events-none">◆</span>
               </div>
 
-              {/* Decorativo */}
-              <span className="absolute top-3 right-4 text-amber-600/25 text-xl select-none pointer-events-none">◆</span>
+              {/* Tabs Bar — no scrolleable */}
+              <SheetTabBar active={activeTab} onChange={setActiveTab} />
+
+              {/* Tab Content — único área scrolleable */}
+              <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">
+                {activeTab === 'resumen' && (
+                  <TabResumen
+                    {...{
+                      stats, sheet, character, raceDetail, isOwner, isGm, currentHp, maxHp, hitDie, hpPct, hpColor,
+                      editingHp, hpInput, setHpInput, setEditingHp, editingMaxHp, maxHpInput, setMaxHpInput, setEditingMaxHp,
+                      ac, xp, xpPct, level, xpForCurrent, xpForNext, canLevelUp, editingAc, acInput, setAcInput, setEditingAc,
+                      editingXp, xpInput, setXpInput, setEditingXp, dexMod, strMod, profBonus, passivePerception, hitDiceAvailable,
+                      conditions: (character.conditions as string[]) ?? [], deathSaves, isStable: currentHp === 0 && deathSaves.successes >= 3,
+                      isDead: currentHp === 0 && deathSaves.failures >= 3, currency: sheet.currency ?? { gold: 0, silver: 0, copper: 0 },
+                      showRestPanel, setShowRestPanel, showLongRestConfirm, setShowLongRestConfirm, shortRestHd, setShortRestHd,
+                      shortRestHpInput, setShortRestHpInput, showConditionPicker, setShowConditionPicker,
+                      adjustHp, saveHp, saveMaxHp, saveAc, saveXp, shortRest, longRest, toggleCondition, toggleDeathSave,
+                      setShowLevelUpModal, setLevelUpHpInput, setModal, classDetail, raceDetailSpeed: raceDetail?.speed,
+                      classFeaturesByLevel, subclassDetail, subclassFeatureList,
+                    }}
+                    patchSheet={patchSheet}
+                    patchCharacter={patchCharacter}
+                  />
+                )}
+                {activeTab === 'pericias' && (
+                  <TabPericias
+                    stats={stats}
+                    skillProficiencies={sheet.skill_proficiencies ?? []}
+                    weaponProficiencies={sheet.weapon_proficiencies ?? []}
+                    profBonus={profBonus}
+                    savingThrows={sheet.saving_throws ?? []}
+                    setModal={setModal}
+                  />
+                )}
+                {activeTab === 'hechizos' && (
+                  <TabHechizos
+                    spells={sheet.spells ?? []} maxSlots={maxSlots} slotsUsed={sheet.spell_slots_used ?? {}}
+                    characterClass={character.class} isOwner={isOwner} isSpellcaster={isSpellcaster}
+                    setModal={setModal} toggleSlot={toggleSlot}
+                  />
+                )}
+                {activeTab === 'historia' && (
+                  <TabHistoria
+                    backstory={character.backstory}
+                    isOwner={isOwner}
+                    confirmDelete={confirmDelete}
+                    setConfirmDelete={setConfirmDelete}
+                    onDelete={async () => { await supabase.from('characters').delete().eq('id', characterId); navigate({ to: '/' }) }}
+                  />
+                )}
+              </div>
             </div>
 
-            {/* Tabs Bar */}
-            <SheetTabBar active={activeTab} onChange={setActiveTab} />
-
-            {/* Tab Content */}
-            <div className="min-h-[500px] relative">
-              {activeTab === 'resumen' && (
-                <TabResumen
-                  {...{
-                    stats, sheet, character, raceDetail, isOwner, isGm, currentHp, maxHp, hitDie, hpPct, hpColor,
-                    editingHp, hpInput, setHpInput, setEditingHp, editingMaxHp, maxHpInput, setMaxHpInput, setEditingMaxHp,
-                    ac, xp, xpPct, level, xpForCurrent, xpForNext, canLevelUp, editingAc, acInput, setAcInput, setEditingAc,
-                    editingXp, xpInput, setXpInput, setEditingXp, dexMod, strMod, profBonus, passivePerception, hitDiceAvailable,
-                    conditions: (character.conditions as string[]) ?? [], deathSaves, isStable: currentHp === 0 && deathSaves.successes >= 3,
-                    isDead: currentHp === 0 && deathSaves.failures >= 3, currency: sheet.currency ?? { gold: 0, silver: 0, copper: 0 },
-                    showRestPanel, setShowRestPanel, showLongRestConfirm, setShowLongRestConfirm, shortRestHd, setShortRestHd,
-                    shortRestHpInput, setShortRestHpInput, showConditionPicker, setShowConditionPicker,
-                    adjustHp, saveHp, saveMaxHp, saveAc, saveXp, shortRest, longRest, toggleCondition, toggleDeathSave,
-                    setShowLevelUpModal, setLevelUpHpInput, setModal, classDetail, raceDetailSpeed: raceDetail?.speed,
-                    classFeaturesByLevel, subclassDetail, subclassFeatureList,
-                  }}
-                  patchSheet={patchSheet}
-                  patchCharacter={patchCharacter}
-                />
-              )}
-              {activeTab === 'pericias' && (
-                <TabPericias
-                  stats={stats}
-                  skillProficiencies={sheet.skill_proficiencies ?? []}
-                  weaponProficiencies={sheet.weapon_proficiencies ?? []}
-                  profBonus={profBonus}
-                  savingThrows={sheet.saving_throws ?? []}
-                  setModal={setModal}
-                />
-              )}
-              {activeTab === 'hechizos' && (
-                <TabHechizos
-                  spells={sheet.spells ?? []} maxSlots={maxSlots} slotsUsed={sheet.spell_slots_used ?? {}}
-                  characterClass={character.class} isOwner={isOwner} isSpellcaster={isSpellcaster}
-                  setModal={setModal} toggleSlot={toggleSlot}
-                />
-              )}
-              {activeTab === 'historia' && (
-                <TabHistoria
-                  backstory={character.backstory}
-                  isOwner={isOwner}
-                  confirmDelete={confirmDelete}
-                  setConfirmDelete={setConfirmDelete}
-                  onDelete={async () => { await supabase.from('characters').delete().eq('id', characterId); navigate({ to: '/' }) }}
-                />
-              )}
+            {/* Panel de Inventario */}
+            <div
+              className={`lg:col-span-5 h-full min-h-0 overflow-hidden ${mobileSection === 'personaje' ? 'hidden lg:flex lg:flex-col' : ''}`}
+              style={darkFrameStyle}
+            >
+              <InventoryPanel
+                characterId={characterId}
+                inventory={inventory}
+                sheet={sheet}
+                isOwner={isOwner}
+                ac={ac}
+                toggleEquip={toggleEquip}
+                equipToSlot={equipToSlot}
+                moveEquipSlot={moveEquipSlot}
+                patchCurrency={(p) => patchSheet({ currency: { ...(sheet.currency ?? { gold: 0, silver: 0, copper: 0 }), ...p } })}
+                currency={sheet.currency ?? { gold: 0, silver: 0, copper: 0 }}
+                strScore={stats.str ?? 10}
+              />
             </div>
-          </div>
 
-          {/* Sidebar Area: Inventory */}
-          <div className="lg:col-span-5 h-full min-h-0 overflow-hidden" style={darkFrameStyle}>
-            <InventoryPanel
-              characterId={characterId}
-              inventory={inventory}
-              sheet={sheet}
-              isOwner={isOwner}
-              ac={ac}
-              toggleEquip={toggleEquip}
-              equipToSlot={equipToSlot}
-              moveEquipSlot={moveEquipSlot}
-              patchCurrency={(p) => patchSheet({ currency: { ...(sheet.currency ?? { gold: 0, silver: 0, copper: 0 }), ...p } })}
-              currency={sheet.currency ?? { gold: 0, silver: 0, copper: 0 }}
-              strScore={stats.str ?? 10}
-            />
           </div>
-
         </div>
       </main>
 

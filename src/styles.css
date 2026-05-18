@@ -76,3 +76,11 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #5a3c18;
 }
+
+/* ── Scrollbar invisible (scroll funciona igual) ─────────────────────────── */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

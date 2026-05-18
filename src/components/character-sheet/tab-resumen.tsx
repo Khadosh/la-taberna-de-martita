@@ -476,7 +476,7 @@ export function TabResumen(props: TabResumenProps) {
                     </button>
                     {showConditionPicker && (
                       <div
-                        className="absolute left-0 top-9 z-20 w-48 shadow-lg max-h-52 overflow-y-auto"
+                        className="absolute left-0 bottom-9 z-20 w-48 shadow-lg max-h-52 overflow-y-auto"
                         style={{ border: '1px solid rgba(120,80,30,0.5)', background: '#f0e4c0' }}
                       >
                         {CONDITIONS.filter(c => !conditions.includes(c)).map(c => (
