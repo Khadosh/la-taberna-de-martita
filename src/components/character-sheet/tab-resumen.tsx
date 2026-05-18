@@ -437,7 +437,7 @@ export function TabResumen(props: TabResumenProps) {
                   className="px-2 py-0.5 text-[10px] font-serif border transition-colors"
                   style={activeFeatLevel === lvl
                     ? { background: '#78350f', color: '#fef3c7', border: '1px solid #92400e' }
-                    : { background: 'transparent', color: '#78716c', border: '1px solid rgba(109,85,48,0.4)' }
+                    : { background: 'transparent', color: '#4e4c4cff', border: '1px solid rgba(56, 48, 36, 0.4)' }
                   }
                 >
                   Nv. {lvl}{lvl === level ? ' ★' : ''}

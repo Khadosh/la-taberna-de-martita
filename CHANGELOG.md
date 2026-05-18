@@ -18,6 +18,9 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 - Wax seals con PNG real; condiciones con tooltip combinado; botón de quitar más visible
 - Ajustes de contraste y bordes en tab pericias
 - Highlight exterior de slots aumentado para mayor profundidad visual
+- Panel de inventario: monedas compactas en borde superior, barra de filtro rediseñada, botón `+` metálico, barra de carga sin fondo sólido
+- Paper doll: altura aumentada a 340px, bottom row con flex simétrico para CA badge centrado, slot extra vacío eliminado
+- Tab Resumen: botón de nivel inactivo con texto y borde más oscuros para mayor contraste
 
 ### chore
 - Eliminado `routeTree.gen.ts` auto-generado del repo

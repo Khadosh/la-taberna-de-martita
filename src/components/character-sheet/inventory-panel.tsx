@@ -160,23 +160,34 @@ export function InventoryPanel({
   return (
     <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
       <div className="flex flex-col h-full text-stone-300 overflow-hidden font-serif relative"
-        style={{ backgroundImage: "url('/assets/images/wood_panel.png')", backgroundSize: 'cover', backgroundPosition: 'center' }}>
+        style={{ backgroundImage: "url('/assets/images/wood_panel.png')", backgroundSize: '100% 100%' }}>
 
-        {/* Barra superior */}
-        <div className="p-3 flex items-center justify-between shrink-0"
-          style={{ background: 'rgba(8,3,0,0.52)', borderBottom: '1px solid rgba(0,0,0,0.55)' }}>
-          <div className="flex items-center gap-2 rounded-full px-3 py-1 flex-1 max-w-[200px]"
-            style={{ background: 'rgba(3,1,0,0.75)', border: '1px solid rgba(0,0,0,0.65)' }}>
-            <span className="text-stone-500 text-xs">🔍</span>
-            <input placeholder="Filtrar morral..." className="bg-transparent border-none outline-none text-[10px] w-full text-stone-400 font-serif" />
+        {/* Encabezado: monedas arriba + filtro abajo */}
+        <div className="shrink-0">
+          <CurrencyPlates currency={currency} isOwner={isOwner} patchCurrency={patchCurrency} />
+          <div className="px-4 py-2 flex items-center justify-between"
+            style={{ background: 'rgba(8,3,0,0.18)', borderBottom: '1px solid rgba(0,0,0,0.35)' }}>
+            <div className="flex items-center gap-2 rounded-sm px-3 py-1.5 flex-1 max-w-[200px]"
+              style={{ background: 'rgba(2,1,0,0.92)', border: '1px solid rgba(0,0,0,0.85)', boxShadow: 'inset 3px 3px 10px rgba(0,0,0,1), inset 0 5px 18px rgba(0,0,0,0.95), inset -2px -2px 6px rgba(0,0,0,0.7), 1px 1px 0 rgba(120,70,15,0.25)' }}>
+              <svg viewBox="0 0 14 14" fill="none" style={{ width: 11, height: 11, flexShrink: 0, color: 'rgba(180,130,70,0.55)' }}>
+                <path d="M1 2h12l-4.5 5.5V12L5.5 13V7.5L1 2z" fill="currentColor" stroke="currentColor" strokeWidth="0.5" strokeLinejoin="round" />
+              </svg>
+              <input placeholder="Filtrar morral..." className="bg-transparent border-none outline-none text-[10px] w-full text-stone-400 font-serif" />
+            </div>
+            {isOwner && (
+              <button
+                onClick={() => setAddingItem(true)}
+                className="text-amber-400 hover:text-amber-300 transition-colors ml-2 font-bold leading-none"
+                style={{
+                  width: 24, height: 24, borderRadius: 4, fontSize: 18,
+                  border: '1px solid rgba(120,75,15,0.6)',
+                  boxShadow: 'inset 0 1px 0 rgba(255,220,100,0.18), 0 3px 7px rgba(0,0,0,0.7), 0 1px 3px rgba(0,0,0,0.5)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center'
+                }}
+              >＋</button>
+            )}
           </div>
-          {isOwner && (
-            <button onClick={() => setAddingItem(true)} className="text-stone-500 hover:text-amber-500 text-lg transition-colors ml-2">＋</button>
-          )}
         </div>
-
-        {/* Monedas */}
-        <CurrencyPlates currency={currency} isOwner={isOwner} patchCurrency={patchCurrency} />
 
         {/* Paper Doll */}
         <div className="shrink-0 px-1"
@@ -271,11 +282,11 @@ export function InventoryPanel({
         )}
 
         {/* Barra de carga */}
-        <div className="px-5 py-4 shrink-0" style={{ background: 'rgba(10,4,0,0.85)', borderTop: '1px solid rgba(0,0,0,0.6)' }}>
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-stone-600 text-xs">⚖</span>
+        <div className="mx-20 pt-1 pb-1 shrink-0">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-stone-100 opacity-50 text-xl">⚖</span>
             <span className="text-[10px] font-mono font-bold text-stone-400 tracking-wider">
-              {totalWeight.toFixed(1)} <span className="text-stone-700">/</span> {carryCapacity} <span className="text-stone-700 ml-1 italic opacity-60">lb</span>
+              {totalWeight.toFixed(1)} <span className="text-stone-200">/</span> {carryCapacity} <span className="text-stone-200 ml-1 italic opacity-60">lb</span>
             </span>
           </div>
           <div className="h-2 w-full rounded-full overflow-hidden flex"

@@ -332,7 +332,7 @@ export function PaperDoll({
   const rightSlots: SlotKey[] = ['amulet', 'ring_1', 'ring_2']
 
   return (
-    <div className="relative w-full select-none" style={{ height: 320, background: 'radial-gradient(ellipse 58% 58% at 50% 48%, rgba(210,100,12,0.28) 0%, rgba(100,45,8,0) 72%)' }}>
+    <div className="relative w-full select-none" style={{ height: 340, background: 'radial-gradient(ellipse 58% 58% at 50% 48%, rgba(210,100,12,0.28) 0%, rgba(100,45,8,0) 72%)' }}>
       {/* Left column */}
       <div className="absolute left-2 top-3 flex flex-col gap-2">
         {leftSlots.map(slot => (
@@ -368,8 +368,8 @@ export function PaperDoll({
       </div>
 
       {/* Bottom row */}
-      <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-2 pb-2">
-        <div className="flex gap-1.5">
+      <div className="absolute bottom-0 left-0 right-0 flex items-center px-2 pb-2">
+        <div style={{ flex: 1 }} className="flex gap-1.5">
           {(['main_hand', 'off_hand'] as SlotKey[]).map(slot => (
             <Slot key={slot} slotKey={slot}
               item={bySlot(slot)}
@@ -377,12 +377,11 @@ export function PaperDoll({
               onClick={() => handleSlot(slot)}
               onDoubleClick={() => { const i = bySlot(slot); if (i) onUnequip(i.id) }}
               activeDrag={activeDrag}
-              size={40}
             />
           ))}
         </div>
 
-        {/* CA badge */}
+        {/* CA badge — centrado exacto */}
         <div className="relative flex items-center justify-center" style={{ width: 52, height: 58 }}>
           <svg viewBox="0 0 52 58" className="absolute inset-0 w-full h-full">
             <path d="M4 4 L48 4 L48 36 Q48 52 26 56 Q4 52 4 36 Z" fill="#0d0d0d" stroke="#78350f" strokeWidth="1.5" />
@@ -394,16 +393,14 @@ export function PaperDoll({
           </div>
         </div>
 
-        <div className="flex gap-1.5">
+        <div style={{ flex: 1 }} className="flex gap-1.5 items-center justify-end">
           <Slot slotKey="ranged"
             item={bySlot('ranged')}
             isSelected={bySlot('ranged')?.id === selectedItemId}
             onClick={() => handleSlot('ranged')}
             onDoubleClick={() => { const i = bySlot('ranged'); if (i) onUnequip(i.id) }}
             activeDrag={activeDrag}
-            size={40}
           />
-          <div style={{ width: 40, height: 40, borderRadius: 6, background: 'rgba(3,1,0,0.93)', boxShadow: 'inset 0 5px 16px rgba(0,0,0,0.95)', border: '1px solid rgba(0,0,0,0.85)', opacity: 0.7 }} />
         </div>
       </div>
     </div>
