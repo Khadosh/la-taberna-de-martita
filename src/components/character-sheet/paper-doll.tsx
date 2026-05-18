@@ -237,32 +237,33 @@ function Slot({
     }
 
     if (!isEmpty) {
-      base.background = '#181510'
+      base.background = 'rgba(5,2,0,0.90)'
       if (isSelected) {
         base.border = '2px solid #f59e0b'
-        base.boxShadow = '0 0 10px rgba(217,119,6,0.45)'
+        base.boxShadow = '0 0 10px rgba(217,119,6,0.45), inset 2px 2px 8px rgba(0,0,0,0.95), inset 0 4px 12px rgba(0,0,0,0.85)'
       } else {
-        base.border = '1px solid rgba(120,53,15,0.3)'
+        base.border = '1px solid rgba(80,35,8,0.65)'
+        base.boxShadow = 'inset 2px 2px 8px rgba(0,0,0,0.98), inset 0 4px 14px rgba(0,0,0,0.90), inset -1px -1px 5px rgba(90,45,8,0.30)'
       }
       return base
     }
 
     // Empty slot
     if (!activeDrag) {
-      // Default: barely visible, matches panel background
-      base.background = '#0d0d0d'
-      base.border = '1px solid #1e1e1e'
+      base.background = 'rgba(3,1,0,0.93)'
+      base.border = '1px solid rgba(0,0,0,0.88)'
+      base.boxShadow = 'inset 2px 2px 8px rgba(0,0,0,0.98), inset 0 4px 14px rgba(0,0,0,0.92), inset -1px -1px 5px rgba(90,45,8,0.35)'
       return base
     }
     if (isCompatible) {
-      base.background = '#0f0c07'
+      base.background = 'rgba(8,4,0,0.88)'
       base.border = '1px dashed rgba(150,75,15,0.65)'
-      base.boxShadow = '0 0 6px rgba(217,119,6,0.15)'
+      base.boxShadow = '0 0 8px rgba(217,119,6,0.28), inset 2px 2px 8px rgba(0,0,0,0.95), inset 0 4px 12px rgba(0,0,0,0.88)'
       return base
     }
     // Incompatible during drag: fade out
-    base.background = '#090909'
-    base.border = '1px solid #111'
+    base.background = 'rgba(3,1,0,0.90)'
+    base.border = '1px solid rgba(0,0,0,0.82)'
     base.opacity = 0.35
     return base
   })()
@@ -282,7 +283,10 @@ function Slot({
     >
       <div className="w-full h-full flex items-center justify-center overflow-hidden rounded-sm pointer-events-none">
         {isEmpty ? (
-          <div className={`w-[58%] h-[58%] flex items-center justify-center transition-colors ${isCompatible && activeDrag ? 'text-amber-700/60' : 'text-[#2a2520] opacity-50'}`}>
+          <div
+            className="w-[58%] h-[58%] flex items-center justify-center transition-colors"
+            style={{ color: isCompatible && activeDrag ? 'rgba(180,90,15,0.65)' : 'rgba(160,100,50,0.35)' }}
+          >
             {SLOT_SVG[slotKey]}
           </div>
         ) : iconUrl ? (
@@ -298,7 +302,7 @@ function Slot({
       <div className="absolute bottom-full mb-1.5 left-1/2 -translate-x-1/2 z-50
                       pointer-events-none select-none whitespace-nowrap
                       opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-        <div className="bg-[#0a0a0a] border border-amber-900/40 px-2 py-0.5 rounded-sm shadow-lg">
+        <div className="px-2 py-0.5 rounded-sm shadow-lg" style={{ background: 'rgba(5,2,0,0.92)', border: '1px solid rgba(120,60,10,0.5)' }}>
           <span className="text-[9px] text-amber-400/90 font-serif tracking-wide">
             {item?.name ?? SLOT_LABELS[slotKey]}
           </span>
@@ -328,7 +332,7 @@ export function PaperDoll({
   const rightSlots: SlotKey[] = ['amulet', 'ring_1', 'ring_2']
 
   return (
-    <div className="relative w-full select-none" style={{ height: 320 }}>
+    <div className="relative w-full select-none" style={{ height: 320, background: 'radial-gradient(ellipse 58% 58% at 50% 48%, rgba(210,100,12,0.28) 0%, rgba(100,45,8,0) 72%)' }}>
       {/* Left column */}
       <div className="absolute left-2 top-3 flex flex-col gap-2">
         {leftSlots.map(slot => (
@@ -399,7 +403,7 @@ export function PaperDoll({
             activeDrag={activeDrag}
             size={40}
           />
-          <div className="w-10 h-10 rounded-sm bg-[#0a0a0a] border border-dashed border-[#1a1a1a] opacity-20" />
+          <div style={{ width: 40, height: 40, borderRadius: 6, background: 'rgba(3,1,0,0.93)', boxShadow: 'inset 0 5px 16px rgba(0,0,0,0.95)', border: '1px solid rgba(0,0,0,0.85)', opacity: 0.7 }} />
         </div>
       </div>
     </div>
