@@ -218,7 +218,7 @@ export function InventoryPanel({
               />
             ))}
             {Array.from({ length: Math.max(0, 30 - displayInventory.length) }).map((_, i) => (
-              <div key={`empty-${i}`} style={{ width: 48, height: 48, borderRadius: 6, background: 'rgba(3,1,0,0.93)', boxShadow: 'inset 2px 2px 8px rgba(0,0,0,0.98), inset 0 4px 14px rgba(0,0,0,0.92), inset -1px -1px 5px rgba(90,45,8,0.35)', border: '1px solid rgba(0,0,0,0.88)' }} />
+              <div key={`empty-${i}`} style={{ width: 48, height: 48, borderRadius: 6, background: 'rgba(3,1,0,0.93)', boxShadow: 'inset 2px 2px 8px rgba(0,0,0,0.98), inset 0 4px 14px rgba(0,0,0,0.92), inset -1px -1px 5px rgba(90,45,8,0.35), 1px 1px 0 rgba(160,90,20,0.40)', border: '1px solid rgba(0,0,0,0.88)' }} />
             ))}
           </div>
         </div>
