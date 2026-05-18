@@ -34,11 +34,11 @@
 
 ### 🎨 Visual — Pulido pendiente (corto plazo)
 Continuación del overhaul visual iniciado en v1.0.0:
-- **Ajuste fino del papiro**: balance entre textura visible y legibilidad en todos los tabs
-- **Wax seals**: mejorar detalle de íconos, posible variación de tamaño por severidad de condición
-- **Tab Pericias**: aplicar el mismo lenguaje visual (stat boxes, legibilidad sobre papiro)
+- ✅ **Ajuste fino del papiro**: balance entre textura visible y legibilidad en todos los tabs
+- ✅ **Wax seals**: PNG real, tooltip combinado, botón de quitar más visible
+- ✅ **Tab Pericias**: contraste y bordes ajustados al lenguaje visual del pergamino
+- ✅ **Inventario**: rediseño con madera y chapas metálicas (`darkFrameStyle`)
 - **Tab Hechizos**: aplicar lenguaje visual + integrar spell slots con el sistema de paper doll
-- **Inventario**: mejoras en la legibilidad del grid y peso total visible
 
 ### 📦 Features de juego (mediano plazo)
 

@@ -4,6 +4,26 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 
 ---
 
+## [Unreleased]
+
+### feat
+- Rediseño visual del inventario con madera y chapas metálicas (`darkFrameStyle`)
+- GACO auto-calculado por arma + proficiencia; badges de competencia clicables en tab pericias
+
+### fix
+- Mobile layout, bugs de inventario y legibilidad en pergamino
+
+### style
+- Stat boxes con efecto latón gastado y puntadas decorativas entre tabs
+- Wax seals con PNG real; condiciones con tooltip combinado; botón de quitar más visible
+- Ajustes de contraste y bordes en tab pericias
+- Highlight exterior de slots aumentado para mayor profundidad visual
+
+### chore
+- Eliminado `routeTree.gen.ts` auto-generado del repo
+
+---
+
 ## [1.0.0] — 2026-05-17 · Paper Doll, Inventario BG3 y Visual Overhaul
 
 El mayor salto visual y de UX desde el MVP. La hoja de personaje pasa de funcional a inmersiva.

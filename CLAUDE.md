@@ -136,6 +136,10 @@ Conventional Commits: `feat`, `fix`, `refactor`, `chore`, `docs`, `style`
 git commit -m "feat: descripción corta en minúsculas sin punto final"
 ```
 
+**Antes de cada commit**, actualizar obligatoriamente:
+1. `CHANGELOG.md` — agregar entrada bajo `## [Unreleased]` con el tipo y descripción del cambio
+2. `ROADMAP.md` — marcar como completado o actualizar el ítem correspondiente si aplica
+
 **No commitear** cambios visuales experimentales hasta que el usuario los apruebe.
 **No pushear** sin confirmación explícita del usuario.
 
