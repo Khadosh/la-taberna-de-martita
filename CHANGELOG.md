@@ -32,6 +32,10 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 - SheetRow: bordes laterales eliminados (innecesarios con el nuevo padding del contenedor)
 - Todos los emojis reemplazados por SVGs inline acordes al lenguaje visual del pergamino (tabs, dados, espada, bolsa, info, cierre, flecha, etc.)
 
+### refactor
+- `isMobile` state y resize listener eliminados; `sheetStyle` unificado para desktop y mobile
+- `sheetStyleMobile` removido de imports y uso
+
 ### chore
 - Eliminado `routeTree.gen.ts` auto-generado del repo
 

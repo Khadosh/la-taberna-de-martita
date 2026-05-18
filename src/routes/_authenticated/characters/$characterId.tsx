@@ -12,7 +12,7 @@ import { DiceModule } from '../../../lib/dice'
 
 // Components
 import { type SheetJson, type InfoModalData } from '../../../components/character-sheet/types'
-import { parchmentStyle, mapBgStyle, sheetStyle, sheetStyleMobile, darkFrameStyle, SheetTabBar, type SheetTab } from '../../../components/character-sheet/sheet-primitives'
+import { parchmentStyle, mapBgStyle, sheetStyle, darkFrameStyle, SheetTabBar, type SheetTab } from '../../../components/character-sheet/sheet-primitives'
 import { InfoModal } from '../../../components/character-sheet/sheet-badges'
 import { LevelUpModal } from '../../../components/character-sheet/level-up-modal'
 import { TabResumen } from '../../../components/character-sheet/tab-resumen'
@@ -37,7 +37,6 @@ function CharacterSheet() {
   // UI State
   const [activeTab, setActiveTab] = useState<SheetTab>('resumen')
   const [mobileSection, setMobileSection] = useState<'personaje' | 'inventario'>('personaje')
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 1024)
   const [modal, setModal] = useState<InfoModalData | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [generatingPortrait, setGeneratingPortrait] = useState(false)
@@ -386,14 +385,6 @@ function CharacterSheet() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [character?.id, inventory.length])
 
-  // ── isMobile ─────────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    const handler = () => setIsMobile(window.innerWidth < 1024)
-    window.addEventListener('resize', handler)
-    return () => window.removeEventListener('resize', handler)
-  }, [])
-
   // ── Realtime ──────────────────────────────────────────────────────────────
 
   useEffect(() => {
@@ -553,7 +544,7 @@ function CharacterSheet() {
             {/* Hoja de personaje */}
             <div
               className={`lg:col-span-7 h-full flex flex-col overflow-hidden ${mobileSection === 'inventario' ? 'hidden lg:flex' : ''}`}
-              style={isMobile ? sheetStyleMobile : sheetStyle}
+              style={sheetStyle}
             >
               {/* Header: Identidad + Retrato — no scrolleable */}
               <div className="w-full flex flex-row items-center justify-center pt-2">

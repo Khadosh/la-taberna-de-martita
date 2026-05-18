@@ -17,9 +17,10 @@ export const mapBgStyle: React.CSSProperties = {
 // Hoja de pergamino sobre la mesa — con textura de papiro real
 export const sheetStyle: React.CSSProperties = {
   backgroundImage: `url('/assets/images/papiro.png')`,
-  backgroundSize: 'cover',
-  backgroundPosition: 'center',
+  backgroundSize: '100% 100%',
+  backgroundPosition: 'center center',
   backgroundRepeat: 'no-repeat',
+  backgroundBlendMode: 'multiply',
 }
 
 // Versión mobile: sin bordes ni sombras (va edge-to-edge)

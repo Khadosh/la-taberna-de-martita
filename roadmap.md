@@ -38,7 +38,11 @@ Continuación del overhaul visual iniciado en v1.0.0:
 - ✅ **Wax seals**: PNG real, tooltip combinado, botón de quitar más visible
 - ✅ **Tab Pericias**: contraste y bordes ajustados al lenguaje visual del pergamino
 - ✅ **Inventario**: rediseño con madera y chapas metálicas (`darkFrameStyle`)
-- **Tab Hechizos**: aplicar lenguaje visual + integrar spell slots con el sistema de paper doll
+- ✅ **Tab Hechizos**: lenguaje visual aplicado (spell slots con gradiente latón, colores cálidos)
+- ✅ **Tab Historia**: consistencia visual con SheetRow
+- ✅ **Emojis → SVGs**: todos los tabs, botones y acciones usan SVGs inline acordes al pergamino
+- ✅ **Tiradas de salvación**: unificadas en stat boxes del Tab Resumen (mod + proficiency)
+- **Tab Hechizos**: integrar spell slots con el sistema de paper doll (pendiente)
 
 ### 📦 Features de juego (mediano plazo)
 
