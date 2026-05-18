@@ -4,7 +4,7 @@
  */
 import { useState } from 'react'
 import type { RaceDetail, FeatureDetail } from '../../lib/dnd-api'
-import { ABILITY_LABELS, abilityModifier } from '../../lib/dnd-api'
+import { ABILITY_LABELS } from '../../lib/dnd-api'
 import { CONDITIONS } from '../../lib/dnd-constants'
 import type { SheetJson, InfoModalData } from './types'
 import { SheetLabel, SheetRow, QuickPill } from './sheet-primitives'
@@ -16,24 +16,24 @@ function fmtMod(m: number) { return m >= 0 ? `+${m}` : String(m) }
 
 // ── Helpers de color para stat boxes ─────────────────────────────────────────
 
-// Cuerpo del box: escala de gris-marrón según valor de la habilidad
+// Latón base: varía sutilmente según el valor de la habilidad
 function statBodyRgb(val: number): [number, number, number] {
-  const t = Math.max(0, Math.min(1, (val - 6) / 14)) // 6-20 → 0-1
+  const t = Math.max(0, Math.min(1, (val - 6) / 14))
   return [
-    Math.round(24 + t * 32),  // 24 → 56
-    Math.round(16 + t * 22),  // 16 → 38
-    Math.round(6 + t * 10),   // 6 → 16
+    Math.round(78 + t * 26),  // 78 → 104  (rojo cálido)
+    Math.round(61 + t * 20),  // 61 → 81   (verde latón)
+    Math.round(16 + t * 16),  // 16 → 32   (azul mínimo)
   ]
 }
 
-// Badge del modificador: rojo → gris → verde
-function modBadgeColors(mod: number): { bg: string; border: string; text: string } {
-  if (mod >= 4)  return { bg: '#0c2c12', border: '#186030', text: '#22c55e' }
-  if (mod >= 2)  return { bg: '#142810', border: '#204c1e', text: '#4ade80' }
-  if (mod >= 1)  return { bg: '#222e10', border: '#304618', text: '#86efac' }
-  if (mod === 0) return { bg: '#232018', border: '#363028', text: '#9ca3af' }
-  if (mod >= -1) return { bg: '#341a08', border: '#502c10', text: '#fb923c' }
-  return           { bg: '#2e0c0c', border: '#4a1818', text: '#f87171' }
+// Color de texto del modificador: rojo → crema → verde
+function modTextColor(mod: number): string {
+  if (mod >= 4) return '#22c55e'
+  if (mod >= 2) return '#4ade80'
+  if (mod >= 1) return '#86efac'
+  if (mod === 0) return '#e8d898'
+  if (mod >= -1) return '#fb923c'
+  return '#f87171'
 }
 
 interface ClassFeatureLevel {
@@ -145,33 +145,55 @@ export function TabResumen(props: TabResumenProps) {
               const val = stats[k] ?? 10
               const mod = Math.floor((val - 10) / 2)
               const [r, g, b] = statBodyRgb(val)
-              const badge = modBadgeColors(mod)
+              const textColor = modTextColor(mod)
+              // Colores derivados del latón base
+              const hi  = `rgb(${r+26},${g+19},${b+7})`   // brillo top-left
+              const mid = `rgb(${r+10},${g+7},${b+2})`     // medio
+              const base= `rgb(${r},${g},${b})`
+              const drk = `rgb(${r-12},${g-9},${b-3})`     // sombra bottom-right
+              const bdr = `rgb(${r-24},${g-17},${b-6})`    // borde exterior
+              const insetDrk = `rgb(${r-18},${g-13},${b-4})`  // placa inset (más oscura)
+              const rivetHi   = `rgb(${r+55},${g+42},${b+16})` // specular de la tachuela
               return (
                 <div
                   key={k}
-                  className="text-center relative select-none"
+                  className="relative select-none flex flex-col items-center"
                   style={{
-                    borderRadius: 6,
-                    background: `linear-gradient(145deg, rgb(${r+14},${g+10},${b+4}) 0%, rgb(${r},${g},${b}) 45%, rgb(${r-6},${g-4},${b-2}) 100%)`,
-                    border: '1px solid rgba(170,120,45,0.65)',
+                    borderRadius: 7,
+                    background: `linear-gradient(155deg, ${hi} 0%, ${mid} 30%, ${base} 65%, ${drk} 100%)`,
+                    border: `2px solid ${bdr}`,
                     boxShadow: `
-                      inset 0 1px 0 rgba(220,175,60,0.38),
-                      inset 1px 0 0 rgba(200,155,50,0.18),
-                      inset 0 -1px 0 rgba(0,0,0,0.5),
-                      inset -1px 0 0 rgba(0,0,0,0.28),
-                      0 3px 6px rgba(0,0,0,0.45)
+                      inset 0 1px 0 rgba(230,200,110,0.5),
+                      inset 1px 0 0 rgba(210,175,80,0.25),
+                      inset 0 -2px 0 rgba(0,0,0,0.5),
+                      inset -1px 0 0 rgba(0,0,0,0.3),
+                      0 4px 8px rgba(0,0,0,0.55),
+                      0 2px 3px rgba(0,0,0,0.3)
                     `,
-                    padding: '8px 4px 6px',
+                    padding: '7px 5px 7px',
                   }}
                 >
+                  {/* Tachuelas en las cuatro esquinas */}
+                  {([{top:3,left:3},{top:3,right:3},{bottom:3,left:3},{bottom:3,right:3}] as React.CSSProperties[]).map((pos, i) => (
+                    <div key={i} style={{
+                      position: 'absolute',
+                      width: 5, height: 5,
+                      borderRadius: '50%',
+                      background: `radial-gradient(circle at 36% 30%, ${rivetHi} 0%, ${mid} 50%, ${bdr} 100%)`,
+                      boxShadow: '0 1px 2px rgba(0,0,0,0.85), inset 0 1px 0 rgba(255,220,100,0.25)',
+                      ...pos,
+                    }} />
+                  ))}
+
                   {/* Label */}
                   <p style={{
                     fontSize: 9,
-                    letterSpacing: '0.14em',
+                    letterSpacing: '0.15em',
                     fontFamily: 'Georgia, serif',
-                    color: '#c09858',
+                    color: `rgb(${r+62},${g+48},${b+20})`,
                     textTransform: 'uppercase',
-                    textShadow: '0 1px 2px rgba(0,0,0,0.6)',
+                    textShadow: '0 1px 2px rgba(0,0,0,0.75)',
+                    marginBottom: 1,
                   }}>
                     {ABILITY_LABELS[k]}
                   </p>
@@ -181,32 +203,37 @@ export function TabResumen(props: TabResumenProps) {
                     fontSize: 28,
                     fontWeight: 700,
                     fontFamily: 'Georgia, serif',
-                    color: '#f0e2c0',
-                    lineHeight: 1.15,
-                    textShadow: '0 2px 4px rgba(0,0,0,0.6)',
-                    margin: '2px 0 5px',
+                    color: '#f0e8c8',
+                    lineHeight: 1.1,
+                    textShadow: '0 2px 5px rgba(0,0,0,0.75), 0 0 1px rgba(0,0,0,0.5)',
+                    margin: '1px 0 6px',
                   }}>
                     {val}
                   </p>
 
-                  {/* Badge de modificador */}
+                  {/* Placa de modificador — inset grabado */}
                   <div style={{
-                    display: 'inline-block',
-                    padding: '1px 8px',
+                    width: '84%',
+                    textAlign: 'center',
                     borderRadius: 4,
-                    background: badge.bg,
-                    border: `1px solid ${badge.border}`,
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06), 0 1px 2px rgba(0,0,0,0.35)',
-                    minWidth: 34,
+                    background: `linear-gradient(180deg, ${insetDrk} 0%, ${base} 100%)`,
+                    border: `1px solid ${bdr}`,
+                    boxShadow: `
+                      inset 0 2px 4px rgba(0,0,0,0.55),
+                      inset 0 1px 0 rgba(0,0,0,0.3),
+                      0 1px 0 rgba(230,200,90,0.2)
+                    `,
+                    padding: '2px 0 3px',
                   }}>
                     <span style={{
-                      fontSize: 12,
+                      fontSize: 13,
                       fontWeight: 700,
                       fontFamily: 'monospace',
-                      color: badge.text,
-                      textShadow: `0 0 6px ${badge.text}50`,
+                      color: textColor,
+                      textShadow: '0 1px 3px rgba(0,0,0,0.9)',
+                      letterSpacing: '0.04em',
                     }}>
-                      {abilityModifier(val)}
+                      {fmtMod(mod)}
                     </span>
                   </div>
                 </div>
@@ -297,7 +324,7 @@ export function TabResumen(props: TabResumenProps) {
                 {ac}
               </button>
             )}
-            <p className="text-[10px] text-stone-400 font-serif mt-1">Armadura</p>
+            <p className="text-[10px] text-stone-600 font-serif mt-1">Armadura</p>
           </div>
         </div>
 
@@ -310,7 +337,7 @@ export function TabResumen(props: TabResumenProps) {
             </div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-mono text-stone-700">{xp.toLocaleString()} XP</span>
+                <span className="text-sm font-mono text-stone-600">{xp.toLocaleString()} XP</span>
                 {(isGm && !editingXp) && (
                   <button onClick={() => { setEditingXp(true); setXpInput('') }}
                     className="text-[10px] px-1.5 py-0.5 border border-stone-500 hover:border-amber-700 text-stone-500 hover:text-amber-700 font-serif transition-colors leading-none">
@@ -318,7 +345,7 @@ export function TabResumen(props: TabResumenProps) {
                   </button>
                 )}
               </div>
-              {xpForNext && <span className="text-[10px] text-stone-400 font-serif">Nv. {level + 1} — {xpForNext.toLocaleString()}</span>}
+              {xpForNext && <span className="text-[10px] text-stone-700 font-serif">Nv. {level + 1} → {xpForNext.toLocaleString()}</span>}
             </div>
             {(isGm && editingXp) && (
               <div className="flex items-center gap-1 w-full">
@@ -415,15 +442,15 @@ export function TabResumen(props: TabResumenProps) {
             )}
             {activeFeatLevel === 'subclass'
               ? subclassFeatureList?.results.map(f => (
-                  <FeatureCard key={f.index} index={f.index} name={f.name}
-                    isNew={false} compact maxLevel={level}
-                    onInfo={(data: FeatureDetail) => setModal({ kind: 'feature', data })} />
-                ))
+                <FeatureCard key={f.index} index={f.index} name={f.name}
+                  isNew={false} compact maxLevel={level}
+                  onInfo={(data: FeatureDetail) => setModal({ kind: 'feature', data })} />
+              ))
               : classFeaturesByLevel.find(l => l.level === activeFeatLevel)?.features.map(f => (
-                  <FeatureCard key={f.index} index={f.index} name={f.name}
-                    isNew={activeFeatLevel === level} compact maxLevel={level}
-                    onInfo={(data: FeatureDetail) => setModal({ kind: 'feature', data })} />
-                ))
+                <FeatureCard key={f.index} index={f.index} name={f.name}
+                  isNew={activeFeatLevel === level} compact maxLevel={level}
+                  onInfo={(data: FeatureDetail) => setModal({ kind: 'feature', data })} />
+              ))
             }
           </div>
         </div>
