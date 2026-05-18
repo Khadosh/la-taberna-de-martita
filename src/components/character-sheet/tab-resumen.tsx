@@ -147,13 +147,13 @@ export function TabResumen(props: TabResumenProps) {
               const [r, g, b] = statBodyRgb(val)
               const textColor = modTextColor(mod)
               // Colores derivados del latón base
-              const hi  = `rgb(${r+26},${g+19},${b+7})`   // brillo top-left
-              const mid = `rgb(${r+10},${g+7},${b+2})`     // medio
-              const base= `rgb(${r},${g},${b})`
-              const drk = `rgb(${r-12},${g-9},${b-3})`     // sombra bottom-right
-              const bdr = `rgb(${r-24},${g-17},${b-6})`    // borde exterior
-              const insetDrk = `rgb(${r-18},${g-13},${b-4})`  // placa inset (más oscura)
-              const rivetHi   = `rgb(${r+55},${g+42},${b+16})` // specular de la tachuela
+              const hi = `rgb(${r + 26},${g + 19},${b + 7})`   // brillo top-left
+              const mid = `rgb(${r + 10},${g + 7},${b + 2})`     // medio
+              const base = `rgb(${r},${g},${b})`
+              const drk = `rgb(${r - 12},${g - 9},${b - 3})`     // sombra bottom-right
+              const bdr = `rgb(${r - 24},${g - 17},${b - 6})`    // borde exterior
+              const insetDrk = `rgb(${r - 18},${g - 13},${b - 4})`  // placa inset (más oscura)
+              const rivetHi = `rgb(${r + 55},${g + 42},${b + 16})` // specular de la tachuela
               return (
                 <div
                   key={k}
@@ -174,7 +174,7 @@ export function TabResumen(props: TabResumenProps) {
                   }}
                 >
                   {/* Tachuelas en las cuatro esquinas */}
-                  {([{top:3,left:3},{top:3,right:3},{bottom:3,left:3},{bottom:3,right:3}] as React.CSSProperties[]).map((pos, i) => (
+                  {([{ top: 3, left: 3 }, { top: 3, right: 3 }, { bottom: 3, left: 3 }, { bottom: 3, right: 3 }] as React.CSSProperties[]).map((pos, i) => (
                     <div key={i} style={{
                       position: 'absolute',
                       width: 5, height: 5,
@@ -190,7 +190,7 @@ export function TabResumen(props: TabResumenProps) {
                     fontSize: 9,
                     letterSpacing: '0.15em',
                     fontFamily: 'Georgia, serif',
-                    color: `rgb(${r+62},${g+48},${b+20})`,
+                    color: `rgb(${r + 62},${g + 48},${b + 20})`,
                     textTransform: 'uppercase',
                     textShadow: '0 1px 2px rgba(0,0,0,0.75)',
                     marginBottom: 1,
@@ -479,14 +479,6 @@ export function TabResumen(props: TabResumenProps) {
             <>
               <SheetLabel>Condiciones activas</SheetLabel>
               <div className="flex flex-wrap gap-3 mt-4 items-center">
-                {conditions.map(c => (
-                  <WaxSeal
-                    key={c}
-                    condition={c}
-                    canRemove={isOwner}
-                    onRemove={() => toggleCondition(c)}
-                  />
-                ))}
                 {isOwner && (
                   <div className="relative">
                     <button
@@ -494,9 +486,10 @@ export function TabResumen(props: TabResumenProps) {
                       className="text-xs font-serif transition-colors"
                       style={{
                         padding: '4px 10px',
-                        border: '1px solid rgba(120,80,30,0.5)',
-                        color: '#8a6840',
-                        background: 'rgba(80,50,15,0.1)',
+                        border: '1px solid rgba(90,52,14,0.75)',
+                        color: '#4a2808',
+                        background: 'rgba(180,130,60,0.18)',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.15)',
                       }}
                     >
                       + condición
@@ -519,6 +512,33 @@ export function TabResumen(props: TabResumenProps) {
                     )}
                   </div>
                 )}
+                <div className="flex flex-1 gap-0 items-center relative px-2">
+                  <div style={{
+                    position: 'absolute',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    left: 0,
+                    right: 36,
+                    height: 32,
+                    borderRadius: 999,
+                    background: 'rgba(42,24,8,0.38)',
+                    border: '2px solid rgba(72,44,14,0.8)',
+                    boxShadow: `
+                      inset 0 2px 4px rgba(0,0,0,0.45),
+                      inset 0 -1px 2px rgba(160,100,30,0.15),
+                      0 1px 0 rgba(190,130,45,0.35),
+                      0 2px 5px rgba(0,0,0,0.25)
+                    `,
+                  }} />
+                  {conditions.map(c => (
+                    <WaxSeal
+                      key={c}
+                      condition={c}
+                      canRemove={isOwner}
+                      onRemove={() => toggleCondition(c)}
+                    />
+                  ))}
+                </div>
               </div>
             </>
           )}

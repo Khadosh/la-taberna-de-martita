@@ -15,7 +15,7 @@ export function TabHistoria({ backstory, isOwner, confirmDelete, setConfirmDelet
       {backstory ? (
         <p className="text-sm text-stone-700 font-serif italic leading-relaxed whitespace-pre-wrap mt-2">{backstory}</p>
       ) : (
-        <p className="text-stone-400 font-serif italic text-sm text-center py-10">Sin historia registrada.</p>
+        <p className="text-stone-600 font-serif italic text-sm text-center py-10">Sin historia registrada.</p>
       )}
 
       {isOwner && (

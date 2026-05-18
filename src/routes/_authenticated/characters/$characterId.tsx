@@ -266,10 +266,10 @@ function CharacterSheet() {
   }
 
   const toggleEquip = async (itemId: string) => {
-    const current      = sheet.equipped_items ?? []
+    const current = sheet.equipped_items ?? []
     const currentSlots = (sheet.equipped_slots ?? {}) as Partial<Record<SlotKey, string>>
-    const isEquipping  = !current.includes(itemId)
-    const item         = inventory.find(i => i.id === itemId)
+    const isEquipping = !current.includes(itemId)
+    const item = inventory.find(i => i.id === itemId)
 
     let newEquipped = isEquipping
       ? [...current, itemId]
@@ -382,7 +382,7 @@ function CharacterSheet() {
     if (Object.keys(rebuilt).length > 0) {
       patchSheet({ equipped_slots: rebuilt })
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [character?.id, inventory.length])
 
   // ── isMobile ─────────────────────────────────────────────────────────────
@@ -495,7 +495,7 @@ function CharacterSheet() {
               style={isMobile ? sheetStyleMobile : sheetStyle}
             >
               {/* Header: Identidad + Retrato — no scrolleable */}
-              <div className="flex items-stretch flex-shrink-0 relative overflow-hidden" style={{ minHeight: '120px', borderBottom: '1px solid rgba(109,85,48,0.4)' }}>
+              <div className="flex items-stretch flex-shrink-0 mb-2 relative overflow-hidden" style={{ minHeight: '120px' }}>
                 {/* Portrait con frame ornamental */}
                 <div
                   className="w-[108px] flex-shrink-0 relative group"
@@ -522,7 +522,7 @@ function CharacterSheet() {
                   }} />
                   {[['top-1 left-1', ''], ['top-1 right-1', 'rotate-90'], ['bottom-1 left-1', '-rotate-90'], ['bottom-1 right-1', 'rotate-180']].map(([pos, rot], i) => (
                     <svg key={i} className={`absolute ${pos} ${rot}`} width="12" height="12" viewBox="0 0 12 12">
-                      <path d="M1 6V1h5" stroke="rgba(210,160,50,0.9)" strokeWidth="1.2" fill="none" strokeLinecap="round"/>
+                      <path d="M1 6V1h5" stroke="rgba(210,160,50,0.9)" strokeWidth="1.2" fill="none" strokeLinecap="round" />
                     </svg>
                   ))}
                   <div className="absolute inset-0 flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100"
@@ -555,7 +555,9 @@ function CharacterSheet() {
               </div>
 
               {/* Tabs Bar — no scrolleable */}
-              <SheetTabBar active={activeTab} onChange={setActiveTab} />
+              <div className='my-3 py-2 border-t-2 border-oklch(44.5% 0.038 45.635)'>
+                <SheetTabBar active={activeTab} onChange={setActiveTab} />
+              </div>
 
               {/* Tab Content — único área scrolleable */}
               <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none">

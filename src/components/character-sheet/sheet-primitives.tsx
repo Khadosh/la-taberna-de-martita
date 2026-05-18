@@ -109,31 +109,31 @@ export function QuickPill({
 export type SheetTab = 'resumen' | 'pericias' | 'hechizos' | 'historia'
 
 const TAB_DEFS: { id: SheetTab; label: string; icon: string }[] = [
-  { id: 'resumen',  label: 'Resumen',  icon: '📋' },
+  { id: 'resumen', label: 'Resumen', icon: '📋' },
   { id: 'pericias', label: 'Pericias', icon: '🎯' },
   { id: 'hechizos', label: 'Hechizos', icon: '✨' },
   { id: 'historia', label: 'Historia', icon: '📜' },
 ]
 
-function StitchDivider() {
+function TabStitch({ side }: { side: 'left' | 'right' }) {
   return (
     <div style={{
-      flexShrink: 0,
-      alignSelf: 'stretch',
+      position: 'absolute',
+      [side]: 5,
+      top: '50%',
+      transform: 'translateY(-50%)',
       display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 2.5,
-      padding: '0 2px',
+      flexDirection: 'column',
+      gap: 4,
       pointerEvents: 'none',
     }}>
       {[0, 1, 2].map(i => (
         <div key={i} style={{
-          width: 1.5,
-          height: 8,
+          width: 2,
+          height: 7,
           borderRadius: 1,
-          background: 'rgba(165,112,22,0.7)',
-          boxShadow: '1px 0 1px rgba(0,0,0,0.55), -0.5px 0 0 rgba(230,185,70,0.15)',
+          background: 'rgba(188,148,52,0.55)',
+          boxShadow: '1px 0 1px rgba(0,0,0,0.6), -0.5px 0 0 rgba(230,190,80,0.12)',
         }} />
       ))}
     </div>
@@ -151,36 +151,31 @@ export function SheetTabBar({
     <div
       className="flex w-full"
       style={{
-        background: 'linear-gradient(180deg, #3a2410 0%, #271608 100%)',
-        borderTop: '1px solid #6a4020',
-        borderBottom: '2px solid #180e04',
+        gap: '4px',
       }}
     >
-      {TAB_DEFS.map((tab, idx) => {
+      {TAB_DEFS.map(tab => {
         const isActive = active === tab.id
         return (
-          <React.Fragment key={tab.id}>
-            {idx > 0 && <StitchDivider />}
-            <button
-              onClick={() => onChange(tab.id)}
-              className="flex-1 flex items-center justify-center gap-1 px-2 py-2.5 text-xs font-serif tracking-wide transition-all"
-              style={isActive ? {
-                background: 'linear-gradient(180deg, #5a3820 0%, #3e2410 100%)',
-                color: '#f0d898',
-                fontWeight: 600,
-                borderBottom: '2px solid #c8900a',
-                borderTop: '1px solid rgba(220,160,40,0.3)',
-                boxShadow: 'inset 0 1px 0 rgba(220,160,40,0.15)',
-              } : {
-                background: 'transparent',
-                color: '#8a6840',
-                borderBottom: '2px solid transparent',
-              }}
-            >
-              <span className="text-sm leading-none" style={{ opacity: isActive ? 1 : 0.65 }}>{tab.icon}</span>
-              <span className="hidden md:inline">{tab.label}</span>
-            </button>
-          </React.Fragment>
+          <button
+            key={tab.id}
+            onClick={() => onChange(tab.id)}
+            className="relative flex-1 flex items-center justify-center gap-1 px-2 py-2.5 text-xs font-serif tracking-wide transition-all"
+            style={isActive ? {
+              fontWeight: 600,
+              borderRadius: '3px 3px 0 0',
+            } : {
+              background: 'rgba(22,12,4,0.75)',
+              color: '#c79d67ff',
+              borderRadius: '3px 3px 0 0',
+              borderBottom: '1px solid rgba(100,70,30,0.45)',
+            }}
+          >
+            <TabStitch side="left" />
+            <TabStitch side="right" />
+            <span className="text-sm leading-none" style={{ opacity: isActive ? 1 : 0.65 }}>{tab.icon}</span>
+            <span className="hidden md:inline">{tab.label}</span>
+          </button>
         )
       })}
     </div>
