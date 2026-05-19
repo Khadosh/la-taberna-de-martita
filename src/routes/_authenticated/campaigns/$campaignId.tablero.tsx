@@ -175,6 +175,7 @@ function PlayerTablero({ campaignId, session }: { campaignId: string; session: S
       maxHp,
       portraitUrl: char?.portrait_url ?? bt.portrait_url ?? null,
       isActive: false,
+      showHp: bt.kind === 'player',
     }
   }), [boardTokens, characters])
 

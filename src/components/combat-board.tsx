@@ -12,6 +12,7 @@ export type TokenData = {
   maxHp: number
   portraitUrl?: string | null
   isActive: boolean
+  showHp?: boolean
 }
 
 export type AttackEntity = {
@@ -75,20 +76,22 @@ function CombatToken({
           }} />
         )}
         {/* HP arc SVG */}
-        <svg
-          width={TOKEN_SIZE} height={TOKEN_SIZE}
-          viewBox={`0 0 ${TOKEN_SIZE} ${TOKEN_SIZE}`}
-          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
-        >
-          <circle cx={half} cy={half} r={R} fill="none" stroke="rgba(0,0,0,0.55)" strokeWidth={7} />
-          <circle
-            cx={half} cy={half} r={R}
-            fill="none" stroke={color} strokeWidth={6}
-            strokeDasharray={`${arc} ${CIRC}`}
-            strokeLinecap="round"
-            transform={`rotate(-90, ${half}, ${half})`}
-          />
-        </svg>
+        {data.showHp !== false && (
+          <svg
+            width={TOKEN_SIZE} height={TOKEN_SIZE}
+            viewBox={`0 0 ${TOKEN_SIZE} ${TOKEN_SIZE}`}
+            style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          >
+            <circle cx={half} cy={half} r={R} fill="none" stroke="rgba(0,0,0,0.55)" strokeWidth={7} />
+            <circle
+              cx={half} cy={half} r={R}
+              fill="none" stroke={color} strokeWidth={6}
+              strokeDasharray={`${arc} ${CIRC}`}
+              strokeLinecap="round"
+              transform={`rotate(-90, ${half}, ${half})`}
+            />
+          </svg>
+        )}
         {/* Portrait */}
         <div style={{
           position: 'absolute', inset: 9, borderRadius: '50%', overflow: 'hidden',
@@ -123,13 +126,15 @@ function CombatToken({
         {data.name}
       </p>
       {/* HP */}
-      <p style={{
-        textAlign: 'center', fontSize: 9, fontFamily: 'monospace',
-        color: 'rgba(255,230,150,0.9)', textShadow: '0 1px 2px rgba(0,0,0,1)',
-        lineHeight: 1.1, pointerEvents: 'none',
-      }}>
-        {data.currentHp}/{data.maxHp}
-      </p>
+      {data.showHp !== false && (
+        <p style={{
+          textAlign: 'center', fontSize: 9, fontFamily: 'monospace',
+          color: 'rgba(255,230,150,0.9)', textShadow: '0 1px 2px rgba(0,0,0,1)',
+          lineHeight: 1.1, pointerEvents: 'none',
+        }}>
+          {data.currentHp}/{data.maxHp}
+        </p>
+      )}
     </div>
   )
 }
