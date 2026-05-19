@@ -137,16 +137,48 @@ function CombatToken({
 export function CombatBoard({
   tokens,
   allEntities,
+  mapUrl,
+  externalPositions,
+  onTokenMoved,
+  canDrag,
 }: {
   tokens: TokenData[]
   allEntities: AttackEntity[]
+  mapUrl?: string | null
+  externalPositions?: Record<string, Pos>
+  onTokenMoved?: (entityId: string, x: number, y: number) => void
+  canDrag?: (tokenId: string) => boolean
 }) {
   const boardRef = useRef<HTMLDivElement>(null)
   const [positions, setPositions] = useState<Record<string, Pos>>({})
   const [dragging, setDragging] = useState<string | null>(null)
+  const draggingRef = useRef<string | null>(null)
   const dragRef = useRef<{ id: string; mx: number; my: number; tx: number; ty: number; moved: boolean } | null>(null)
   const [attackFrom, setAttackFrom] = useState<string | null>(null)
   const [attackTo, setAttackTo] = useState<string | null>(null)
+
+  // Keep draggingRef in sync so the externalPositions effect can read it without being a dep
+  useEffect(() => { draggingRef.current = dragging }, [dragging])
+
+  // Merge external position updates (from realtime) — only runs when server data changes,
+  // NOT when dragging ends (avoiding the stale-position snap-back bug).
+  // externalPositions stores normalized (0-1) coords; denormalize to pixels using current board size.
+  useEffect(() => {
+    if (!externalPositions || Object.keys(externalPositions).length === 0) return
+    const board = boardRef.current
+    if (!board) return
+    const { width, height } = board.getBoundingClientRect()
+    if (width === 0) return
+    setPositions(prev => {
+      const next = { ...prev }
+      for (const [id, pos] of Object.entries(externalPositions)) {
+        if (draggingRef.current === id) continue
+        next[id] = { x: pos.x * width, y: pos.y * height }
+      }
+      return next
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalPositions])
 
   // Initialize positions when combat starts or new tokens are added
   useEffect(() => {
@@ -161,6 +193,7 @@ export function CombatBoard({
       if (!board) return
       const { width, height } = board.getBoundingClientRect()
       if (width === 0) { requestAnimationFrame(init); return }
+      const newlyPlaced: { id: string; nx: number; ny: number }[] = []
       setPositions(prev => {
         const next = { ...prev }
         const players = tokens.filter(t => t.kind === 'player')
@@ -171,16 +204,20 @@ export function CombatBoard({
             if (next[t.id]) return
             const col = i % cols
             const row = Math.floor(i / cols)
-            next[t.id] = {
-              x: Math.min(width - TOKEN_SIZE - 10, width * startFrac + col * (TOKEN_SIZE + 28) + 20),
-              y: Math.min(height - TOKEN_SIZE - 50, height * 0.12 + row * (TOKEN_SIZE + 46)),
-            }
+            const x = Math.min(width - TOKEN_SIZE - 10, width * startFrac + col * (TOKEN_SIZE + 28) + 20)
+            const y = Math.min(height - TOKEN_SIZE - 50, height * 0.12 + row * (TOKEN_SIZE + 46))
+            next[t.id] = { x, y }
+            newlyPlaced.push({ id: t.id, nx: x / width, ny: y / height })
           })
         }
         layout(players, 0.04)
         layout(npcs, 0.54)
         return next
       })
+      // Persist initial positions normalized so other clients see correct placement
+      if (onTokenMoved) {
+        newlyPlaced.forEach(({ id, nx, ny }) => onTokenMoved(id, nx, ny))
+      }
     }
     requestAnimationFrame(init)
   }, [tokens])
@@ -207,7 +244,7 @@ export function CombatBoard({
         }))
       }
     }
-    const handleUp = () => {
+    const handleUp = (e: PointerEvent) => {
       const d = dragRef.current
       if (d && !d.moved) {
         const id = d.id
@@ -216,6 +253,17 @@ export function CombatBoard({
           if (prev === id) { setAttackTo(null); return null }
           setAttackTo(id); return prev
         })
+      } else if (d && d.moved && onTokenMoved) {
+        const board = boardRef.current
+        if (board) {
+          const rect = board.getBoundingClientRect()
+          const dx = e.clientX - d.mx
+          const dy = e.clientY - d.my
+          const x = Math.max(0, Math.min(rect.width - TOKEN_SIZE, d.tx + dx))
+          const y = Math.max(0, Math.min(rect.height - TOKEN_SIZE - 34, d.ty + dy))
+          // Normalizar a 0-1 para que las coordenadas sean independientes del tamaño del board
+          onTokenMoved(d.id, x / rect.width, y / rect.height)
+        }
       }
       setDragging(null)
       dragRef.current = null
@@ -248,12 +296,14 @@ export function CombatBoard({
   const midX = fromPos && toPos ? (fromPos.x + toPos.x) / 2 + TOKEN_SIZE / 2 : 0
   const midY = fromPos && toPos ? (fromPos.y + toPos.y) / 2 + TOKEN_SIZE / 2 : 0
 
+  const bgUrl = mapUrl ?? '/assets/images/mapa_combate.png'
+
   return (
     <div
       ref={boardRef}
       style={{
         flex: 1, position: 'relative', overflow: 'hidden',
-        backgroundImage: `url('/assets/images/mapa_combate.png')`,
+        backgroundImage: `url('${bgUrl}')`,
         backgroundSize: 'cover', backgroundPosition: 'center',
       }}
       onClick={e => {
@@ -291,6 +341,7 @@ export function CombatBoard({
             isFrom={attackFrom === token.id}
             isTo={attackTo === token.id}
             onPointerDown={e => {
+              if (canDrag && !canDrag(token.id)) return
               e.stopPropagation()
               const p = positions[token.id] ?? { x: 0, y: 0 }
               setDragging(token.id)

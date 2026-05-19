@@ -11,7 +11,19 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 - GACO auto-calculado por arma + proficiencia; badges de competencia clicables en tab pericias
 - Tablero de combate visual: mapa `mapa_combate.png` con fichas circulares, drag libre, arco SVG de HP y flecha de ataque con cálculo integrado
 - Layout 3 columnas en combate: PJs izquierda, tablero centro, NPCs derecha
+- Panel lateral de NPCs en combate: controles -5/-1/+1/+5 de HP y botón de eliminar por cada NPC activo
 - Fix de flash en HP optimista de jugadores: `refetchQueries` en lugar de `invalidateQueries` para borrar el override local recién cuando el servidor confirmó el dato
+- **Tablero de Juego V1**: tab unificado (antes "Combate" + "Mapas") visible para DM y jugadores
+  - DM puede subir imagen de mapa de fondo (Supabase Storage, bucket `campaign-maps`)
+  - Mapa activo sincronizado en tiempo real para todos los conectados
+  - Posiciones de tokens persistidas en tabla `board_tokens` y sincronizadas via Supabase Realtime
+  - Jugadores pueden mover su propia ficha; DM puede mover cualquier ficha
+  - Vista de jugador simplificada: solo el tablero, sin controles de combate
+  - Mapa hardcodeado (`mapa_combate.png`) como fallback si no se subió ninguno
+
+### refactor
+- Pantalla de combate orientada exclusivamente a combate: eliminados header "Pantalla del DM", notas de sesión y botones de descanso largo/fin de combate
+- Rutas `/lucha` y `/mapas` redirigen a `/tablero`
 
 ### fix
 - Mobile layout, bugs de inventario y legibilidad en pergamino

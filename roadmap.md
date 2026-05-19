@@ -46,17 +46,19 @@ Continuación del overhaul visual iniciado en v1.0.0:
 
 ### ⚔️ Combate — siguiente iteración
 
-#### Tablero compartido jugadores ↔ DM (V2)
-Los jugadores actualmente no tienen tab "Combate". El tablero visual lo ve solo el DM.
-- Agregar tab Combate en la vista de jugador (read-only del tablero)
-- Definir qué puede ver el jugador vs solo el DM: NPCs ocultos (`is_hidden`), HP de enemigos, condiciones, etc.
-- Requiere: persistir posiciones de tokens en Supabase Realtime por sesión de combate
-- Requiere: modelo de permisos para fichas (visible para jugadores / solo DM)
+#### Tablero compartido jugadores ↔ DM
+- ✅ Tab "Tablero" unificado visible para DM y jugadores (reemplaza "Combate" + "Mapas")
+- ✅ Tab Combate/Tablero accesible para jugadores (con su ficha movible)
+- ✅ Posiciones de tokens persistidas en `board_tokens` y sincronizadas via Supabase Realtime
+- ✅ Jugadores mueven su propia ficha; DM mueve cualquier ficha
+- ✅ Coordenadas normalizadas (0-1) para consistencia entre pantallas de distinto tamaño
+- Pendiente: NPCs ocultos (`is_hidden`) — jugadores no ven fichas con `is_hidden: true`
+- Pendiente: HP de enemigos visible/oculto por configuración del DM
 
 #### HP de NPCs desde el tablero
-Actualmente el HP de NPCs solo se muestra en la ficha; no hay forma de ajustarlo desde el tablero.
-- Click en ficha NPC → panel flotante con -5/-1/+1/+5 y HP directo
-- Botón de eliminar del combate desde el panel de la ficha
+- ✅ Panel lateral derecho con -5/-1/+1/+5 y HP directo por cada NPC activo
+- ✅ Botón de eliminar del combate desde el panel lateral
+- Pendiente: click en token del tablero → panel flotante inline (más directo que el sidebar)
 
 ### 📦 Features de juego (mediano plazo)
 
@@ -83,23 +85,24 @@ El DM puede crear ítems únicos atados a la campaña:
 
 ### 🔧 Bugs y UX pendientes (Sesión 2 feedback)
 
-| Item | Prioridad |
-|------|-----------|
-| Al salir del personaje: volver a la campaña, no al dashboard | Alta |
-| XP: sumar al valor actual (no reemplazar) | Alta |
-| Objetos: cantidad con +/- (no input directo) | Media |
-| Peso al agregar ítem desde catálogo | Media |
-| Level up: accesible desde la hoja del jugador sin XP | Media |
-| Borrar campañas y personajes desde el dashboard | Media |
-| Navegación: "volver" consistente en todas las pantallas | Baja |
-| Feedback de guardado en la hoja (actualmente solo HP lo tiene) | Baja |
+| Item | Estado | Prioridad |
+|------|--------|-----------|
+| Al salir del personaje: volver a la campaña, no al dashboard | Pendiente | Alta |
+| XP: sumar al valor actual (no reemplazar) | ✅ Ya implementado | — |
+| Objetos: cantidad con +/- al hacer click | ✅ Ya existe en panel de detalle | — |
+| Peso al agregar ítem desde catálogo | ✅ Ya implementado | — |
+| Level up: accesible sin XP | ✅ No necesario (wizard ya accesible) | — |
+| Borrar personajes desde el dashboard | ✅ Ya existe | — |
+| Borrar campañas desde el dashboard | Pendiente | Media |
+| Navegación: "volver" consistente en todas las pantallas | Pendiente | Baja |
+| Feedback de guardado en la hoja (actualmente solo HP lo tiene) | Pendiente | Baja |
 
 ### 🗺 Features más grandes (largo plazo)
 
-#### Mapas de sesión
-- Subir imagen como mapa visible por el party
-- Solo el DM puede cambiarla
-- v2 (post-MVP): tokens drag-and-drop, fog of war
+#### Tablero de Juego (ex Mapas + Combate)
+- ✅ **V1**: Tab unificado visible para DM y jugadores; mapa dinámico (upload a Storage); tokens sincronizados via Realtime; jugadores mueven su propia ficha
+- **V2 — Tokens compartidos con iniciativa visible**: mostrar el turno activo a los jugadores; sincronizar el estado de combate (activo/inactivo, turno actual) en Supabase
+- **V3 — Fog of war**: máscara oscura sobre el mapa; DM revela zonas progresivamente
 
 #### Historial de sesiones
 - Lista de sesiones pasadas por campaña

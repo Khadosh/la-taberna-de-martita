@@ -17,8 +17,7 @@ type TabDef = {
   | '/campaigns/$campaignId/objetos'
   | '/campaigns/$campaignId/habilidades'
   | '/campaigns/$campaignId/taberna'
-  | '/campaigns/$campaignId/lucha'
-  | '/campaigns/$campaignId/mapas'
+  | '/campaigns/$campaignId/tablero'
   label: string
   icon: string
   exact?: boolean
@@ -28,8 +27,7 @@ type TabDef = {
 const GM_TABS: TabDef[] = [
   { to: '/campaigns/$campaignId', label: 'Overview', icon: '📇', exact: true },
   { to: '/campaigns/$campaignId/pnj', label: 'PNJs', icon: '👤' },
-  { to: '/campaigns/$campaignId/lucha', label: 'Combate', icon: '⚔️' },
-  { to: '/campaigns/$campaignId/mapas', label: 'Mapas', icon: '🗺️' },
+  { to: '/campaigns/$campaignId/tablero', label: 'Tablero', icon: '⚔️' },
   { to: '/campaigns/$campaignId/taberna', label: 'Taberna', icon: '🍺' },
   { to: '/campaigns/$campaignId/hechizos', label: 'Hechizos', icon: '✨' },
   { to: '/campaigns/$campaignId/objetos', label: 'Objetos', icon: '📦' },
@@ -39,6 +37,7 @@ const GM_TABS: TabDef[] = [
 // Tabs que ve el jugador (herramientas de referencia en mesa)
 const PLAYER_TABS: TabDef[] = [
   { to: '/campaigns/$campaignId', label: 'Mi Party', icon: '📇', exact: true },
+  { to: '/campaigns/$campaignId/tablero', label: 'Tablero', icon: '⚔️' },
   { to: '/campaigns/$campaignId/hechizos', label: 'Hechizos', icon: '✨' },
   { to: '/campaigns/$campaignId/objetos', label: 'Objetos', icon: '📦' },
   { to: '/campaigns/$campaignId/habilidades', label: 'Habilidades', icon: '😊' },
