@@ -9,6 +9,9 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 ### feat
 - Rediseño visual del inventario con madera y chapas metálicas (`darkFrameStyle`)
 - GACO auto-calculado por arma + proficiencia; badges de competencia clicables en tab pericias
+- Tablero de combate visual: mapa `mapa_combate.png` con fichas circulares, drag libre, arco SVG de HP y flecha de ataque con cálculo integrado
+- Layout 3 columnas en combate: PJs izquierda, tablero centro, NPCs derecha
+- Fix de flash en HP optimista de jugadores: `refetchQueries` en lugar de `invalidateQueries` para borrar el override local recién cuando el servidor confirmó el dato
 
 ### fix
 - Mobile layout, bugs de inventario y legibilidad en pergamino

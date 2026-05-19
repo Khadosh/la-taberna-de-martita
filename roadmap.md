@@ -44,6 +44,20 @@ Continuación del overhaul visual iniciado en v1.0.0:
 - ✅ **Tiradas de salvación**: unificadas en stat boxes del Tab Resumen (mod + proficiency)
 - **Tab Hechizos**: integrar spell slots con el sistema de paper doll (pendiente)
 
+### ⚔️ Combate — siguiente iteración
+
+#### Tablero compartido jugadores ↔ DM (V2)
+Los jugadores actualmente no tienen tab "Combate". El tablero visual lo ve solo el DM.
+- Agregar tab Combate en la vista de jugador (read-only del tablero)
+- Definir qué puede ver el jugador vs solo el DM: NPCs ocultos (`is_hidden`), HP de enemigos, condiciones, etc.
+- Requiere: persistir posiciones de tokens en Supabase Realtime por sesión de combate
+- Requiere: modelo de permisos para fichas (visible para jugadores / solo DM)
+
+#### HP de NPCs desde el tablero
+Actualmente el HP de NPCs solo se muestra en la ficha; no hay forma de ajustarlo desde el tablero.
+- Click en ficha NPC → panel flotante con -5/-1/+1/+5 y HP directo
+- Botón de eliminar del combate desde el panel de la ficha
+
 ### 📦 Features de juego (mediano plazo)
 
 #### Dado compartido en sesión
