@@ -15,6 +15,7 @@ import { type SheetJson, type InfoModalData } from '../../../components/characte
 import { parchmentStyle, mapBgStyle, sheetStyle, darkFrameStyle, SheetTabBar, type SheetTab } from '../../../components/character-sheet/sheet-primitives'
 import { InfoModal } from '../../../components/character-sheet/sheet-badges'
 import { LevelUpModal } from '../../../components/character-sheet/level-up-modal'
+import { ClassChoicesPanel } from '../../../components/character-sheet/class-choices-panel'
 import { TabResumen } from '../../../components/character-sheet/tab-resumen'
 import { TabPericias } from '../../../components/character-sheet/tab-pericias'
 import { TabHechizos } from '../../../components/character-sheet/tab-hechizos'
@@ -47,6 +48,9 @@ function CharacterSheet() {
   const [levelUpHpInput, setLevelUpHpInput] = useState('')
   const [levelUpSubclass, setLevelUpSubclass] = useState('')
   const [levelUpAsi, setLevelUpAsi] = useState<Record<string, number>>({})
+  const [levelUpFightingStyle, setLevelUpFightingStyle] = useState('')
+  const [levelUpFavoredEnemy, setLevelUpFavoredEnemy] = useState('')
+  const [levelUpNewSpells, setLevelUpNewSpells] = useState<string[]>([])
 
   // Inline editing state
   const [editingHp, setEditingHp] = useState(false)
@@ -194,6 +198,15 @@ function CharacterSheet() {
     const patch: Record<string, any> = { level: character.level + 1, current_hp: currentHp + hpGain }
     const sheetPatches: Partial<SheetJson> = { max_hp: newMaxHp }
     if (levelUpSubclass) sheetPatches.subclass = levelUpSubclass
+    if (levelUpFightingStyle) sheetPatches.fighting_style = levelUpFightingStyle
+    if (levelUpFavoredEnemy) {
+      const current = (character.sheet_json as SheetJson)?.favored_enemy ?? []
+      sheetPatches.favored_enemy = [...current, levelUpFavoredEnemy]
+    }
+    if (levelUpNewSpells.length > 0) {
+      const current = (character.sheet_json as SheetJson)?.spells ?? []
+      sheetPatches.spells = [...current, ...levelUpNewSpells]
+    }
     if (Object.keys(levelUpAsi).length > 0) {
       const newStats = { ...(character.stats as Record<string, number>) }
       for (const [key, val] of Object.entries(levelUpAsi)) {
@@ -204,6 +217,12 @@ function CharacterSheet() {
     await patchSheet(sheetPatches)
     await patchCharacter(patch)
     setShowLevelUpModal(false)
+    setLevelUpHpInput('')
+    setLevelUpSubclass('')
+    setLevelUpAsi({})
+    setLevelUpFightingStyle('')
+    setLevelUpFavoredEnemy('')
+    setLevelUpNewSpells([])
   }
 
   const toggleCondition = async (cond: string) => {
@@ -620,6 +639,14 @@ function CharacterSheet() {
               {/* Tab Content — único área scrolleable */}
               <div className="flex-1 min-h-0 overflow-y-auto scrollbar-none px-2">
                 {activeTab === 'resumen' && (
+                  <>
+                  <ClassChoicesPanel
+                    characterClass={character.class}
+                    sheet={sheet}
+                    level={level}
+                    isOwner={isOwner}
+                    patchSheet={patchSheet}
+                  />
                   <TabResumen
                     {...{
                       stats, sheet, character, raceDetail, isOwner, isGm, currentHp, maxHp, hitDie, hpPct, hpColor,
@@ -638,6 +665,7 @@ function CharacterSheet() {
                     patchSheet={patchSheet}
                     patchCharacter={patchCharacter}
                   />
+                  </>
                 )}
                 {activeTab === 'pericias' && (
                   <TabPericias
@@ -658,10 +686,12 @@ function CharacterSheet() {
                 {activeTab === 'historia' && (
                   <TabHistoria
                     backstory={character.backstory}
+                    sheet={sheet}
                     isOwner={isOwner}
                     confirmDelete={confirmDelete}
                     setConfirmDelete={setConfirmDelete}
                     onDelete={async () => { await supabase.from('characters').delete().eq('id', characterId); navigate({ to: '/' }) }}
+                    patchSheet={patchSheet}
                   />
                 )}
               </div>
@@ -695,8 +725,16 @@ function CharacterSheet() {
       {showLevelUpModal && (
         <LevelUpModal
           character={character} level={level} hitDie={hitDie} conMod={conMod} stats={stats}
-          hpInput={levelUpHpInput} setHpInput={setLevelUpHpInput} subclass={levelUpSubclass} setSubclass={setLevelUpSubclass}
-          asi={levelUpAsi} setAsi={setLevelUpAsi} currentSubclass={sheet.subclass} onConfirm={levelUp}
+          hpInput={levelUpHpInput} setHpInput={setLevelUpHpInput}
+          subclass={levelUpSubclass} setSubclass={setLevelUpSubclass}
+          asi={levelUpAsi} setAsi={setLevelUpAsi}
+          fightingStyle={levelUpFightingStyle} setFightingStyle={setLevelUpFightingStyle}
+          favoredEnemy={levelUpFavoredEnemy} setFavoredEnemy={setLevelUpFavoredEnemy}
+          newSpells={levelUpNewSpells} setNewSpells={setLevelUpNewSpells}
+          currentSubclass={sheet.subclass}
+          currentFightingStyle={sheet.fighting_style}
+          currentFavoredEnemies={sheet.favored_enemy}
+          onConfirm={levelUp}
           onCancel={() => setShowLevelUpModal(false)}
         />
       )}

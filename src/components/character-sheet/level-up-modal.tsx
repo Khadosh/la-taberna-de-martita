@@ -1,10 +1,20 @@
+import { useState } from 'react'
 import { useQuery, useQueries } from '@tanstack/react-query'
 import { dndApi, dndKeys } from '../../lib/dnd-api'
 import { parchmentStyle } from './sheet-primitives'
+import { FIGHTING_STYLES_BY_CLASS, FAVORED_ENEMIES } from '../../lib/class-choices'
 
 const STAT_LABELS_FULL: Record<string, string> = {
   str: 'Fuerza', dex: 'Destreza', con: 'Constitución',
   int: 'Inteligencia', wis: 'Sabiduría', cha: 'Carisma',
+}
+
+function maxCastableLevel(spellcasting?: { [key: string]: number | undefined }): number {
+  if (!spellcasting) return 0
+  for (let i = 9; i >= 1; i--) {
+    if ((spellcasting[`spell_slots_level_${i}`] ?? 0) > 0) return i
+  }
+  return 0
 }
 
 export function LevelUpModal({
@@ -12,7 +22,12 @@ export function LevelUpModal({
   hpInput, setHpInput,
   subclass, setSubclass,
   asi, setAsi,
+  fightingStyle, setFightingStyle,
+  favoredEnemy, setFavoredEnemy,
+  newSpells, setNewSpells,
   currentSubclass,
+  currentFightingStyle,
+  currentFavoredEnemies,
   onConfirm, onCancel,
 }: {
   character: { name: string; class: string }
@@ -26,12 +41,21 @@ export function LevelUpModal({
   setSubclass: (v: string) => void
   asi: Record<string, number>
   setAsi: (v: Record<string, number>) => void
+  fightingStyle: string
+  setFightingStyle: (v: string) => void
+  favoredEnemy: string
+  setFavoredEnemy: (v: string) => void
+  newSpells: string[]
+  setNewSpells: (v: string[]) => void
   currentSubclass?: string
+  currentFightingStyle?: string
+  currentFavoredEnemies?: string[]
   onConfirm: () => void
   onCancel: () => void
 }) {
   const nextLevel = level + 1
   const classIndex = character.class.toLowerCase()
+  const [spellSearch, setSpellSearch] = useState('')
 
   const { data: classLevels } = useQuery({
     queryKey: dndKeys.classLevels(classIndex),
@@ -45,7 +69,9 @@ export function LevelUpModal({
   })
 
   const targetLevel = classLevels?.find(l => l.level === nextLevel)
+  const currentLevelData = classLevels?.find(l => l.level === level)
   const features = targetLevel?.features ?? []
+
   const hasAsi = (targetLevel?.ability_score_bonuses ?? 0) > 0 && !currentSubclass?.includes('asi-done-' + nextLevel)
   const needsSubclass = features.some(f =>
     ['archetype', 'tradition', 'oath', 'origin', 'circle', 'domain', 'patron', 'path',
@@ -53,6 +79,47 @@ export function LevelUpModal({
       f.name.toLowerCase().includes(kw) || f.index.includes(kw)
     )
   ) && !currentSubclass
+
+  const hasFightingStyleFeature = !currentFightingStyle && features.some(f =>
+    f.name.toLowerCase().includes('fighting style') || f.index.includes('fighting-style')
+  )
+  const hasFavoredEnemyFeature = features.some(f =>
+    f.index.includes('favored-enemy') || f.name.toLowerCase().includes('favored enemy')
+  )
+
+  // Spell learning: only for known-casters (has spells_known in level data)
+  const spellsKnownNow = currentLevelData?.spellcasting?.spells_known ?? 0
+  const spellsKnownNext = targetLevel?.spellcasting?.spells_known ?? 0
+  const spellsToLearn = Math.max(0, spellsKnownNext - spellsKnownNow)
+  const needsSpells = spellsToLearn > 0
+  const maxSpellLevel = maxCastableLevel(targetLevel?.spellcasting as Record<string, number> | undefined)
+
+  const { data: classSpellRefs } = useQuery({
+    queryKey: dndKeys.classSpells(classIndex),
+    queryFn: () => dndApi.classSpells(classIndex),
+    staleTime: Infinity,
+    enabled: needsSpells,
+  })
+
+  const allSpellRefs = classSpellRefs?.results ?? []
+  const spellDetailResults = useQueries({
+    queries: allSpellRefs.map(s => ({
+      queryKey: dndKeys.spell(s.index),
+      queryFn: () => dndApi.spell(s.index),
+      staleTime: Infinity,
+      enabled: needsSpells,
+    })),
+  })
+
+  const spellsLoaded = spellDetailResults.filter(r => r.data).length
+  const spellsLoadedPct = allSpellRefs.length > 0 ? Math.round(spellsLoaded / allSpellRefs.length * 100) : 0
+
+  const filteredSpells = spellDetailResults
+    .map(r => r.data)
+    .filter(Boolean)
+    .filter(s => s!.level <= maxSpellLevel)
+    .filter(s => !spellSearch || s!.name.toLowerCase().includes(spellSearch.toLowerCase()))
+    .sort((a, b) => a!.level - b!.level || a!.name.localeCompare(b!.name))
 
   const featureResults = useQueries({
     queries: features.map(f => ({
@@ -66,10 +133,23 @@ export function LevelUpModal({
   const maxAsiPoints = 2
   const avgHp = Math.floor(hitDie / 2) + 1 + conMod
 
+  const fightingStyles = FIGHTING_STYLES_BY_CLASS[classIndex] ?? FIGHTING_STYLES_BY_CLASS['fighter']
+
   const hpValid = hpInput && parseInt(hpInput) >= 1
   const subclassValid = !needsSubclass || subclass
   const asiValid = !hasAsi || totalAsiPoints === maxAsiPoints
-  const canConfirm = hpValid && subclassValid && asiValid
+  const fightingStyleValid = !hasFightingStyleFeature || fightingStyle !== ''
+  const favoredEnemyValid = !hasFavoredEnemyFeature || favoredEnemy !== ''
+  const spellsValid = !needsSpells || newSpells.length === spellsToLearn
+  const canConfirm = hpValid && subclassValid && asiValid && fightingStyleValid && favoredEnemyValid && spellsValid
+
+  const toggleSpell = (index: string) => {
+    if (newSpells.includes(index)) {
+      setNewSpells(newSpells.filter(s => s !== index))
+    } else if (newSpells.length < spellsToLearn) {
+      setNewSpells([...newSpells, index])
+    }
+  }
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={onCancel}>
@@ -108,6 +188,107 @@ export function LevelUpModal({
               {subclasses.results.map(sc => (
                 <SubclassOption key={sc.index} index={sc.index} selected={subclass === sc.index} onSelect={() => setSubclass(sc.index)} />
               ))}
+            </div>
+          </div>
+        )}
+
+        {hasFightingStyleFeature && (
+          <div className="space-y-2">
+            <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">Estilo de combate</p>
+            <p className="text-xs text-stone-500 font-serif italic">Elegí un estilo que define tu manera de pelear.</p>
+            <div className="grid gap-2">
+              {fightingStyles.map(fs => (
+                <button
+                  key={fs.id}
+                  onClick={() => setFightingStyle(fs.id)}
+                  className={`text-left border p-3 transition-colors ${fightingStyle === fs.id
+                    ? 'border-amber-700 bg-amber-100/50 ring-1 ring-amber-600'
+                    : 'border-stone-400 hover:border-amber-600 hover:bg-amber-50/30'
+                  }`}
+                >
+                  <p className="text-sm font-semibold text-stone-800 font-serif">{fs.name}</p>
+                  <p className="text-xs text-stone-500 font-serif italic mt-0.5">{fs.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {hasFavoredEnemyFeature && (
+          <div className="space-y-2">
+            <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">
+              Enemigo predilecto {currentFavoredEnemies && currentFavoredEnemies.length > 0 && `(actual: ${currentFavoredEnemies.join(', ')})`}
+            </p>
+            <p className="text-xs text-stone-500 font-serif italic">
+              Elegí un tipo de criatura. Obtenés ventaja en Sabiduría (Percepción/Supervivencia) para rastrearlos y recordar información de ellos.
+            </p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {FAVORED_ENEMIES.map(enemy => (
+                <button
+                  key={enemy}
+                  onClick={() => setFavoredEnemy(enemy)}
+                  className={`text-left border px-3 py-2 text-xs font-serif transition-colors ${favoredEnemy === enemy
+                    ? 'border-amber-700 bg-amber-100/50 ring-1 ring-amber-600 text-stone-800 font-semibold'
+                    : 'border-stone-400 hover:border-amber-600 hover:bg-amber-50/30 text-stone-600'
+                  }`}
+                >
+                  {enemy}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {needsSpells && (
+          <div className="space-y-2">
+            <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">
+              Conjuros conocidos ({newSpells.length}/{spellsToLearn} elegidos)
+            </p>
+            <p className="text-xs text-stone-500 font-serif italic">
+              Elegí {spellsToLearn} conjuro{spellsToLearn > 1 ? 's' : ''} de nivel {maxSpellLevel > 1 ? `1–${maxSpellLevel}` : '1'} de la lista del {character.class}.
+            </p>
+            {allSpellRefs.length > 0 && spellsLoadedPct < 100 && (
+              <div className="h-1 rounded-full overflow-hidden" style={{ background: 'rgba(200,170,110,0.3)' }}>
+                <div className="h-full rounded-full bg-amber-700 transition-all" style={{ width: `${spellsLoadedPct}%` }} />
+              </div>
+            )}
+            <input
+              type="text"
+              placeholder="Buscar conjuro..."
+              value={spellSearch}
+              onChange={e => setSpellSearch(e.target.value)}
+              className="w-full px-3 py-1.5 text-sm border border-stone-400 bg-amber-50/80 focus:outline-none focus:border-amber-700 font-serif"
+            />
+            <div className="max-h-52 overflow-y-auto space-y-1 pr-1">
+              {filteredSpells.length === 0 && spellsLoadedPct < 100 && (
+                <p className="text-xs text-stone-400 font-serif italic text-center py-2">Cargando conjuros...</p>
+              )}
+              {filteredSpells.length === 0 && spellsLoadedPct === 100 && (
+                <p className="text-xs text-stone-400 font-serif italic text-center py-2">No se encontraron conjuros.</p>
+              )}
+              {filteredSpells.map(spell => {
+                const selected = newSpells.includes(spell!.index)
+                const canSelect = selected || newSpells.length < spellsToLearn
+                return (
+                  <button
+                    key={spell!.index}
+                    onClick={() => canSelect && toggleSpell(spell!.index)}
+                    disabled={!canSelect}
+                    className={`w-full text-left border px-3 py-2 transition-colors ${selected
+                      ? 'border-amber-700 bg-amber-100/50 ring-1 ring-amber-600'
+                      : canSelect
+                        ? 'border-stone-300 hover:border-amber-600 hover:bg-amber-50/30'
+                        : 'border-stone-200 opacity-40 cursor-not-allowed'
+                    }`}
+                  >
+                    <span className="text-xs font-semibold text-stone-800 font-serif">{spell!.name}</span>
+                    <span className="text-[10px] text-stone-400 font-serif ml-2">Nv.{spell!.level} · {spell!.school?.name ?? ''}</span>
+                    {selected && (
+                      <span className="float-right text-[10px] text-amber-700 font-semibold">elegido</span>
+                    )}
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}

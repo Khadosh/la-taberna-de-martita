@@ -1,17 +1,114 @@
+import { useState } from 'react'
+import { BACKGROUNDS } from '../../lib/dnd-backgrounds'
 import { SheetLabel, SheetRow } from './sheet-primitives'
+import type { SheetJson } from './types'
 
 interface TabHistoriaProps {
   backstory: string | null | undefined
+  sheet: SheetJson
   isOwner: boolean
   confirmDelete: boolean
   setConfirmDelete: (v: boolean) => void
   onDelete: () => void
+  patchSheet: (p: Partial<SheetJson>) => Promise<void>
 }
 
-export function TabHistoria({ backstory, isOwner, confirmDelete, setConfirmDelete, onDelete }: TabHistoriaProps) {
+export function TabHistoria({ backstory, sheet, isOwner, confirmDelete, setConfirmDelete, onDelete, patchSheet }: TabHistoriaProps) {
+  const [pickingBackground, setPickingBackground] = useState(false)
+
+  const bgData = sheet.background ? BACKGROUNDS[sheet.background] : null
+
+  const handleSelect = async (key: string) => {
+    await patchSheet({ background: key })
+    setPickingBackground(false)
+  }
+
   return (
     <div>
+      {/* Trasfondo */}
       <SheetRow>
+        <div className="flex-1 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <SheetLabel>Trasfondo</SheetLabel>
+            {isOwner && (
+              <button
+                onClick={() => setPickingBackground(v => !v)}
+                className="text-[10px] font-serif transition-colors"
+                style={{ color: '#9a7540' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#78350f')}
+                onMouseLeave={e => (e.currentTarget.style.color = '#9a7540')}
+              >
+                {pickingBackground ? 'cancelar' : bgData ? 'cambiar' : 'elegir'}
+              </button>
+            )}
+          </div>
+
+          {/* Picker */}
+          {pickingBackground && (
+            <div className="mb-4 grid gap-1.5">
+              {Object.entries(BACKGROUNDS).map(([key, bg]) => (
+                <button
+                  key={key}
+                  onClick={() => handleSelect(key)}
+                  className="w-full text-left border px-3 py-2 transition-colors"
+                  style={sheet.background === key
+                    ? { border: '1px solid rgba(180,100,20,0.6)', background: 'rgba(180,100,20,0.08)', color: '#78350f' }
+                    : { border: '1px solid rgba(109,85,48,0.25)', color: '#5c3d18' }
+                  }
+                  onMouseEnter={e => { if (sheet.background !== key) e.currentTarget.style.background = 'rgba(109,85,48,0.06)' }}
+                  onMouseLeave={e => { if (sheet.background !== key) e.currentTarget.style.background = '' }}
+                >
+                  <span className="text-sm font-semibold font-serif">{bg.name}</span>
+                  <span className="text-xs font-serif ml-2" style={{ color: '#9a7540' }}>
+                    {bg.skills.join(', ')}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Current background display */}
+          {!pickingBackground && bgData && (
+            <div className="space-y-3">
+              <h4 className="font-serif font-bold text-base" style={{ color: '#3d2510' }}>{bgData.name}</h4>
+
+              <p className="text-xs font-serif italic leading-relaxed" style={{ color: '#5c3d18' }}>
+                {bgData.desc}
+              </p>
+
+              <div>
+                <p className="text-[10px] uppercase tracking-widest font-semibold font-serif mb-1.5" style={{ color: '#9a7540' }}>
+                  Competencias en habilidades
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {bgData.skills.map(skill => (
+                    <span key={skill} className="text-xs font-serif px-2 py-0.5"
+                      style={{ background: 'rgba(109,85,48,0.1)', border: '1px solid rgba(109,85,48,0.25)', color: '#5c3d18' }}>
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[10px] uppercase tracking-widest font-semibold font-serif mb-1" style={{ color: '#9a7540' }}>
+                  Herramienta / Instrumento
+                </p>
+                <p className="text-xs font-serif" style={{ color: '#5c3d18' }}>{bgData.tool}</p>
+              </div>
+            </div>
+          )}
+
+          {!pickingBackground && !bgData && (
+            <p className="font-serif italic text-sm text-center py-4" style={{ color: '#7a5828' }}>
+              {isOwner ? 'Sin trasfondo. Elegí uno para ver sus rasgos.' : 'Sin trasfondo registrado.'}
+            </p>
+          )}
+        </div>
+      </SheetRow>
+
+      {/* Historia del personaje */}
+      <SheetRow className="border-t border-stone-500/30">
         <div className="flex-1 p-5">
           <SheetLabel>Historia del Personaje</SheetLabel>
           {backstory ? (

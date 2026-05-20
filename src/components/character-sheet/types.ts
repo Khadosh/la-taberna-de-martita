@@ -21,6 +21,9 @@ export type SheetJson = {
   }
   currency?: { gold: number; silver: number; copper: number }
   max_hp?: number
+  fighting_style?: string
+  favored_enemy?: string[]
+  background?: string
 }
 
 export type InfoModalData =

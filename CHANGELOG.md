@@ -7,6 +7,11 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 ## [Unreleased]
 
 ### feat
+- Level up: selector de conjuros conocidos para casters (Ranger, Bardo, Hechicero, Warlock) con buscador y filtro por nivel máximo casteable
+- Level up: selector de Estilo de Combate para Ranger, Fighter y Paladin
+- Level up: selector de Enemigo Predilecto para el Ranger
+- Panel de elecciones pendientes en tab Resumen: aparece automáticamente cuando faltan selecciones de clase (estilo de combate, enemigo predilecto, conjuros) y permite completarlas sin resetear el nivel
+- Trasfondo en tab Historia: muestra nombre, descripción, competencias en habilidades y herramienta del trasfondo elegido durante la creación; permite cambiarlo
 - Rediseño visual del inventario con madera y chapas metálicas (`darkFrameStyle`)
 - GACO auto-calculado por arma + proficiencia; badges de competencia clicables en tab pericias
 - Tablero de combate visual: mapa `mapa_combate.png` con fichas circulares, drag libre, arco SVG de HP y flecha de ataque con cálculo integrado

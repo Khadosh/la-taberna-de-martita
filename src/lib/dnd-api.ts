@@ -74,6 +74,7 @@ export interface ClassLevel {
   ability_score_bonuses: number
   prof_bonus: number
   spellcasting?: {
+    spells_known?: number
     spell_slots_level_1?: number
     spell_slots_level_2?: number
     spell_slots_level_3?: number
@@ -117,6 +118,14 @@ export interface EquipmentItem {
   category_range?: string                         // 'Simple Melee', etc.
   properties?: { index: string; name: string }[]  // 'finesse', 'thrown', 'light', …
   damage?: { damage_dice: string; damage_type: ApiRef }
+}
+
+export interface BackgroundDetail {
+  index: string
+  name: string
+  starting_proficiencies: ApiRef[]
+  feature: { name: string; desc: string[] }
+  language_options?: { choose: number; type?: string }
 }
 
 export interface MonsterSummary {
@@ -185,6 +194,8 @@ export const dndApi = {
   equipmentCategory: (i: string) => get<{ index: string; name: string; equipment: ApiRef[] }>(`/equipment-categories/${i}`),
   monsters: () => get<{ count: number; results: MonsterSummary[] }>('/monsters'),
   monster: (i: string) => get<MonsterDetail>(`/monsters/${i}`),
+  backgroundList: () => get2014<{ results: ApiRef[] }>('/backgrounds'),
+  background: (i: string) => get2014<BackgroundDetail>(`/backgrounds/${i}`),
 }
 
 export const dndKeys = {
@@ -206,6 +217,8 @@ export const dndKeys = {
   equipmentCategory: (i: string) => ['dnd', 'equipment-category', i] as const,
   monsters: ['dnd', 'monsters'] as const,
   monster: (i: string) => ['dnd', 'monsters', i] as const,
+  backgrounds: ['dnd', 'backgrounds'] as const,
+  background: (i: string) => ['dnd', 'backgrounds', i] as const,
 }
 
 export function rollStat(): number {
