@@ -138,6 +138,10 @@ Usamos [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## 📝 Changelog
 
+- **2026-05-20**: `feat: improve equipment icon matching and generate custom icons`
+  - ✅ Implemented whole-word matching helper `hasWords` in `src/lib/item-icons.ts` to solve false-positive substring matches (e.g. hempen, tinderbox, caltrops).
+  - ✅ Generated 7 premium custom inventory icons (Thieves' Tools, Alchemist's Supplies, Poisoner's Kit, Herbalism Kit, Caltrops, Tinderbox, Hempen Rope) matching the game's fantasy style.
+  - ✅ Updated docs with detail proposals and verified clean production compilation build.
 - **2026-05-20**: `docs: add shared-dice-proposal and update documentation`
   - ✅ Guardada la propuesta de sincronización de dados en `docs/shared-dice-proposal.md`.
   - ✅ Configurado comando de automatización `/push` (en formato de skill para el LLM).
