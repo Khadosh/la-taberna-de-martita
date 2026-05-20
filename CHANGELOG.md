@@ -29,6 +29,8 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 - Mobile layout, bugs de inventario y legibilidad en pergamino
 
 ### style
+- Stat boxes: gradiente con luz desde arriba-derecha, carta levantada con sombra outward, badge semáforo (fondo oscuro + número pastel por tono rojo→neutro→verde según modificador)
+- Textura de papiro actualizada
 - Stat boxes con efecto latón gastado y puntadas decorativas entre tabs
 - Wax seals con PNG real; condiciones con tooltip combinado; botón de quitar más visible
 - Ajustes de contraste y bordes en tab pericias
