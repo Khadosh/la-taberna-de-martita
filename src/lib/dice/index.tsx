@@ -60,22 +60,19 @@ export function DiceModule({
   isOpen: boolean;
   onClose: () => void
 }) {
-  if (!isOpen) return null;
-
+  // Canvas siempre montado (display:none cuando cerrado) para que WebGL se inicialice
+  // en el background al cargar la página y no bloquee el hilo cuando el usuario abre los dados.
   return (
-    // Fondo oscuro y borroso que centra el contenido
-    <div className="fixed inset-0 z-[9999] bg-stone-950/60 backdrop-blur-sm flex items-center justify-center pointer-events-auto p-4">
-
-      {/* Caja del Modal: Aquí gestionas el tamaño */}
-      {/* w-full = 100% de ancho, max-w-3xl = ancho máximo de 768px, h-[600px] = alto fijo de 600px */}
+    <div
+      className="fixed inset-0 z-[9999] bg-stone-950/60 backdrop-blur-sm flex items-center justify-center pointer-events-auto p-4"
+      style={{ display: isOpen ? 'flex' : 'none' }}
+    >
       <div className="relative w-full max-w-3xl h-[600px] bg-stone-900 border-2 border-amber-900/50 rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col">
 
-        {/* Canvas 3D de los dados */}
         <div className="absolute inset-0 pointer-events-none">
           <DiceArena />
         </div>
 
-        {/* Capa de interfaz (botones, bandeja de dados, botón cerrar) */}
         <div className="absolute inset-0 pointer-events-none flex flex-col justify-end">
           <UIOverlay onClose={onClose} />
         </div>

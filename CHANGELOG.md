@@ -26,6 +26,7 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 - Rutas `/lucha` y `/mapas` redirigen a `/tablero`
 
 ### fix
+- Tirador de dados: eliminado flash blanco al abrir — canvas WebGL pre-montado en background, HDR servido localmente (sin request a GitHub), Environment envuelto en Suspense para evitar re-render al cargar
 - Mobile layout, bugs de inventario y legibilidad en pergamino
 
 ### style

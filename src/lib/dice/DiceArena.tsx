@@ -1,5 +1,5 @@
 // @ts-nocheck
-import React, { useState, useEffect, useRef } from 'react';
+import React, { Suspense, useState, useEffect, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Physics, usePlane, useBox } from '@react-three/cannon';
 import { OrbitControls, PerspectiveCamera, Environment, ContactShadows } from '@react-three/drei';
@@ -164,6 +164,7 @@ export default function DiceArena() {
                 style={{ width: '100%', height: '60%' }}
                 shadows={{ type: THREE.PCFShadowMap }}
                 dpr={[1, 2]}
+                gl={{ powerPreference: 'high-performance' }}
             >
                 <CameraControl rolling={rolling} />
                 <OrbitControls enablePan={false} enableZoom={false} maxPolarAngle={Math.PI / 2.5} />
@@ -171,7 +172,10 @@ export default function DiceArena() {
                 <ambientLight intensity={0.7} />
                 <spotLight position={[10, 20, 10]} angle={0.4} penumbra={1} intensity={5} castShadow color="#4deeea" />
                 <pointLight position={[-10, -5, -10]} intensity={1.5} color="#c8a45d" />
-                <Environment preset="sunset" />
+                <Suspense fallback={null}>
+                  <Environment files="/assets/venice_sunset_1k.hdr" />
+                </Suspense>
+
 
                 <Physics gravity={[0, -28, 0]}>
                     <Floor />
