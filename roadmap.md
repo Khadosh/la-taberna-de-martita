@@ -30,112 +30,41 @@
 
 ---
 
-## 🎯 Próximas prioridades
+## 🎯 Próximas prioridades (Propuestas Futuras)
 
-### 🎨 Visual — Pulido pendiente (corto plazo)
-Continuación del overhaul visual iniciado en v1.0.0:
-- ✅ **Ajuste fino del papiro**: balance entre textura visible y legibilidad en todos los tabs
-- ✅ **Wax seals**: PNG real, tooltip combinado, botón de quitar más visible
-- ✅ **Tab Pericias**: contraste y bordes ajustados al lenguaje visual del pergamino
-- ✅ **Inventario**: rediseño con madera y chapas metálicas (`darkFrameStyle`)
-- ✅ **Tab Hechizos**: lenguaje visual aplicado (spell slots con gradiente latón, colores cálidos)
-- ✅ **Tab Historia**: consistencia visual con SheetRow
-- ✅ **Emojis → SVGs**: todos los tabs, botones y acciones usan SVGs inline acordes al pergamino
-- ✅ **Tiradas de salvación**: unificadas en stat boxes del Tab Resumen (mod + proficiency)
-- **Tab Hechizos**: integrar spell slots con el sistema de paper doll (pendiente)
+### 🎲 1. Dado compartido e interactivo (1-Way Player-to-DM)
+Sincronización de dados en mesa integrada al tablero de combate del DM (documentado detalladamente en [shared-dice-proposal.md](file:///Users/joaquinnader/Documents/web/personales/dungeonsanddragons/tavern-app/docs/shared-dice-proposal.md)):
+- **Tiradas interactivas en la hoja (Click-to-Roll)**: Hacer clickeables modificadores de características, salvaciones y pericias.
+- **Broadcast de tiradas de jugador**: Transmitir el resultado vía Supabase Realtime al DM.
+- **Tiradas del DM secretas**: Las tiradas del DM permanecen locales y secretas.
+- **Registro de Tiradas en la Pantalla del DM**: Tercera columna derecha en la pantalla de Combate del DM (`lucha.tsx`) que funciona como feed en tiempo real de tiradas.
 
-### ⚔️ Combate — siguiente iteración
+### 🔧 2. Bugs y UX pendientes (Sesión 2 feedback)
 
-#### Tablero compartido jugadores ↔ DM
-- ✅ Tab "Tablero" unificado visible para DM y jugadores (reemplaza "Combate" + "Mapas")
-- ✅ Tab Combate/Tablero accesible para jugadores (con su ficha movible)
-- ✅ Posiciones de tokens persistidas en `board_tokens` y sincronizadas via Supabase Realtime
-- ✅ Jugadores mueven su propia ficha; DM mueve cualquier ficha
-- ✅ Coordenadas normalizadas (0-1) para consistencia entre pantallas de distinto tamaño
-- Pendiente: NPCs ocultos (`is_hidden`) — jugadores no ven fichas con `is_hidden: true`
-- Pendiente: HP de enemigos visible/oculto por configuración del DM
-
-#### HP de NPCs desde el tablero
-- ✅ Panel lateral derecho con -5/-1/+1/+5 y HP directo por cada NPC activo
-- ✅ Botón de eliminar del combate desde el panel lateral
-- Pendiente: click en token del tablero → panel flotante inline (más directo que el sidebar)
-
-### 📦 Features de juego (mediano plazo)
-
-#### Dado compartido en sesión
-El tirador flotante existe pero las tiradas no son visibles para el resto de la mesa.
-- Historial de tiradas visible para todos los conectados a la campaña (Supabase Realtime)
-- El DM ve las tiradas del party en la pantalla DM
-- Tiradas con etiqueta: "Ataque +3", "Salvación DES", etc.
-
-#### Spell slots integrados al paper doll
-- Mostrar slots disponibles/usados desde el panel de inventario
-- Click en un slot de hechizo para marcarlo como usado
-- Reset en descanso largo (ya existe el handler)
-
-#### Items personalizados por campaña
-El DM puede crear ítems únicos atados a la campaña:
-- Nombre, descripción, peso, precio, propiedades especiales (`properties` JSON)
-- Disponibles en la Taberna de esa campaña
-- Tabla `campaign_items` (`campaign_id`, `name`, `properties` JSON)
-
-#### Sistema de compraventa con aprobación del DM
-- Jugador envía solicitud de compra → DM acepta/rechaza/contra-propone
-- Tabla `purchase_requests` con status (pending/accepted/rejected/countered)
-
-### 🔧 Bugs y UX pendientes (Sesión 2 feedback)
-
-| Item | Estado | Prioridad |
-|------|--------|-----------|
-| Al salir del personaje: volver a la campaña, no al dashboard | Pendiente | Alta |
-| XP: sumar al valor actual (no reemplazar) | ✅ Ya implementado | — |
-| Objetos: cantidad con +/- al hacer click | ✅ Ya existe en panel de detalle | — |
-| Peso al agregar ítem desde catálogo | ✅ Ya implementado | — |
-| Level up: accesible sin XP | ✅ No necesario (wizard ya accesible) | — |
-| Borrar personajes desde el dashboard | ✅ Ya existe | — |
-| Borrar campañas desde el dashboard | Pendiente | Media |
-| Navegación: "volver" consistente en todas las pantallas | Pendiente | Baja |
-| Feedback de guardado en la hoja (actualmente solo HP lo tiene) | Pendiente | Baja |
-
-### 🗺 Features más grandes (largo plazo)
-
-#### Tablero de Juego (ex Mapas + Combate)
-- ✅ **V1**: Tab unificado visible para DM y jugadores; mapa dinámico (upload a Storage); tokens sincronizados via Realtime; jugadores mueven su propia ficha
-- **V2 — Tokens compartidos con iniciativa visible**: mostrar el turno activo a los jugadores; sincronizar el estado de combate (activo/inactivo, turno actual) en Supabase
-- **V3 — Fog of war**: máscara oscura sobre el mapa; DM revela zonas progresivamente
-
-#### Historial de sesiones
-- Lista de sesiones pasadas por campaña
-- Notas archivadas y consultables
-
-#### Distribución de loot
-- DM crea un "tesoro" con ítems del catálogo
-- Jugadores toman ítems → van directo a su inventario
-
-#### Chat de sesión
-- Canal de texto por campaña
-- Tiradas de dado aparecen automáticamente
-- GM puede hacer anuncios destacados
-
-#### Export PDF
-- Hoja de personaje como PDF estilo D&D oficial
+| Item | Prioridad |
+|------|-----------|
+| Al salir del personaje: volver a la campaña, no al dashboard | Alta |
+| XP: sumar al valor actual (no reemplazar) | Alta |
+| Objetos: cantidad con +/- (no input directo) | Media |
+| Peso al agregar ítem desde catálogo | Media |
+| Level up: accesible desde la hoja del jugador sin XP | Media |
+| Borrar campañas y personajes desde el dashboard | Media |
+| Navegación: "volver" consistente en todas las pantallas | Baja |
+| Feedback de guardado en la hoja (actualmente solo HP lo tiene) | Baja |
 
 ---
 
-## Deuda técnica
+## 🗺 Features más grandes (largo plazo)
 
-| Item | Urgencia |
-|------|----------|
-| Sin tests (unit ni e2e) | Media |
-| Sin Sentry / error monitoring | Media |
-| Sin GitHub Actions CI (deploy manual via push main) | Baja |
-| Componentes de hoja grandes (`$characterId.tsx` > 500 líneas) | Baja |
-| `agents.md` desactualizado (refleja estado inicial del proyecto) | Baja |
+### Mapas de sesión
+- Subir imagen como mapa visible por el party.
+- Solo el DM puede cambiarla.
+- v2: tokens drag-and-drop, fog of war.
 
----
+### Historial de sesiones
+- Lista de sesiones pasadas por campaña.
+- Notas archivadas y consultables.
 
-## Descartado / ya no aplica
-
-- SSR / TanStack Start → app 100% autenticada, sin SEO, SPA es suficiente
-- Drizzle en runtime → Supabase client directo con tipos generados
-- `CONDITIONS_ES` duplicado → ya centralizado en `lib/dnd-constants.ts`
+### Distribución de loot
+- DM crea un "tesoro" con ítems del catálogo.
+- Jugadores toman ítems → van directo a su inventario.

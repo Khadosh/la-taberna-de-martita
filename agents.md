@@ -10,11 +10,11 @@ App companion para sesiones de Dungeons & Dragons 5ª edición.
 El **Dungeon Master** y los **jugadores** se loguean, cada uno con su rol.  
 Funcionalidades core:
 
-- Creación de personajes de forma interactiva (guiada, divertida, con datos reales de 5e)
-- Hojas de personaje persistentes y editables
-- Sistema de notas/anotaciones por sesión (DM y jugadores)
-- Integración con API pública de D&D 5e para traer hechizos, clases, razas, pericias, etc.
-- Reutilización del módulo de tirada de dados ya existente (ver sección **Código reutilizado**)
+- Creación de personajes de forma interactiva (guiada, con datos reales de la API de 5e).
+- Hojas de personaje persistentes y editables con estética premium.
+- Sistema de notas/anotaciones por sesión (DM y jugadores).
+- Integración con API pública de D&D 5e (`dnd5eapi.co` + `Open5e`) para traer hechizos, clases, razas, pericias, etc.
+- Sistema de dados 3D con físicas integrado en la hoja de personaje y la pantalla de combate.
 
 ---
 
@@ -35,9 +35,9 @@ Funcionalidades core:
 | Package manager | pnpm |
 | D&D data | [dnd5eapi.co](https://www.dnd5eapi.co) (primaria) / [Open5e](https://api.open5e.com/v1) (fallback/enriquecimiento) |
 
-> **Por qué SPA y no TanStack Start:** app 100% autenticada, sin páginas públicas indexables. SSR no aporta nada y agrega riesgo de breaking changes de un framework en beta.  
+> **Por qué SPA y no TanStack Start:** app 100% autenticada, sin páginas públicas indexables. SSR no aporta nada y agrega riesgo de breaking changes.  
 > **Por qué Drizzle solo en dev:** no hay servidor Node donde correrlo en runtime. Se usa para definir el schema y correr migraciones; el acceso a datos usa el Supabase client directamente.  
-> **Por qué dos APIs de 5e:** `dnd5eapi.co` tiene mejor cobertura de SRD base (clases, razas, hechizos, equipo). Open5e agrega contenido de terceros. Usar dnd5eapi.co como primaria; Open5e como fallback o enriquecimiento.
+> **Por qué dos APIs de 5e:** `dnd5eapi.co` tiene mejor cobertura de SRD base. Open5e agrega contenido de terceros.
 
 ---
 
@@ -49,7 +49,7 @@ tavern-app/
 │   ├── lib/
 │   │   ├── supabase.ts          # cliente Supabase singleton
 │   │   ├── dnd-api/             # wrappers fetch + TanStack Query keys
-│   │   └── dice/                # módulo rollDice (a extraer del repo existente)
+│   │   └── dice/                # módulo rollDice (dados 3D con físicas react-three-cannon)
 │   ├── routes/
 │   │   ├── __root.tsx           # layout raíz, QueryClientProvider context
 │   │   ├── index.tsx            # landing / redirect
@@ -79,8 +79,6 @@ VITE_DND_API_BASE=https://www.dnd5eapi.co/api
 VITE_OPEN5E_API_BASE=https://api.open5e.com/v1
 ```
 
-> `SUPABASE_SERVICE_ROLE_KEY` **nunca** va en el cliente ni en el repo. Solo si se agregan edge functions propias.
-
 ---
 
 ## 🗄 Schema de base de datos (Drizzle)
@@ -95,86 +93,33 @@ characters        { id, user_id, campaign_id, name, race, class, level, stats, b
 session_notes     { id, campaign_id, author_id, title, body, is_private, session_date, created_at }
 ```
 
-> `sheet_json` es un JSONB que guarda el estado completo de la hoja de personaje (HP, hechizos preparados, inventario, etc.). Drizzle lo tipea con `$type<CharacterSheet>()`.  
-> `is_private` en notas permite que el DM tenga anotaciones que los jugadores no ven.
-
 ---
 
-## 🎲 Código reutilizado — Módulo de dados
+## 🎲 Módulo de dados interactivo y compartido (Futuro)
 
-Tengo una app existente con lógica de tirada de dados. Pasos para integrarlo:
-
-1. Copiar/extraer el módulo a `src/lib/dice/`
-2. Exponer una API limpia: `rollDice(notation: string): DiceResult` — donde `notation` es estándar (`"2d6+3"`, `"1d20"`, etc.)
-3. El componente visual de tirada se monta en la hoja de personaje y en el panel de sesión
-4. **No reescribir lo que ya funciona.** Si hay dependencias propias, evaluarlas antes de extraer.
-
-**Repo fuente del dado:** `[COMPLETAR]`  
-**Dependencias que arrastra:** `[COMPLETAR]`
+El sistema de dados 3D utiliza Three.js y react-three-cannon para físicas reales. Hay una propuesta de diseño para tiradas de dados compartidas (1-way de jugadores a DM) y click-to-roll interactivo documentada en [shared-dice-proposal.md](file:///Users/joaquinnader/Documents/web/personales/dungeonsanddragons/tavern-app/docs/shared-dice-proposal.md).
 
 ---
 
 ## 🧙 Creación de personaje — flujo interactivo
 
-El objetivo es que crear un personaje sea un momento, no un formulario.  
-Propuesta de flujo en pasos con TanStack Form + datos reales de la API:
-
 ```
 1. ¿Cómo te llamás?          → nombre + apodo opcional
-2. ¿Quién sos?               → selección de Raza (desde dnd5eapi) con descripción y traits
+2. ¿Quién sos?               → selección de Raza con descripción y traits
 3. ¿Qué hacés?               → selección de Clase con flavor text, hit die, proficiencias
-4. Tu historia               → origen (Background) + textarea de backstory libre
-5. Tus números               → tirada interactiva de stats (usa el módulo de dados) o point buy
-6. Hechizos iniciales        → si la clase es spellcaster, selector con búsqueda desde API
+4. Tu historia               → origen (Background) + backstory libre
+5. Tus números               → tirada interactiva de stats o point buy
+6. Hechizos iniciales        → selector con búsqueda desde API
 7. Resumen y confirmación    → hoja preview antes de guardar
 ```
-
-Cada paso valida con TanStack Form. El estado del wizard se acumula en un objeto que al final hace un solo INSERT en `characters` via Supabase client.
 
 ---
 
 ## 👥 Roles y permisos (Supabase RLS)
 
-```sql
--- Players solo ven sus propios personajes
--- DM ve todos los personajes de su campaña
--- Notas privadas solo las ve el autor (o el DM si es DM)
-```
-
-Configurar Row Level Security en Supabase directamente.  
-RLS es la red de seguridad real — no hay servidor propio que filtre.
-
----
-
-## 📡 Integración D&D 5e API
-
-Wrapper en `src/lib/dnd-api/`:
-
-```ts
-// Endpoints principales a wrappear:
-GET /races          → lista de razas
-GET /races/{index}  → detalle con traits
-GET /classes        → lista de clases
-GET /classes/{index}/levels/1  → features de nivel 1
-GET /spells         → lista con filtros (por clase, nivel)
-GET /spells/{index} → detalle completo
-GET /skills         → pericias
-GET /equipment      → equipo básico
-```
-
-Cachear con TanStack Query (`staleTime: Infinity` para datos de reglas — no cambian).  
-No guardar en DB los datos de la API, solo referencias por `index` string.
-
----
-
-## 🔭 Decisiones arquitectónicas clave
-
-- **SPA sin SSR** — app 100% autenticada, sin páginas públicas. SSR agrega complejidad innecesaria.
-- **Supabase Auth** maneja sesiones. El rol DM/Player se guarda en `user_metadata` o en una tabla `profiles` with FK a `auth.users`.
-- **Drizzle solo para schema y migraciones** — runtime usa Supabase client con tipos generados (`supabase gen types typescript`).
-- **sheet_json como JSONB** evita over-engineering de schema para un MVP. Si el modelo crece, migrar a columnas explícitas.
-- **API de D&D es read-only y pública** — no necesita proxy propio a menos que haya problemas de CORS en producción.
-- **Dados en cliente** — la lógica de `rollDice` es pura, no necesita ir al servidor.
+- Players solo ven sus propios personajes y campañas a las que están unidos.
+- DM ve todos los personajes y notas de su campaña.
+- RLS configurado en Supabase a nivel de base de datos para todas las tablas core.
 
 ---
 
@@ -186,35 +131,25 @@ Usamos [Conventional Commits](https://www.conventionalcommits.org/).
 
 - **Tipos permitidos:** `feat`, `fix`, `chore`, `docs`, `style`, `refactor`, `test`, `perf`, `ci`.
 - **Reglas:**
-  - `subject` en minúsculas.
-  - Sin punto final.
+  - `subject` en minúsculas y sin punto final.
   - Máximo 72 caracteres.
-
-**Ejemplo:**
-`chore: basic project setup`
 
 ---
 
 ## 📝 Changelog
 
-Para ver el historial detallado de cambios, consulta el archivo [CHANGELOG.md](file:///Users/joaquinnader/coding/personal/la-taberna-de-martita/CHANGELOG.md).
-
+- **2026-05-20**: `docs: add shared-dice-proposal and update documentation`
+  - ✅ Guardada la propuesta de sincronización de dados en `docs/shared-dice-proposal.md`.
+  - ✅ Configurado comando de automatización `/push` (en formato de skill para el LLM).
 - **2026-05-14**: `feat: complete session 1 feedback loop & rebranding`
-  - ✅ **Rebranding**: "La Taberna de Martita" con visuales atmosféricos.
-  - ✅ **Sistemas**: Realtime sync, Bestiario, Spellbook y mecánicas de descanso.
-  - ✅ **UX/UI**: Rediseño de habilidades, inventario compacto y wizard v2.
+  - ✅ Rebranding: "La Taberna de Martita" con estética de papiro, madera y metal.
+  - ✅ Sistemas: Realtime sync, Bestiario, Spellbook y mecánicas de descanso.
+  - ✅ UX/UI: Rediseño de habilidades, inventario compacto y wizard v2.
 - **2026-05-13**: `feat: production launch & dm screen`
-  - ✅ **Infra**: Deploy en Vercel, dominio custom y email transaccional.
-  - ✅ **GM**: Pantalla de sesión con iniciativa y notas.
-- **2026-05-12**: `chore: project initialization`
-  - ✅ **Setup**: Auth, Supabase RLS, Wizard de creación inicial.
+  - ✅ GM: Pantalla de sesión con iniciativa y notas.
 
 ---
 
 ## 🗺 Roadmap
 
 El seguimiento de tareas y próximos pasos se encuentra en [roadmap.md](file:///Users/joaquinnader/Documents/web/personales/dungeonsanddragons/tavern-app/roadmap.md).
-
----
-
-*Última actualización: implementado feedback sesión 1 (19/21 items) + sistemas de level-up y hechizos*
