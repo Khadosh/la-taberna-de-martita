@@ -138,6 +138,11 @@ Usamos [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## 📝 Changelog
 
+- **2026-05-20**: `feat: add inventory item stats panel with svg icon badges`
+  - ✅ Al seleccionar un item del inventario, se fetchea `GET /api/2014/equipment/{index}` (TanStack Query, caché 10 min, lazy).
+  - ✅ Panel muestra stat pills: daño (armas), CA + bonus DES (armaduras), categoría, rango, propiedades, costo.
+  - ✅ Creado `stat-icons.tsx` con 20 SVG inline (11 propiedades de arma: finesse, light, heavy, two-handed, versatile, reach, thrown, ammunition, loading, monk, special + Simple/Martial + Melee/Ranged + Light/Medium/Heavy Armor + Shield).
+  - ✅ `dnd-api.ts`: `equipmentDetail` migrado a endpoint `/api/2014/`.
 - **2026-05-20**: `feat: improve equipment icon matching and generate custom icons`
   - ✅ Implemented whole-word matching helper `hasWords` in `src/lib/item-icons.ts` to solve false-positive substring matches (e.g. hempen, tinderbox, caltrops).
   - ✅ Generated 7 premium custom inventory icons (Thieves' Tools, Alchemist's Supplies, Poisoner's Kit, Herbalism Kit, Caltrops, Tinderbox, Hempen Rope) matching the game's fantasy style.

@@ -1,8 +1,15 @@
 const BASE = 'https://www.dnd5eapi.co/api'
+const BASE_2014 = 'https://www.dnd5eapi.co/api/2014'
 
 async function get<T>(path: string): Promise<T> {
   const res = await fetch(`${BASE}${path}`)
   if (!res.ok) throw new Error(`DnD API ${res.status}: ${path}`)
+  return res.json() as Promise<T>
+}
+
+async function get2014<T>(path: string): Promise<T> {
+  const res = await fetch(`${BASE_2014}${path}`)
+  if (!res.ok) throw new Error(`DnD API 2014 ${res.status}: ${path}`)
   return res.json() as Promise<T>
 }
 
@@ -173,7 +180,7 @@ export const dndApi = {
   subclassFeatures: (i: string) => get<{ results: ApiRef[] }>(`/subclasses/${i}/features`),
   skill: (i: string) => get<SkillDetail>(`/skills/${i}`),
   equipment: () => get<{ count: number; results: ApiRef[] }>('/equipment'),
-  equipmentDetail: (i: string) => get<EquipmentItem>(`/equipment/${i}`),
+  equipmentDetail: (i: string) => get2014<EquipmentItem>(`/equipment/${i}`),
   equipmentCategories: () => get<{ results: ApiRef[] }>('/equipment-categories'),
   equipmentCategory: (i: string) => get<{ index: string; name: string; equipment: ApiRef[] }>(`/equipment-categories/${i}`),
   monsters: () => get<{ count: number; results: MonsterSummary[] }>('/monsters'),

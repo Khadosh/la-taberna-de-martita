@@ -1,5 +1,5 @@
-import { useState, useMemo, useCallback } from 'react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useState, useMemo, useCallback, type ReactNode } from 'react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   DndContext, DragOverlay,
   PointerSensor, useSensor, useSensors,
@@ -7,6 +7,7 @@ import {
   useDroppable,
 } from '@dnd-kit/core'
 import { supabase } from '../../lib/supabase'
+import { dndApi, dndKeys } from '../../lib/dnd-api'
 import type { SheetJson } from './types'
 import { inferSlot, type SlotKey } from '../../lib/equip-slots'
 import { PaperDoll, type ActiveDrag } from './paper-doll'
@@ -16,6 +17,29 @@ import { DraggableItem } from './inventory-grid-item'
 import { CurrencyPlates } from './inventory-currency'
 import { AddItemModal } from './inventory-add-modal'
 import { SlotPickerModal } from './inventory-slot-picker'
+import { STAT_ICONS } from './stat-icons'
+
+// ── Stat badge pill ────────────────────────────────────────────────────────────
+const PILL_STYLES: Record<string, { bg: string; border: string; text: string }> = {
+  amber: { bg: 'rgba(120,60,8,0.45)',  border: 'rgba(180,100,20,0.5)',  text: '#d97706' },
+  blue:  { bg: 'rgba(30,58,100,0.45)', border: 'rgba(60,100,180,0.5)',  text: '#60a5fa' },
+  red:   { bg: 'rgba(100,20,20,0.45)', border: 'rgba(160,40,40,0.5)',   text: '#f87171' },
+  gold:  { bg: 'rgba(100,80,10,0.45)', border: 'rgba(180,150,20,0.5)',  text: '#fbbf24' },
+  stone: { bg: 'rgba(40,32,20,0.55)',  border: 'rgba(80,60,30,0.5)',    text: '#a8a29e' },
+}
+function StatPill({ accent = 'stone', iconKey, children }: { accent?: string; iconKey?: string; children: ReactNode }) {
+  const s = PILL_STYLES[accent] ?? PILL_STYLES.stone
+  const icon = iconKey ? STAT_ICONS[iconKey] : null
+  return (
+    <span
+      className="inline-flex items-center gap-1 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded"
+      style={{ background: s.bg, border: `1px solid ${s.border}`, color: s.text, letterSpacing: '0.04em' }}
+    >
+      {icon && <span style={{ width: 10, height: 10, display: 'inline-flex', flexShrink: 0 }}>{icon}</span>}
+      {children}
+    </span>
+  )
+}
 
 interface InventoryPanelProps {
   characterId: string
@@ -41,6 +65,25 @@ export function InventoryPanel({
   const [addingItem, setAddingItem] = useState(false)
   const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null)
   const [slotPickerItem, setSlotPickerItem] = useState<InventoryItem | null>(null)
+
+  // Derive D&D API index from item name: "Leather Armor" → "leather-armor"
+  const selectedIndex = useMemo(() => {
+    if (!selectedItem) return null
+    return selectedItem.name
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '')
+  }, [selectedItem?.name])
+
+  // Lazy fetch: only runs when an item is selected; silently fails for custom items
+  const { data: itemDetail, isLoading: detailLoading } = useQuery({
+    queryKey: dndKeys.equipmentDetail(selectedIndex ?? ''),
+    queryFn: () => dndApi.equipmentDetail(selectedIndex!),
+    enabled: !!selectedIndex,
+    retry: false,
+    staleTime: 1000 * 60 * 10, // cache 10 min
+  })
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } })
@@ -252,6 +295,67 @@ export function InventoryPanel({
                   <p className="text-[10px] text-stone-500 italic mt-1 leading-relaxed line-clamp-2">
                     {selectedItem.notes || 'Sin descripción.'}
                   </p>
+
+                  {/* D&D API stat badges */}
+                  {detailLoading && (
+                    <div className="flex gap-1 mt-2">
+                      {[1,2].map(i => (
+                        <div key={i} className="h-4 w-14 rounded animate-pulse" style={{ background: 'rgba(120,70,15,0.2)' }} />
+                      ))}
+                    </div>
+                  )}
+                  {itemDetail && (
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {/* Weapon: damage */}
+                      {itemDetail.damage && (
+                        <StatPill accent="amber">
+                          {itemDetail.damage.damage_dice} {itemDetail.damage.damage_type.name}
+                        </StatPill>
+                      )}
+                      {/* Weapon: properties (all, with icons) */}
+                      {itemDetail.properties?.map(p => (
+                        <StatPill key={p.index} accent="stone" iconKey={p.index}>
+                          {p.name}
+                        </StatPill>
+                      ))}
+                      {/* Weapon: category */}
+                      {itemDetail.weapon_category && (
+                        <StatPill accent="stone" iconKey={itemDetail.weapon_category}>
+                          {itemDetail.weapon_category}
+                        </StatPill>
+                      )}
+                      {/* Weapon: range */}
+                      {itemDetail.weapon_range && (
+                        <StatPill accent="stone" iconKey={itemDetail.weapon_range}>
+                          {itemDetail.weapon_range}
+                        </StatPill>
+                      )}
+                      {/* Armor: AC */}
+                      {itemDetail.armor_class && (
+                        <StatPill accent="blue">
+                          CA {itemDetail.armor_class.base}
+                          {itemDetail.armor_class.dex_bonus ? ' + DES' : ''}
+                          {itemDetail.armor_class.max_bonus != null ? ` (máx +${itemDetail.armor_class.max_bonus})` : ''}
+                        </StatPill>
+                      )}
+                      {/* Armor: category with icon */}
+                      {itemDetail.armor_category && (
+                        <StatPill accent="stone" iconKey={`${itemDetail.armor_category} Armor`}>
+                          {itemDetail.armor_category}
+                        </StatPill>
+                      )}
+                      {/* Armor: stealth disadvantage */}
+                      {(itemDetail as any).stealth_disadvantage === true && (
+                        <StatPill accent="red">Sigilo ⚠</StatPill>
+                      )}
+                      {/* Cost */}
+                      {itemDetail.cost && (
+                        <StatPill accent="gold">
+                          {itemDetail.cost.quantity} {itemDetail.cost.unit}
+                        </StatPill>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               <button onClick={() => setSelectedItem(null)} className="text-stone-600 hover:text-stone-300 ml-2 shrink-0">✕</button>
