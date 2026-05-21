@@ -81,7 +81,7 @@ function CampaignLayout() {
   const tabs = isGm ? GM_TABS : PLAYER_TABS
 
   return (
-    <div className="min-h-screen text-stone-900" style={parchmentStyle}>
+    <div className="min-h-screen text-stone-900" style={isGm ? dmStyle : parchmentStyle}>
 
       {/* Header */}
       <header className="border-b-2 border-stone-900 bg-stone-950 px-4 sm:px-8 py-3 flex items-center gap-4">
@@ -169,4 +169,11 @@ const parchmentStyle: React.CSSProperties = {
     linear-gradient(90deg, rgba(120, 90, 40, 0.08) 1px, transparent 1px) 0 0 / 28px 28px,
     linear-gradient(160deg, #f5ead6 0%, #ede0c4 50%, #e8d9b8 100%)
   `,
+}
+
+const dmStyle: React.CSSProperties = {
+  backgroundImage: `url('/assets/images/Fondo DM.png')`,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center top',
+  backgroundAttachment: 'fixed',
 }

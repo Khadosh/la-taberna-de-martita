@@ -48,6 +48,8 @@ Sincronización de dados en mesa integrada al tablero de combate del DM (documen
 | Objetos: cantidad con +/- (no input directo) | Media |
 | Peso al agregar ítem desde catálogo | Media |
 | Level up: accesible desde la hoja del jugador sin XP | Media |
+| Level up: conjuros, estilo de combate y enemigo predilecto | ✅ |
+| Trasfondo visible en la hoja de personaje (tab Historia) | ✅ |
 | Borrar campañas y personajes desde el dashboard | Media |
 | Navegación: "volver" consistente en todas las pantallas | Baja |
 | Feedback de guardado en la hoja (actualmente solo HP lo tiene) | Baja |

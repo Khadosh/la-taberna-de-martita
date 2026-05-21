@@ -7,6 +7,7 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 ## [Unreleased]
 
 ### feat
+- Fondo exclusivo para DM en la hoja de campaña (`Fondo DM.png`); jugadores siguen viendo el pergamino
 - Level up: selector de conjuros conocidos para casters (Ranger, Bardo, Hechicero, Warlock) con buscador y filtro por nivel máximo casteable
 - Level up: selector de Estilo de Combate para Ranger, Fighter y Paladin
 - Level up: selector de Enemigo Predilecto para el Ranger
