@@ -138,6 +138,14 @@ Usamos [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## 📝 Changelog
 
+- **2026-05-22**: `refactor: modularize campaign tablero routing and split layout views`
+  - ✅ Modularizado el componente gigante `$campaignId.tablero.tsx` (reduciéndolo de ~1720 a 41 líneas).
+  - ✅ Creado custom hook `useDmTablero` (`use-dm-tablero.ts`) conteniendo todas las queries, handlers y lógica de realtime/broadcast.
+  - ✅ Creado el subcomponente presentacional `DmTableroLayout` (`dm-tablero-layout.tsx`) para la interfaz de dashboard del DM.
+  - ✅ Creado el selector de mapas `DmMapSelector` (`dm-map-selector.tsx`) abstrayendo la modal y biblioteca de mapas.
+  - ✅ Creado el formulario de gestión de PNJs `DmNpcForm` (`dm-npc-form.tsx`) aislando los desplegables de Bestiario, PNJs de campaña y creador personalizado.
+  - ✅ Creado el contenedor de tipos `tablero-types.ts` unificando tipos compartidos y helpers de HP y CA.
+  - ✅ Resueltos errores de tipado de TypeScript y asegurado que no haya warnings ni fallos de compilación en el build.
 - **2026-05-22**: `feat: implement map selector library and exploration mode on tactical board`
   - ✅ Implementada biblioteca de mapas (`Map Selector Modal`) con listado completo de mapas subidos, miniaturas/thumbnails, estados activos, e importación/carga desde el almacenamiento de Supabase.
   - ✅ Habilitado el modo de exploración libre en el tablero táctico del DM: la cuadrícula de mapa y tokens ahora están activos siempre, sin necesidad de iniciar combate.
