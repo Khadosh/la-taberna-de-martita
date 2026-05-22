@@ -140,6 +140,7 @@ Usamos [Conventional Commits](https://www.conventionalcommits.org/).
 
 - **2026-05-22**: `refactor: modularize combat board components and implement draggable popup`
   - ✅ Refactorizado `combat-board.tsx` en subcomponentes modulares bajo `src/components/combat/` (`combat-types.ts`, `combat-helpers.tsx`, `combat-token.tsx`, `combat-popup.tsx`).
+  - ✅ Creado custom hook `useCombatBoard` (`use-combat-board.ts`) para aislar todo el estado, drag-and-drop, y cálculos matemáticos/lógicos de combate del renderizado visual, reduciendo el archivo `combat-board.tsx` a ~350 líneas de UI pura.
   - ✅ Implementada funcionalidad draggable interactiva en el panel overlay de cálculo de combate, previniendo superposiciones y manteniendo el estado de offset en memoria.
   - ✅ Corregida la propagación de clics dentro del diálogo de combate para evitar activar clics involuntarios en la rejilla de fondo.
   - ✅ Solucionado bug que impedía seleccionar otros tokens cuando se operaba con el personaje propio, asegurando que se oculte la información privada del DM (como CA y probabilidad exacta) cuando se visualiza desde la perspectiva del jugador.
