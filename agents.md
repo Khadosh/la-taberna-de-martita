@@ -138,6 +138,11 @@ Usamos [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## 📝 Changelog
 
+- **2026-05-22**: `feat: implement map selector library and exploration mode on tactical board`
+  - ✅ Implementada biblioteca de mapas (`Map Selector Modal`) con listado completo de mapas subidos, miniaturas/thumbnails, estados activos, e importación/carga desde el almacenamiento de Supabase.
+  - ✅ Habilitado el modo de exploración libre en el tablero táctico del DM: la cuadrícula de mapa y tokens ahora están activos siempre, sin necesidad de iniciar combate.
+  - ✅ Rediseñada la barra de control superior para unificar el flujo: muestra `Iniciar combate` cuando está inactivo, o los controles de turno y `Fin Combate` cuando el combate está en curso, junto a accesos rápidos para `Mapas`, `+ NPC` y `☀ Descanso`.
+  - ✅ Resueltos errores de compilación de TypeScript e inicialización tardía en queries de personajes y PNJs.
 - **2026-05-22**: `feat: improve combat board interactions, action modes, AoE templates, and layout viewport stability`
   - ✅ Implementado sistema de zoom y paneo táctico interactivo con cuadrícula Chebyshev.
   - ✅ Añadido selector de modos de acción (Melee, Rango, Lanzar, Conjuro) vinculado con inventario y conjuros del personaje.

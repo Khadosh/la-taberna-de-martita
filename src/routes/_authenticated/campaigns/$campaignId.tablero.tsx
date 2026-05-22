@@ -120,6 +120,11 @@ function PlayerTablero({ campaignId, session }: { campaignId: string; session: S
   const [externalTargeting, setExternalTargeting] = useState<any>(null)
   const channelRef = useRef<any>(null)
 
+  // Combat sync states
+  const [combatActive, setCombatActive] = useState(false)
+  const [combatants, setCombatants] = useState<any[]>([])
+  const [currentTurn, setCurrentTurn] = useState(0)
+
   const { data: characters = [] } = useQuery({
     queryKey: ['campaign-characters', campaignId],
     queryFn: async () => {
@@ -182,7 +187,22 @@ function PlayerTablero({ campaignId, session }: { campaignId: string; session: S
       .on('broadcast', { event: 'dm-targeting-updated' }, (payload) => {
         setExternalTargeting(payload.payload)
       })
-      .subscribe()
+      .on('broadcast', { event: 'combat-state-sync' }, (payload) => {
+        const p = payload.payload
+        setCombatActive(p.combatActive)
+        setCombatants(p.combatants)
+        setCurrentTurn(p.currentTurn)
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          // Request current combat state from DM
+          channel.send({
+            type: 'broadcast',
+            event: 'request-combat-state',
+            payload: {}
+          })
+        }
+      })
     channelRef.current = channel
     return () => { supabase.removeChannel(channel) }
   }, [campaignId])
@@ -278,29 +298,91 @@ function PlayerTablero({ campaignId, session }: { campaignId: string; session: S
     }
   }
 
-  if (boardTokens.length === 0) {
+  if (!activeMapUrl) {
     return (
-      <div className="bg-stone-950 flex flex-col items-center justify-center" style={{ minHeight: 'calc(100vh - 100px)' }}>
-        <p className="text-stone-600 font-serif text-sm">Esperando que el DM inicie el tablero...</p>
+      <div className="bg-stone-950 flex flex-col items-center justify-center animate-fade-in" style={{ minHeight: 'calc(100vh - 100px)' }}>
+        <p className="text-stone-500 font-serif text-sm">Esperando que el DM cargue un mapa...</p>
       </div>
     )
   }
 
+  const hasToken = boardTokens.some(bt => bt.entity_id === myCharId)
+
+  const placeMyCharacter = async () => {
+    if (!myCharId) return
+    const char = characters.find(c => c.id === myCharId)
+    if (!char) return
+    const maxHp = maxHpFor(char)
+    const currentHp = char.current_hp ?? maxHp
+    await db.from('board_tokens').upsert({
+      campaign_id: campaignId,
+      entity_id: char.id,
+      kind: 'player',
+      label: char.name,
+      current_hp: currentHp,
+      max_hp: maxHp,
+      portrait_url: char.portrait_url ?? null,
+      x: 5,
+      y: 5,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'campaign_id,entity_id' })
+  }
+
+  const currentCombatant = combatants[currentTurn]
+  const currentCombatantName = currentCombatant
+    ? (currentCombatant.kind === 'player'
+      ? (characters.find(c => c.id === currentCombatant.characterId)?.name || 'Jugador')
+      : (currentCombatant.npc?.name || 'Enemigo'))
+    : ''
+
   return (
-    <div className="bg-stone-950 flex overflow-hidden" style={{ height: 'calc(100vh - 100px)' }}>
-      <CombatBoard
-        tokens={tokens}
-        allEntities={allCombatEntities}
-        mapUrl={activeMapUrl}
-        externalPositions={externalPositions}
-        onTokenMoved={onTokenMoved}
-        canDrag={tokenId => tokenId === myCharId}
-        characters={characters as any}
-        isPlayer={true}
-        externalTargeting={externalTargeting}
-        onSelectionChange={handleSelectionChange}
-        onAttackConfirm={handleAttackConfirm}
-      />
+    <div className="bg-stone-950 flex flex-col overflow-hidden w-full" style={{ height: 'calc(100vh - 100px)' }}>
+      {/* Read-only Combat tracker header if combat is active */}
+      {combatActive && (
+        <div className="border-b border-stone-850 bg-stone-900/90 px-4 py-2.5 flex items-center gap-3 shrink-0">
+          <span className="text-xs font-serif text-amber-500 flex items-center gap-1.5">
+            <span className="animate-pulse">⚔</span> Modo Combate Activo
+          </span>
+          <div className="w-px h-4 bg-stone-750" />
+          <span className="text-xs text-stone-300 font-serif">
+            Turno actual: <strong className="text-amber-200">{currentCombatantName}</strong>
+          </span>
+          <span className="text-xs text-stone-500 font-mono">
+            (Turno {currentTurn + 1}/{combatants.length})
+          </span>
+        </div>
+      )}
+
+      <div className="flex-1 relative flex overflow-hidden">
+        {/* Floating badge to place character if not on board */}
+        {!hasToken && myCharId && (
+          <div className="absolute top-4 left-4 z-30 bg-stone-950/90 border border-amber-900/40 rounded p-3 shadow-lg max-w-[200px]">
+            <p className="text-[11px] text-stone-300 font-serif mb-2 leading-snug">
+              Tu personaje no está en el tablero.
+            </p>
+            <button
+              onClick={placeMyCharacter}
+              className="w-full py-1 bg-amber-900/50 hover:bg-amber-800 text-amber-200 text-xs font-serif rounded border border-amber-700/40 transition-colors"
+            >
+              📍 Colocar personaje
+            </button>
+          </div>
+        )}
+
+        <CombatBoard
+          tokens={tokens}
+          allEntities={allCombatEntities}
+          mapUrl={activeMapUrl}
+          externalPositions={externalPositions}
+          onTokenMoved={onTokenMoved}
+          canDrag={tokenId => tokenId === myCharId}
+          characters={characters as any}
+          isPlayer={true}
+          externalTargeting={externalTargeting}
+          onSelectionChange={handleSelectionChange}
+          onAttackConfirm={handleAttackConfirm}
+        />
+      </div>
     </div>
   )
 }
@@ -310,7 +392,6 @@ function PlayerTablero({ campaignId, session }: { campaignId: string; session: S
 function DmTablero({ campaignId, session: _session }: { campaignId: string; session: Session }) {
   const queryClient = useQueryClient()
   const npcInputRef = useRef<HTMLInputElement>(null)
-  const mapInputRef = useRef<HTMLInputElement>(null)
 
   const [localHp, setLocalHp] = useState<Record<string, number>>({})
   const hpTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
@@ -322,8 +403,14 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
 
   // Board state
   const [activeMapUrl, setActiveMapUrl] = useState<string | null>(null)
+  const [boardTokens, setBoardTokens] = useState<BoardToken[]>([])
   const [externalPositions, setExternalPositions] = useState<Record<string, { x: number; y: number }>>({})
   const [mapUploading, setMapUploading] = useState(false)
+
+  // Map library state
+  const [mapsList, setMapsList] = useState<{ name: string; rawName: string; url: string }[]>([])
+  const [loadingMaps, setLoadingMaps] = useState(false)
+  const [showMapSelector, setShowMapSelector] = useState(false)
 
   // Bestiary picker
   const [showBestiary, setShowBestiary] = useState(false)
@@ -359,6 +446,66 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
   // Realtime target sync states
   const [externalTargeting, setExternalTargeting] = useState<any>(null)
   const channelRef = useRef<any>(null)
+
+  // ── Map library operations ────────────────────────────────────────────────
+
+  const fetchMaps = async () => {
+    setLoadingMaps(true)
+    try {
+      const { data, error } = await supabase.storage
+        .from('campaign-maps')
+        .list(campaignId, { limit: 100 })
+
+      if (error) throw error
+
+      if (data) {
+        const list = data
+          .filter(f => f.name !== '.emptyFolderPlaceholder')
+          .map(f => {
+            const { data: { publicUrl } } = supabase.storage
+              .from('campaign-maps')
+              .getPublicUrl(`${campaignId}/${f.name}`)
+
+            const friendlyName = f.name.replace(/^\d+_/, '')
+            return { name: friendlyName, rawName: f.name, url: publicUrl }
+          })
+        setMapsList(list)
+      }
+    } catch (err) {
+      console.error('Error fetching maps:', err)
+    } finally {
+      setLoadingMaps(false)
+    }
+  }
+
+  const activateMap = async (url: string) => {
+    try {
+      await db.from('campaigns').update({ active_map_url: url }).eq('id', campaignId)
+      setActiveMapUrl(url)
+    } catch (err) {
+      console.error('Error activating map:', err)
+    }
+  }
+
+  const deleteMap = async (map: { name: string; rawName: string; url: string }) => {
+    if (!confirm(`¿Seguro que deseas eliminar el mapa "${map.name}"?`)) return
+    try {
+      const { error } = await supabase.storage
+        .from('campaign-maps')
+        .remove([`${campaignId}/${map.rawName}`])
+
+      if (error) throw error
+
+      if (activeMapUrl === map.url) {
+        await db.from('campaigns').update({ active_map_url: null }).eq('id', campaignId)
+        setActiveMapUrl(null)
+      }
+
+      fetchMaps()
+    } catch (err) {
+      console.error('Error deleting map:', err)
+    }
+  }
 
   // ── Queries ──────────────────────────────────────────────────────────────
 
@@ -418,14 +565,34 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
     return () => { supabase.removeChannel(channel) }
   }, [campaignId, queryClient])
 
+  // Load initial board tokens on mount
+  useEffect(() => {
+    db.from('board_tokens').select('*').eq('campaign_id', campaignId)
+      .then(({ data }: { data: BoardToken[] | null }) => { if (data) setBoardTokens(data) })
+  }, [campaignId])
+
   // ── Realtime: board_tokens (position updates from players) ────────────────
 
   useEffect(() => {
     const channel = supabase.channel(`dm-board-${campaignId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'board_tokens', filter: `campaign_id=eq.${campaignId}` },
+        (payload) => {
+          const bt = payload.new as BoardToken
+          setBoardTokens(prev => {
+            if (prev.find(t => t.entity_id === bt.entity_id)) return prev
+            return [...prev, bt]
+          })
+        })
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'board_tokens', filter: `campaign_id=eq.${campaignId}` },
         (payload) => {
           const bt = payload.new as BoardToken
+          setBoardTokens(prev => prev.map(t => t.entity_id === bt.entity_id ? bt : t))
           setExternalPositions(prev => ({ ...prev, [bt.entity_id]: { x: bt.x, y: bt.y } }))
+        })
+      .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'board_tokens', filter: `campaign_id=eq.${campaignId}` },
+        (payload) => {
+          const old = payload.old as { entity_id: string }
+          setBoardTokens(prev => prev.filter(t => t.entity_id !== old.entity_id))
         })
       .subscribe()
     return () => { supabase.removeChannel(channel) }
@@ -437,6 +604,9 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
     // Load initial map
     db.from('campaigns').select('active_map_url').eq('id', campaignId).single()
       .then(({ data }: { data: { active_map_url?: string | null } | null }) => { if (data?.active_map_url) setActiveMapUrl(data.active_map_url) })
+
+    // Load maps library
+    fetchMaps()
 
     const channel = supabase.channel(`dm-map-${campaignId}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'campaigns', filter: `id=eq.${campaignId}` },
@@ -454,6 +624,28 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
     onAttackConfirmRef.current = handleAttackConfirm
   }, [handleAttackConfirm])
 
+  // Combat broadcast sync refs & effects to broadcast state changes
+  const combatActiveRef = useRef(combatActive)
+  const combatantsRef = useRef(combatants)
+  const currentTurnRef = useRef(currentTurn)
+
+  const broadcastCombatState = (active: boolean, list: Combatant[], turn: number) => {
+    if (channelRef.current) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'combat-state-sync',
+        payload: { combatActive: active, combatants: list, currentTurn: turn }
+      })
+    }
+  }
+
+  useEffect(() => {
+    combatActiveRef.current = combatActive
+    combatantsRef.current = combatants
+    currentTurnRef.current = currentTurn
+    broadcastCombatState(combatActive, combatants, currentTurn)
+  }, [combatActive, combatants, currentTurn])
+
   useEffect(() => {
     const channel = supabase.channel(`campaign-board-${campaignId}`)
       .on('broadcast', { event: 'player-targeting-updated' }, (payload) => {
@@ -464,6 +656,17 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
         if (onAttackConfirmRef.current) {
           onAttackConfirmRef.current(attackerId, targetId, hit, damage, isHealing, spellLevel)
         }
+      })
+      .on('broadcast', { event: 'request-combat-state' }, () => {
+        channel.send({
+          type: 'broadcast',
+          event: 'combat-state-sync',
+          payload: {
+            combatActive: combatActiveRef.current,
+            combatants: combatantsRef.current,
+            currentTurn: currentTurnRef.current
+          }
+        })
       })
       .subscribe()
     channelRef.current = channel
@@ -515,9 +718,6 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
       .eq('entity_id', entityId)
   }
 
-  const clearBoard = async () => {
-    await db.from('board_tokens').delete().eq('campaign_id', campaignId)
-  }
 
   const onTokenMoved = async (entityId: string, x: number, y: number) => {
     await db.from('board_tokens')
@@ -552,19 +752,15 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
   // ── Combat ───────────────────────────────────────────────────────────────
 
   const startCombat = async () => {
-    const list: Combatant[] = characters.map(c => {
+    const list: Combatant[] = []
+
+    // 1. Roll initiative for all players
+    for (const c of characters) {
       const dexMod = Math.floor(((c.stats.dex ?? 10) - 10) / 2)
       const init = Math.ceil(Math.random() * 20) + dexMod
-      return { kind: 'player', characterId: c.id, initiative: init }
-    })
-    list.sort((a, b) => getInitiative(b) - getInitiative(a))
-    setCombatants(list)
-    setCurrentTurn(0)
-    setCombatActive(true)
-    setTimeout(() => npcInputRef.current?.focus(), 100)
+      list.push({ kind: 'player', characterId: c.id, initiative: init })
 
-    // Sync player tokens to board
-    for (const c of characters) {
+      // Sync player tokens to board
       const maxHp = maxHpFor(c)
       await upsertTokenToBoard({
         id: c.id, name: c.name, kind: 'player',
@@ -572,13 +768,35 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
         maxHp, portraitUrl: c.portrait_url, isActive: false,
       })
     }
+
+    // 2. Roll initiative for all NPCs currently placed on the board
+    const npcTokens = boardTokens.filter(bt => bt.kind === 'npc')
+    for (const bt of npcTokens) {
+      const init = Math.ceil(Math.random() * 20)
+      list.push({
+        kind: 'npc',
+        npc: {
+          id: bt.entity_id,
+          name: bt.label,
+          currentHp: bt.current_hp ?? 10,
+          maxHp: bt.max_hp ?? 10,
+          initiative: init,
+        }
+      })
+    }
+
+    list.sort((a, b) => getInitiative(b) - getInitiative(a))
+    setCombatants(list)
+    setCurrentTurn(0)
+    setCombatActive(true)
+    setTimeout(() => npcInputRef.current?.focus(), 100)
   }
 
   const endCombat = async () => {
     setCombatActive(false)
     setCombatants([])
     setCurrentTurn(0)
-    await clearBoard()
+    // Don't call clearBoard()! Let tokens persist on the board.
   }
 
   const nextTurn = () => setCurrentTurn(t => (t + 1) % combatants.length)
@@ -592,11 +810,13 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
     const init = Math.ceil(Math.random() * 20)
     const npc: Npc = { id: crypto.randomUUID(), name, currentHp: hp, maxHp: hp, initiative: init }
     const newCombatant: Combatant = { kind: 'npc', npc }
-    setCombatants(prev => {
-      const list = [...prev, newCombatant]
-      list.sort((a, b) => getInitiative(b) - getInitiative(a))
-      return list
-    })
+    if (combatActive) {
+      setCombatants(prev => {
+        const list = [...prev, newCombatant]
+        list.sort((a, b) => getInitiative(b) - getInitiative(a))
+        return list
+      })
+    }
     setNpcInput('')
     npcInputRef.current?.focus()
     await upsertTokenToBoard({ id: npc.id, name: npc.name, kind: 'npc', currentHp: npc.currentHp, maxHp: npc.maxHp, portraitUrl: null, isActive: false })
@@ -641,11 +861,13 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
         }
         return { kind: 'npc' as const, npc }
       })
-      setCombatants(prev => {
-        const list = [...prev, ...newCombatants]
-        list.sort((a, b) => getInitiative(b) - getInitiative(a))
-        return list
-      })
+      if (combatActive) {
+        setCombatants(prev => {
+          const list = [...prev, ...newCombatants]
+          list.sort((a, b) => getInitiative(b) - getInitiative(a))
+          return list
+        })
+      }
       for (const c of newCombatants) {
         if (c.kind === 'npc') {
           await upsertTokenToBoard({ id: c.npc.id, name: c.npc.name, kind: 'npc', currentHp: c.npc.currentHp, maxHp: c.npc.maxHp, portraitUrl: null, isActive: false })
@@ -664,7 +886,7 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
     const dexMod = Math.floor(((stats.dex ?? 10) - 10) / 2)
     const hp = cn.current_hp ?? cn.max_hp ?? 10
     const maxHp = cn.max_hp ?? hp
-    const existing = combatants.filter(c => c.kind === 'npc' && c.npc.name.replace(/ \d+$/, '') === cn.name).length
+    const existing = boardTokens.filter(bt => bt.kind === 'npc' && bt.label.replace(/ \d+$/, '') === cn.name).length
     const suffix = existing > 0 ? ` ${existing + 1}` : ''
     const loot = ((cn.sheet_json as { loot?: NpcItem[] } | null)?.loot) ?? []
     const npc: Npc = {
@@ -678,11 +900,13 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
       npcType: cn.race ?? undefined,
       loot,
     }
-    setCombatants(prev => {
-      const list = [...prev, { kind: 'npc' as const, npc }]
-      list.sort((a, b) => getInitiative(b) - getInitiative(a))
-      return list
-    })
+    if (combatActive) {
+      setCombatants(prev => {
+        const list = [...prev, { kind: 'npc' as const, npc }]
+        list.sort((a, b) => getInitiative(b) - getInitiative(a))
+        return list
+      })
+    }
     await upsertTokenToBoard({ id: npc.id, name: npc.name, kind: 'npc', currentHp: npc.currentHp, maxHp: npc.maxHp, portraitUrl: null, isActive: false })
   }
 
@@ -698,11 +922,13 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
       npcType: npcFormType,
       loot: npcFormItems.filter(i => i.name.trim()),
     }
-    setCombatants(prev => {
-      const list = [...prev, { kind: 'npc' as const, npc }]
-      list.sort((a, b) => getInitiative(b) - getInitiative(a))
-      return list
-    })
+    if (combatActive) {
+      setCombatants(prev => {
+        const list = [...prev, { kind: 'npc' as const, npc }]
+        list.sort((a, b) => getInitiative(b) - getInitiative(a))
+        return list
+      })
+    }
     await upsertTokenToBoard({ id: npc.id, name: npc.name, kind: 'npc', currentHp: npc.currentHp, maxHp: npc.maxHp, portraitUrl: null, isActive: false })
     setShowNpcForm(false)
     setNpcFormName(''); setNpcFormHp(10); setNpcFormAc(10)
@@ -805,36 +1031,63 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
 
   // ── Attack calculator ─────────────────────────────────────────────────────
 
+  const tokens = useMemo((): TokenData[] => {
+    if (combatActive) {
+      return combatants.flatMap((c, idx): TokenData[] => {
+        if (c.kind === 'player') {
+          const ch = characters.find(x => x.id === c.characterId)
+          if (!ch) return []
+          const maxHp = maxHpFor(ch)
+          const curHp = localHp[ch.id] ?? currentHpFor(ch)
+          return [{ id: ch.id, name: ch.name, kind: 'player', currentHp: curHp, maxHp, portraitUrl: ch.portrait_url, isActive: idx === currentTurn }]
+        }
+        return [{ id: c.npc.id, name: c.npc.name, kind: 'npc', currentHp: c.npc.currentHp, maxHp: c.npc.maxHp, portraitUrl: null, isActive: idx === currentTurn }]
+      })
+    } else {
+      return boardTokens.map(bt => {
+        const char = bt.kind === 'player' ? characters.find(c => c.id === bt.entity_id) : null
+        const maxHp = char ? maxHpFor(char) : bt.max_hp ?? 10
+        const currentHp = char ? (localHp[char.id] ?? currentHpFor(char)) : bt.current_hp ?? maxHp
+        return {
+          id: bt.entity_id,
+          name: bt.label,
+          kind: bt.kind,
+          currentHp,
+          maxHp,
+          portraitUrl: char?.portrait_url ?? bt.portrait_url ?? null,
+          isActive: false,
+        }
+      })
+    }
+  }, [combatActive, combatants, boardTokens, characters, currentTurn, localHp])
+
   const allCombatEntities = useMemo((): { id: string; name: string; ac: number; attackBonus: number }[] => {
     const result: { id: string; name: string; ac: number; attackBonus: number }[] = []
-    for (const c of combatants) {
-      if (c.kind === 'player') {
-        const ch = characters.find(x => x.id === c.characterId)
+    for (const t of tokens) {
+      if (t.kind === 'player') {
+        const ch = characters.find(x => x.id === t.id)
         if (!ch) continue
         const strMod = Math.floor(((ch.stats.str ?? 10) - 10) / 2)
         const dexMod = Math.floor(((ch.stats.dex ?? 10) - 10) / 2)
         const prof = Math.ceil(ch.level / 4) + 1
-        result.push({ id: ch.id, name: ch.name, ac: ch.armor_class ?? (10 + Math.floor(((ch.stats.dex ?? 10) - 10) / 2)), attackBonus: prof + Math.max(strMod, dexMod) })
+        result.push({
+          id: ch.id,
+          name: ch.name,
+          ac: ch.armor_class ?? (10 + dexMod),
+          attackBonus: prof + Math.max(strMod, dexMod),
+        })
       } else {
-        result.push({ id: c.npc.id, name: c.npc.name, ac: c.npc.ac ?? 10, attackBonus: c.npc.attackBonus ?? 0 })
+        const npcCombatant = combatants.find(c => c.kind === 'npc' && (c as any).npc.id === t.id) as { kind: 'npc'; npc: Npc } | undefined
+        result.push({
+          id: t.id,
+          name: t.name,
+          ac: npcCombatant?.npc.ac ?? 10,
+          attackBonus: npcCombatant?.npc.attackBonus ?? 0
+        })
       }
     }
     return result
-  }, [combatants, characters])
-
-  const tokens = useMemo((): TokenData[] => {
-    if (!combatActive) return []
-    return combatants.flatMap((c, idx): TokenData[] => {
-      if (c.kind === 'player') {
-        const ch = characters.find(x => x.id === c.characterId)
-        if (!ch) return []
-        const maxHp = maxHpFor(ch)
-        const curHp = localHp[ch.id] ?? currentHpFor(ch)
-        return [{ id: ch.id, name: ch.name, kind: 'player', currentHp: curHp, maxHp, portraitUrl: ch.portrait_url, isActive: idx === currentTurn }]
-      }
-      return [{ id: c.npc.id, name: c.npc.name, kind: 'npc', currentHp: c.npc.currentHp, maxHp: c.npc.maxHp, portraitUrl: null, isActive: idx === currentTurn }]
-    })
-  }, [combatants, characters, currentTurn, localHp])
+  }, [tokens, characters, combatants])
 
   const handleSelectionChange = (state: any) => {
     if (channelRef.current) {
@@ -980,314 +1233,293 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
         </aside>
 
         {/* CENTER: Board */}
+        {/* CENTER: Board */}
         <main className="flex-1 flex flex-col overflow-hidden relative">
-          {combatActive ? (
-            <>
-              {/* Control bar */}
-              <div className="border-b border-stone-800 bg-stone-900/90 px-4 py-2 flex items-center gap-3 shrink-0">
+          {/* Control bar */}
+          <div className="border-b border-stone-800 bg-stone-900/90 px-4 py-2 flex items-center gap-3 shrink-0">
+            {combatActive ? (
+              <>
                 <button onClick={nextTurn}
                   className="px-4 py-1.5 bg-amber-800 hover:bg-amber-700 text-amber-100 font-serif text-sm transition-colors">
                   Siguiente →
                 </button>
-                <span className="text-xs text-stone-500 font-serif">
+                <span className="text-xs text-stone-500 font-serif font-mono">
                   Turno {currentTurn + 1}/{combatants.length}
                 </span>
                 <div className="flex-1" />
-                {/* Map upload */}
-                <button
-                  onClick={() => mapInputRef.current?.click()}
-                  disabled={mapUploading}
-                  className="px-3 py-1.5 font-serif text-xs border border-stone-700 text-stone-400 hover:border-stone-500 hover:text-stone-200 disabled:opacity-40 transition-colors"
-                  title="Cambiar mapa de fondo"
-                >
-                  {mapUploading ? '...' : '🗺 Mapa'}
-                </button>
-                <input ref={mapInputRef} type="file" accept="image/*" className="hidden"
-                  onChange={e => { const f = e.target.files?.[0]; if (f) uploadMap(f); e.target.value = '' }} />
-                <button
-                  onClick={() => { setShowNpcBar(v => !v); setShowBestiary(false); setShowNpcForm(false); setShowCampaignNpcs(false) }}
-                  className={`px-3 py-1.5 font-serif text-xs transition-colors border ${showNpcBar ? 'border-amber-700 bg-amber-950/40 text-amber-300' : 'border-stone-700 text-stone-400 hover:border-stone-500 hover:text-stone-200'}`}
-                >
-                  + NPC
-                </button>
-                {showLongRestConfirm ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-stone-400 font-serif">¿Descanso largo?</span>
-                    <button onClick={partyLongRest} className="text-xs px-2 py-1 bg-amber-800 hover:bg-amber-700 text-amber-100 font-serif">Confirmar</button>
-                    <button onClick={() => setShowLongRestConfirm(false)} className="text-xs text-stone-500 hover:text-stone-300">✕</button>
-                  </div>
-                ) : (
-                  <button onClick={() => setShowLongRestConfirm(true)} disabled={characters.length === 0}
-                    className="px-3 py-1.5 border border-stone-700 text-stone-400 hover:border-amber-700 hover:text-amber-400 disabled:opacity-40 font-serif text-xs transition-colors">
-                    ☀ Descanso
-                  </button>
-                )}
                 <button onClick={endCombat}
                   className="px-3 py-1.5 border border-stone-600 text-stone-400 hover:border-red-700 hover:text-red-400 font-serif text-xs transition-colors">
-                  Fin
+                  Fin Combate
+                </button>
+              </>
+            ) : (
+              <>
+                <button onClick={startCombat} disabled={characters.length === 0}
+                  className="px-4 py-1.5 bg-amber-850 hover:bg-amber-800 border border-amber-700/50 text-amber-100 font-serif text-sm transition-colors flex items-center gap-1.5">
+                  ⚔ Iniciar combate
+                </button>
+                <div className="flex-1" />
+              </>
+            )}
+
+            {/* Map selection modal trigger */}
+            <button
+              onClick={() => setShowMapSelector(true)}
+              className="px-3 py-1.5 font-serif text-xs border border-stone-700 text-stone-400 hover:border-stone-500 hover:text-stone-200 transition-colors"
+              title="Biblioteca de mapas"
+            >
+              🗺 Mapas
+            </button>
+
+            <button
+              onClick={() => { setShowNpcBar(v => !v); setShowBestiary(false); setShowNpcForm(false); setShowCampaignNpcs(false) }}
+              className={`px-3 py-1.5 font-serif text-xs transition-colors border ${showNpcBar ? 'border-amber-700 bg-amber-950/40 text-amber-300' : 'border-stone-700 text-stone-400 hover:border-stone-500 hover:text-stone-200'}`}
+            >
+              + NPC
+            </button>
+
+            {showLongRestConfirm ? (
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-stone-400 font-serif">¿Descanso largo?</span>
+                <button onClick={partyLongRest} className="text-xs px-2 py-1 bg-amber-800 hover:bg-amber-700 text-amber-100 font-serif">Confirmar</button>
+                <button onClick={() => setShowLongRestConfirm(false)} className="text-xs text-stone-500 hover:text-stone-300">✕</button>
+              </div>
+            ) : (
+              <button onClick={() => setShowLongRestConfirm(true)} disabled={characters.length === 0}
+                className="px-3 py-1.5 border border-stone-700 text-stone-400 hover:border-amber-700 hover:text-amber-400 disabled:opacity-40 font-serif text-xs transition-colors">
+                ☀ Descanso
+              </button>
+            )}
+          </div>
+
+          {/* NPC add bar */}
+          {showNpcBar && (
+            <div className="border-b border-stone-800 bg-stone-900 px-4 py-3 space-y-2 shrink-0 max-h-96 overflow-y-auto">
+              <div className="flex items-center gap-2">
+                <input
+                  ref={npcInputRef}
+                  value={npcInput}
+                  onChange={e => setNpcInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && npcInput.trim() && addNpc()}
+                  placeholder='Nombre [hp]  ej: Goblin 7'
+                  className="flex-1 px-3 py-2 bg-stone-950 border border-stone-700 text-stone-300 text-sm font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500"
+                />
+                <button onClick={addNpc} disabled={!npcInput.trim()}
+                  className="px-3 py-2 bg-stone-800 hover:bg-stone-700 disabled:opacity-30 text-stone-300 font-serif text-sm transition-colors">
+                  + NPC
+                </button>
+                <button
+                  onClick={() => { setShowCampaignNpcs(b => !b); setCampaignNpcSearch(''); if (showBestiary) setShowBestiary(false); if (showNpcForm) setShowNpcForm(false) }}
+                  className={`px-3 py-2 font-serif text-sm transition-colors border ${showCampaignNpcs ? 'border-amber-700 bg-amber-950/40 text-amber-300' : 'border-stone-700 bg-stone-950 text-stone-400 hover:border-stone-500 hover:text-stone-200'}`}
+                >
+                  PNJ campaña
+                </button>
+                <button
+                  onClick={() => { setShowBestiary(b => !b); setBestiarySearch(''); if (showNpcForm) setShowNpcForm(false); if (showCampaignNpcs) setShowCampaignNpcs(false) }}
+                  className={`px-3 py-2 font-serif text-sm transition-colors border ${showBestiary ? 'border-amber-700 bg-amber-950/40 text-amber-300' : 'border-stone-700 bg-stone-950 text-stone-400 hover:border-stone-500 hover:text-stone-200'}`}
+                >
+                  Bestiario
+                </button>
+                <button
+                  onClick={() => { setShowNpcForm(b => !b); if (showBestiary) setShowBestiary(false); if (showCampaignNpcs) setShowCampaignNpcs(false) }}
+                  className={`px-3 py-2 font-serif text-sm transition-colors border ${showNpcForm ? 'border-amber-700 bg-amber-950/40 text-amber-300' : 'border-stone-700 bg-stone-950 text-stone-400 hover:border-stone-500 hover:text-stone-200'}`}
+                >
+                  Personalizado
                 </button>
               </div>
 
-              {/* NPC add bar */}
-              {showNpcBar && (
-                <div className="border-b border-stone-800 bg-stone-900 px-4 py-3 space-y-2 shrink-0 max-h-96 overflow-y-auto">
-                  <div className="flex items-center gap-2">
-                    <input
-                      ref={npcInputRef}
-                      value={npcInput}
-                      onChange={e => setNpcInput(e.target.value)}
-                      onKeyDown={e => e.key === 'Enter' && npcInput.trim() && addNpc()}
-                      placeholder='Nombre [hp]  ej: Goblin 7'
-                      className="flex-1 px-3 py-2 bg-stone-950 border border-stone-700 text-stone-300 text-sm font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500"
-                    />
-                    <button onClick={addNpc} disabled={!npcInput.trim()}
-                      className="px-3 py-2 bg-stone-800 hover:bg-stone-700 disabled:opacity-30 text-stone-300 font-serif text-sm transition-colors">
-                      + NPC
-                    </button>
-                    <button
-                      onClick={() => { setShowCampaignNpcs(b => !b); setCampaignNpcSearch(''); if (showBestiary) setShowBestiary(false); if (showNpcForm) setShowNpcForm(false) }}
-                      className={`px-3 py-2 font-serif text-sm transition-colors border ${showCampaignNpcs ? 'border-amber-700 bg-amber-950/40 text-amber-300' : 'border-stone-700 bg-stone-950 text-stone-400 hover:border-stone-500 hover:text-stone-200'}`}
-                    >
-                      PNJ campaña
-                    </button>
-                    <button
-                      onClick={() => { setShowBestiary(b => !b); setBestiarySearch(''); if (showNpcForm) setShowNpcForm(false); if (showCampaignNpcs) setShowCampaignNpcs(false) }}
-                      className={`px-3 py-2 font-serif text-sm transition-colors border ${showBestiary ? 'border-amber-700 bg-amber-950/40 text-amber-300' : 'border-stone-700 bg-stone-950 text-stone-400 hover:border-stone-500 hover:text-stone-200'}`}
-                    >
-                      Bestiario
-                    </button>
-                    <button
-                      onClick={() => { setShowNpcForm(b => !b); if (showBestiary) setShowBestiary(false); if (showCampaignNpcs) setShowCampaignNpcs(false) }}
-                      className={`px-3 py-2 font-serif text-sm transition-colors border ${showNpcForm ? 'border-amber-700 bg-amber-950/40 text-amber-300' : 'border-stone-700 bg-stone-950 text-stone-400 hover:border-stone-500 hover:text-stone-200'}`}
-                    >
-                      Personalizado
-                    </button>
-                  </div>
-
-                  {showCampaignNpcs && (
-                    <div className="bg-stone-950 border border-stone-700 p-3 space-y-2">
-                      <input autoFocus value={campaignNpcSearch} onChange={e => setCampaignNpcSearch(e.target.value)}
-                        placeholder="Buscar PNJ de campaña..."
-                        className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-300 text-sm font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500" />
-                      {campaignNpcs.length === 0 ? (
-                        <p className="text-xs text-stone-600 font-serif italic px-1 py-2">
-                          No hay PNJs. <Link to="/campaigns/$campaignId/pnj" params={{ campaignId }} className="text-amber-500 underline">Crear uno →</Link>
-                        </p>
-                      ) : filteredCampaignNpcs.length === 0 ? (
-                        <p className="text-xs text-stone-600 font-serif italic px-1">Sin resultados.</p>
-                      ) : (
-                        <ul className="max-h-48 overflow-y-auto divide-y divide-stone-800">
-                          {filteredCampaignNpcs.map(n => {
-                            const stats = n.stats as Record<string, number> | null
-                            const dexMod = Math.floor((((stats?.dex) ?? 10) - 10) / 2)
-                            const roleChip = n.role === 'antagonist' ? 'text-red-400' : n.role === 'ally' ? 'text-green-400' : 'text-stone-500'
-                            return (
-                              <li key={n.id}>
-                                <button onClick={() => addNpcFromCampaign(n)}
-                                  className="w-full text-left px-3 py-2 text-sm text-stone-300 hover:bg-stone-800 font-serif transition-colors flex items-center justify-between gap-3">
-                                  <div className="min-w-0 flex-1">
-                                    <span className="block truncate">{n.name}</span>
-                                    <span className={`text-[10px] tracking-wide uppercase ${roleChip}`}>{n.role}</span>
-                                  </div>
-                                  <div className="flex items-center gap-3 text-xs font-mono text-stone-500 shrink-0">
-                                    {n.max_hp != null && <span>{n.max_hp} PG</span>}
-                                    {n.armor_class != null && <span>CA {n.armor_class}</span>}
-                                    <span>Ini {formatModInline(dexMod)}</span>
-                                  </div>
-                                </button>
-                              </li>
-                            )
-                          })}
-                        </ul>
-                      )}
-                    </div>
-                  )}
-
-                  {showBestiary && (
-                    <div className="bg-stone-950 border border-stone-700 p-3 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <input autoFocus value={bestiarySearch} onChange={e => setBestiarySearch(e.target.value)}
-                          placeholder="Buscar monstruo..."
-                          className="flex-1 px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-300 text-sm font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500" />
-                        <div className="flex items-center gap-1 shrink-0">
-                          <span className="text-xs text-stone-500 font-serif">×</span>
-                          <input type="number" min={1} max={10} value={bestiaryQty}
-                            onChange={e => setBestiaryQty(Math.max(1, Math.min(10, parseInt(e.target.value) || 1)))}
-                            className="w-12 px-2 py-1.5 bg-stone-900 border border-stone-700 text-stone-300 text-sm font-mono text-center focus:outline-none focus:border-stone-500" />
-                        </div>
-                      </div>
-                      {bestiarySearch.trim().length === 0 && (
-                        <p className="text-xs text-stone-600 font-serif italic px-1">Escribí el nombre del monstruo para buscar.</p>
-                      )}
-                      {filteredMonsters.length > 0 && (
-                        <ul className="max-h-44 overflow-y-auto divide-y divide-stone-800">
-                          {filteredMonsters.map(m => (
-                            <li key={m.index}>
-                              <button disabled={addingMonster} onClick={() => addNpcFromMonster(m, bestiaryQty)}
-                                className="w-full text-left px-3 py-2 text-sm text-stone-300 hover:bg-stone-800 disabled:opacity-40 font-serif transition-colors flex items-center justify-between">
-                                <span>{m.name}{bestiaryQty > 1 ? ` ×${bestiaryQty}` : ''}</span>
-                                {addingMonster && <span className="text-xs text-stone-600">...</span>}
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                      {bestiarySearch.trim().length > 0 && filteredMonsters.length === 0 && (
-                        <p className="text-xs text-stone-600 font-serif italic px-1">Sin resultados.</p>
-                      )}
-                    </div>
-                  )}
-
-                  {showNpcForm && (
-                    <div className="bg-stone-950 border border-stone-700 p-4 space-y-4">
-                      <p className="text-xs tracking-widest text-stone-500 uppercase font-serif">Crear NPC personalizado</p>
-                      <div>
-                        <label className="block text-xs text-stone-600 font-serif mb-1">Nombre *</label>
-                        <input autoFocus value={npcFormName} onChange={e => setNpcFormName(e.target.value)}
-                          placeholder="Ej: Capitán Grigor"
-                          className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500" />
-                      </div>
-                      <div className="grid grid-cols-3 gap-2">
-                        <div>
-                          <label className="block text-xs text-stone-600 font-serif mb-1">HP máx *</label>
-                          <input type="number" min={1} value={npcFormHp} onChange={e => setNpcFormHp(parseInt(e.target.value) || 1)}
-                            className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-mono text-center focus:outline-none focus:border-stone-500" />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-stone-600 font-serif mb-1">CA</label>
-                          <input type="number" min={1} value={npcFormAc} onChange={e => setNpcFormAc(parseInt(e.target.value) || 10)}
-                            className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-mono text-center focus:outline-none focus:border-stone-500" />
-                        </div>
-                        <div>
-                          <label className="block text-xs text-stone-600 font-serif mb-1">Tipo</label>
-                          <input list="npc-types" value={npcFormType} onChange={e => setNpcFormType(e.target.value)}
-                            className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-serif focus:outline-none focus:border-stone-500" />
-                          <datalist id="npc-types">
-                            {['humanoide', 'bestia', 'muerto viviente', 'construcción', 'dragón', 'elemental', 'hada', 'engendro', 'gigante', 'infernal', 'planta'].map(t => (
-                              <option key={t} value={t} />
-                            ))}
-                          </datalist>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="block text-xs text-stone-600 font-serif mb-1">Bono de ataque</label>
-                          <div className="flex items-center">
-                            <span className="px-2 py-1.5 bg-stone-800 border border-r-0 border-stone-700 text-stone-500 text-sm font-mono">+</span>
-                            <input type="number" value={npcFormAttack} onChange={e => setNpcFormAttack(parseInt(e.target.value) || 0)}
-                              className="flex-1 px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-mono focus:outline-none focus:border-stone-500" />
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-xs text-stone-600 font-serif mb-1">Daño</label>
-                          <input value={npcFormDamage} onChange={e => setNpcFormDamage(e.target.value)}
-                            placeholder="ej: 1d8+3 cortante"
-                            className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-mono placeholder-stone-700 focus:outline-none focus:border-stone-500" />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-between mb-2">
-                          <label className="text-xs text-stone-600 font-serif">Botín</label>
-                          <button onClick={addLootItem} className="text-xs px-2 py-0.5 border border-stone-700 text-stone-500 hover:border-stone-500 hover:text-stone-300 font-serif transition-colors">
-                            + Agregar
-                          </button>
-                        </div>
-                        <div className="space-y-1.5">
-                          {npcFormItems.map(item => (
-                            <NpcLootItemRow key={item.id} item={item}
-                              onUpdate={patch => updateLootItem(item.id, patch)}
-                              onRemove={() => removeLootItem(item.id)} />
-                          ))}
-                        </div>
-                      </div>
-                      <div className="flex items-center justify-between pt-1 border-t border-stone-800">
-                        <button onClick={() => setShowNpcForm(false)} className="text-xs text-stone-600 hover:text-stone-400 font-serif transition-colors">Cancelar</button>
-                        <button onClick={createCustomNpc} disabled={!npcFormName.trim() || npcFormHp < 1}
-                          className="px-4 py-1.5 bg-amber-800 hover:bg-amber-700 disabled:opacity-30 text-amber-100 font-serif text-sm transition-colors">
-                          Agregar al combate
-                        </button>
-                      </div>
-                    </div>
+              {showCampaignNpcs && (
+                <div className="bg-stone-950 border border-stone-700 p-3 space-y-2">
+                  <input autoFocus value={campaignNpcSearch} onChange={e => setCampaignNpcSearch(e.target.value)}
+                    placeholder="Buscar PNJ de campaña..."
+                    className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-300 text-sm font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500" />
+                  {campaignNpcs.length === 0 ? (
+                    <p className="text-xs text-stone-600 font-serif italic px-1 py-2">
+                      No hay PNJs. <Link to="/campaigns/$campaignId/pnj" params={{ campaignId }} className="text-amber-500 underline">Crear uno →</Link>
+                    </p>
+                  ) : filteredCampaignNpcs.length === 0 ? (
+                    <p className="text-xs text-stone-600 font-serif italic px-1">Sin resultados.</p>
+                  ) : (
+                    <ul className="max-h-48 overflow-y-auto divide-y divide-stone-800">
+                      {filteredCampaignNpcs.map(n => {
+                        const stats = n.stats as Record<string, number> | null
+                        const dexMod = Math.floor((((stats?.dex) ?? 10) - 10) / 2)
+                        const roleChip = n.role === 'antagonist' ? 'text-red-400' : n.role === 'ally' ? 'text-green-400' : 'text-stone-500'
+                        return (
+                          <li key={n.id}>
+                            <button onClick={() => addNpcFromCampaign(n)}
+                              className="w-full text-left px-3 py-2 text-sm text-stone-300 hover:bg-stone-800 font-serif transition-colors flex items-center justify-between gap-3">
+                              <div className="min-w-0 flex-1">
+                                <span className="block truncate">{n.name}</span>
+                                <span className={`text-[10px] tracking-wide uppercase ${roleChip}`}>{n.role}</span>
+                              </div>
+                              <div className="flex items-center gap-3 text-xs font-mono text-stone-500 shrink-0">
+                                {n.max_hp != null && <span>{n.max_hp} PG</span>}
+                                {n.armor_class != null && <span>CA {n.armor_class}</span>}
+                                <span>Ini {formatModInline(dexMod)}</span>
+                              </div>
+                            </button>
+                          </li>
+                        )
+                      })}
+                    </ul>
                   )}
                 </div>
               )}
 
-              <CombatBoard
-                tokens={tokens}
-                allEntities={allCombatEntities}
-                mapUrl={activeMapUrl}
-                externalPositions={externalPositions}
-                onTokenMoved={onTokenMoved}
-                onAttackConfirm={handleAttackConfirm}
-                characters={characters as any}
-                isPlayer={false}
-                externalTargeting={externalTargeting}
-                onSelectionChange={handleSelectionChange}
-              />
+              {showBestiary && (
+                <div className="bg-stone-950 border border-stone-700 p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input autoFocus value={bestiarySearch} onChange={e => setBestiarySearch(e.target.value)}
+                      placeholder="Buscar monstruo..."
+                      className="flex-1 px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-300 text-sm font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500" />
+                    <div className="flex items-center gap-1 shrink-0">
+                      <span className="text-xs text-stone-500 font-serif">×</span>
+                      <input type="number" min={1} max={10} value={bestiaryQty}
+                        onChange={e => setBestiaryQty(Math.max(1, Math.min(10, parseInt(e.target.value) || 1)))}
+                        className="w-12 px-2 py-1.5 bg-stone-900 border border-stone-700 text-stone-300 text-sm font-mono text-center focus:outline-none focus:border-stone-500" />
+                    </div>
+                  </div>
+                  {bestiarySearch.trim().length === 0 && (
+                    <p className="text-xs text-stone-600 font-serif italic px-1">Escribí el nombre del monstruo para buscar.</p>
+                  )}
+                  {filteredMonsters.length > 0 && (
+                    <ul className="max-h-44 overflow-y-auto divide-y divide-stone-800">
+                      {filteredMonsters.map(m => (
+                        <li key={m.index}>
+                          <button disabled={addingMonster} onClick={() => addNpcFromMonster(m, bestiaryQty)}
+                            className="w-full text-left px-3 py-2 text-sm text-stone-300 hover:bg-stone-800 disabled:opacity-40 font-serif transition-colors flex items-center justify-between">
+                            <span>{m.name}{bestiaryQty > 1 ? ` ×${bestiaryQty}` : ''}</span>
+                            {addingMonster && <span className="text-xs text-stone-600">...</span>}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {bestiarySearch.trim().length > 0 && filteredMonsters.length === 0 && (
+                    <p className="text-xs text-stone-600 font-serif italic px-1">Sin resultados.</p>
+                  )}
+                </div>
+              )}
 
-              {/* Combat history log — bottom-right, read-only, collapsible */}
-              {combatActive && combatLog.length > 0 && (
-                <div className="absolute bottom-3 right-3 z-20 w-64 pointer-events-auto" style={{ background: 'rgba(5,3,1,0.72)', border: '1px solid rgba(80,60,20,0.35)', borderRadius: 6 }}>
-                  <button
-                    className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-serif text-stone-500 hover:text-stone-300 transition-colors"
-                    onClick={() => setShowLog(v => !v)}
-                  >
-                    <span className="tracking-widest uppercase">Historial</span>
-                    <span>{showLog ? '▾' : '▴'}</span>
-                  </button>
-                  {showLog && (
-                    <div className="px-2 pb-2 space-y-1 max-h-44 overflow-y-auto">
-                      {combatLog.map(entry => (
-                        <div key={entry.id} className="text-[10px] font-mono px-2 py-1 rounded flex items-center gap-1.5"
-                          style={{ background: 'rgba(0,0,0,0.35)' }}>
-                          <span style={{ color: entry.hit ? '#4ade80' : '#f87171' }}>{entry.hit ? '✓' : '✗'}</span>
-                          <span className="text-stone-400 truncate flex-1">
-                            <span className="text-stone-300">{entry.attackerName}</span>
-                            <span className="text-stone-600"> → </span>
-                            <span className="text-stone-300">{entry.targetName}</span>
-                          </span>
-                          {entry.hit && entry.damage != null && entry.damage > 0
-                            ? (entry.isHealing
-                              ? <span className="text-green-400 font-bold shrink-0">+{entry.damage} pg</span>
-                              : <span className="text-red-400 font-bold shrink-0">-{entry.damage} pg</span>)
-                            : !entry.hit && <span className="text-stone-600 shrink-0 text-[9px]">fallo</span>
-                          }
-                        </div>
+              {showNpcForm && (
+                <div className="bg-stone-950 border border-stone-700 p-4 space-y-4">
+                  <p className="text-xs tracking-widest text-stone-500 uppercase font-serif">Crear NPC personalizado</p>
+                  <div>
+                    <label className="block text-xs text-stone-600 font-serif mb-1">Nombre *</label>
+                    <input autoFocus value={npcFormName} onChange={e => setNpcFormName(e.target.value)}
+                      placeholder="Ej: Capitán Grigor"
+                      className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500" />
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className="block text-xs text-stone-600 font-serif mb-1">HP máx *</label>
+                      <input type="number" min={1} value={npcFormHp} onChange={e => setNpcFormHp(parseInt(e.target.value) || 1)}
+                        className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-mono text-center focus:outline-none focus:border-stone-500" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-stone-600 font-serif mb-1">CA</label>
+                      <input type="number" min={1} value={npcFormAc} onChange={e => setNpcFormAc(parseInt(e.target.value) || 10)}
+                        className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-mono text-center focus:outline-none focus:border-stone-500" />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-stone-600 font-serif mb-1">Tipo</label>
+                      <input list="npc-types" value={npcFormType} onChange={e => setNpcFormType(e.target.value)}
+                        className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-serif focus:outline-none focus:border-stone-500" />
+                      <datalist id="npc-types">
+                        {['humanoide', 'bestia', 'muerto viviente', 'construcción', 'dragón', 'elemental', 'hada', 'engendro', 'gigante', 'infernal', 'planta'].map(t => (
+                          <option key={t} value={t} />
+                        ))}
+                      </datalist>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs text-stone-600 font-serif mb-1">Bono de ataque</label>
+                      <div className="flex items-center">
+                        <span className="px-2 py-1.5 bg-stone-800 border border-r-0 border-stone-700 text-stone-500 text-sm font-mono">+</span>
+                        <input type="number" value={npcFormAttack} onChange={e => setNpcFormAttack(parseInt(e.target.value) || 0)}
+                          className="flex-1 px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-mono focus:outline-none focus:border-stone-500" />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs text-stone-600 font-serif mb-1">Daño</label>
+                      <input value={npcFormDamage} onChange={e => setNpcFormDamage(e.target.value)}
+                        placeholder="ej: 1d8+3 cortante"
+                        className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-mono placeholder-stone-700 focus:outline-none focus:border-stone-500" />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs text-stone-600 font-serif">Botín</label>
+                      <button onClick={addLootItem} className="text-xs px-2 py-0.5 border border-stone-700 text-stone-500 hover:border-stone-500 hover:text-stone-300 font-serif transition-colors">
+                        + Agregar
+                      </button>
+                    </div>
+                    <div className="space-y-1.5">
+                      {npcFormItems.map(item => (
+                        <NpcLootItemRow key={item.id} item={item}
+                          onUpdate={patch => updateLootItem(item.id, patch)}
+                          onRemove={() => removeLootItem(item.id)} />
                       ))}
                     </div>
-                  )}
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="flex-1 flex flex-col overflow-hidden">
-              {/* Map visible even when not in combat */}
-              <div className="flex-1 relative" style={{
-                backgroundImage: `url('${activeMapUrl ?? '/assets/images/mapa_combate.png'}')`,
-                backgroundSize: 'cover', backgroundPosition: 'center',
-              }}>
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-                  <div className="bg-stone-950/85 border border-stone-700 px-6 py-4 flex flex-col items-center gap-3">
-                    <p className="text-stone-400 font-serif text-sm text-center">
-                      Cuando empiece el combate, la iniciativa se<br />tira automáticamente para todos los jugadores.
-                    </p>
-                    <button onClick={startCombat} disabled={characters.length === 0}
-                      className="px-6 py-2.5 bg-amber-800 hover:bg-amber-700 disabled:opacity-40 text-amber-100 font-serif transition-colors">
-                      ⚔ Iniciar combate
+                  </div>
+                  <div className="flex items-center justify-between pt-1 border-t border-stone-800">
+                    <button onClick={() => setShowNpcForm(false)} className="text-xs text-stone-600 hover:text-stone-400 font-serif transition-colors">Cancelar</button>
+                    <button onClick={createCustomNpc} disabled={!npcFormName.trim() || npcFormHp < 1}
+                      className="px-4 py-1.5 bg-amber-800 hover:bg-amber-700 disabled:opacity-30 text-amber-100 font-serif text-sm transition-colors">
+                      Agregar al combate
                     </button>
                   </div>
-                  {/* Map upload for pre-combat state */}
-                  <button
-                    onClick={() => mapInputRef.current?.click()}
-                    disabled={mapUploading}
-                    className="text-xs text-stone-500 hover:text-stone-300 font-serif transition-colors disabled:opacity-40"
-                  >
-                    {mapUploading ? 'Subiendo...' : '🗺 Cambiar mapa de fondo'}
-                  </button>
-                  <input ref={mapInputRef} type="file" accept="image/*" className="hidden"
-                    onChange={e => { const f = e.target.files?.[0]; if (f) uploadMap(f); e.target.value = '' }} />
                 </div>
-              </div>
+              )}
+            </div>
+          )}
+
+          <CombatBoard
+            tokens={tokens}
+            allEntities={allCombatEntities}
+            mapUrl={activeMapUrl}
+            externalPositions={externalPositions}
+            onTokenMoved={onTokenMoved}
+            onAttackConfirm={handleAttackConfirm}
+            characters={characters as any}
+            isPlayer={false}
+            externalTargeting={externalTargeting}
+            onSelectionChange={handleSelectionChange}
+          />
+
+          {/* Combat history log — bottom-right, read-only, collapsible */}
+          {combatActive && combatLog.length > 0 && (
+            <div className="absolute bottom-3 right-3 z-20 w-64 pointer-events-auto" style={{ background: 'rgba(5,3,1,0.72)', border: '1px solid rgba(80,60,20,0.35)', borderRadius: 6 }}>
+              <button
+                className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-serif text-stone-500 hover:text-stone-300 transition-colors"
+                onClick={() => setShowLog(v => !v)}
+              >
+                <span className="tracking-widest uppercase">Historial</span>
+                <span>{showLog ? '▾' : '▴'}</span>
+              </button>
+              {showLog && (
+                <div className="px-2 pb-2 space-y-1 max-h-44 overflow-y-auto">
+                  {combatLog.map(entry => (
+                    <div key={entry.id} className="text-[10px] font-mono px-2 py-1 rounded flex items-center gap-1.5"
+                      style={{ background: 'rgba(0,0,0,0.35)' }}>
+                      <span style={{ color: entry.hit ? '#4ade80' : '#f87171' }}>{entry.hit ? '✓' : '✗'}</span>
+                      <span className="text-stone-400 truncate flex-1">
+                        <span className="text-stone-300">{entry.attackerName}</span>
+                        <span className="text-stone-600"> → </span>
+                        <span className="text-stone-300">{entry.targetName}</span>
+                      </span>
+                      {entry.hit && entry.damage != null && entry.damage > 0
+                        ? (entry.isHealing
+                          ? <span className="text-green-400 font-bold shrink-0 font-mono">+{entry.damage} pg</span>
+                          : <span className="text-red-400 font-bold shrink-0 font-mono font-bold">-{entry.damage} pg</span>)
+                        : !entry.hit && <span className="text-stone-600 shrink-0 text-[9px]">fallo</span>
+                      }
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </main>
@@ -1343,6 +1575,126 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
           </aside>
         )}
       </div>
+
+      {/* Map Selector Modal */}
+      {showMapSelector && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-xs p-4">
+          <div className="bg-stone-900 border border-stone-800 rounded-lg max-w-lg w-full p-5 space-y-4 shadow-2xl flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between border-b border-stone-800 pb-3">
+              <h3 className="font-serif text-lg text-amber-500 flex items-center gap-2">
+                <span>🗺</span> Biblioteca de Mapas
+              </h3>
+              <button
+                onClick={() => setShowMapSelector(false)}
+                className="text-stone-500 hover:text-stone-300 transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Upload Zone */}
+            <div className="border border-dashed border-stone-800 hover:border-stone-700 bg-stone-950/40 p-4 rounded text-center transition-colors">
+              <input
+                type="file"
+                id="modal-map-input"
+                accept="image/*"
+                className="hidden"
+                disabled={mapUploading}
+                onChange={async (e) => {
+                  const f = e.target.files?.[0]
+                  if (f) {
+                    await uploadMap(f)
+                    fetchMaps()
+                  }
+                  e.target.value = ''
+                }}
+              />
+              <label
+                htmlFor="modal-map-input"
+                className="cursor-pointer flex flex-col items-center gap-1.5 py-2"
+              >
+                <span className="text-xl">📤</span>
+                <span className="text-xs text-stone-300 font-serif">
+                  {mapUploading ? 'Subiendo mapa...' : 'Hacé clic para subir una imagen de mapa'}
+                </span>
+                <span className="text-[10px] text-stone-500 font-mono">PNG, JPG, WEBP (Recomendado máx. 5MB)</span>
+              </label>
+            </div>
+
+            {/* Maps List */}
+            <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar min-h-[200px]">
+              <p className="text-xs font-serif text-stone-500 uppercase tracking-widest px-1">Mapas subidos</p>
+              
+              {loadingMaps ? (
+                <div className="text-center py-8 text-stone-500 text-xs font-serif">
+                  Cargando biblioteca de mapas...
+                </div>
+              ) : mapsList.length === 0 ? (
+                <div className="text-center py-8 text-stone-600 text-xs font-serif italic border border-stone-800/50 rounded">
+                  No hay mapas subidos aún.
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  {mapsList.map((map) => {
+                    const isActive = activeMapUrl === map.url
+                    return (
+                      <div
+                        key={map.rawName}
+                        className={`flex items-center gap-3 p-2 border rounded transition-all ${
+                          isActive
+                            ? 'bg-amber-950/20 border-amber-800/60'
+                            : 'bg-stone-950/40 border-stone-850 hover:border-stone-800'
+                        }`}
+                      >
+                        <img
+                          src={map.url}
+                          alt={map.name}
+                          className="w-10 h-10 object-cover rounded border border-stone-800 bg-stone-900 shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-serif text-stone-200 truncate" title={map.name}>
+                            {map.name}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {isActive ? (
+                            <span className="px-2 py-0.5 bg-amber-900/40 border border-amber-800/50 rounded text-[9px] text-amber-300 font-serif">
+                              Activo
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => activateMap(map.url)}
+                              className="px-2.5 py-1 text-[10px] font-serif bg-stone-800 hover:bg-stone-700 border border-stone-700 text-stone-300 rounded transition-colors"
+                            >
+                              Activar
+                            </button>
+                          )}
+                          <button
+                            onClick={() => deleteMap(map)}
+                            className="p-1 text-stone-600 hover:text-red-400 transition-colors text-xs"
+                            title="Eliminar mapa"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="border-t border-stone-800 pt-3 flex justify-end">
+              <button
+                onClick={() => setShowMapSelector(false)}
+                className="px-4 py-1.5 bg-stone-850 hover:bg-stone-800 border border-stone-750 text-stone-300 font-serif text-xs rounded transition-colors"
+              >
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

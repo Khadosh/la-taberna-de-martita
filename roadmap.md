@@ -79,6 +79,8 @@ Sincronización de dados en mesa integrada al tablero de combate del DM (documen
 - ✅ Refactorización y modularización del tablero de combate para una arquitectura limpia.
 - ✅ Panel de cálculo de ataque interactivo y arrastrable (evita superposiciones del terreno).
 - ✅ Flujo simplificado de targeting y right-click para jugadores con datos confidenciales del DM protegidos.
+- ✅ Biblioteca de mapas (`Map Selector Modal`) con listado completo, miniaturas/thumbnails y carga.
+- ✅ Modo exploración (tablero activo siempre) unificado con el modo combate.
 
 ### Historial de sesiones
 - Lista de sesiones pasadas por campaña.
