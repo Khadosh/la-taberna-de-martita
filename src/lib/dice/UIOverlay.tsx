@@ -301,6 +301,7 @@ function buildDieMesh(sides, theme, isPercentile = false) {
 function DiceMiniCanvas({ sides, theme, isHovered, isPercentile }) {
     const containerRef = useRef(null);
     const internals = useRef(null);
+    const [webglError, setWebglError] = useState(false);
 
     // Init scene once
     useEffect(() => {
@@ -314,7 +315,15 @@ function DiceMiniCanvas({ sides, theme, isHovered, isPercentile }) {
         const cam = new THREE.PerspectiveCamera(38, w / h, 0.1, 50);
         cam.position.set(0, 0, 3.8);
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        let renderer;
+        try {
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        } catch (err) {
+            console.warn('WebGL Renderer creation failed, falling back to static presentation:', err);
+            setWebglError(true);
+            return;
+        }
+
         renderer.setSize(w, h);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.setClearColor(0x000000, 0);
@@ -374,6 +383,14 @@ function DiceMiniCanvas({ sides, theme, isHovered, isPercentile }) {
             internals.current.hovered = isHovered;
         }
     }, [isHovered]);
+
+    if (webglError) {
+        return (
+            <div className="w-12 h-12 rounded-lg bg-stone-900 border border-amber-900/30 flex items-center justify-center text-amber-500/70 font-serif font-bold text-xs shadow-inner">
+                {isPercentile ? 'D10%' : `D${sides}`}
+            </div>
+        );
+    }
 
     return <div ref={containerRef} className="flex items-center justify-center" />;
 }
