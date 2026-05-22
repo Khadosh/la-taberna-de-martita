@@ -139,6 +139,202 @@ function CombatToken({
   )
 }
 
+// ── Visual enhancements for Attack Calculation ───────────────────────────────
+
+function CrossedSwordsIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" style={{ flexShrink: 0 }}>
+      <line x1="4" y1="20" x2="20" y2="4" />
+      <line x1="5" y1="15" x2="9" y2="19" />
+      <line x1="20" y1="20" x2="4" y2="4" />
+      <line x1="19" y1="15" x2="15" y2="19" />
+    </svg>
+  )
+}
+
+function CrossedArrowsIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+      <line x1="4" y1="20" x2="20" y2="4" />
+      <polyline points="15,4 20,4 20,9" />
+      <line x1="20" y1="20" x2="4" y2="4" />
+      <polyline points="9,20 4,20 4,15" />
+    </svg>
+  )
+}
+
+function D20Icon({ size = 15 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="#d5b88a" strokeWidth="1.2" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.5))' }}>
+      <polygon points="12,2 22,7.5 22,16.5 12,22 2,16.5 2,7.5" />
+      <polygon points="12,2 12,8 2,7.5" />
+      <polygon points="12,2 12,8 22,7.5" />
+      <polygon points="12,8 22,7.5 17,14" />
+      <polygon points="12,8 2,7.5 7,14" />
+      <polygon points="12,8 7,14 17,14" />
+      <polygon points="7,14 17,14 12,22" />
+      <polygon points="2,16.5 7,14 12,22" />
+      <polygon points="22,16.5 17,14 12,22" />
+      <polygon points="2,7.5 2,16.5 7,14" />
+      <polygon points="22,7.5 22,16.5 17,14" />
+      <text x="12" y="12.5" fontSize="5" fontFamily="monospace" fontWeight="bold" fill="#d5b88a" stroke="none" textAnchor="middle">D20</text>
+    </svg>
+  )
+}
+
+function StylizedArrow() {
+  return (
+    <svg width="28" height="10" viewBox="0 0 36 12" fill="none" style={{ opacity: 0.8, flexShrink: 0 }}>
+      <line x1="6" y1="6" x2="30" y2="6" stroke="#bc9434" strokeWidth="1.5" />
+      <path d="M 28 3 L 34 6 L 28 9 L 29.5 6 Z" fill="#bc9434" />
+      <path d="M 4 2 L 8 6 L 4 10" stroke="#bc9434" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M 2 3 L 5 6 L 2 9" stroke="#bc9434" strokeWidth="1.2" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function CornerBracket({ rotation }: { rotation: 0 | 90 | 180 | 270 }) {
+  const styles: React.CSSProperties = {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    transform: `rotate(${rotation}deg)`,
+    pointerEvents: 'none',
+    zIndex: 5,
+  }
+
+  if (rotation === 0) {
+    styles.top = -8
+    styles.left = -8
+  } else if (rotation === 90) {
+    styles.top = -8
+    styles.right = -8
+  } else if (rotation === 180) {
+    styles.bottom = -8
+    styles.right = -8
+  } else if (rotation === 270) {
+    styles.bottom = -8
+    styles.left = -8
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" style={styles}>
+      <defs>
+        <linearGradient id={`brass-grad-${rotation}`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#8a6b3e" />
+          <stop offset="50%" stopColor="#d5b88a" />
+          <stop offset="100%" stopColor="#5c4322" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M 0 0 L 24 0 L 24 5 L 5 5 L 5 24 L 0 24 Z"
+        fill={`url(#brass-grad-${rotation})`}
+        filter="drop-shadow(1px 1.5px 1px rgba(0,0,0,0.8))"
+      />
+      <circle cx="11" cy="11" r="2.2" fill="#1c1208" />
+      <circle cx="11" cy="11" r="1.5" fill="#d5b88a" />
+    </svg>
+  )
+}
+
+function DecorativeProgressBar({ percentage }: { percentage: number }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, flex: 1 }}>
+      <style>{`
+        @keyframes lightning-wiggle {
+          0% { transform: translateY(0px) scaleY(1); }
+          50% { transform: translateY(-1px) scaleY(1.15); }
+          100% { transform: translateY(0px) scaleY(1); }
+        }
+        /* Hide HTML5 Up/Down Spinners */
+        .no-spinners::-webkit-outer-spin-button,
+        .no-spinners::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        .no-spinners {
+          -moz-appearance: textfield;
+        }
+      `}</style>
+      <div style={{
+        position: 'relative',
+        flex: 1,
+        height: 12,
+        background: '#20120a',
+        border: '2px solid #5a3c1e',
+        borderRadius: 4,
+        boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.8), 0 1px 2px rgba(255,255,255,0.05)',
+        overflow: 'hidden',
+      }}>
+        {/* Laurel leaves pattern (background) */}
+        <svg width="100%" height="100%" style={{ position: 'absolute', inset: 0, opacity: 0.25 }}>
+          <defs>
+            <pattern id="laurel" width="16" height="12" patternUnits="userSpaceOnUse">
+              <path d="M 1 6 Q 4 3 8 6 Q 4 9 1 6" fill="#bc9434" />
+              <path d="M 15 6 Q 12 3 8 6 Q 12 9 15 6" fill="#bc9434" />
+              <line x1="0" y1="6" x2="16" y2="6" stroke="#bc9434" strokeWidth="1" />
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#laurel)" />
+        </svg>
+
+        {/* Fill container */}
+        <div style={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          bottom: 0,
+          width: `${percentage}%`,
+          background: 'linear-gradient(90deg, rgba(59,130,246,0.3) 0%, rgba(96,165,250,0.7) 70%, rgba(255,255,255,0.95) 100%)',
+          boxShadow: '0 0 8px #3b82f6, 0 0 15px rgba(96,165,250,0.6)',
+          transition: 'width 0.4s ease-out',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          overflow: 'hidden',
+        }}>
+          {/* Lightning bolt effect */}
+          <svg width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 100 20" style={{ position: 'absolute', inset: 0 }}>
+            <path
+              d="M 0 10 Q 15 12 30 8 T 60 12 T 90 8 T 100 10"
+              fill="none"
+              stroke="#e0f2fe"
+              strokeWidth="1.5"
+              style={{
+                filter: 'drop-shadow(0 0 3px #60a5fa)',
+                animation: 'lightning-wiggle 0.6s infinite ease-in-out',
+              }}
+            />
+            <path
+              d="M 0 10 L 15 7 L 30 13 L 45 8 L 60 12 L 75 6 L 90 14 L 100 10"
+              fill="none"
+              stroke="#ffffff"
+              strokeWidth="1"
+              opacity="0.75"
+              style={{
+                filter: 'drop-shadow(0 0 2px #93c5fd)',
+              }}
+            />
+          </svg>
+        </div>
+      </div>
+      
+      {/* Percentage text */}
+      <span style={{
+        fontSize: 13,
+        fontFamily: 'Georgia, serif',
+        fontWeight: 'bold',
+        color: '#d5b88a',
+        minWidth: 36,
+        textAlign: 'right',
+        textShadow: '0 2px 4px rgba(0,0,0,0.9)',
+      }}>
+        {percentage}%
+      </span>
+    </div>
+  )
+}
+
 export function CombatBoard({
   tokens,
   allEntities,
@@ -369,67 +565,197 @@ export function CombatBoard({
           position: 'absolute', left: midX, top: midY,
           transform: 'translate(-50%, -50%)',
           zIndex: 40, pointerEvents: 'auto',
-          background: 'rgba(10,7,3,0.95)',
-          border: '1px solid rgba(180,130,40,0.55)',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.75)',
-          padding: '10px 14px', minWidth: 200,
+          background: 'radial-gradient(circle at 50% 50%, #2f1d13 0%, #150c07 100%)',
+          border: '8px solid #23140a',
+          borderRadius: 8,
+          boxShadow: '0 20px 50px rgba(0,0,0,0.9), inset 0 0 25px rgba(0,0,0,0.95), 0 0 0 1.5px #120a05',
+          padding: '12px 14px 12px',
+          width: 'calc(100% - 24px)',
+          maxWidth: 370,
           fontFamily: 'Georgia, serif',
+          boxSizing: 'border-box',
         }}>
+          {/* Corner Brackets */}
+          <CornerBracket rotation={0} />
+          <CornerBracket rotation={270} />
+          <CornerBracket rotation={90} />
+          <CornerBracket rotation={180} />
+
           {/* Header */}
-          <p style={{ fontSize: 10, color: 'rgba(180,140,60,0.75)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 5 }}>
-            Cálculo de ataque
+          <p style={{ fontSize: 9, color: 'rgba(180,140,60,0.6)', textTransform: 'uppercase', letterSpacing: '0.25em', marginBottom: 8, fontWeight: 'bold' }}>
+            Cálculo de Ataque
           </p>
-          <p style={{ fontSize: 12, color: '#d6d3c8', marginBottom: 8 }}>
-            <span style={{ color: '#fbbf24', fontWeight: 600 }}>{calcResult.attackerName}</span>
-            {' → '}
-            <span style={{ color: '#fca5a5' }}>{calcResult.defenderName}</span>
-          </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
-            <div style={{ textAlign: 'center' }}>
-              <p style={{ fontSize: 30, fontWeight: 700, color: '#fbbf24', fontFamily: 'monospace', lineHeight: 1 }}>
-                {calcResult.nat20Always ? '✔' : `${calcResult.minRoll}+`}
-              </p>
-              <p style={{ fontSize: 9, color: 'rgba(180,140,60,0.65)', textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 2 }}>
-                necesita
-              </p>
-            </div>
-            <div style={{ flex: 1 }}>
-              <p style={{ fontSize: 11, color: '#a8a29e', marginBottom: 5 }}>
-                +{calcResult.attackBonus} vs CA {calcResult.defAc}
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                <div style={{ flex: 1, height: 5, background: 'rgba(255,255,255,0.07)', borderRadius: 3, overflow: 'hidden' }}>
-                  <div style={{ height: '100%', background: '#b45309', borderRadius: 3, width: `${calcResult.hitChance}%`, transition: 'width 0.2s' }} />
-                </div>
-                <span style={{ fontSize: 11, fontFamily: 'monospace', color: '#fbbf24' }}>{calcResult.hitChance}%</span>
+
+          {/* Names */}
+          <div style={{
+            fontSize: 15,
+            marginBottom: 10,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            lineHeight: 1,
+            textShadow: '0 1px 3px rgba(0,0,0,0.8)'
+          }}>
+            <span style={{ color: '#d5b88a', fontWeight: 700, fontFamily: 'Georgia, serif' }}>{calcResult.attackerName}</span>
+            <StylizedArrow />
+            <span style={{ color: '#fca5a5', fontWeight: 600, fontFamily: 'Georgia, serif' }}>{calcResult.defenderName}</span>
+          </div>
+
+          {/* Number + bar */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
+            {/* Needs roll block */}
+            <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 65 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', position: 'relative' }}>
+                <span style={{
+                  fontSize: 38,
+                  fontWeight: 'bold',
+                  color: '#d5b88a',
+                  fontFamily: 'Georgia, serif',
+                  lineHeight: 1,
+                  textShadow: '0 2px 4px rgba(0,0,0,0.8)',
+                }}>
+                  {calcResult.nat20Always ? '✔' : calcResult.minRoll}
+                </span>
+                {!calcResult.nat20Always && (
+                  <div style={{ display: 'flex', alignItems: 'center', marginTop: 3, marginLeft: 2, position: 'relative' }}>
+                    <span style={{
+                      fontSize: 22,
+                      fontWeight: 'bold',
+                      color: '#d5b88a',
+                      fontFamily: 'Georgia, serif',
+                      lineHeight: 1,
+                    }}>+</span>
+                    <div style={{ marginLeft: 2, marginTop: -4 }}>
+                      <D20Icon size={15} />
+                    </div>
+                  </div>
+                )}
               </div>
+              <span style={{
+                fontSize: 8,
+                color: 'rgba(180,140,60,0.6)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.15em',
+                marginTop: 4,
+                fontWeight: 600,
+              }}>
+                Necesita
+              </span>
+            </div>
+
+            {/* Progress bar + VS block */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <span style={{
+                fontSize: 12,
+                color: '#d4d4d8',
+                fontFamily: 'Georgia, serif',
+                textShadow: '0 1px 2px rgba(0,0,0,0.8)',
+              }}>
+                {calcResult.attackBonus >= 0 ? `+${calcResult.attackBonus}` : calcResult.attackBonus} vs CA {calcResult.defAc}
+              </span>
+              
+              <DecorativeProgressBar percentage={calcResult.hitChance} />
             </div>
           </div>
 
-          {/* Hit / miss + damage */}
-          <div style={{ borderTop: '1px solid rgba(80,60,20,0.4)', paddingTop: 8, display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'nowrap' }}>
+          {/* Divider */}
+          <div style={{
+            height: 2,
+            background: 'none',
+            borderTop: '1.5px solid #1a0f07',
+            borderBottom: '1.5px solid #3c2414',
+            margin: '6px 0 12px 0',
+            opacity: 0.8,
+          }} />
+
+          {/* Action row */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 8,
+          }}>
+            {/* Pega Button */}
             <button
               onClick={() => setHit(true)}
               style={{
-                padding: '3px 10px', fontSize: 11, fontFamily: 'Georgia, serif', cursor: 'pointer', borderRadius: 3, whiteSpace: 'nowrap',
-                background: hit === true ? 'rgba(22,101,52,0.8)' : 'rgba(255,255,255,0.05)',
-                border: hit === true ? '1px solid #16a34a' : '1px solid rgba(100,80,40,0.4)',
-                color: hit === true ? '#86efac' : '#a8a29e',
+                flex: 1,
+                height: 36,
+                fontSize: 13,
+                fontFamily: 'Georgia, serif',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                borderRadius: 4,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                transition: 'all 0.2s',
+                outline: 'none',
+                opacity: hit === false ? 0.4 : 1,
+                ...(hit === true
+                  ? {
+                      background: 'linear-gradient(180deg, #3d6a45 0%, #1c3521 100%)',
+                      border: '2px solid #528c5c',
+                      color: '#fcd34d',
+                      boxShadow: '0 0 12px rgba(74,222,128,0.25), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -3px 0 rgba(0,0,0,0.4)',
+                    }
+                  : {
+                      background: 'linear-gradient(180deg, #1e3322 0%, #122115 100%)',
+                      border: '2px solid #2e4d34',
+                      color: 'rgba(134,239,172,0.6)',
+                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), inset 0 -2px 0 rgba(0,0,0,0.5)',
+                    })
               }}
-            >✓ Pega</button>
+            >
+              <CrossedSwordsIcon />
+              Pega
+            </button>
+
+            {/* Falla Button */}
             <button
               onClick={() => { setHit(false); setDamage('') }}
               style={{
-                padding: '3px 10px', fontSize: 11, fontFamily: 'Georgia, serif', cursor: 'pointer', borderRadius: 3, whiteSpace: 'nowrap',
-                background: hit === false ? 'rgba(127,29,29,0.7)' : 'rgba(255,255,255,0.05)',
-                border: hit === false ? '1px solid #dc2626' : '1px solid rgba(100,80,40,0.4)',
-                color: hit === false ? '#fca5a5' : '#a8a29e',
+                flex: 1,
+                height: 36,
+                fontSize: 13,
+                fontFamily: 'Georgia, serif',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                borderRadius: 4,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 6,
+                transition: 'all 0.2s',
+                outline: 'none',
+                opacity: hit === true ? 0.4 : 1,
+                ...(hit === false
+                  ? {
+                      background: 'linear-gradient(180deg, #881337 0%, #4c0519 100%)',
+                      border: '2px solid #f43f5e',
+                      color: '#fcd34d',
+                      boxShadow: '0 0 12px rgba(244,63,94,0.25), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -3px 0 rgba(0,0,0,0.4)',
+                    }
+                  : {
+                      background: 'linear-gradient(180deg, #2a2e30 0%, #1b1e1f 100%)',
+                      border: '2px solid #3f4547',
+                      color: 'rgba(212,212,216,0.6)',
+                      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), inset 0 -2px 0 rgba(0,0,0,0.5)',
+                    })
               }}
-            >✗ Falla</button>
+            >
+              <CrossedArrowsIcon />
+              Falla
+            </button>
+
+            {/* Damage Input (centered directly in flex row) */}
             {hit === true && (
               <input
                 autoFocus
-                type="number" min={0}
+                type="number"
+                min={0}
+                placeholder="0"
                 value={damage}
                 onChange={e => setDamage(e.target.value)}
                 onKeyDown={e => {
@@ -438,15 +764,26 @@ export function CombatBoard({
                     setAttackFrom(null); setAttackTo(null)
                   }
                 }}
-                placeholder="daño"
+                className="no-spinners"
                 style={{
-                  width: 52, padding: '3px 6px', fontSize: 12, fontFamily: 'monospace', textAlign: 'center',
-                  background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(220,38,38,0.5)',
-                  color: '#fca5a5', borderRadius: 3, outline: 'none',
+                  width: 50,
+                  height: 36,
+                  padding: '0 4px',
+                  fontSize: 18,
+                  fontFamily: 'monospace',
+                  textAlign: 'center',
+                  background: 'rgba(0,0,0,0.65)',
+                  border: '2px solid #1e1208',
+                  color: '#d5b88a',
+                  borderRadius: 4,
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.9)',
                 }}
               />
             )}
-            <div style={{ flex: 1 }} />
+
+            {/* Wax Seal OK Button */}
             {hit !== null && (
               <button
                 onClick={() => {
@@ -456,15 +793,89 @@ export function CombatBoard({
                 }}
                 disabled={hit === true && !damage}
                 style={{
-                  padding: '3px 10px', fontSize: 11, fontFamily: 'Georgia, serif', cursor: 'pointer', borderRadius: 3, whiteSpace: 'nowrap',
-                  background: 'rgba(120,60,10,0.8)', border: '1px solid rgba(180,100,20,0.6)',
-                  color: '#fbbf24', opacity: hit === true && !damage ? 0.4 : 1,
+                  position: 'relative',
+                  width: 52,
+                  height: 52,
+                  background: 'none',
+                  border: 'none',
+                  cursor: hit === true && !damage ? 'not-allowed' : 'pointer',
+                  padding: 0,
+                  outline: 'none',
+                  flexShrink: 0,
+                  transition: 'transform 0.1s, opacity 0.2s',
+                  opacity: hit === true && !damage ? 0.35 : 1,
                 }}
-              >OK</button>
+                onMouseDown={e => {
+                  if (!(hit === true && !damage)) {
+                    e.currentTarget.style.transform = 'scale(0.92)'
+                  }
+                }}
+                onMouseUp={e => {
+                  e.currentTarget.style.transform = 'scale(1)'
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.transform = 'scale(1)'
+                }}
+              >
+                <img
+                  src="/assets/images/wax seal (1).png"
+                  alt="Confirmar"
+                  draggable={false}
+                  style={{
+                    position: 'absolute',
+                    inset: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    pointerEvents: 'none',
+                    filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.6))',
+                  }}
+                />
+                
+                {/* Embossed content */}
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  paddingTop: 1,
+                }}>
+                  {/* Crossed Axes watermark */}
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="18"
+                    height="18"
+                    style={{
+                      color: 'rgba(195,115,62,0.85)',
+                      filter: 'drop-shadow(0 1px 0.8px rgba(8,2,0,0.82)) drop-shadow(0 -0.5px 0.5px rgba(255,195,130,0.28))',
+                      position: 'absolute',
+                    }}
+                  >
+                    <path d="M4 20 L20 4 M20 20 L4 4" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                    <path d="M15 3 L21 6 L18 9 L15 6 Z" fill="currentColor" />
+                    <path d="M9 3 L3 6 L6 9 L9 6 Z" fill="currentColor" />
+                  </svg>
+
+                  {/* Text label */}
+                  <span style={{
+                    fontFamily: 'Georgia, serif',
+                    fontSize: 11,
+                    fontWeight: 'bold',
+                    color: '#fcd34d',
+                    textShadow: '0 2px 3px rgba(0,0,0,0.9)',
+                    zIndex: 1,
+                    letterSpacing: '0.05em',
+                  }}>
+                    OK
+                  </span>
+                </div>
+              </button>
             )}
           </div>
         </div>
       )}
+
 
       {/* Hint when attacker selected but no target yet */}
       {attackFrom && !attackTo && (
