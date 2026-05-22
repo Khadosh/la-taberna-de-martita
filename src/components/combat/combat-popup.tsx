@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { dndApi } from '../../lib/dnd-api'
+import { useQuery, useQueries } from '@tanstack/react-query'
+import { dndApi, dndKeys } from '../../lib/dnd-api'
 import {
   D20Icon,
   StylizedArrow,
@@ -166,18 +166,28 @@ export function CombatPopup({
     staleTime: 60 * 1000 * 10, // 10 minutes cache
   })
 
-  // Group attacker spells by level
+  // Fetch details for all attacker spells to group them by level in the dropdown
+  const attackerSpells = useMemo(() => attackerChar?.sheet_json.spells ?? [], [attackerChar])
+  const attackerSpellsQueries = useQueries({
+    queries: attackerSpells.map((index: string) => ({
+      queryKey: dndKeys.spell(index),
+      queryFn: () => dndApi.spell(index),
+      staleTime: Infinity,
+    }))
+  })
+
   const groupedAttackerSpells = useMemo(() => {
-    if (!attackerChar || !attackerChar.sheet_json.spells) return {}
-    const list = attackerChar.sheet_json.spells as any[]
-    const groups: Record<number, any[]> = {}
-    list.forEach(sp => {
-      const lvl = sp.level ?? 0
-      if (!groups[lvl]) groups[lvl] = []
-      groups[lvl].push(sp)
+    const groups: Record<number, { index: string; name: string }[]> = {}
+    attackerSpellsQueries.forEach(res => {
+      if (res.data) {
+        const data = res.data as any
+        const lvl = data.level
+        if (!groups[lvl]) groups[lvl] = []
+        groups[lvl].push({ index: data.index, name: data.name })
+      }
     })
     return groups
-  }, [attackerChar])
+  }, [attackerSpellsQueries])
 
   // Reset inputs on mode or targets change
   useEffect(() => {

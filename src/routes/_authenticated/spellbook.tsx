@@ -60,10 +60,10 @@ function SpellbookPage() {
   }, [allSpells, search, levelFilter, classFilter, classSpells])
 
   return (
-    <div className="min-h-screen text-stone-900" style={parchmentStyle}>
+    <div className="h-screen flex flex-col overflow-hidden text-stone-900" style={parchmentStyle}>
 
       {/* Header */}
-      <header className="border-b-2 border-stone-800 bg-stone-900 px-4 sm:px-8 py-2.5 flex items-center gap-3">
+      <header className="border-b-2 border-stone-800 bg-stone-900 px-4 sm:px-8 py-2.5 flex items-center gap-3 shrink-0">
         <Link to="/" className="text-amber-400 hover:text-amber-200 transition-colors text-sm font-serif shrink-0">← La Taberna</Link>
         <div className="w-px h-4 bg-stone-700 shrink-0" />
         <div>
@@ -76,21 +76,21 @@ function SpellbookPage() {
         </Link>
       </header>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-8 py-8 flex flex-col sm:flex-row gap-6">
+      <div className="flex-1 overflow-hidden max-w-5xl w-full mx-auto px-4 sm:px-8 py-8 flex flex-col sm:flex-row gap-6">
 
         {/* Left panel — search + filters + list */}
-        <div className="w-full sm:w-80 shrink-0 space-y-3">
+        <div className="w-full sm:w-80 shrink-0 flex flex-col overflow-hidden space-y-3">
           <input
             type="search"
             placeholder="Buscar conjuro..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={inputStyle}
-            className="w-full px-3 py-2 text-sm text-stone-800 placeholder-stone-500 font-serif focus:outline-none"
+            className="w-full px-3 py-2 text-sm text-stone-800 placeholder-stone-500 font-serif focus:outline-none shrink-0"
           />
 
           {/* Filters */}
-          <div className="flex gap-2">
+          <div className="flex gap-2 shrink-0">
             <select
               value={classFilter}
               onChange={e => setClassFilter(e.target.value)}
@@ -116,14 +116,14 @@ function SpellbookPage() {
             </select>
           </div>
 
-          <p className="text-[10px] text-stone-500 font-serif italic">
+          <p className="text-[10px] text-stone-500 font-serif italic shrink-0">
             {filtered.length} conjuros{classFilter ? ` de ${classFilter}` : ''}
           </p>
 
           {loadingAll ? (
-            <p className="text-stone-500 text-sm font-serif italic px-1">Consultando los grimoires...</p>
+            <p className="text-stone-500 text-sm font-serif italic px-1 shrink-0">Consultando los grimoires...</p>
           ) : (
-            <ul className="space-y-0.5 max-h-[calc(100vh-220px)] overflow-y-auto pr-1">
+            <ul className="flex-1 overflow-y-auto pr-1 space-y-0.5">
               {filtered.length === 0 && (
                 <li className="text-stone-500 text-sm font-serif italic px-1">Sin resultados.</li>
               )}
@@ -148,11 +148,11 @@ function SpellbookPage() {
         </div>
 
         {/* Right panel — spell detail */}
-        <div className="flex-1">
+        <div className="flex-1 overflow-hidden flex flex-col">
           {selected ? (
             <SpellCard index={selected} />
           ) : (
-            <div className="flex items-center justify-center h-64 border border-stone-400/40" style={cardStyle}>
+            <div className="flex items-center justify-center h-full border border-stone-400/40" style={cardStyle}>
               <p className="text-stone-500 font-serif italic text-sm">Seleccioná un conjuro para ver los detalles.</p>
             </div>
           )}
@@ -181,10 +181,10 @@ function SpellCard({ index }: { index: string }) {
   const schoolName = SPELL_SCHOOLS[spell.school.index] ?? spell.school.name
 
   return (
-    <div style={cardStyle} className="border border-stone-400/40 overflow-hidden">
+    <div style={cardStyle} className="border border-stone-400/40 overflow-hidden flex flex-col h-full flex-1">
 
       {/* Title bar */}
-      <div className="bg-amber-950/80 px-5 py-4 border-b-2 border-amber-900/60">
+      <div className="bg-amber-950/80 px-5 py-4 border-b-2 border-amber-900/60 shrink-0">
         <h2 className="font-display text-amber-100 text-xl leading-tight">{spell.name}</h2>
         <p className="text-amber-300/70 font-serif text-xs mt-0.5 italic">
           {spell.level === 0 ? 'Truco' : `Nivel ${spell.level}`} · {schoolName}
@@ -192,7 +192,7 @@ function SpellCard({ index }: { index: string }) {
       </div>
 
       {/* Properties */}
-      <div className="px-5 py-3 border-b border-amber-900/30 bg-amber-950/20">
+      <div className="px-5 py-3 border-b border-amber-900/30 bg-amber-950/20 shrink-0">
         <div className="grid grid-cols-2 gap-x-6 gap-y-1 text-sm font-serif">
           <PropLine label="Tiempo" value={spell.casting_time} />
           <PropLine label="Alcance" value={spell.range} />
@@ -202,7 +202,7 @@ function SpellCard({ index }: { index: string }) {
       </div>
 
       {/* Description */}
-      <div className="px-5 py-4 space-y-3 max-h-[60vh] overflow-y-auto">
+      <div className="px-5 py-4 space-y-3 flex-1 overflow-y-auto">
         {spell.desc.map((p, i) => (
           <p key={i} className="text-sm font-serif text-stone-800 leading-relaxed whitespace-pre-line">{p}</p>
         ))}

@@ -239,7 +239,7 @@ export function CombatBoard({
         </svg>
 
         {/* Tokens Container */}
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'auto' }}>
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
           {tokens.map(token => {
             const pos = positions[token.id]
             if (!pos) return null

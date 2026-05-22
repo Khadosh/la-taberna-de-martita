@@ -51,10 +51,10 @@ function BestiaryPage() {
   }, [list, search])
 
   return (
-    <div className="min-h-screen text-stone-900" style={parchmentStyle}>
+    <div className="h-screen flex flex-col overflow-hidden text-stone-900" style={parchmentStyle}>
 
       {/* Header */}
-      <header className="border-b-2 border-stone-800 bg-stone-900 px-4 sm:px-8 py-2.5 flex items-center gap-3">
+      <header className="border-b-2 border-stone-800 bg-stone-900 px-4 sm:px-8 py-2.5 flex items-center gap-3 shrink-0">
         <Link to="/" className="text-amber-400 hover:text-amber-200 transition-colors text-sm font-serif shrink-0">← La Taberna</Link>
         <div className="w-px h-4 bg-stone-700 shrink-0" />
         <div>
@@ -67,23 +67,23 @@ function BestiaryPage() {
         </Link>
       </header>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-8 py-8 flex flex-col sm:flex-row gap-6">
+      <div className="flex-1 overflow-hidden max-w-5xl w-full mx-auto px-4 sm:px-8 py-8 flex flex-col sm:flex-row gap-6">
 
         {/* Left panel — search + list */}
-        <div className="w-full sm:w-72 shrink-0 space-y-3">
+        <div className="w-full sm:w-72 shrink-0 flex flex-col overflow-hidden space-y-3">
           <input
             type="search"
             placeholder="Buscar monstruo..."
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={inputStyle}
-            className="w-full px-3 py-2 text-sm text-stone-800 placeholder-stone-500 font-serif focus:outline-none"
+            className="w-full px-3 py-2 text-sm text-stone-800 placeholder-stone-500 font-serif focus:outline-none shrink-0"
           />
 
           {isLoading ? (
-            <p className="text-stone-500 text-sm font-serif italic px-1">Consultando el bestiario...</p>
+            <p className="text-stone-500 text-sm font-serif italic px-1 shrink-0">Consultando el bestiario...</p>
           ) : (
-            <ul className="space-y-0.5 max-h-[calc(100vh-160px)] overflow-y-auto pr-1">
+            <ul className="flex-1 overflow-y-auto pr-1 space-y-0.5">
               {filtered.length === 0 && (
                 <li className="text-stone-500 text-sm font-serif italic px-1">Sin resultados.</li>
               )}
@@ -100,11 +100,11 @@ function BestiaryPage() {
         </div>
 
         {/* Right panel — stat block */}
-        <div className="flex-1">
+        <div className="flex-1 overflow-hidden flex flex-col">
           {selected ? (
             <StatBlock index={selected} />
           ) : (
-            <div className="flex items-center justify-center h-64 border border-stone-400/40" style={cardStyle}>
+            <div className="flex items-center justify-center h-full border border-stone-400/40" style={cardStyle}>
               <p className="text-stone-500 font-serif italic text-sm">Seleccioná un monstruo para ver su ficha.</p>
             </div>
           )}
@@ -164,10 +164,10 @@ function StatBlock({ index }: { index: string }) {
   ]
 
   return (
-    <div style={cardStyle} className="border border-stone-400/40 overflow-hidden">
+    <div style={cardStyle} className="border border-stone-400/40 overflow-hidden flex flex-col h-full flex-1">
 
       {/* Title bar */}
-      <div className="bg-amber-950/80 px-5 py-4 border-b-2 border-amber-900/60">
+      <div className="bg-amber-950/80 px-5 py-4 border-b-2 border-amber-900/60 shrink-0">
         <h2 className="font-display text-amber-100 text-xl leading-tight">{m.name}</h2>
         <p className="text-amber-300/70 font-serif text-xs mt-0.5 capitalize italic">
           {m.size} {m.type} · {m.alignment}
@@ -175,7 +175,7 @@ function StatBlock({ index }: { index: string }) {
       </div>
 
       {/* Core stats */}
-      <div className="px-5 py-3 border-b border-amber-900/30 bg-amber-950/20">
+      <div className="px-5 py-3 border-b border-amber-900/30 bg-amber-950/20 shrink-0">
         <div className="grid grid-cols-3 gap-x-6 gap-y-1 text-sm font-serif">
           <StatLine label="CA" value={String(ac)} />
           <StatLine label="PV" value={`${m.hit_points} (${m.hit_points_roll})`} />
@@ -186,7 +186,7 @@ function StatBlock({ index }: { index: string }) {
       </div>
 
       {/* Ability scores */}
-      <div className="px-5 py-3 border-b border-stone-400/30">
+      <div className="px-5 py-3 border-b border-stone-400/30 shrink-0">
         <div className="grid grid-cols-6 gap-1 text-center">
           {STATS.map(({ key, label }) => {
             const score = m[key] as number
@@ -203,7 +203,7 @@ function StatBlock({ index }: { index: string }) {
 
       {/* Traits */}
       {(m.damage_resistances.length > 0 || m.damage_immunities.length > 0 || m.damage_vulnerabilities.length > 0 || m.condition_immunities.length > 0) && (
-        <div className="px-5 py-3 border-b border-stone-400/30 space-y-1">
+        <div className="px-5 py-3 border-b border-stone-400/30 space-y-1 shrink-0">
           {m.damage_vulnerabilities.length > 0 && (
             <TraitLine label="Vulnerabilidades" value={m.damage_vulnerabilities.join(', ')} />
           )}
@@ -220,12 +220,12 @@ function StatBlock({ index }: { index: string }) {
       )}
 
       {/* Senses / Languages */}
-      <div className="px-5 py-3 border-b border-stone-400/30 space-y-1">
+      <div className="px-5 py-3 border-b border-stone-400/30 space-y-1 shrink-0">
         <TraitLine label="Sentidos" value={Object.entries(m.senses).map(([k, v]) => `${k.replace(/_/g, ' ')} ${v}`).join(', ')} />
         {m.languages && <TraitLine label="Idiomas" value={m.languages} />}
       </div>
 
-      <div className="px-5 py-4 space-y-4 max-h-96 overflow-y-auto">
+      <div className="px-5 py-4 space-y-4 flex-1 overflow-y-auto">
 
         {/* Special abilities */}
         {m.special_abilities && m.special_abilities.length > 0 && (

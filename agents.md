@@ -138,6 +138,13 @@ Usamos [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## 📝 Changelog
 
+- **2026-05-22**: `feat: improve combat board interactions, action modes, AoE templates, and layout viewport stability`
+  - ✅ Implementado sistema de zoom y paneo táctico interactivo con cuadrícula Chebyshev.
+  - ✅ Añadido selector de modos de acción (Melee, Rango, Lanzar, Conjuro) vinculado con inventario y conjuros del personaje.
+  - ✅ Implementadas plantillas de área (AoE) con detección de blancos y soporte para curaciones/slots de conjuro.
+  - ✅ Refactorizada la hoja de estilos y layout de campaña (`CampaignLayout`) para eliminar scrolls indeseados en el tablero de combate y ubicar el scroll vertical del resto de las pestañas en el borde derecho del viewport.
+  - ✅ Optimizados los layouts del Compendio de Conjuros (`spellbook`) y el Bestiario (`bestiary`) con altura fija (`h-screen`) y paneles de scroll independiente.
+  - ✅ Añadida sincronización bidireccional en tiempo real (broadcast) de objetivos y daño de ataques entre jugador y DM.
 - **2026-05-22**: `refactor: modularize combat board components and implement draggable popup`
   - ✅ Refactorizado `combat-board.tsx` en subcomponentes modulares bajo `src/components/combat/` (`combat-types.ts`, `combat-helpers.tsx`, `combat-token.tsx`, `combat-popup.tsx`).
   - ✅ Creado custom hook `useCombatBoard` (`use-combat-board.ts`) para aislar todo el estado, drag-and-drop, y cálculos matemáticos/lógicos de combate del renderizado visual, reduciendo el archivo `combat-board.tsx` a ~350 líneas de UI pura.

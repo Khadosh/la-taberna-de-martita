@@ -24,6 +24,7 @@ export function CombatToken({
         position: 'absolute', left: pos.x, top: pos.y,
         width: TOKEN_SIZE, touchAction: 'none', cursor: 'grab',
         zIndex: isFrom || isTo ? 20 : 10,
+        pointerEvents: 'auto',
       }}
       onPointerDown={onPointerDown}
       onContextMenu={onContextMenu}

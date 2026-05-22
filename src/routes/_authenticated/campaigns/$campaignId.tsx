@@ -79,12 +79,16 @@ function CampaignLayout() {
 
   const isGm = campaign.dm_id === session.user.id
   const tabs = isGm ? GM_TABS : PLAYER_TABS
+  const isTablero = !!matchRoute({
+    to: '/campaigns/$campaignId/tablero',
+    fuzzy: true,
+  })
 
   return (
-    <div className="min-h-screen text-stone-900" style={isGm ? dmStyle : parchmentStyle}>
+    <div className="h-screen flex flex-col overflow-hidden text-stone-900" style={isGm ? dmStyle : parchmentStyle}>
 
       {/* Header */}
-      <header className="border-b-2 border-stone-900 bg-stone-950 px-4 sm:px-8 py-3 flex items-center gap-4">
+      <header className="border-b-2 border-stone-900 bg-stone-950 px-4 sm:px-8 py-3 flex items-center gap-4 shrink-0">
         <Link to="/" className="text-amber-400 hover:text-amber-200 transition-colors text-sm font-serif shrink-0">
           ← Dashboard
         </Link>
@@ -127,7 +131,7 @@ function CampaignLayout() {
       </header>
 
       {/* Tab bar — role-aware */}
-      <nav className="border-b-2 border-stone-900 bg-stone-900 px-2 sm:px-6 py-1.5 overflow-x-auto">
+      <nav className="border-b-2 border-stone-900 bg-stone-900 px-2 sm:px-6 py-1.5 overflow-x-auto shrink-0">
         <ul className="flex items-center gap-1 min-w-max">
           {tabs.map(tab => {
             const isActive = matchRoute({
@@ -155,7 +159,9 @@ function CampaignLayout() {
       </nav>
 
       {/* Outlet — child renders */}
-      <Outlet />
+      <div className={`flex-1 ${isTablero ? 'overflow-hidden' : 'overflow-y-auto'} relative flex flex-col`}>
+        <Outlet />
+      </div>
 
       {/* Dice Module — available to all */}
       <DiceModule isOpen={showDice} onClose={() => setShowDice(false)} />

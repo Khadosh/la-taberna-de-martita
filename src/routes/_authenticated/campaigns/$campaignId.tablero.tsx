@@ -287,7 +287,7 @@ function PlayerTablero({ campaignId, session }: { campaignId: string; session: S
   }
 
   return (
-    <div className="bg-stone-950 flex" style={{ height: 'calc(100vh - 100px)' }}>
+    <div className="bg-stone-950 flex overflow-hidden" style={{ height: 'calc(100vh - 100px)' }}>
       <CombatBoard
         tokens={tokens}
         allEntities={allCombatEntities}
@@ -853,7 +853,7 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="bg-stone-950 text-stone-100 flex flex-col" style={{ minHeight: 'calc(100vh - 100px)' }}>
+    <div className="bg-stone-950 text-stone-100 flex flex-col overflow-hidden" style={{ height: 'calc(100vh - 100px)' }}>
       <div className="flex flex-1 overflow-hidden">
 
         {/* LEFT: Party */}

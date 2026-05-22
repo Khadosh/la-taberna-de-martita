@@ -394,16 +394,15 @@ export function useCombatBoard({
     })
   }
 
-  // Pan Gestures (Left click + Space, or Middle click, or Right click on background)
   const handleBgPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    const isBackground = e.target === boardRef.current || (e.target as HTMLElement).id === 'map-canvas'
-    if (!isBackground) return
-
     const isMiddleClick = e.button === 1
     const isRightClick = e.button === 2
     const isSpacePan = e.button === 0 && (e.nativeEvent as any).spaceKey
 
-    if (isMiddleClick || isRightClick || isSpacePan || e.button === 0) {
+    const isBackground = e.target === boardRef.current || (e.target as HTMLElement).id === 'map-canvas'
+    const isAllowedPan = isMiddleClick || isSpacePan || (isBackground && (e.button === 0 || isRightClick))
+
+    if (isAllowedPan) {
       e.stopPropagation()
       setIsPanning(true)
       panStartRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y }

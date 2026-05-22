@@ -59,6 +59,7 @@ Sincronización de dados en mesa integrada al tablero de combate del DM (documen
 | Navegación: "volver" consistente en todas las pantallas | Baja |
 | Feedback de guardado en la hoja (actualmente solo HP lo tiene) | Baja |
 | Diseño visual del panel de cálculo de ataque | ✅ |
+| Scrolls indeseados en el tablero y barra de scroll descentrada → solucionado dinámicamente en CampaignLayout | ✅ |
 
 ---
 
