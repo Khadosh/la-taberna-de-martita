@@ -6,21 +6,30 @@ export const Route = createFileRoute('/_authenticated/campaigns/$campaignId/hech
 })
 
 function HechizosTab() {
+  const hechizosBgStyle: React.CSSProperties = {
+    backgroundImage: `url('/assets/images/hechizos_bg.png')`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'fixed',
+  }
+
   return (
-    <ComingSoon
-      icon="✨"
-      title="Hechizos"
-      lines={[
-        'Próximamente: compendio embebido con filtros por clase y nivel, dentro del hub.',
-      ]}
-      footer={
-        <Link
-          to="/spellbook"
-          className="inline-block mt-4 px-4 py-2 rounded bg-stone-900 text-amber-100 text-sm font-serif hover:bg-stone-800 transition-colors"
-        >
-          Abrir compendio global →
-        </Link>
-      }
-    />
+    <div className="w-full min-h-full flex-1 overflow-y-auto text-stone-900 bg-stone-950" style={hechizosBgStyle}>
+      <ComingSoon
+        icon="✨"
+        title="Hechizos"
+        lines={[
+          'Próximamente: compendio embebido con filtros por clase y nivel, dentro del hub.',
+        ]}
+        footer={
+          <Link
+            to="/spellbook"
+            className="inline-block mt-4 px-4 py-2 rounded bg-stone-900 text-amber-100 text-sm font-serif hover:bg-stone-800 transition-colors"
+          >
+            Abrir compendio global →
+          </Link>
+        }
+      />
+    </div>
   )
 }

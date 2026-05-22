@@ -138,6 +138,11 @@ Usamos [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## 📝 Changelog
 
+- **2026-05-22**: `style: replace campaign tab emojis with custom D&D SVGs and configure specific page backgrounds`
+  - ✅ Reemplazados todos los emojis genéricos de la barra de navegación de la campaña por iconos SVG premium y personalizados (Scroll, Hood, Crossed Swords, Beer, Spellbook, Scales, D20).
+  - ✅ Eliminado el fondo global de la campaña de la plantilla base en favor de una base sólida y oscura.
+  - ✅ Implementados fondos atmosféricos de pantalla específicos para cada pestaña (Overview, PNJs, Hechizos, Comercio, Taberna, Habilidades).
+  - ✅ Sincronizados y prevenidos scrolls indeseados y problemas de superposición o legibilidad de textos sobre las imágenes de fondo.
 - **2026-05-22**: `feat: implement campaign commerce and interactive tavern services`
   - ✅ Reemplazada la pestaña obsoleta de Objetos por la de Comercio (`comercio.tsx`) con tiendas temáticas (Armería, Provisiones, Alquimia y Magia, Establo, Gremio).
   - ✅ Implementada reventa de objetos al 50% de su valor comercial estándar.

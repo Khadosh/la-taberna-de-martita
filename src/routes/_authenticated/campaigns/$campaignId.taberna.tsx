@@ -386,8 +386,16 @@ function Taberna() {
     setLoading(false)
   }
 
+  const tavernBgStyle: React.CSSProperties = {
+    backgroundImage: `url('/assets/images/tavern_bg.png')`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'fixed',
+  }
+
   return (
-    <main className="max-w-5xl mx-auto px-4 sm:px-8 py-8">
+    <div className="w-full min-h-full flex-1 overflow-y-auto text-stone-200 bg-stone-950" style={tavernBgStyle}>
+      <main className="max-w-5xl mx-auto px-4 sm:px-8 py-8">
       
       {/* Decorative tavern ambiance banner */}
       <div className="relative h-56 sm:h-64 w-full mb-8 overflow-hidden rounded-lg border border-stone-850 shadow-2xl bg-stone-950">
@@ -542,6 +550,7 @@ function Taberna() {
         )}
 
       </div>
-    </main>
+      </main>
+    </div>
   )
 }

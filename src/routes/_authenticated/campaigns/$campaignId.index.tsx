@@ -6,6 +6,7 @@ import { ABILITY_LABELS } from '../../../lib/dnd-api'
 import { getSpellSlots } from '../../../lib/dnd-constants'
 import { CLASS_ICONS } from '../../../lib/class-meta'
 import type { Tables } from '../../../lib/database.types'
+import { dmStyle, parchmentStyle } from './$campaignId'
 
 export const Route = createFileRoute('/_authenticated/campaigns/$campaignId/')({
   component: CampaignHubLanding,
@@ -95,8 +96,18 @@ function CampaignHubLanding() {
 
   const isGm = campaign.dm_id === session.user.id
 
-  if (isGm) return <GmView campaignId={campaignId} characters={characters} npcs={npcs} />
-  return <PlayerView campaignId={campaignId} characters={characters} userId={session.user.id} />
+  if (isGm) {
+    return (
+      <div className="w-full min-h-full flex-1 overflow-y-auto text-stone-900 bg-stone-950" style={dmStyle}>
+        <GmView campaignId={campaignId} characters={characters} npcs={npcs} />
+      </div>
+    )
+  }
+  return (
+    <div className="w-full min-h-full flex-1 overflow-y-auto text-stone-900" style={parchmentStyle}>
+      <PlayerView campaignId={campaignId} characters={characters} userId={session.user.id} />
+    </div>
+  )
 }
 
 // ── GM View ──────────────────────────────────────────────────────────────────

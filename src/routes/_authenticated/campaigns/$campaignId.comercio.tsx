@@ -310,8 +310,16 @@ function Comercio() {
 
   const selectedCharInventory = allInventory.filter(i => i.character_id === sellCharId)
 
+  const comercioBgStyle: React.CSSProperties = {
+    backgroundImage: `url('/assets/images/comercio_bg.png')`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'fixed',
+  }
+
   return (
-    <main className="max-w-5xl mx-auto px-4 sm:px-8 py-8">
+    <div className="w-full min-h-full flex-1 overflow-y-auto text-stone-200 bg-stone-950" style={comercioBgStyle}>
+      <main className="max-w-5xl mx-auto px-4 sm:px-8 py-8">
       
       {/* Commerce Header banner */}
       <div className="relative h-44 sm:h-52 w-full mb-8 overflow-hidden rounded-lg border border-stone-800 shadow-2xl bg-stone-950">
@@ -645,6 +653,7 @@ function Comercio() {
         </div>
       )}
 
-    </main>
+      </main>
+    </div>
   )
 }

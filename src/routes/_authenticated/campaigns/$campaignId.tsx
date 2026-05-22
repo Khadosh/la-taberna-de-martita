@@ -4,6 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { DiceModule } from '../../../lib/dice'
+import { ScrollIcon, HoodIcon, CrossedSwordsIcon, BeerIcon, SpellbookIcon, ScalesIcon, D20Icon } from '../../../components/icons/campaign-icons'
 
 export const Route = createFileRoute('/_authenticated/campaigns/$campaignId')({
   component: CampaignLayout,
@@ -19,29 +20,29 @@ type TabDef = {
   | '/campaigns/$campaignId/taberna'
   | '/campaigns/$campaignId/tablero'
   label: string
-  icon: string
+  icon: React.ReactNode
   exact?: boolean
 }
 
 // Tabs que ve el GM (acceso completo a herramientas de dirección)
 const GM_TABS: TabDef[] = [
-  { to: '/campaigns/$campaignId', label: 'Overview', icon: '📇', exact: true },
-  { to: '/campaigns/$campaignId/pnj', label: 'PNJs', icon: '👤' },
-  { to: '/campaigns/$campaignId/tablero', label: 'Tablero', icon: '⚔️' },
-  { to: '/campaigns/$campaignId/taberna', label: 'Taberna', icon: '🍺' },
-  { to: '/campaigns/$campaignId/hechizos', label: 'Hechizos', icon: '✨' },
-  { to: '/campaigns/$campaignId/comercio', label: 'Comercio', icon: '🏪' },
-  { to: '/campaigns/$campaignId/habilidades', label: 'Habilidades', icon: '😊' },
+  { to: '/campaigns/$campaignId', label: 'Overview', icon: <ScrollIcon />, exact: true },
+  { to: '/campaigns/$campaignId/pnj', label: 'PNJs', icon: <HoodIcon /> },
+  { to: '/campaigns/$campaignId/tablero', label: 'Tablero', icon: <CrossedSwordsIcon /> },
+  { to: '/campaigns/$campaignId/taberna', label: 'Taberna', icon: <BeerIcon /> },
+  { to: '/campaigns/$campaignId/hechizos', label: 'Hechizos', icon: <SpellbookIcon /> },
+  { to: '/campaigns/$campaignId/comercio', label: 'Comercio', icon: <ScalesIcon /> },
+  { to: '/campaigns/$campaignId/habilidades', label: 'Habilidades', icon: <D20Icon /> },
 ]
 
 // Tabs que ve el jugador (herramientas de referencia en mesa)
 const PLAYER_TABS: TabDef[] = [
-  { to: '/campaigns/$campaignId', label: 'Mi Party', icon: '📇', exact: true },
-  { to: '/campaigns/$campaignId/tablero', label: 'Tablero', icon: '⚔️' },
-  { to: '/campaigns/$campaignId/taberna', label: 'Taberna', icon: '🍺' },
-  { to: '/campaigns/$campaignId/hechizos', label: 'Hechizos', icon: '✨' },
-  { to: '/campaigns/$campaignId/comercio', label: 'Comercio', icon: '🏪' },
-  { to: '/campaigns/$campaignId/habilidades', label: 'Habilidades', icon: '😊' },
+  { to: '/campaigns/$campaignId', label: 'Mi Party', icon: <ScrollIcon />, exact: true },
+  { to: '/campaigns/$campaignId/tablero', label: 'Tablero', icon: <CrossedSwordsIcon /> },
+  { to: '/campaigns/$campaignId/taberna', label: 'Taberna', icon: <BeerIcon /> },
+  { to: '/campaigns/$campaignId/hechizos', label: 'Hechizos', icon: <SpellbookIcon /> },
+  { to: '/campaigns/$campaignId/comercio', label: 'Comercio', icon: <ScalesIcon /> },
+  { to: '/campaigns/$campaignId/habilidades', label: 'Habilidades', icon: <D20Icon /> },
 ]
 
 function CampaignLayout() {
@@ -86,7 +87,7 @@ function CampaignLayout() {
   })
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden text-stone-900" style={isGm ? dmStyle : parchmentStyle}>
+    <div className="h-screen flex flex-col overflow-hidden text-stone-200 bg-stone-950">
 
       {/* Header */}
       <header className="border-b-2 border-stone-900 bg-stone-950 px-4 sm:px-8 py-3 flex items-center gap-4 shrink-0">
@@ -170,7 +171,7 @@ function CampaignLayout() {
   )
 }
 
-const parchmentStyle: React.CSSProperties = {
+export const parchmentStyle: React.CSSProperties = {
   background: `
     linear-gradient(rgba(120, 90, 40, 0.08) 1px, transparent 1px) 0 0 / 28px 28px,
     linear-gradient(90deg, rgba(120, 90, 40, 0.08) 1px, transparent 1px) 0 0 / 28px 28px,
@@ -178,7 +179,7 @@ const parchmentStyle: React.CSSProperties = {
   `,
 }
 
-const dmStyle: React.CSSProperties = {
+export const dmStyle: React.CSSProperties = {
   backgroundImage: `url('/assets/images/Fondo DM.png')`,
   backgroundSize: 'cover',
   backgroundPosition: 'center top',
