@@ -94,7 +94,7 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
   } = dmState
 
   return (
-    <div className="bg-stone-955 text-stone-100 flex flex-col overflow-hidden w-full" style={{ height: 'calc(100vh - 100px)' }}>
+    <div className="bg-stone-950 text-stone-100 flex flex-col overflow-hidden w-full" style={{ height: 'calc(100vh - 100px)' }}>
       <div className="flex flex-1 overflow-hidden">
         
         {/* LEFT: Party */}

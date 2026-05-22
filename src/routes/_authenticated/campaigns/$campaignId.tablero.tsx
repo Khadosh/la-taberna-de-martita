@@ -10,6 +10,11 @@ export const Route = createFileRoute('/_authenticated/campaigns/$campaignId/tabl
   component: TableroRoute,
 })
 
+function DmTablero({ campaignId }: { campaignId: string; session: Session }) {
+  const dmState = useDmTablero(campaignId)
+  return <DmTableroLayout campaignId={campaignId} dmState={dmState} />
+}
+
 function TableroRoute() {
   const { campaignId } = Route.useParams()
   const { session } = Route.useRouteContext() as { session: Session }
@@ -33,7 +38,4 @@ function TableroRoute() {
   )
 }
 
-function DmTablero({ campaignId }: { campaignId: string; session: Session }) {
-  const dmState = useDmTablero(campaignId)
-  return <DmTableroLayout campaignId={campaignId} dmState={dmState} />
-}
+

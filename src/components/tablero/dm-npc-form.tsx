@@ -101,7 +101,7 @@ export function DmNpcForm({
           onChange={e => setNpcInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && npcInput.trim() && addNpc()}
           placeholder='Nombre [hp]  ej: Goblin 7'
-          className="flex-1 px-3 py-2 bg-stone-955 border border-stone-700 text-stone-300 text-sm font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500"
+          className="flex-1 px-3 py-2 bg-stone-950 border border-stone-700 text-stone-300 text-sm font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500"
         />
         <button onClick={addNpc} disabled={!npcInput.trim()}
           className="px-3 py-2 bg-stone-800 hover:bg-stone-700 disabled:opacity-30 text-stone-300 font-serif text-sm transition-colors">
@@ -121,7 +121,7 @@ export function DmNpcForm({
         </button>
         <button
           onClick={() => { setShowNpcForm(b => !b); setShowBestiary(false); setShowCampaignNpcs(false) }}
-          className={`px-3 py-2 font-serif text-sm transition-colors border ${showNpcForm ? 'border-amber-700 bg-amber-950/40 text-amber-300' : 'border-stone-700 bg-stone-955 text-stone-400 hover:border-stone-500 hover:text-stone-200'}`}
+          className={`px-3 py-2 font-serif text-sm transition-colors border ${showNpcForm ? 'border-amber-700 bg-amber-950/40 text-amber-300' : 'border-stone-700 bg-stone-950 text-stone-400 hover:border-stone-500 hover:text-stone-200'}`}
         >
           Personalizado
         </button>
