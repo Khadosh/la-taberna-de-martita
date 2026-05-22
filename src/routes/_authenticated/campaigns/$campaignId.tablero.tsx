@@ -179,6 +179,33 @@ function PlayerTablero({ campaignId, session }: { campaignId: string; session: S
     }
   }), [boardTokens, characters])
 
+  const allCombatEntities = useMemo((): { id: string; name: string; ac: number; attackBonus: number }[] => {
+    const result: { id: string; name: string; ac: number; attackBonus: number }[] = []
+    for (const bt of boardTokens) {
+      if (bt.kind === 'player') {
+        const ch = characters.find(x => x.id === bt.entity_id)
+        if (!ch) continue
+        const strMod = Math.floor(((ch.stats.str ?? 10) - 10) / 2)
+        const dexMod = Math.floor(((ch.stats.dex ?? 10) - 10) / 2)
+        const prof = Math.ceil(ch.level / 4) + 1
+        result.push({
+          id: ch.id,
+          name: ch.name,
+          ac: ch.armor_class ?? (10 + Math.floor(((ch.stats.dex ?? 10) - 10) / 2)),
+          attackBonus: prof + Math.max(strMod, dexMod)
+        })
+      } else {
+        result.push({
+          id: bt.entity_id,
+          name: bt.label,
+          ac: bt.max_hp ? 10 : 10,
+          attackBonus: 0
+        })
+      }
+    }
+    return result
+  }, [boardTokens, characters])
+
   const onTokenMoved = async (entityId: string, x: number, y: number) => {
     await db.from('board_tokens')
       .update({ x, y, updated_at: new Date().toISOString() })
@@ -198,11 +225,12 @@ function PlayerTablero({ campaignId, session }: { campaignId: string; session: S
     <div className="bg-stone-950 flex" style={{ height: 'calc(100vh - 100px)' }}>
       <CombatBoard
         tokens={tokens}
-        allEntities={[] as { id: string; name: string; ac: number; attackBonus: number }[]}
+        allEntities={allCombatEntities}
         mapUrl={activeMapUrl}
         externalPositions={externalPositions}
         onTokenMoved={onTokenMoved}
         canDrag={tokenId => tokenId === myCharId}
+        characters={characters as any}
       />
     </div>
   )
@@ -255,7 +283,7 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
   const [showNpcBar, setShowNpcBar] = useState(false)
 
   // Combat log
-  type LogEntry = { id: string; attackerName: string; targetName: string; hit: boolean; damage?: number }
+  type LogEntry = { id: string; attackerName: string; targetName: string; hit: boolean; damage?: number; isHealing?: boolean }
   const [combatLog, setCombatLog] = useState<LogEntry[]>([])
   const [showLog, setShowLog] = useState(true)
 
@@ -624,17 +652,21 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
 
   // ── Combat log ───────────────────────────────────────────────────────────
 
-  const handleAttackConfirm = (attackerId: string, targetId: string, hit: boolean, damage?: number) => {
+  const handleAttackConfirm = (attackerId: string, targetId: string, hit: boolean, damage?: number, isHealing?: boolean) => {
     if (hit && damage && damage > 0) {
       const playerChar = characters.find(c => c.id === targetId)
       if (playerChar) {
         const maxHp = maxHpFor(playerChar)
         const curHp = localHp[playerChar.id] ?? currentHpFor(playerChar)
-        adjustCharacterHp(playerChar.id, curHp, maxHp, curHp - damage)
+        const nextHp = isHealing ? Math.min(maxHp, curHp + damage) : Math.max(0, curHp - damage)
+        adjustCharacterHp(playerChar.id, curHp, maxHp, nextHp)
       } else {
         const npcCombatant = combatants.find(c => c.kind === 'npc' && c.npc.id === targetId)
         if (npcCombatant && npcCombatant.kind === 'npc') {
-          updateNpc(npcCombatant.npc.id, { currentHp: Math.max(0, npcCombatant.npc.currentHp - damage) })
+          const nextHp = isHealing 
+            ? Math.min(npcCombatant.npc.maxHp ?? 100, npcCombatant.npc.currentHp + damage) 
+            : Math.max(0, npcCombatant.npc.currentHp - damage)
+          updateNpc(npcCombatant.npc.id, { currentHp: nextHp })
         }
       }
     }
@@ -645,7 +677,7 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
         id: crypto.randomUUID(),
         attackerName: attacker.name,
         targetName: target.name,
-        hit, damage,
+        hit, damage, isHealing,
       }, ...prev].slice(0, 30))
     }
   }
@@ -1052,6 +1084,7 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
                 externalPositions={externalPositions}
                 onTokenMoved={onTokenMoved}
                 onAttackConfirm={handleAttackConfirm}
+                characters={characters as any}
               />
 
               {/* Combat history log — bottom-right, read-only, collapsible */}
@@ -1076,7 +1109,9 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
                             <span className="text-stone-300">{entry.targetName}</span>
                           </span>
                           {entry.hit && entry.damage != null && entry.damage > 0
-                            ? <span className="text-red-400 font-bold shrink-0">-{entry.damage}</span>
+                            ? (entry.isHealing
+                              ? <span className="text-green-400 font-bold shrink-0">+{entry.damage} pg</span>
+                              : <span className="text-red-400 font-bold shrink-0">-{entry.damage} pg</span>)
                             : !entry.hit && <span className="text-stone-600 shrink-0 text-[9px]">fallo</span>
                           }
                         </div>

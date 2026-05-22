@@ -58,16 +58,20 @@ Sincronización de dados en mesa integrada al tablero de combate del DM (documen
 | Borrar campañas y personajes desde el dashboard | Media |
 | Navegación: "volver" consistente en todas las pantallas | Baja |
 | Feedback de guardado en la hoja (actualmente solo HP lo tiene) | Baja |
-| Diseño visual del panel de cálculo de ataque | Baja |
+| Diseño visual del panel de cálculo de ataque | ✅ |
 
 ---
 
 ## 🗺 Features más grandes (largo plazo)
 
-### Mapas de sesión
-- Subir imagen como mapa visible por el party.
-- Solo el DM puede cambiarla.
-- v2: tokens drag-and-drop, fog of war.
+### Mapas de sesión (Combat Grid, Zoom/Pan & AoE Templates)
+- ✅ Subir imagen como mapa visible por el party.
+- ✅ Solo el DM puede cambiarla.
+- ✅ Tokens drag-and-drop en tiempo real.
+- ✅ Cuadrícula de combate interactiva y zoomeable.
+- ✅ Cálculo de distancia y rango de ataque (Melee, Arco, Lanzamiento).
+- ✅ Proyección de áreas de efecto de hechizos (Esfera, Cubo, Línea) con detección de blancos en área.
+- ✅ Resolución y log de combate con soporte para curaciones y daño multi-objetivo.
 
 ### Historial de sesiones
 - Lista de sesiones pasadas por campaña.

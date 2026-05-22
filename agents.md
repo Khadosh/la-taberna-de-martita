@@ -138,6 +138,13 @@ Usamos [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## 📝 Changelog
 
+- **2026-05-22**: `feat: implement zoomable grid, action mode selector, and AoE templates on combat board`
+  - ✅ Implementado sistema de zoom y paneo interactivo en el tablero táctico con posicionamiento preciso.
+  - ✅ Añadido cuadriculado (grid) ajustable (tamaño y desplazamiento horizontal/vertical) con medición de distancias en pies (regla Chebyshev de D&D 5e).
+  - ✅ Creado selector de 4 modos de acción (Melee, Rango, Lanzar, Conjuro) con validación inteligente de rangos y desventajas.
+  - ✅ Integración con inventario del personaje (armas cuerpo a cuerpo/rango y objetos arrojadizos) y conjuros conocidos.
+  - ✅ Proyección visual de plantillas de área de efecto (AoE): Esferas, Cubos y Líneas con detección automática de blancos dentro del área.
+  - ✅ Soporte para conjuros de curación (botón verde de curación que suma pg en lugar de restarlos) y resolución multi-objetivo en lote.
 - **2026-05-20**: `feat: add inventory item stats panel with svg icon badges`
   - ✅ Al seleccionar un item del inventario, se fetchea `GET /api/2014/equipment/{index}` (TanStack Query, caché 10 min, lazy).
   - ✅ Panel muestra stat pills: daño (armas), CA + bonus DES (armaduras), categoría, rango, propiedades, costo.
