@@ -408,7 +408,7 @@ function Taberna() {
       </div>
 
       {successMsg && (
-        <div className="mb-6 px-4 py-3 border border-amber-800 bg-amber-950/40 text-amber-250 text-sm font-serif rounded flex items-center justify-between gap-3 shadow-lg">
+        <div className="mb-6 px-4 py-3 border border-amber-700 bg-stone-950 text-amber-200 text-sm font-serif rounded flex items-center justify-between gap-3 shadow-lg">
           <div className="flex items-center gap-2">
             <span>🎉</span>
             <span>{successMsg}</span>
@@ -449,8 +449,8 @@ function Taberna() {
                 onClick={() => handleSelectService(serv)}
                 className={`text-left p-4 border rounded-lg transition-all flex items-start gap-4 ${
                   selectedService?.id === serv.id
-                    ? 'bg-amber-950/20 border-amber-600 text-amber-100 shadow-lg'
-                    : 'bg-stone-900/40 border-stone-850 text-stone-300 hover:bg-stone-850/30 hover:border-stone-700'
+                    ? 'bg-amber-950 border-amber-500 text-amber-100 shadow-lg'
+                    : 'bg-stone-950 border-stone-850 text-stone-300 hover:bg-stone-900 hover:border-stone-700'
                 }`}
               >
                 <span className="text-3xl bg-stone-950 p-2 border border-stone-800 rounded">{serv.icon}</span>
@@ -460,7 +460,7 @@ function Taberna() {
                     <span className="font-mono text-xs font-bold text-amber-500 shrink-0">{formatCost(serv.cost, serv.unit)}</span>
                   </div>
                   <p className="text-xs text-stone-400 font-serif leading-relaxed line-clamp-2">{serv.description}</p>
-                  <p className="text-[10px] text-amber-600/80 font-serif italic">{serv.benefit}</p>
+                  <p className="text-[10px] text-amber-500 font-serif italic">{serv.benefit}</p>
                 </div>
               </button>
             ))}
@@ -470,7 +470,7 @@ function Taberna() {
         {/* Selected Service Checkout Box */}
         {selectedService && (
           <div className="w-full lg:w-80 shrink-0">
-            <div className="relative bg-stone-900 border border-stone-800 p-5 rounded-lg space-y-4 shadow-xl">
+            <div className="relative bg-stone-950 border border-stone-800 p-5 rounded-lg space-y-4 shadow-xl">
               <button onClick={() => setSelectedService(null)} className="absolute top-3 right-3 text-stone-500 hover:text-stone-300 text-lg leading-none">✕</button>
 
               <div className="flex items-start gap-3">
@@ -485,7 +485,7 @@ function Taberna() {
                 {selectedService.description}
               </p>
 
-              <div className="bg-amber-950/10 border border-amber-900/35 p-3 rounded">
+              <div className="bg-amber-950 border border-amber-900 p-3 rounded">
                 <span className="text-[10px] font-display font-semibold uppercase text-amber-500 block mb-1">Efecto Especial</span>
                 <p className="text-xs text-stone-300 font-serif italic">{selectedService.benefit}</p>
               </div>
@@ -503,7 +503,7 @@ function Taberna() {
                       
                       return (
                         <label key={c.id} className={`flex items-center gap-2 px-2.5 py-2 border rounded cursor-pointer transition-all text-xs font-serif ${
-                          consumeCharId === c.id ? 'border-amber-600 bg-amber-950/15' : 'border-stone-800 bg-stone-900/60 hover:bg-stone-800/40'
+                          consumeCharId === c.id ? 'border-amber-500 bg-amber-950' : 'border-stone-850 bg-stone-950 hover:bg-stone-900'
                         } ${!canAfford ? 'opacity-40' : ''}`}>
                           <input
                             type="radio" name="consume-char" value={c.id}
@@ -514,7 +514,7 @@ function Taberna() {
                           />
                           <div className="flex-1 min-w-0">
                             <span className="text-stone-200 block truncate font-semibold">{c.name}</span>
-                            <span className="text-[10px] text-stone-500 block font-mono">HP: {c.current_hp ?? maxHp}/{maxHp}</span>
+                            <span className="text-[10px] text-stone-400 block font-mono">HP: {c.current_hp ?? maxHp}/{maxHp}</span>
                           </div>
                           <span className={`font-mono text-[10px] shrink-0 ${canAfford ? 'text-amber-500' : 'text-red-500'}`}>
                             {cur.gold} MO {cur.silver > 0 ? `${cur.silver} MP` : ''}

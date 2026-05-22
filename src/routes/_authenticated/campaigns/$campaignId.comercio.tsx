@@ -370,8 +370,8 @@ function Comercio() {
                 onClick={() => { setActiveShopId(shop.id); setSearch(''); setSelected(null); setError(null) }}
                 className={`flex flex-col items-center justify-center p-3 text-center border rounded transition-all ${
                   activeShopId === shop.id
-                    ? 'bg-amber-950/20 border-amber-600/80 text-amber-350 shadow-inner'
-                    : 'bg-stone-900/40 border-stone-800 text-stone-400 hover:bg-stone-800/40 hover:text-stone-200'
+                    ? 'bg-amber-950 border-amber-500 text-amber-250 font-semibold shadow-inner'
+                    : 'bg-stone-950 border-stone-850 text-stone-450 hover:bg-stone-900 hover:text-stone-200'
                 }`}
               >
                 <span className="text-xl mb-1.5">{shop.icon}</span>
@@ -381,7 +381,7 @@ function Comercio() {
           </div>
 
           {/* Shop ambiance flavor text */}
-          <div className="bg-stone-900/40 border border-stone-850 p-4 rounded text-xs font-serif italic text-stone-400">
+          <div className="bg-stone-950 border border-stone-850 p-4 rounded text-xs font-serif italic text-stone-300">
             {activeShop.flavor}
           </div>
 
@@ -403,7 +403,7 @@ function Comercio() {
                 {categoryQueries.isLoading ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {Array.from({ length: 8 }).map((_, i) => (
-                      <div key={i} className="h-10 bg-stone-900/60 border border-stone-800 animate-pulse rounded" />
+                      <div key={i} className="h-10 bg-stone-950 border border-stone-850 animate-pulse rounded" />
                     ))}
                   </div>
                 ) : items.length === 0 ? (
@@ -420,8 +420,8 @@ function Comercio() {
                           onClick={() => handleSelect(item)}
                           className={`text-left flex items-center gap-3 px-3 py-2 text-xs font-serif border rounded transition-all ${
                             selected?.index === item.index
-                              ? 'bg-amber-950/20 border-amber-600 text-amber-300'
-                              : 'bg-stone-900/30 border-stone-850 text-stone-300 hover:bg-stone-900/80 hover:border-stone-700'
+                              ? 'bg-amber-950 border-amber-500 text-amber-250 font-semibold'
+                              : 'bg-stone-950 border-stone-850 text-stone-300 hover:bg-stone-900 hover:border-stone-700'
                           }`}
                         >
                           <div className="w-8 h-8 shrink-0 overflow-hidden rounded bg-stone-950 flex items-center justify-center border border-stone-800">
@@ -442,7 +442,7 @@ function Comercio() {
               {/* Buying details sidebar */}
               {selected && (
                 <div className="w-full lg:w-80 shrink-0">
-                  <div className="relative bg-stone-900 border border-stone-800 p-5 rounded-lg space-y-4 shadow-xl">
+                  <div className="relative bg-stone-950 border border-stone-800 p-5 rounded-lg space-y-4 shadow-xl">
                     <button onClick={() => setSelected(null)} className="absolute top-3 right-3 text-stone-500 hover:text-stone-300 text-lg leading-none">✕</button>
 
                     {loadingDetail ? (
@@ -537,7 +537,7 @@ function Comercio() {
       {/* ── SELL TAB MODE ─────────────────────────────────────────────────── */}
       {tabMode === 'vender' && (
         <div className="space-y-6">
-          <div className="bg-stone-900/40 border border-stone-850 p-4 rounded text-xs font-serif italic text-stone-400">
+          <div className="bg-stone-950 border border-stone-850 p-4 rounded text-xs font-serif italic text-stone-300">
             Los mercaderes locales compran tu equipo usado al **50% de su valor comercial estándar**.
           </div>
 
@@ -550,8 +550,8 @@ function Comercio() {
                   onClick={() => { setSellCharId(c.id); setSellConfirm(null) }}
                   className={`px-3 py-1.5 text-xs font-serif border rounded transition-all ${
                     sellCharId === c.id
-                      ? 'bg-amber-950/20 border-amber-600 text-amber-350 font-bold'
-                      : 'bg-stone-900/40 border-stone-800 text-stone-400 hover:bg-stone-800'
+                      ? 'bg-amber-950 border-amber-500 text-amber-250 font-bold shadow-inner'
+                      : 'bg-stone-950 border-stone-850 text-stone-450 hover:bg-stone-900 hover:text-stone-200'
                   }`}
                 >
                   {c.name}
@@ -570,7 +570,7 @@ function Comercio() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {selectedCharInventory.map(item => {
                   return (
-                    <div key={item.id} className="bg-stone-900 border border-stone-800 p-4 rounded-lg flex flex-col justify-between space-y-3">
+                    <div key={item.id} className="bg-stone-950 border border-stone-850 p-4 rounded-lg flex flex-col justify-between space-y-3">
                       <div>
                         <h4 className="font-display text-sm font-bold text-stone-200 truncate">{item.name}</h4>
                         {item.notes && <p className="text-[10px] font-serif italic text-stone-500 line-clamp-1 mt-0.5">{item.notes}</p>}
