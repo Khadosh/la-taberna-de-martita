@@ -449,10 +449,10 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
   }, [campaignId])
 
   // ── Realtime: custom board interactive sync ────────────────────────────────
-  const onAttackConfirmRef = useRef(onAttackConfirm)
+  const onAttackConfirmRef = useRef<any>(null)
   useEffect(() => {
-    onAttackConfirmRef.current = onAttackConfirm
-  }, [onAttackConfirm])
+    onAttackConfirmRef.current = handleAttackConfirm
+  }, [handleAttackConfirm])
 
   useEffect(() => {
     const channel = supabase.channel(`campaign-board-${campaignId}`)
