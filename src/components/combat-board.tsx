@@ -50,7 +50,7 @@ function arcColor(pct: number): string {
 }
 
 function CombatToken({
-  data, pos, isFrom, isTo, inAoE, onPointerDown,
+  data, pos, isFrom, isTo, inAoE, onPointerDown, onContextMenu,
 }: {
   data: TokenData
   pos: Pos
@@ -58,6 +58,7 @@ function CombatToken({
   isTo: boolean
   inAoE?: boolean
   onPointerDown: (e: React.PointerEvent) => void
+  onContextMenu?: (e: React.MouseEvent) => void
 }) {
   const pct = data.maxHp > 0 ? Math.max(0, Math.min(1, data.currentHp / data.maxHp)) : 0
   const arc = pct * CIRC
@@ -72,6 +73,7 @@ function CombatToken({
         zIndex: isFrom || isTo ? 20 : 10,
       }}
       onPointerDown={onPointerDown}
+      onContextMenu={onContextMenu}
     >
       <div style={{ position: 'relative', width: TOKEN_SIZE, height: TOKEN_SIZE }}>
         {/* AoE Highlight Ring */}
@@ -478,8 +480,9 @@ export function CombatBoard({
   // Combat Attack Popup states
   const [attackFrom, setAttackFrom] = useState<string | null>(null)
   const [attackTo, setAttackTo] = useState<string | null>(null)
+  const [groundTargetPos, setGroundTargetPos] = useState<Pos | null>(null)
   const fromPos = attackFrom ? positions[attackFrom] : null
-  const toPos = attackTo ? positions[attackTo] : null
+  const toPos = attackTo === 'ground' ? groundTargetPos : (attackTo ? positions[attackTo] : null)
   const [hit, setHit] = useState<boolean | null>(null)
   const [damage, setDamage] = useState('')
 
@@ -621,12 +624,23 @@ export function CombatBoard({
   useEffect(() => {
     setHit(null)
     setDamage('')
-    setSelectedMode('melee')
+    if (attackTo === 'ground') {
+      setSelectedMode('spell')
+    } else {
+      setSelectedMode('melee')
+    }
     setSelectedSpellIndex(null)
     setSelectedWeaponId(null)
     setAoeActive(false)
     setAoePosition(null)
   }, [attackFrom, attackTo])
+
+  useEffect(() => {
+    if (!attackFrom) {
+      setAttackTo(null)
+      setGroundTargetPos(null)
+    }
+  }, [attackFrom])
 
   useEffect(() => { draggingRef.current = dragging }, [dragging])
 
@@ -790,13 +804,21 @@ export function CombatBoard({
 
   // Handle placing/moving AoE on click
   const handleBoardClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const canvasX = (e.clientX - rect.left - pan.x) / zoom
+    const canvasY = (e.clientY - rect.top - pan.y) / zoom
+
     if (aoeActive) {
-      const rect = e.currentTarget.getBoundingClientRect()
-      const canvasX = (e.clientX - rect.left - pan.x) / zoom
-      const canvasY = (e.clientY - rect.top - pan.y) / zoom
       setAoePosition({ x: canvasX, y: canvasY })
+    }
+
+    if (attackTo === 'ground') {
+      setGroundTargetPos({ x: canvasX - TOKEN_SIZE / 2, y: canvasY - TOKEN_SIZE / 2 })
+      if (aoeActive) {
+        setAoePosition({ x: canvasX, y: canvasY })
+      }
     } else {
-      if (e.target === boardRef.current || (e.target as HTMLElement).id === 'map-canvas') {
+      if (!aoeActive && (e.target === boardRef.current || (e.target as HTMLElement).id === 'map-canvas')) {
         setAttackFrom(null)
         setAttackTo(null)
       }
@@ -903,7 +925,9 @@ export function CombatBoard({
   const calcResult = useMemo(() => {
     if (!attackFrom || !attackTo) return null
     const atk = allEntities.find(e => e.id === attackFrom)
-    const def = allEntities.find(e => e.id === attackTo)
+    const def = attackTo === 'ground'
+      ? { id: 'ground', name: 'Terreno', ac: 10, attackBonus: 0 }
+      : allEntities.find(e => e.id === attackTo)
     if (!atk || !def) return null
 
     // Fetch attack stats
@@ -1101,11 +1125,21 @@ export function CombatBoard({
                 isTo={attackTo === token.id}
                 inAoE={inAoE}
                 onPointerDown={e => {
+                  if (e.button !== 0) return // Only drag on left click
                   if (canDrag && !canDrag(token.id)) return
                   e.stopPropagation()
                   const p = positions[token.id] ?? { x: 0, y: 0 }
                   setDragging(token.id)
                   dragRef.current = { id: token.id, mx: e.clientX, my: e.clientY, tx: p.x, ty: p.y, moved: false }
+                }}
+                onContextMenu={e => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setAttackFrom(token.id)
+                  setAttackTo('ground')
+                  const p = positions[token.id] ?? { x: 0, y: 0 }
+                  setGroundTargetPos({ x: p.x, y: p.y })
+                  setSelectedMode('spell')
                 }}
               />
             )
@@ -1191,12 +1225,31 @@ export function CombatBoard({
 
           {/* Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-            <p style={{ fontSize: 9, color: 'rgba(180,140,60,0.6)', textTransform: 'uppercase', letterSpacing: '0.25em', fontWeight: 'bold', margin: 0 }}>
-              Cálculo de Combate
-            </p>
-            <span style={{ fontSize: 9, color: '#fca5a5', fontFamily: 'monospace' }}>
-              Dist: {distanceFtGrid} ft
-            </span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <p style={{ fontSize: 9, color: 'rgba(180,140,60,0.6)', textTransform: 'uppercase', letterSpacing: '0.25em', fontWeight: 'bold', margin: 0 }}>
+                Cálculo de Combate
+              </p>
+              <span style={{ fontSize: 9, color: '#fca5a5', fontFamily: 'monospace' }}>
+                Dist: {distanceFtGrid} ft
+              </span>
+            </div>
+            <button
+              onClick={() => {
+                setAttackFrom(null)
+                setAttackTo(null)
+              }}
+              style={{
+                background: 'none', border: 'none', color: 'rgba(180,140,60,0.6)',
+                fontSize: 14, cursor: 'pointer', padding: '0 4px', margin: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'color 0.15s', outline: 'none',
+              }}
+              onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+              onMouseLeave={e => e.currentTarget.style.color = 'rgba(180,140,60,0.6)'}
+              title="Cerrar"
+            >
+              ✕
+            </button>
           </div>
 
           {/* Mode Selector icons */}

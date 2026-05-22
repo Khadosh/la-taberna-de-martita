@@ -148,6 +148,8 @@ Usamos [Conventional Commits](https://www.conventionalcommits.org/).
   - ✅ Deducción automática de casillas de conjuro (spell slots) al lanzar conjuros desde el tablero de combate.
   - ✅ Agrupación jerárquica de conjuros por nivel en el selector utilizando optgroups de HTML.
   - ✅ Clamping y limitación dinámica del popup de ataque para asegurar contención total en el viewport.
+  - ✅ Deshabilitado el menú de clic derecho (context menu) nativo a nivel global en toda la aplicación.
+  - ✅ Creada interacción de clic derecho en tokens para iniciar acciones dirigidas al Terreno ("ground target"), habilitando posicionar hechizos de área libremente.
 - **2026-05-20**: `feat: add inventory item stats panel with svg icon badges`
   - ✅ Al seleccionar un item del inventario, se fetchea `GET /api/2014/equipment/{index}` (TanStack Query, caché 10 min, lazy).
   - ✅ Panel muestra stat pills: daño (armas), CA + bonus DES (armaduras), categoría, rango, propiedades, costo.

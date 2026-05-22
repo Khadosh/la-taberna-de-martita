@@ -26,6 +26,14 @@ function RootComponent() {
     return () => subscription.unsubscribe()
   }, [router])
 
+  useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault()
+    }
+    window.addEventListener('contextmenu', handleContextMenu)
+    return () => window.removeEventListener('contextmenu', handleContextMenu)
+  }, [])
+
   return (
     <>
       <Outlet />

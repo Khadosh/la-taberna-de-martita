@@ -678,7 +678,9 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
       }
     }
     const attacker = allCombatEntities.find(e => e.id === attackerId)
-    const target = allCombatEntities.find(e => e.id === targetId)
+    const target = targetId === 'ground'
+      ? { id: 'ground', name: 'Terreno' }
+      : allCombatEntities.find(e => e.id === targetId)
     if (attacker && target) {
       setCombatLog(prev => [{
         id: crypto.randomUUID(),
