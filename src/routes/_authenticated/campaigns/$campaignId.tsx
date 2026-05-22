@@ -14,7 +14,7 @@ type TabDef = {
   | '/campaigns/$campaignId'
   | '/campaigns/$campaignId/pnj'
   | '/campaigns/$campaignId/hechizos'
-  | '/campaigns/$campaignId/objetos'
+  | '/campaigns/$campaignId/comercio'
   | '/campaigns/$campaignId/habilidades'
   | '/campaigns/$campaignId/taberna'
   | '/campaigns/$campaignId/tablero'
@@ -30,7 +30,7 @@ const GM_TABS: TabDef[] = [
   { to: '/campaigns/$campaignId/tablero', label: 'Tablero', icon: '⚔️' },
   { to: '/campaigns/$campaignId/taberna', label: 'Taberna', icon: '🍺' },
   { to: '/campaigns/$campaignId/hechizos', label: 'Hechizos', icon: '✨' },
-  { to: '/campaigns/$campaignId/objetos', label: 'Objetos', icon: '📦' },
+  { to: '/campaigns/$campaignId/comercio', label: 'Comercio', icon: '🏪' },
   { to: '/campaigns/$campaignId/habilidades', label: 'Habilidades', icon: '😊' },
 ]
 
@@ -38,8 +38,9 @@ const GM_TABS: TabDef[] = [
 const PLAYER_TABS: TabDef[] = [
   { to: '/campaigns/$campaignId', label: 'Mi Party', icon: '📇', exact: true },
   { to: '/campaigns/$campaignId/tablero', label: 'Tablero', icon: '⚔️' },
+  { to: '/campaigns/$campaignId/taberna', label: 'Taberna', icon: '🍺' },
   { to: '/campaigns/$campaignId/hechizos', label: 'Hechizos', icon: '✨' },
-  { to: '/campaigns/$campaignId/objetos', label: 'Objetos', icon: '📦' },
+  { to: '/campaigns/$campaignId/comercio', label: 'Comercio', icon: '🏪' },
   { to: '/campaigns/$campaignId/habilidades', label: 'Habilidades', icon: '😊' },
 ]
 

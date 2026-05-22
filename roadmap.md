@@ -22,7 +22,7 @@
 | Pantalla DM (iniciativa, NPCs, notas de sesión) | ✅ |
 | Generador de PNJs persistentes | ✅ |
 | Bestiario + Spellbook | ✅ |
-| Taberna (compraventa entre PJs) | ✅ |
+| Taberna y Comercio (tiendas y consumo) | ✅ |
 | Tirador de dados flotante | ✅ |
 | Visual overhaul: papiro, cuero, latón, wax seals | ✅ |
 | Realtime sync (HP, condiciones) | ✅ |

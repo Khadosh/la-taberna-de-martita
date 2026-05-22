@@ -138,6 +138,12 @@ Usamos [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## 📝 Changelog
 
+- **2026-05-22**: `feat: implement campaign commerce and interactive tavern services`
+  - ✅ Reemplazada la pestaña obsoleta de Objetos por la de Comercio (`comercio.tsx`) con tiendas temáticas (Armería, Provisiones, Alquimia y Magia, Establo, Gremio).
+  - ✅ Implementada reventa de objetos al 50% de su valor comercial estándar.
+  - ✅ Creada la pestaña interactiva de Taberna (`taberna.tsx`) con servicios de bebidas, comidas y hospedaje.
+  - ✅ Sincronizados mecánicamente los efectos de consumo con la base de datos (descuento de oro/plata/cobre, curación de PG, y reglas de Descanso Largo).
+  - ✅ Habilitado el acceso de la pestaña Taberna para jugadores comunes.
 - **2026-05-22**: `refactor: modularize campaign tablero routing and split layout views`
   - ✅ Modularizado el componente gigante `$campaignId.tablero.tsx` (reduciéndolo de ~1720 a 41 líneas).
   - ✅ Creado custom hook `useDmTablero` (`use-dm-tablero.ts`) conteniendo todas las queries, handlers y lógica de realtime/broadcast.
