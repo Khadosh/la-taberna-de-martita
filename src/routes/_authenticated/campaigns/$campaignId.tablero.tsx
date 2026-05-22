@@ -736,14 +736,14 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
 
   // ── Combat log ───────────────────────────────────────────────────────────
 
-  const handleAttackConfirm = async (
+  async function handleAttackConfirm(
     attackerId: string,
     targetId: string,
     hit: boolean,
     damage?: number,
     isHealing?: boolean,
     spellLevel?: number
-  ) => {
+  ) {
     if (hit && damage && damage > 0) {
       const playerChar = characters.find(c => c.id === targetId)
       if (playerChar) {
