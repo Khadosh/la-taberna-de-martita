@@ -146,6 +146,7 @@ export function CombatBoard({
   externalPositions,
   onTokenMoved,
   canDrag,
+  onAttackConfirm,
 }: {
   tokens: TokenData[]
   allEntities: AttackEntity[]
@@ -153,6 +154,7 @@ export function CombatBoard({
   externalPositions?: Record<string, Pos>
   onTokenMoved?: (entityId: string, x: number, y: number) => void
   canDrag?: (tokenId: string) => boolean
+  onAttackConfirm?: (attackerId: string, targetId: string, hit: boolean, damage?: number) => void
 }) {
   const boardRef = useRef<HTMLDivElement>(null)
   const [positions, setPositions] = useState<Record<string, Pos>>({})
@@ -161,6 +163,11 @@ export function CombatBoard({
   const dragRef = useRef<{ id: string; mx: number; my: number; tx: number; ty: number; moved: boolean } | null>(null)
   const [attackFrom, setAttackFrom] = useState<string | null>(null)
   const [attackTo, setAttackTo] = useState<string | null>(null)
+  const [hit, setHit] = useState<boolean | null>(null)
+  const [damage, setDamage] = useState('')
+
+  // Reset hit/damage when attack selection changes
+  React.useEffect(() => { setHit(null); setDamage('') }, [attackFrom, attackTo])
 
   // Keep draggingRef in sync so the externalPositions effect can read it without being a dep
   useEffect(() => { draggingRef.current = dragging }, [dragging])
@@ -361,13 +368,14 @@ export function CombatBoard({
         <div style={{
           position: 'absolute', left: midX, top: midY,
           transform: 'translate(-50%, -50%)',
-          zIndex: 40, pointerEvents: 'none',
-          background: 'rgba(10,7,3,0.93)',
+          zIndex: 40, pointerEvents: 'auto',
+          background: 'rgba(10,7,3,0.95)',
           border: '1px solid rgba(180,130,40,0.55)',
           boxShadow: '0 4px 24px rgba(0,0,0,0.75)',
-          padding: '10px 14px', minWidth: 190,
+          padding: '10px 14px', minWidth: 200,
           fontFamily: 'Georgia, serif',
         }}>
+          {/* Header */}
           <p style={{ fontSize: 10, color: 'rgba(180,140,60,0.75)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 5 }}>
             Cálculo de ataque
           </p>
@@ -376,7 +384,7 @@ export function CombatBoard({
             {' → '}
             <span style={{ color: '#fca5a5' }}>{calcResult.defenderName}</span>
           </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
             <div style={{ textAlign: 'center' }}>
               <p style={{ fontSize: 30, fontWeight: 700, color: '#fbbf24', fontFamily: 'monospace', lineHeight: 1 }}>
                 {calcResult.nat20Always ? '✔' : `${calcResult.minRoll}+`}
@@ -396,6 +404,64 @@ export function CombatBoard({
                 <span style={{ fontSize: 11, fontFamily: 'monospace', color: '#fbbf24' }}>{calcResult.hitChance}%</span>
               </div>
             </div>
+          </div>
+
+          {/* Hit / miss + damage */}
+          <div style={{ borderTop: '1px solid rgba(80,60,20,0.4)', paddingTop: 8, display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'nowrap' }}>
+            <button
+              onClick={() => setHit(true)}
+              style={{
+                padding: '3px 10px', fontSize: 11, fontFamily: 'Georgia, serif', cursor: 'pointer', borderRadius: 3, whiteSpace: 'nowrap',
+                background: hit === true ? 'rgba(22,101,52,0.8)' : 'rgba(255,255,255,0.05)',
+                border: hit === true ? '1px solid #16a34a' : '1px solid rgba(100,80,40,0.4)',
+                color: hit === true ? '#86efac' : '#a8a29e',
+              }}
+            >✓ Pega</button>
+            <button
+              onClick={() => { setHit(false); setDamage('') }}
+              style={{
+                padding: '3px 10px', fontSize: 11, fontFamily: 'Georgia, serif', cursor: 'pointer', borderRadius: 3, whiteSpace: 'nowrap',
+                background: hit === false ? 'rgba(127,29,29,0.7)' : 'rgba(255,255,255,0.05)',
+                border: hit === false ? '1px solid #dc2626' : '1px solid rgba(100,80,40,0.4)',
+                color: hit === false ? '#fca5a5' : '#a8a29e',
+              }}
+            >✗ Falla</button>
+            {hit === true && (
+              <input
+                autoFocus
+                type="number" min={0}
+                value={damage}
+                onChange={e => setDamage(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && damage && onAttackConfirm) {
+                    onAttackConfirm(attackFrom!, attackTo!, true, parseInt(damage) || 0)
+                    setAttackFrom(null); setAttackTo(null)
+                  }
+                }}
+                placeholder="daño"
+                style={{
+                  width: 52, padding: '3px 6px', fontSize: 12, fontFamily: 'monospace', textAlign: 'center',
+                  background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(220,38,38,0.5)',
+                  color: '#fca5a5', borderRadius: 3, outline: 'none',
+                }}
+              />
+            )}
+            <div style={{ flex: 1 }} />
+            {hit !== null && (
+              <button
+                onClick={() => {
+                  if (!onAttackConfirm) return
+                  onAttackConfirm(attackFrom!, attackTo!, hit, hit ? (parseInt(damage) || 0) : undefined)
+                  setAttackFrom(null); setAttackTo(null)
+                }}
+                disabled={hit === true && !damage}
+                style={{
+                  padding: '3px 10px', fontSize: 11, fontFamily: 'Georgia, serif', cursor: 'pointer', borderRadius: 3, whiteSpace: 'nowrap',
+                  background: 'rgba(120,60,10,0.8)', border: '1px solid rgba(180,100,20,0.6)',
+                  color: '#fbbf24', opacity: hit === true && !damage ? 0.4 : 1,
+                }}
+              >OK</button>
+            )}
           </div>
         </div>
       )}

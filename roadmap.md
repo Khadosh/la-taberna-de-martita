@@ -50,9 +50,15 @@ Sincronización de dados en mesa integrada al tablero de combate del DM (documen
 | Level up: accesible desde la hoja del jugador sin XP | Media |
 | Level up: conjuros, estilo de combate y enemigo predilecto | ✅ |
 | Trasfondo visible en la hoja de personaje (tab Historia) | ✅ |
+| HP lag en owner: update optimista faltaba en patchCharacter | ✅ |
+| DM ve HP nivel 1 post-level-up: maxHpFor ahora lee sheet_json.max_hp | ✅ |
+| Tooltip de inventario: recortado por overflow → reescrito con position fixed | ✅ |
+| Log de combate integrado en panel de ataque del tablero | ✅ |
+| Maniquí PNG reemplaza silueta SVG en paper doll | ✅ |
 | Borrar campañas y personajes desde el dashboard | Media |
 | Navegación: "volver" consistente en todas las pantallas | Baja |
 | Feedback de guardado en la hoja (actualmente solo HP lo tiene) | Baja |
+| Diseño visual del panel de cálculo de ataque | Baja |
 
 ---
 

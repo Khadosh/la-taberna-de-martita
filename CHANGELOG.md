@@ -7,6 +7,13 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 ## [Unreleased]
 
 ### feat
+- Tablero de combate: log de ataque integrado en el panel de cálculo — botones ✓ Pega / ✗ Falla + input de daño; confirmar aplica HP al objetivo automáticamente
+- Tablero de combate: historial de combate colapsable en esquina inferior derecha (solo lectura, semi-transparente)
+- Tablero de combate: `maxHpFor` lee `sheet_json.max_hp` primero para reflejar HP post-level-up correctamente en la vista del DM
+- Inventario: tooltip de objetos equipados renderizado con `position: fixed` (escapa overflow); muestra nombre, peso y notas
+- Inventario: objetos equipados sin icono muestran nombre en texto sobre el slot
+- Paper doll: silueta humanoid reemplazada por imagen `maniqui.png` con `mixBlendMode: multiply`
+- HP optimista para owner: `patchCharacter` aplica `setQueryData` antes del request a Supabase
 - Fondo exclusivo para DM en la hoja de campaña (`Fondo DM.png`); jugadores siguen viendo el pergamino
 - Level up: selector de conjuros conocidos para casters (Ranger, Bardo, Hechicero, Warlock) con buscador y filtro por nivel máximo casteable
 - Level up: selector de Estilo de Combate para Ranger, Fighter y Paladin

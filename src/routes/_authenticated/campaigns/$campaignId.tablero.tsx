@@ -254,6 +254,11 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
   const [showLongRestConfirm, setShowLongRestConfirm] = useState(false)
   const [showNpcBar, setShowNpcBar] = useState(false)
 
+  // Combat log
+  type LogEntry = { id: string; attackerName: string; targetName: string; hit: boolean; damage?: number }
+  const [combatLog, setCombatLog] = useState<LogEntry[]>([])
+  const [showLog, setShowLog] = useState(true)
+
   // ── Queries ──────────────────────────────────────────────────────────────
 
   const { data: characters = [] } = useQuery({
@@ -345,6 +350,8 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
   // ── Helpers ──────────────────────────────────────────────────────────────
 
   const maxHpFor = (c: Character) => {
+    const sheetMaxHp = (c.sheet_json as { max_hp?: number }).max_hp
+    if (sheetMaxHp) return sheetMaxHp
     const hitDie = (c.sheet_json as { hit_die?: number }).hit_die ?? 8
     const conMod = Math.floor(((c.stats.con ?? 10) - 10) / 2)
     return hitDie + conMod
@@ -615,6 +622,34 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
     setShowLongRestConfirm(false)
   }
 
+  // ── Combat log ───────────────────────────────────────────────────────────
+
+  const handleAttackConfirm = (attackerId: string, targetId: string, hit: boolean, damage?: number) => {
+    if (hit && damage && damage > 0) {
+      const playerChar = characters.find(c => c.id === targetId)
+      if (playerChar) {
+        const maxHp = maxHpFor(playerChar)
+        const curHp = localHp[playerChar.id] ?? currentHpFor(playerChar)
+        adjustCharacterHp(playerChar.id, curHp, maxHp, curHp - damage)
+      } else {
+        const npcCombatant = combatants.find(c => c.kind === 'npc' && c.npc.id === targetId)
+        if (npcCombatant && npcCombatant.kind === 'npc') {
+          updateNpc(npcCombatant.npc.id, { currentHp: Math.max(0, npcCombatant.npc.currentHp - damage) })
+        }
+      }
+    }
+    const attacker = allCombatEntities.find(e => e.id === attackerId)
+    const target = allCombatEntities.find(e => e.id === targetId)
+    if (attacker && target) {
+      setCombatLog(prev => [{
+        id: crypto.randomUUID(),
+        attackerName: attacker.name,
+        targetName: target.name,
+        hit, damage,
+      }, ...prev].slice(0, 30))
+    }
+  }
+
   // ── Attack calculator ─────────────────────────────────────────────────────
 
   const allCombatEntities = useMemo((): { id: string; name: string; ac: number; attackBonus: number }[] => {
@@ -778,7 +813,7 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
         </aside>
 
         {/* CENTER: Board */}
-        <main className="flex-1 flex flex-col overflow-hidden">
+        <main className="flex-1 flex flex-col overflow-hidden relative">
           {combatActive ? (
             <>
               {/* Control bar */}
@@ -1016,7 +1051,40 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
                 mapUrl={activeMapUrl}
                 externalPositions={externalPositions}
                 onTokenMoved={onTokenMoved}
+                onAttackConfirm={handleAttackConfirm}
               />
+
+              {/* Combat history log — bottom-right, read-only, collapsible */}
+              {combatActive && combatLog.length > 0 && (
+                <div className="absolute bottom-3 right-3 z-20 w-64 pointer-events-auto" style={{ background: 'rgba(5,3,1,0.72)', border: '1px solid rgba(80,60,20,0.35)', borderRadius: 6 }}>
+                  <button
+                    className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-serif text-stone-500 hover:text-stone-300 transition-colors"
+                    onClick={() => setShowLog(v => !v)}
+                  >
+                    <span className="tracking-widest uppercase">Historial</span>
+                    <span>{showLog ? '▾' : '▴'}</span>
+                  </button>
+                  {showLog && (
+                    <div className="px-2 pb-2 space-y-1 max-h-44 overflow-y-auto">
+                      {combatLog.map(entry => (
+                        <div key={entry.id} className="text-[10px] font-mono px-2 py-1 rounded flex items-center gap-1.5"
+                          style={{ background: 'rgba(0,0,0,0.35)' }}>
+                          <span style={{ color: entry.hit ? '#4ade80' : '#f87171' }}>{entry.hit ? '✓' : '✗'}</span>
+                          <span className="text-stone-400 truncate flex-1">
+                            <span className="text-stone-300">{entry.attackerName}</span>
+                            <span className="text-stone-600"> → </span>
+                            <span className="text-stone-300">{entry.targetName}</span>
+                          </span>
+                          {entry.hit && entry.damage != null && entry.damage > 0
+                            ? <span className="text-red-400 font-bold shrink-0">-{entry.damage}</span>
+                            : !entry.hit && <span className="text-stone-600 shrink-0 text-[9px]">fallo</span>
+                          }
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </>
           ) : (
             <div className="flex-1 flex flex-col overflow-hidden">

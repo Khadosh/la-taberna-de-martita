@@ -139,6 +139,9 @@ function CharacterSheet() {
   // ── Handlers ──────────────────────────────────────────────────────────────
 
   const patchCharacter = async (patch: Database['public']['Tables']['characters']['Update']) => {
+    queryClient.setQueryData(['character', characterId], (old: typeof character | undefined) =>
+      old ? { ...old, ...patch } : old
+    )
     await supabase.from('characters').update(patch).eq('id', characterId)
     queryClient.invalidateQueries({ queryKey: ['character', characterId] })
   }

@@ -65,6 +65,13 @@ export function InventoryPanel({
   const [addingItem, setAddingItem] = useState(false)
   const [activeDrag, setActiveDrag] = useState<ActiveDrag | null>(null)
   const [slotPickerItem, setSlotPickerItem] = useState<InventoryItem | null>(null)
+  const [tooltipItem, setTooltipItem] = useState<InventoryItem | null>(null)
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 })
+
+  const handleHover = useCallback((item: InventoryItem | null, x: number, y: number) => {
+    setTooltipItem(item)
+    if (item) setTooltipPos({ x, y })
+  }, [])
 
   // Derive D&D API index from item name: "Leather Armor" → "leather-armor"
   const selectedIndex = useMemo(() => {
@@ -269,6 +276,7 @@ export function InventoryPanel({
                 isSelected={selectedItem?.id === item.id}
                 onClick={() => setSelectedItem(item)}
                 onDoubleClick={() => isOwner && handleEquip(item)}
+                onHover={handleHover}
               />
             ))}
             {Array.from({ length: Math.max(0, 30 - displayInventory.length) }).map((_, i) => (
@@ -423,6 +431,36 @@ export function InventoryPanel({
           </div>
         )}
       </DragOverlay>
+
+      {/* Tooltip fixed — escapes overflow clipping del grid */}
+      {tooltipItem && !activeDrag && (
+        <div
+          className="pointer-events-none z-[9999]"
+          style={{
+            position: 'fixed',
+            left: tooltipPos.x + 12,
+            top: tooltipPos.y - 8,
+            transform: 'translateY(-100%)',
+          }}
+        >
+          <div style={{
+            background: 'rgba(10,6,2,0.96)',
+            border: '1px solid rgba(180,120,40,0.5)',
+            borderRadius: 5,
+            padding: '6px 10px',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.9)',
+            maxWidth: 200,
+          }}>
+            <p className="text-[11px] font-semibold text-amber-300 font-serif leading-tight">{tooltipItem.name}</p>
+            {tooltipItem.weight_lbs != null && tooltipItem.weight_lbs > 0 && (
+              <p className="text-[9px] text-stone-500 font-mono mt-0.5">⚖ {tooltipItem.weight_lbs} lb</p>
+            )}
+            {tooltipItem.notes && (
+              <p className="text-[10px] text-stone-400 font-serif italic mt-1 leading-snug">{tooltipItem.notes}</p>
+            )}
+          </div>
+        </div>
+      )}
     </DndContext>
   )
 }

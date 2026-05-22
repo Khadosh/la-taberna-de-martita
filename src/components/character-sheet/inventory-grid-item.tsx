@@ -4,12 +4,13 @@ import type { InventoryItem } from './inventory-types'
 import { ItemIcon } from './inventory-item-icon'
 
 export function DraggableItem({
-  item, isSelected, onClick, onDoubleClick,
+  item, isSelected, onClick, onDoubleClick, onHover,
 }: {
   item: InventoryItem
   isSelected: boolean
   onClick: () => void
   onDoubleClick: () => void
+  onHover: (item: InventoryItem | null, x: number, y: number) => void
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: `inventory-${item.id}`,
@@ -34,7 +35,9 @@ export function DraggableItem({
       {...attributes}
       onClick={onClick}
       onDoubleClick={onDoubleClick}
-      className="relative cursor-grab active:cursor-grabbing hover:brightness-110 transition-all group overflow-hidden touch-none flex items-center justify-center"
+      onMouseEnter={e => !isDragging && onHover(item, e.clientX, e.clientY)}
+      onMouseLeave={() => onHover(null, 0, 0)}
+      className="relative cursor-grab active:cursor-grabbing hover:brightness-110 transition-all overflow-hidden touch-none flex items-center justify-center"
     >
       <ItemIcon name={item.name} imageUrl={item.image_url} />
       {item.quantity > 1 && (
