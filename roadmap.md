@@ -75,6 +75,9 @@ Sincronización de dados en mesa integrada al tablero de combate del DM (documen
 - ✅ Deducción automática de casillas de conjuro (spell slots) en base de datos.
 - ✅ Clasificación y agrupado de conjuros por nivel en el panel de ataque.
 - ✅ Bounding limits y clamping dinámico del popup de ataque para evitar overflow en pantalla.
+- ✅ Refactorización y modularización del tablero de combate para una arquitectura limpia.
+- ✅ Panel de cálculo de ataque interactivo y arrastrable (evita superposiciones del terreno).
+- ✅ Flujo simplificado de targeting y right-click para jugadores con datos confidenciales del DM protegidos.
 
 ### Historial de sesiones
 - Lista de sesiones pasadas por campaña.

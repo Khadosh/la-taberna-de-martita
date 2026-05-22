@@ -138,6 +138,12 @@ Usamos [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## 📝 Changelog
 
+- **2026-05-22**: `refactor: modularize combat board components and implement draggable popup`
+  - ✅ Refactorizado `combat-board.tsx` en subcomponentes modulares bajo `src/components/combat/` (`combat-types.ts`, `combat-helpers.tsx`, `combat-token.tsx`, `combat-popup.tsx`).
+  - ✅ Implementada funcionalidad draggable interactiva en el panel overlay de cálculo de combate, previniendo superposiciones y manteniendo el estado de offset en memoria.
+  - ✅ Corregida la propagación de clics dentro del diálogo de combate para evitar activar clics involuntarios en la rejilla de fondo.
+  - ✅ Solucionado bug que impedía seleccionar otros tokens cuando se operaba con el personaje propio, asegurando que se oculte la información privada del DM (como CA y probabilidad exacta) cuando se visualiza desde la perspectiva del jugador.
+  - ✅ Habilitado el right-click (context menu) en tokens para los jugadores en su propio personaje para preparar objetivos en el terreno y lanzar efectos de área libres.
 - **2026-05-22**: `feat: implement zoomable grid, action mode selector, and AoE templates on combat board`
   - ✅ Implementado sistema de zoom y paneo interactivo en el tablero táctico con posicionamiento preciso.
   - ✅ Añadido cuadriculado (grid) ajustable (tamaño y desplazamiento horizontal/vertical) con medición de distancias en pies (regla Chebyshev de D&D 5e).

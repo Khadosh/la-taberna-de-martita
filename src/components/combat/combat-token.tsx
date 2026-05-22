@@ -1,0 +1,123 @@
+import React from 'react'
+import type { TokenData, Pos } from './combat-types'
+import { TOKEN_SIZE, R, CIRC, arcColor } from './combat-helpers'
+
+export function CombatToken({
+  data, pos, isFrom, isTo, inAoE, onPointerDown, onContextMenu,
+}: {
+  data: TokenData
+  pos: Pos
+  isFrom: boolean
+  isTo: boolean
+  inAoE?: boolean
+  onPointerDown: (e: React.PointerEvent) => void
+  onContextMenu?: (e: React.MouseEvent) => void
+}) {
+  const pct = data.maxHp > 0 ? Math.max(0, Math.min(1, data.currentHp / data.maxHp)) : 0
+  const arc = pct * CIRC
+  const color = arcColor(pct)
+  const half = TOKEN_SIZE / 2
+
+  return (
+    <div
+      style={{
+        position: 'absolute', left: pos.x, top: pos.y,
+        width: TOKEN_SIZE, touchAction: 'none', cursor: 'grab',
+        zIndex: isFrom || isTo ? 20 : 10,
+      }}
+      onPointerDown={onPointerDown}
+      onContextMenu={onContextMenu}
+    >
+      <div style={{ position: 'relative', width: TOKEN_SIZE, height: TOKEN_SIZE }}>
+        {/* AoE Highlight Ring */}
+        {inAoE && (
+          <div style={{
+            position: 'absolute', inset: -6, borderRadius: '50%', pointerEvents: 'none',
+            boxShadow: '0 0 0 3px #ef4444, 0 0 16px rgba(239, 68, 68, 0.7)',
+            animation: 'pulse-aoe 1.2s infinite ease-in-out',
+          }} />
+        )}
+        {/* Active turn glow */}
+        {data.isActive && (
+          <div style={{
+            position: 'absolute', inset: -5, borderRadius: '50%', pointerEvents: 'none',
+            boxShadow: '0 0 0 3px rgba(251,191,36,0.9), 0 0 22px rgba(251,191,36,0.45)',
+          }} />
+        )}
+        {/* Attacker ring (blue) */}
+        {isFrom && (
+          <div style={{
+            position: 'absolute', inset: -4, borderRadius: '50%', pointerEvents: 'none',
+            boxShadow: '0 0 0 3px rgba(96,165,250,0.9)',
+          }} />
+        )}
+        {/* Target ring (red) */}
+        {isTo && (
+          <div style={{
+            position: 'absolute', inset: -4, borderRadius: '50%', pointerEvents: 'none',
+            boxShadow: '0 0 0 3px rgba(248,113,113,0.9)',
+          }} />
+        )}
+        {/* HP arc SVG */}
+        {data.showHp !== false && (
+          <svg
+            width={TOKEN_SIZE} height={TOKEN_SIZE}
+            viewBox={`0 0 ${TOKEN_SIZE} ${TOKEN_SIZE}`}
+            style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+          >
+            <circle cx={half} cy={half} r={R} fill="none" stroke="rgba(0,0,0,0.55)" strokeWidth={7} />
+            <circle
+              cx={half} cy={half} r={R}
+              fill="none" stroke={color} strokeWidth={6}
+              strokeDasharray={`${arc} ${CIRC}`}
+              strokeLinecap="round"
+              transform={`rotate(-90, ${half}, ${half})`}
+            />
+          </svg>
+        )}
+        {/* Portrait */}
+        <div style={{
+          position: 'absolute', inset: 9, borderRadius: '50%', overflow: 'hidden',
+          background: data.kind === 'player' ? '#1a2e1e' : '#2e1a1a',
+          border: '1.5px solid rgba(0,0,0,0.6)',
+          boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.4)',
+        }}>
+          {data.portraitUrl ? (
+            <img
+              src={data.portraitUrl} alt={data.name} draggable={false}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+            />
+          ) : (
+            <div style={{
+              width: '100%', height: '100%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 22, fontFamily: 'Georgia, serif', fontWeight: 700,
+              color: data.kind === 'player' ? '#86efac' : '#fca5a5',
+            }}>
+              {data.name.charAt(0).toUpperCase()}
+            </div>
+          )}
+        </div>
+      </div>
+      {/* Name */}
+      <p style={{
+        textAlign: 'center', fontSize: 10, fontFamily: 'Georgia, serif',
+        color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,1)',
+        marginTop: 3, lineHeight: 1.2, pointerEvents: 'none',
+        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: TOKEN_SIZE,
+      }}>
+        {data.name}
+      </p>
+      {/* HP */}
+      {data.showHp !== false && (
+        <p style={{
+          textAlign: 'center', fontSize: 9, fontFamily: 'monospace',
+          color: 'rgba(255,230,150,0.9)', textShadow: '0 1px 2px rgba(0,0,0,1)',
+          lineHeight: 1.1, pointerEvents: 'none',
+        }}>
+          {data.currentHp}/{data.maxHp}
+        </p>
+      )}
+    </div>
+  )
+}
