@@ -150,6 +150,9 @@ Usamos [Conventional Commits](https://www.conventionalcommits.org/).
   - ✅ Clamping y limitación dinámica del popup de ataque para asegurar contención total en el viewport.
   - ✅ Deshabilitado el menú de clic derecho (context menu) nativo a nivel global en toda la aplicación.
   - ✅ Creada interacción de clic derecho en tokens para iniciar acciones dirigidas al Terreno ("ground target"), habilitando posicionar hechizos de área libremente.
+  - ✅ Solucionado bug de cálculo de HP que mostraba nivel 1 para jugadores en el tablero (migrado a helper global reactivo).
+  - ✅ Corregido conflicto de evento pointerdown para clic derecho en tokens que iniciaba paneo del mapa en lugar de targeting.
+  - ✅ Habilitado canal de sincronización bidireccional (broadcast) en tiempo real para compartir selecciones de ataque y resoluciones de daño entre jugador y GM.
 - **2026-05-20**: `feat: add inventory item stats panel with svg icon badges`
   - ✅ Al seleccionar un item del inventario, se fetchea `GET /api/2014/equipment/{index}` (TanStack Query, caché 10 min, lazy).
   - ✅ Panel muestra stat pills: daño (armas), CA + bonus DES (armaduras), categoría, rango, propiedades, costo.

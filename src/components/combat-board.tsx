@@ -426,6 +426,9 @@ export function CombatBoard({
   canDrag,
   onAttackConfirm,
   characters = [],
+  isPlayer = false,
+  externalTargeting = null,
+  onSelectionChange,
 }: {
   tokens: TokenData[]
   allEntities: AttackEntity[]
@@ -442,6 +445,30 @@ export function CombatBoard({
     spellLevel?: number
   ) => void
   characters?: BoardCharacter[]
+  isPlayer?: boolean
+  externalTargeting?: {
+    attackFrom: string | null
+    attackTo: string | null
+    selectedMode: 'melee' | 'ranged' | 'thrown' | 'spell'
+    selectedSpellIndex: string | null
+    aoeActive: boolean
+    aoeType: 'circle' | 'cube' | 'cone' | 'line'
+    aoeRadius: number
+    aoePosition: Pos | null
+    groundTargetPos: Pos | null
+    attackerName?: string
+  } | null
+  onSelectionChange?: (state: {
+    attackFrom: string | null
+    attackTo: string | null
+    selectedMode: 'melee' | 'ranged' | 'thrown' | 'spell'
+    selectedSpellIndex: string | null
+    aoeActive: boolean
+    aoeType: 'circle' | 'cube' | 'cone' | 'line'
+    aoeRadius: number
+    aoePosition: Pos | null
+    groundTargetPos: Pos | null
+  }) => void
 }) {
   const boardRef = useRef<HTMLDivElement>(null)
   const [positions, setPositions] = useState<Record<string, Pos>>({})
@@ -481,8 +508,6 @@ export function CombatBoard({
   const [attackFrom, setAttackFrom] = useState<string | null>(null)
   const [attackTo, setAttackTo] = useState<string | null>(null)
   const [groundTargetPos, setGroundTargetPos] = useState<Pos | null>(null)
-  const fromPos = attackFrom ? positions[attackFrom] : null
-  const toPos = attackTo === 'ground' ? groundTargetPos : (attackTo ? positions[attackTo] : null)
   const [hit, setHit] = useState<boolean | null>(null)
   const [damage, setDamage] = useState('')
 
@@ -501,27 +526,66 @@ export function CombatBoard({
   const [aoeRadius, setAoeRadius] = useState(20) // in feet
   const [aoePosition, setAoePosition] = useState<Pos | null>(null)
 
+  // Effective targeting state (uses local state if local attackFrom is set, otherwise falls back to externalTargeting if active)
+  const isExternalActive = !attackFrom && !!externalTargeting?.attackFrom
+  
+  const effAttackFrom = isExternalActive ? externalTargeting!.attackFrom : attackFrom
+  const effAttackTo = isExternalActive ? externalTargeting!.attackTo : attackTo
+  const effGroundTargetPos = isExternalActive ? externalTargeting!.groundTargetPos : groundTargetPos
+  
+  const effFromPos = effAttackFrom ? positions[effAttackFrom] : null
+  const effToPos = effAttackTo === 'ground' ? effGroundTargetPos : (effAttackTo ? positions[effAttackTo] : null)
+  
+  const effSelectedMode = isExternalActive ? externalTargeting!.selectedMode : selectedMode
+  const effSelectedSpellIndex = isExternalActive ? externalTargeting!.selectedSpellIndex : selectedSpellIndex
+  
+  const effAoeActive = isExternalActive ? externalTargeting!.aoeActive : aoeActive
+  const effAoeType = isExternalActive ? externalTargeting!.aoeType : aoeType
+  const effAoeRadius = isExternalActive ? externalTargeting!.aoeRadius : aoeRadius
+  const effAoePosition = isExternalActive ? externalTargeting!.aoePosition : aoePosition
+
+  // Map to common local naming to minimize downstream modifications
+  const fromPos = effFromPos
+  const toPos = effToPos
+
+  // Broadcast selection changes
+  useEffect(() => {
+    if (onSelectionChange) {
+      onSelectionChange({
+        attackFrom,
+        attackTo,
+        selectedMode,
+        selectedSpellIndex,
+        aoeActive,
+        aoeType,
+        aoeRadius,
+        aoePosition,
+        groundTargetPos,
+      })
+    }
+  }, [attackFrom, attackTo, selectedMode, selectedSpellIndex, aoeActive, aoeType, aoeRadius, aoePosition, groundTargetPos, onSelectionChange])
+
   // Fetch inventory for active attacker (players only)
-  const attackerChar = useMemo(() => characters.find(c => c.id === attackFrom), [characters, attackFrom])
+  const attackerChar = useMemo(() => characters.find(c => c.id === effAttackFrom), [characters, effAttackFrom])
   
   const { data: attackerInventory = [] } = useQuery({
-    queryKey: ['inventory', attackFrom],
+    queryKey: ['inventory', effAttackFrom],
     queryFn: async () => {
-      if (!attackFrom || !attackerChar) return []
+      if (!effAttackFrom || !attackerChar) return []
       const { data, error } = await supabase
         .from('character_inventory').select('*')
-        .eq('character_id', attackFrom).order('created_at', { ascending: true })
+        .eq('character_id', effAttackFrom).order('created_at', { ascending: true })
       if (error) throw error
       return data
     },
-    enabled: !!attackFrom && !!attackerChar,
+    enabled: !!effAttackFrom && !!attackerChar,
   })
 
   // Fetch selected spell details
   const { data: spellDetail } = useQuery({
-    queryKey: dndKeys.spell(selectedSpellIndex ?? ''),
-    queryFn: () => dndApi.spell(selectedSpellIndex!),
-    enabled: !!selectedSpellIndex,
+    queryKey: dndKeys.spell(effSelectedSpellIndex ?? ''),
+    queryFn: () => dndApi.spell(effSelectedSpellIndex!),
+    enabled: !!effSelectedSpellIndex,
     staleTime: Infinity,
   })
 
@@ -842,7 +906,7 @@ export function CombatBoard({
   const rangeConfig = useMemo(() => {
     if (!attackerChar) return { label: 'Melee', normal: 5, long: 5, status: 'ok' }
 
-    if (selectedMode === 'melee') {
+    if (effSelectedMode === 'melee') {
       const mainHandItemId = attackerChar.sheet_json.equipped_slots?.main_hand
       const weapon = attackerInventory.find(i => i.id === mainHandItemId)
       const wName = weapon?.name.toLowerCase() ?? ''
@@ -855,7 +919,7 @@ export function CombatBoard({
       return { label: weapon?.name ?? 'Cuerpo a Cuerpo', normal: reach, long: reach, status }
     }
 
-    if (selectedMode === 'ranged') {
+    if (effSelectedMode === 'ranged') {
       const rangedItemId = attackerChar.sheet_json.equipped_slots?.ranged
       const weapon = attackerInventory.find(i => i.id === rangedItemId)
       const wName = weapon?.name.toLowerCase() ?? ''
@@ -873,7 +937,7 @@ export function CombatBoard({
       else if (distanceFtGrid > normal) status = 'disadvantage_long'
 
       // Check melee threat (if there is an enemy adjacent within 5 ft)
-      const isThreatened = tokens.some(t => t.id !== attackFrom && t.kind === 'npc' && positions[t.id] && 
+      const isThreatened = tokens.some(t => t.id !== effAttackFrom && t.kind === 'npc' && positions[t.id] && 
         Math.max(Math.round(Math.abs(positions[t.id].x - fromPos!.x) / gridSize), Math.round(Math.abs(positions[t.id].y - fromPos!.y) / gridSize)) * 5 <= 5
       )
 
@@ -886,7 +950,7 @@ export function CombatBoard({
       }
     }
 
-    if (selectedMode === 'thrown') {
+    if (effSelectedMode === 'thrown') {
       const item = attackerInventory.find(i => i.id === selectedWeaponId)
       const iName = item?.name.toLowerCase() ?? ''
 
@@ -902,7 +966,7 @@ export function CombatBoard({
       return { label: item?.name ?? 'Lanzamiento Genérico', normal, long, status }
     }
 
-    if (selectedMode === 'spell') {
+    if (effSelectedMode === 'spell') {
       const spellRangeText = spellDetail?.range.toLowerCase() ?? ''
       let normal = 60
       let status: 'ok' | 'too_far' = 'ok'
@@ -919,15 +983,15 @@ export function CombatBoard({
     }
 
     return { label: 'Generic', normal: 0, long: 0, status: 'ok' }
-  }, [selectedMode, attackerChar, attackerInventory, selectedWeaponId, spellDetail, distanceFtGrid, tokens, positions, attackFrom, fromPos, gridSize])
+  }, [effSelectedMode, attackerChar, attackerInventory, selectedWeaponId, spellDetail, distanceFtGrid, tokens, positions, effAttackFrom, fromPos, gridSize])
 
   // Calculate attack/spell statistics
   const calcResult = useMemo(() => {
-    if (!attackFrom || !attackTo) return null
-    const atk = allEntities.find(e => e.id === attackFrom)
-    const def = attackTo === 'ground'
+    if (!effAttackFrom || !effAttackTo) return null
+    const atk = allEntities.find(e => e.id === effAttackFrom)
+    const def = effAttackTo === 'ground'
       ? { id: 'ground', name: 'Terreno', ac: 10, attackBonus: 0 }
-      : allEntities.find(e => e.id === attackTo)
+      : allEntities.find(e => e.id === effAttackTo)
     if (!atk || !def) return null
 
     // Fetch attack stats
@@ -936,7 +1000,7 @@ export function CombatBoard({
     let saveAbility: string | null = null
     let isHealing = false
 
-    if (attackerChar && selectedMode === 'spell') {
+    if (attackerChar && effSelectedMode === 'spell') {
       const prof = Math.ceil(attackerChar.level / 4) + 1
       const spellAbilityKey = getSpellcastingAbility(attackerChar.class)
       const abilityScore = attackerChar.stats[spellAbilityKey] ?? 10
@@ -966,39 +1030,39 @@ export function CombatBoard({
       saveAbility,
       isHealing,
     }
-  }, [attackFrom, attackTo, allEntities, selectedMode, attackerChar, parsedSpellConfig])
+  }, [effAttackFrom, effAttackTo, allEntities, effSelectedMode, attackerChar, parsedSpellConfig])
 
   // AoE Targets checker
-  const aoeRadiusPixels = (aoeRadius / 5) * gridSize
+  const aoeRadiusPixels = (effAoeRadius / 5) * gridSize
   
   const checkTokenInAoE = (tokenId: string, tokenPos: Pos) => {
-    if (!aoeActive || !aoePosition) return false
+    if (!effAoeActive || !effAoePosition) return false
     const center = { x: tokenPos.x + TOKEN_SIZE/2, y: tokenPos.y + TOKEN_SIZE/2 }
-    const dist = Math.hypot(center.x - aoePosition.x, center.y - aoePosition.y)
+    const dist = Math.hypot(center.x - effAoePosition.x, center.y - effAoePosition.y)
 
-    if (aoeType === 'circle' || aoeType === 'cone') {
+    if (effAoeType === 'circle' || effAoeType === 'cone') {
       return dist <= aoeRadiusPixels
     }
-    if (aoeType === 'cube') {
+    if (effAoeType === 'cube') {
       return (
-        Math.abs(center.x - aoePosition.x) <= aoeRadiusPixels &&
-        Math.abs(center.y - aoePosition.y) <= aoeRadiusPixels
+        Math.abs(center.x - effAoePosition.x) <= aoeRadiusPixels &&
+        Math.abs(center.y - effAoePosition.y) <= aoeRadiusPixels
       )
     }
-    if (aoeType === 'line') {
-      if (!fromPos) return false
-      const attackerCenter = { x: fromPos.x + TOKEN_SIZE/2, y: fromPos.y + TOKEN_SIZE/2 }
-      return distToSegment(center, attackerCenter, aoePosition) <= gridSize / 2
+    if (effAoeType === 'line') {
+      if (!effFromPos) return false
+      const attackerCenter = { x: effFromPos.x + TOKEN_SIZE/2, y: effFromPos.y + TOKEN_SIZE/2 }
+      return distToSegment(center, attackerCenter, effAoePosition) <= gridSize / 2
     }
     return false
   }
 
   const targetsInAoE = useMemo(() => {
-    if (!aoeActive || !aoePosition) return []
+    if (!effAoeActive || !effAoePosition) return []
     return tokens
       .filter(t => checkTokenInAoE(t.id, positions[t.id]))
       .map(t => t.id)
-  }, [aoeActive, aoePosition, tokens, positions])
+  }, [effAoeActive, effAoePosition, effAoeType, aoeRadiusPixels, tokens, positions, effFromPos])
 
   const bgUrl = mapUrl ?? '/assets/images/mapa_combate.png'
 
@@ -1078,31 +1142,31 @@ export function CombatBoard({
           )}
 
           {/* AoE visual template overlay */}
-          {aoeActive && aoePosition && (
+          {effAoeActive && effAoePosition && (
             <g>
-              {aoeType === 'circle' && (
+              {effAoeType === 'circle' && (
                 <circle
-                  cx={aoePosition.x} cy={aoePosition.y} r={aoeRadiusPixels}
+                  cx={effAoePosition.x} cy={effAoePosition.y} r={aoeRadiusPixels}
                   fill="rgba(239, 68, 68, 0.22)" stroke="#ef4444" strokeWidth="2" strokeDasharray="6 3"
                 />
               )}
-              {aoeType === 'cube' && (
+              {effAoeType === 'cube' && (
                 <rect
-                  x={aoePosition.x - aoeRadiusPixels} y={aoePosition.y - aoeRadiusPixels}
+                  x={effAoePosition.x - aoeRadiusPixels} y={effAoePosition.y - aoeRadiusPixels}
                   width={aoeRadiusPixels * 2} height={aoeRadiusPixels * 2}
                   fill="rgba(239, 68, 68, 0.22)" stroke="#ef4444" strokeWidth="2" strokeDasharray="6 3"
                 />
               )}
-              {aoeType === 'cone' && (
+              {effAoeType === 'cone' && (
                 <circle
-                  cx={aoePosition.x} cy={aoePosition.y} r={aoeRadiusPixels}
+                  cx={effAoePosition.x} cy={effAoePosition.y} r={aoeRadiusPixels}
                   fill="rgba(239, 68, 68, 0.22)" stroke="#ef4444" strokeWidth="2" strokeDasharray="6 3"
                 />
               )}
-              {aoeType === 'line' && fromPos && (
+              {effAoeType === 'line' && fromPos && (
                 <line
                   x1={fromPos.x + TOKEN_SIZE/2} y1={fromPos.y + TOKEN_SIZE/2}
-                  x2={aoePosition.x} y2={aoePosition.y}
+                  x2={effAoePosition.x} y2={effAoePosition.y}
                   stroke="#ef4444" strokeWidth={gridSize} strokeLinecap="round" opacity="0.35"
                 />
               )}
@@ -1121,10 +1185,14 @@ export function CombatBoard({
                 key={token.id}
                 data={token}
                 pos={pos}
-                isFrom={attackFrom === token.id}
-                isTo={attackTo === token.id}
+                isFrom={effAttackFrom === token.id}
+                isTo={effAttackTo === token.id}
                 inAoE={inAoE}
                 onPointerDown={e => {
+                  if (e.button === 2) {
+                    e.stopPropagation()
+                    return
+                  }
                   if (e.button !== 0) return // Only drag on left click
                   if (canDrag && !canDrag(token.id)) return
                   e.stopPropagation()
@@ -1135,6 +1203,7 @@ export function CombatBoard({
                 onContextMenu={e => {
                   e.preventDefault()
                   e.stopPropagation()
+                  if (isPlayer && canDrag && !canDrag(token.id)) return
                   setAttackFrom(token.id)
                   setAttackTo('ground')
                   const p = positions[token.id] ?? { x: 0, y: 0 }
@@ -1233,247 +1302,298 @@ export function CombatBoard({
                 Dist: {distanceFtGrid} ft
               </span>
             </div>
-            <button
-              onClick={() => {
-                setAttackFrom(null)
-                setAttackTo(null)
-              }}
-              style={{
-                background: 'none', border: 'none', color: 'rgba(180,140,60,0.6)',
-                fontSize: 14, cursor: 'pointer', padding: '0 4px', margin: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'color 0.15s', outline: 'none',
-              }}
-              onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
-              onMouseLeave={e => e.currentTarget.style.color = 'rgba(180,140,60,0.6)'}
-              title="Cerrar"
-            >
-              ✕
-            </button>
+            {!isExternalActive && (
+              <button
+                onClick={() => {
+                  setAttackFrom(null)
+                  setAttackTo(null)
+                }}
+                style={{
+                  background: 'none', border: 'none', color: 'rgba(180,140,60,0.6)',
+                  fontSize: 14, cursor: 'pointer', padding: '0 4px', margin: 0,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  transition: 'color 0.15s', outline: 'none',
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                onMouseLeave={e => e.currentTarget.style.color = 'rgba(180,140,60,0.6)'}
+                title="Cerrar"
+              >
+                ✕
+              </button>
+            )}
           </div>
 
-          {/* Mode Selector icons */}
-          <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
-            {[
-              { id: 'melee' as const, label: 'Melee', icon: <CrossedSwordsIcon /> },
-              { id: 'ranged' as const, label: 'Arco', icon: <BowIcon /> },
-              { id: 'thrown' as const, label: 'Lanzar', icon: <ThrownIcon /> },
-              { id: 'spell' as const, label: 'Conjuro', icon: <SpellIcon /> },
-            ].map(m => {
-              const isSel = selectedMode === m.id
-              return (
-                <button
-                  key={m.id} onClick={() => setSelectedMode(m.id)}
-                  style={{
-                    flex: 1, height: 38, borderRadius: 4, cursor: 'pointer',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
-                    border: isSel ? '1px solid #d5b88a' : '1px solid #3c2414',
-                    background: isSel ? 'rgba(213, 184, 138, 0.15)' : 'rgba(0,0,0,0.45)',
-                    color: isSel ? '#d5b88a' : '#8a6b3e',
-                    boxShadow: isSel ? '0 0 8px rgba(213,184,138,0.2)' : 'none',
-                    transition: 'all 0.15s',
-                  }}
-                  title={m.label}
-                >
-                  {m.icon}
-                  <span style={{ fontSize: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{m.label}</span>
-                </button>
-              )
-            })}
-          </div>
-
-          {/* Mode details */}
-          <div style={{ background: 'rgba(0,0,0,0.4)', borderRadius: 4, padding: '8px 10px', marginBottom: 12, border: '1px solid #3c2414' }}>
-            <p style={{ margin: '0 0 6px 0', fontSize: 10, color: '#a8a29e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Configuración de Acción
-            </p>
-
-            {/* MELEE MODE DETAILS */}
-            {selectedMode === 'melee' && (
-              <div style={{ fontSize: 11, color: '#e7e5e4' }}>
-                <p style={{ margin: '4px 0' }}>⚔️ Arma: <strong style={{ color: '#d5b88a' }}>{rangeConfig.label}</strong></p>
-                <p style={{ margin: '4px 0' }}>📏 Alcance: <strong>{rangeConfig.normal} ft</strong></p>
-                {rangeConfig.status === 'too_far' && (
-                  <p style={{ margin: '6px 0 0 0', color: '#f87171', fontSize: 10, fontWeight: 'bold' }}>
-                    ⚠️ Objetivo fuera del alcance de cuerpo a cuerpo ({distanceFtGrid} ft &gt; {rangeConfig.normal} ft)
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* RANGED MODE DETAILS */}
-            {selectedMode === 'ranged' && (
-              <div style={{ fontSize: 11, color: '#e7e5e4' }}>
-                <p style={{ margin: '4px 0' }}>🏹 Arma: <strong style={{ color: '#d5b88a' }}>{rangeConfig.label}</strong></p>
-                <p style={{ margin: '4px 0' }}>📏 Rango de tiro: <strong>{rangeConfig.normal}/{rangeConfig.long} ft</strong></p>
-                {rangeConfig.status === 'too_far' && (
-                  <p style={{ margin: '6px 0 0 0', color: '#f87171', fontSize: 10, fontWeight: 'bold' }}>
-                    ❌ Fuera de rango máximo ({distanceFtGrid} ft &gt; {rangeConfig.long} ft)
-                  </p>
-                )}
-                {rangeConfig.status === 'disadvantage_long' && (
-                  <p style={{ margin: '6px 0 0 0', color: '#fbbf24', fontSize: 10, fontWeight: 'bold' }}>
-                    ⚠️ Rango Largo: Ataque con DESVENTAJA
-                  </p>
-                )}
-                {(rangeConfig as any).disadvantageThreat && (
-                  <p style={{ margin: '4px 0 0 0', color: '#fbbf24', fontSize: 10, fontWeight: 'bold' }}>
-                    ⚠️ Amenaza en cuerpo a cuerpo: Ataque con DESVENTAJA
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* THROWN MODE DETAILS */}
-            {selectedMode === 'thrown' && (
-              <div style={{ fontSize: 11, color: '#e7e5e4' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '2px 0 6px 0' }}>
-                  <span style={{ fontSize: 11 }}>Objeto:</span>
-                  {attackerChar ? (
-                    <select
-                      value={selectedWeaponId ?? ''}
-                      onChange={e => setSelectedWeaponId(e.target.value || null)}
-                      style={{ flex: 1, background: '#1c1208', border: '1px solid #5a3c1e', color: '#d5b88a', padding: '2px 4px', fontSize: 11, borderRadius: 3, outline: 'none' }}
-                    >
-                      <option value="">-- Lanzamiento Genérico --</option>
-                      {attackerInventory.map(item => (
-                        <option key={item.id} value={item.id}>
-                          {item.name} (x{item.quantity})
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <span style={{ color: '#a8a29e' }}>Cualquier objeto arrojadizo</span>
-                  )}
+          {/* Mode Selector and Details */}
+          {isExternalActive ? (
+            <div style={{
+              background: 'rgba(0,0,0,0.4)', borderRadius: 4, padding: '10px 12px', marginBottom: 12, border: '1px dashed #3c2414',
+              display: 'flex', flexDirection: 'column', gap: 6
+            }}>
+              {externalTargeting?.attackerName && (
+                <div style={{
+                  background: 'rgba(251, 191, 36, 0.1)',
+                  border: '1px solid rgba(251, 191, 36, 0.3)',
+                  padding: '6px 10px',
+                  borderRadius: 4,
+                  fontSize: 11,
+                  color: '#fbbf24',
+                  textAlign: 'center',
+                  fontStyle: 'italic',
+                  marginBottom: 4,
+                }}>
+                  👁️ Viendo preparación de {externalTargeting.attackerName} en tiempo real
                 </div>
-                <p style={{ margin: '4px 0' }}>📏 Rango arrojadizo: <strong>{rangeConfig.normal}/{rangeConfig.long} ft</strong></p>
-                {rangeConfig.status === 'too_far' && (
-                  <p style={{ margin: '6px 0 0 0', color: '#f87171', fontSize: 10, fontWeight: 'bold' }}>
-                    ❌ Fuera de rango máximo ({distanceFtGrid} ft &gt; {rangeConfig.long} ft)
-                  </p>
-                )}
-                {rangeConfig.status === 'disadvantage_long' && (
-                  <p style={{ margin: '6px 0 0 0', color: '#fbbf24', fontSize: 10, fontWeight: 'bold' }}>
-                    ⚠️ Rango Largo: Ataque con DESVENTAJA
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* SPELL CAST MODE DETAILS */}
-            {selectedMode === 'spell' && (
-              <div style={{ fontSize: 11, color: '#e7e5e4', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <span>Conjuro:</span>
-                  {attackerChar ? (
-                    <select
-                      value={selectedSpellIndex ?? ''}
-                      onChange={e => {
-                        setSelectedSpellIndex(e.target.value || null)
-                        setAoeActive(false)
-                        setAoePosition(null)
+              )}
+              <p style={{ margin: 0, fontSize: 11, color: '#fbbf24', fontWeight: 'bold' }}>
+                Acción Seleccionada: {
+                  effSelectedMode === 'melee' ? '⚔️ Cuerpo a Cuerpo (Melee)' :
+                  effSelectedMode === 'ranged' ? '🏹 Ataque a Distancia (Arco)' :
+                  effSelectedMode === 'thrown' ? '🎯 Objeto Arrojadizo (Lanzar)' :
+                  '✨ Conjuro (Spell)'
+                }
+              </p>
+              {rangeConfig.label && (
+                <p style={{ margin: 0, fontSize: 10, color: '#d4d4d8' }}>
+                  Detalle: <strong style={{ color: '#d5b88a' }}>{rangeConfig.label}</strong>
+                </p>
+              )}
+              {effAoeActive && (
+                <p style={{ margin: 0, fontSize: 10, color: '#ef4444', fontWeight: 'bold' }}>
+                  Plantilla de Área: Activa ({effAoeType === 'circle' ? 'Esfera' : effAoeType === 'cube' ? 'Cubo' : 'Línea'} de {effAoeRadius} ft)
+                </p>
+              )}
+              {effAoeActive && targetsInAoE.length > 0 && (
+                <p style={{ margin: 0, fontSize: 10, color: '#ef4444', fontWeight: 'bold' }}>
+                  🎯 Blancos en área: {targetsInAoE.map(tid => tokens.find(t => t.id === tid)?.name).join(', ')}
+                </p>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Mode Selector icons */}
+              <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+                {[
+                  { id: 'melee' as const, label: 'Melee', icon: <CrossedSwordsIcon /> },
+                  { id: 'ranged' as const, label: 'Arco', icon: <BowIcon /> },
+                  { id: 'thrown' as const, label: 'Lanzar', icon: <ThrownIcon /> },
+                  { id: 'spell' as const, label: 'Conjuro', icon: <SpellIcon /> },
+                ].map(m => {
+                  const isSel = selectedMode === m.id
+                  return (
+                    <button
+                      key={m.id} onClick={() => setSelectedMode(m.id)}
+                      style={{
+                        flex: 1, height: 38, borderRadius: 4, cursor: 'pointer',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2,
+                        border: isSel ? '1px solid #d5b88a' : '1px solid #3c2414',
+                        background: isSel ? 'rgba(213, 184, 138, 0.15)' : 'rgba(0,0,0,0.45)',
+                        color: isSel ? '#d5b88a' : '#8a6b3e',
+                        boxShadow: isSel ? '0 0 8px rgba(213,184,138,0.2)' : 'none',
+                        transition: 'all 0.15s',
                       }}
-                      style={{ flex: 1, background: '#1c1208', border: '1px solid #5a3c1e', color: '#d5b88a', padding: '2px 4px', fontSize: 11, borderRadius: 3, outline: 'none' }}
+                      title={m.label}
                     >
-                      <option value="">-- Seleccionar Hechizo --</option>
-                      {Object.keys(groupedAttackerSpells).length > 0 ? (
-                        Object.keys(groupedAttackerSpells)
-                          .map(Number)
-                          .sort((a, b) => a - b)
-                          .map(lvl => (
-                            <optgroup
-                              key={lvl}
-                              label={lvl === 0 ? 'TRUCOS (CANTRIPS)' : `CONJUROS DE NIVEL ${lvl}`}
-                              style={{ background: '#1c1208', color: '#bc9434', fontStyle: 'normal', fontWeight: 'bold' }}
-                            >
-                              {groupedAttackerSpells[lvl].map(sp => (
-                                <option
-                                  key={sp.index}
-                                  value={sp.index}
-                                  style={{ color: '#d5b88a', fontWeight: 'normal' }}
-                                >
-                                  {sp.name}
-                                </option>
-                              ))}
-                            </optgroup>
-                          ))
-                      ) : (
-                        (attackerChar.sheet_json.spells ?? []).map(sp => (
-                          <option key={sp} value={sp}>
-                            {sp.replace(/-/g, ' ').toUpperCase()}
-                          </option>
-                        ))
-                      )}
-                    </select>
-                  ) : (
-                    <span style={{ color: '#a8a29e' }}>Ataque mágico genérico</span>
-                  )}
-                </div>
+                      {m.icon}
+                      <span style={{ fontSize: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{m.label}</span>
+                    </button>
+                  )
+                })}
+              </div>
 
-                {spellDetail && (
-                  <div style={{ background: 'rgba(0,0,0,0.3)', padding: 6, borderRadius: 3, fontSize: 10, border: '1px dashed #5a3c1e' }}>
-                    <p style={{ margin: '2px 0' }}>📏 Rango del Hechizo: <strong>{spellDetail.range}</strong></p>
-                    <p style={{ margin: '2px 0', color: '#fbbf24' }}>⌛ Ejecución: <strong>{spellDetail.casting_time}</strong> | Duración: <strong>{spellDetail.duration}</strong></p>
+              {/* Mode details */}
+              <div style={{ background: 'rgba(0,0,0,0.4)', borderRadius: 4, padding: '8px 10px', marginBottom: 12, border: '1px solid #3c2414' }}>
+                <p style={{ margin: '0 0 6px 0', fontSize: 10, color: '#a8a29e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Configuración de Acción
+                </p>
+
+                {/* MELEE MODE DETAILS */}
+                {selectedMode === 'melee' && (
+                  <div style={{ fontSize: 11, color: '#e7e5e4' }}>
+                    <p style={{ margin: '4px 0' }}>⚔️ Arma: <strong style={{ color: '#d5b88a' }}>{rangeConfig.label}</strong></p>
+                    <p style={{ margin: '4px 0' }}>📏 Alcance: <strong>{rangeConfig.normal} ft</strong></p>
                     {rangeConfig.status === 'too_far' && (
-                      <p style={{ margin: '4px 0 0 0', color: '#f87171', fontWeight: 'bold' }}>
-                        ❌ Objetivo fuera de rango ({distanceFtGrid} ft &gt; {rangeConfig.normal} ft)
+                      <p style={{ margin: '6px 0 0 0', color: '#f87171', fontSize: 10, fontWeight: 'bold' }}>
+                        ⚠️ Objetivo fuera del alcance de cuerpo a cuerpo ({distanceFtGrid} ft &gt; {rangeConfig.normal} ft)
                       </p>
                     )}
                   </div>
                 )}
 
-                {/* AoE Configurator */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, borderTop: '1px solid #3c2414', paddingTop: 6, marginTop: 2 }}>
-                  <button
-                    onClick={() => {
-                      setAoeActive(v => !v)
-                      if (!aoePosition && toPos) {
-                        setAoePosition({ x: toPos.x + TOKEN_SIZE/2, y: toPos.y + TOKEN_SIZE/2 })
-                      }
-                    }}
-                    style={{
-                      background: aoeActive ? 'rgba(239, 68, 68, 0.25)' : '#2d1808',
-                      border: '1px solid #784c18', color: aoeActive ? '#ef4444' : '#d5b88a',
-                      padding: '3px 8px', borderRadius: 3, fontSize: 9, cursor: 'pointer', fontWeight: 'bold'
-                    }}
-                  >
-                    {aoeActive ? 'Área: Activa 🎯' : 'Proyectar Área (AoE)'}
-                  </button>
-
-                  {aoeActive && (
-                    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-                      <select
-                        value={aoeType} onChange={e => setAoeType(e.target.value as any)}
-                        style={{ background: '#1c1208', border: '1px solid #5a3c1e', color: '#d5b88a', fontSize: 9, padding: '2px 3px', borderRadius: 3 }}
-                      >
-                        <option value="circle">Esfera</option>
-                        <option value="cube">Cubo</option>
-                        <option value="line">Línea</option>
-                      </select>
-                      <input
-                        type="number" value={aoeRadius} step={5} min={5} max={120}
-                        onChange={e => setAoeRadius(Math.max(5, Math.min(120, parseInt(e.target.value) || 20)))}
-                        style={{ width: 28, background: 'rgba(0,0,0,0.6)', border: '1px solid #3c2414', color: '#d5b88a', fontSize: 9, textAlign: 'center', padding: '1px 0' }}
-                      />
-                      <span style={{ fontSize: 9, opacity: 0.8 }}>ft</span>
-                    </div>
-                  )}
-                </div>
-
-                {aoeActive && (
-                  <p style={{ margin: '2px 0 0 0', fontSize: 8, color: '#fbbf24', fontStyle: 'italic' }}>
-                    * Haz clic en el tablero para reposicionar el área del hechizo.
-                  </p>
+                {/* RANGED MODE DETAILS */}
+                {selectedMode === 'ranged' && (
+                  <div style={{ fontSize: 11, color: '#e7e5e4' }}>
+                    <p style={{ margin: '4px 0' }}>🏹 Arma: <strong style={{ color: '#d5b88a' }}>{rangeConfig.label}</strong></p>
+                    <p style={{ margin: '4px 0' }}>📏 Rango de tiro: <strong>{rangeConfig.normal}/{rangeConfig.long} ft</strong></p>
+                    {rangeConfig.status === 'too_far' && (
+                      <p style={{ margin: '6px 0 0 0', color: '#f87171', fontSize: 10, fontWeight: 'bold' }}>
+                        ❌ Fuera de rango máximo ({distanceFtGrid} ft &gt; {rangeConfig.long} ft)
+                      </p>
+                    )}
+                    {rangeConfig.status === 'disadvantage_long' && (
+                      <p style={{ margin: '6px 0 0 0', color: '#fbbf24', fontSize: 10, fontWeight: 'bold' }}>
+                        ⚠️ Rango Largo: Ataque con DESVENTAJA
+                      </p>
+                    )}
+                    {(rangeConfig as any).disadvantageThreat && (
+                      <p style={{ margin: '4px 0 0 0', color: '#fbbf24', fontSize: 10, fontWeight: 'bold' }}>
+                        ⚠️ Amenaza en cuerpo a cuerpo: Ataque con DESVENTAJA
+                      </p>
+                    )}
+                  </div>
                 )}
 
-                {aoeActive && targetsInAoE.length > 0 && (
-                  <p style={{ margin: '4px 0 0 0', fontSize: 10, color: '#ef4444', fontWeight: 'bold' }}>
-                    🎯 Blancos en área: {targetsInAoE.map(tid => tokens.find(t => t.id === tid)?.name).join(', ')}
-                  </p>
+                {/* THROWN MODE DETAILS */}
+                {selectedMode === 'thrown' && (
+                  <div style={{ fontSize: 11, color: '#e7e5e4' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '2px 0 6px 0' }}>
+                      <span style={{ fontSize: 11 }}>Objeto:</span>
+                      {attackerChar ? (
+                        <select
+                          value={selectedWeaponId ?? ''}
+                          onChange={e => setSelectedWeaponId(e.target.value || null)}
+                          style={{ flex: 1, background: '#1c1208', border: '1px solid #5a3c1e', color: '#d5b88a', padding: '2px 4px', fontSize: 11, borderRadius: 3, outline: 'none' }}
+                        >
+                          <option value="">-- Lanzamiento Genérico --</option>
+                          {attackerInventory.map(item => (
+                            <option key={item.id} value={item.id}>
+                              {item.name} (x{item.quantity})
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <span style={{ color: '#a8a29e' }}>Cualquier objeto arrojadizo</span>
+                      )}
+                    </div>
+                    <p style={{ margin: '4px 0' }}>📏 Rango arrojadizo: <strong>{rangeConfig.normal}/{rangeConfig.long} ft</strong></p>
+                    {rangeConfig.status === 'too_far' && (
+                      <p style={{ margin: '6px 0 0 0', color: '#f87171', fontSize: 10, fontWeight: 'bold' }}>
+                        ❌ Fuera de rango máximo ({distanceFtGrid} ft &gt; {rangeConfig.long} ft)
+                      </p>
+                    )}
+                    {rangeConfig.status === 'disadvantage_long' && (
+                      <p style={{ margin: '6px 0 0 0', color: '#fbbf24', fontSize: 10, fontWeight: 'bold' }}>
+                        ⚠️ Rango Largo: Ataque con DESVENTAJA
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {/* SPELL CAST MODE DETAILS */}
+                {selectedMode === 'spell' && (
+                  <div style={{ fontSize: 11, color: '#e7e5e4', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <span>Conjuro:</span>
+                      {attackerChar ? (
+                        <select
+                          value={selectedSpellIndex ?? ''}
+                          onChange={e => {
+                            setSelectedSpellIndex(e.target.value || null)
+                            setAoeActive(false)
+                            setAoePosition(null)
+                          }}
+                          style={{ flex: 1, background: '#1c1208', border: '1px solid #5a3c1e', color: '#d5b88a', padding: '2px 4px', fontSize: 11, borderRadius: 3, outline: 'none' }}
+                        >
+                          <option value="">-- Seleccionar Hechizo --</option>
+                          {Object.keys(groupedAttackerSpells).length > 0 ? (
+                            Object.keys(groupedAttackerSpells)
+                              .map(Number)
+                              .sort((a, b) => a - b)
+                              .map(lvl => (
+                                <optgroup
+                                  key={lvl}
+                                  label={lvl === 0 ? 'TRUCOS (CANTRIPS)' : `CONJUROS DE NIVEL ${lvl}`}
+                                  style={{ background: '#1c1208', color: '#bc9434', fontStyle: 'normal', fontWeight: 'bold' }}
+                                >
+                                  {groupedAttackerSpells[lvl].map(sp => (
+                                    <option
+                                      key={sp.index}
+                                      value={sp.index}
+                                      style={{ color: '#d5b88a', fontWeight: 'normal' }}
+                                    >
+                                      {sp.name}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              ))
+                          ) : (
+                            (attackerChar.sheet_json.spells ?? []).map(sp => (
+                              <option key={sp} value={sp}>
+                                {sp.replace(/-/g, ' ').toUpperCase()}
+                              </option>
+                            ))
+                          )}
+                        </select>
+                      ) : (
+                        <span style={{ color: '#a8a29e' }}>Ataque mágico genérico</span>
+                      )}
+                    </div>
+
+                    {spellDetail && (
+                      <div style={{ background: 'rgba(0,0,0,0.3)', padding: 6, borderRadius: 3, fontSize: 10, border: '1px dashed #5a3c1e' }}>
+                        <p style={{ margin: '2px 0' }}>📏 Rango del Hechizo: <strong>{spellDetail.range}</strong></p>
+                        <p style={{ margin: '2px 0', color: '#fbbf24' }}>⌛ Ejecución: <strong>{spellDetail.casting_time}</strong> | Duración: <strong>{spellDetail.duration}</strong></p>
+                        {rangeConfig.status === 'too_far' && (
+                          <p style={{ margin: '4px 0 0 0', color: '#f87171', fontWeight: 'bold' }}>
+                            ❌ Objetivo fuera de rango ({distanceFtGrid} ft &gt; {rangeConfig.normal} ft)
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* AoE Configurator */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, borderTop: '1px solid #3c2414', paddingTop: 6, marginTop: 2 }}>
+                      <button
+                        onClick={() => {
+                          setAoeActive(v => !v)
+                          if (!aoePosition && toPos) {
+                            setAoePosition({ x: toPos.x + TOKEN_SIZE/2, y: toPos.y + TOKEN_SIZE/2 })
+                          }
+                        }}
+                        style={{
+                          background: aoeActive ? 'rgba(239, 68, 68, 0.25)' : '#2d1808',
+                          border: '1px solid #784c18', color: aoeActive ? '#ef4444' : '#d5b88a',
+                          padding: '3px 8px', borderRadius: 3, fontSize: 9, cursor: 'pointer', fontWeight: 'bold'
+                        }}
+                      >
+                        {aoeActive ? 'Área: Activa 🎯' : 'Proyectar Área (AoE)'}
+                      </button>
+
+                      {aoeActive && (
+                        <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                          <select
+                            value={aoeType} onChange={e => setAoeType(e.target.value as any)}
+                            style={{ background: '#1c1208', border: '1px solid #5a3c1e', color: '#d5b88a', fontSize: 9, padding: '2px 3px', borderRadius: 3 }}
+                          >
+                            <option value="circle">Esfera</option>
+                            <option value="cube">Cubo</option>
+                            <option value="line">Línea</option>
+                          </select>
+                          <input
+                            type="number" value={aoeRadius} step={5} min={5} max={120}
+                            onChange={e => setAoeRadius(Math.max(5, Math.min(120, parseInt(e.target.value) || 20)))}
+                            style={{ width: 28, background: 'rgba(0,0,0,0.6)', border: '1px solid #3c2414', color: '#d5b88a', fontSize: 9, textAlign: 'center', padding: '1px 0' }}
+                          />
+                          <span style={{ fontSize: 9, opacity: 0.8 }}>ft</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {aoeActive && (
+                      <p style={{ margin: '2px 0 0 0', fontSize: 8, color: '#fbbf24', fontStyle: 'italic' }}>
+                        * Haz clic en el tablero para reposicionar el área del hechizo.
+                      </p>
+                    )}
+
+                    {aoeActive && targetsInAoE.length > 0 && (
+                      <p style={{ margin: '4px 0 0 0', fontSize: 10, color: '#ef4444', fontWeight: 'bold' }}>
+                        🎯 Blancos en área: {targetsInAoE.map(tid => tokens.find(t => t.id === tid)?.name).join(', ')}
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
-            )}
-          </div>
+            </>
+          )}
 
           {/* Names Header */}
           <div style={{
@@ -1491,7 +1611,7 @@ export function CombatBoard({
             <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 70 }}>
               <div style={{ display: 'flex', alignItems: 'flex-start', position: 'relative' }}>
                 <span style={{ fontSize: 34, fontWeight: 'bold', color: '#d5b88a', lineHeight: 1, textShadow: '0 2px 4px rgba(0,0,0,0.8)' }}>
-                  {calcResult.isHealing ? '💚' : calcResult.saveAbility ? calcResult.spellSaveDc : (calcResult.nat20Always ? '✔' : calcResult.minRoll)}
+                  {calcResult.isHealing ? '💚' : isPlayer ? '?' : (calcResult.saveAbility ? calcResult.spellSaveDc : (calcResult.nat20Always ? '✔' : calcResult.minRoll))}
                 </span>
                 {!calcResult.nat20Always && !calcResult.saveAbility && !calcResult.isHealing && (
                   <div style={{ display: 'flex', alignItems: 'center', marginTop: 3, marginLeft: 2, position: 'relative' }}>
@@ -1514,14 +1634,19 @@ export function CombatBoard({
                 </span>
               ) : calcResult.saveAbility ? (
                 <span style={{ fontSize: 12, color: '#fca5a5' }}>
-                  Objetivo debe salvar <strong style={{ color: '#d5b88a' }}>{calcResult.saveAbility}</strong> contra CD <strong>{calcResult.spellSaveDc}</strong>
+                  Objetivo debe salvar <strong style={{ color: '#d5b88a' }}>{calcResult.saveAbility}</strong> contra CD {isPlayer ? <strong>?</strong> : <strong>{calcResult.spellSaveDc}</strong>}
                 </span>
               ) : (
                 <>
                   <span style={{ fontSize: 12, color: '#d4d4d8' }}>
-                    {calcResult.attackBonus >= 0 ? `+${calcResult.attackBonus}` : calcResult.attackBonus} vs CA {calcResult.defAc}
+                    {calcResult.attackBonus >= 0 ? `+${calcResult.attackBonus}` : calcResult.attackBonus} vs CA {isPlayer ? '?' : calcResult.defAc}
                   </span>
-                  <DecorativeProgressBar percentage={calcResult.hitChance} />
+                  {!isPlayer && <DecorativeProgressBar percentage={calcResult.hitChance} />}
+                  {isPlayer && (
+                    <span style={{ fontSize: 10, color: 'rgba(180,140,60,0.6)', fontStyle: 'italic' }}>
+                      (La clase de armadura y probabilidad están ocultas)
+                    </span>
+                  )}
                 </>
               )}
             </div>
@@ -1530,152 +1655,167 @@ export function CombatBoard({
           <div style={{ height: 2, borderTop: '1.5px solid #1a0f07', borderBottom: '1.5px solid #3c2414', margin: '6px 0 12px 0', opacity: 0.8 }} />
 
           {/* Action Row */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-            {calcResult.isHealing ? (
-              // HEALING BUTTONS
-              <button
-                onClick={() => setHit(true)}
-                style={{
-                  flex: 1, height: 36, fontSize: 13, fontWeight: 'bold', cursor: 'pointer', borderRadius: 4,
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.2s', outline: 'none',
-                  background: 'linear-gradient(180deg, #15803d 0%, #166534 100%)',
-                  border: '2px solid #22c55e', color: '#fcd34d',
-                  boxShadow: '0 0 12px rgba(34,197,94,0.25), inset 0 1px 0 rgba(255,255,255,0.15)',
-                }}
-              >
-                💚 Cura
-              </button>
-            ) : (
-              // ATTACK BUTTONS
-              <>
+          {isExternalActive ? (
+            <div style={{
+              textAlign: 'center',
+              fontSize: 11,
+              color: '#d5b88a',
+              fontStyle: 'italic',
+              padding: '8px 0',
+              border: '1px dashed #3c2414',
+              borderRadius: 4,
+              background: 'rgba(0,0,0,0.2)'
+            }}>
+              ⏳ Esperando resolución del atacante...
+            </div>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              {calcResult.isHealing ? (
+                // HEALING BUTTONS
                 <button
                   onClick={() => setHit(true)}
                   style={{
                     flex: 1, height: 36, fontSize: 13, fontWeight: 'bold', cursor: 'pointer', borderRadius: 4,
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.2s', outline: 'none',
-                    opacity: hit === false ? 0.4 : 1,
-                    ...(hit === true
-                      ? {
-                          background: 'linear-gradient(180deg, #3d6a45 0%, #1c3521 100%)',
-                          border: '2px solid #528c5c', color: '#fcd34d',
-                          boxShadow: '0 0 12px rgba(74,222,128,0.25), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -3px 0 rgba(0,0,0,0.4)',
-                        }
-                      : {
-                          background: 'linear-gradient(180deg, #1e3322 0%, #122115 100%)',
-                          border: '2px solid #2e4d34', color: 'rgba(134,239,172,0.6)',
-                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), inset 0 -2px 0 rgba(0,0,0,0.5)',
-                        })
+                    background: 'linear-gradient(180deg, #15803d 0%, #166534 100%)',
+                    border: '2px solid #22c55e', color: '#fcd34d',
+                    boxShadow: '0 0 12px rgba(34,197,94,0.25), inset 0 1px 0 rgba(255,255,255,0.15)',
                   }}
                 >
-                  <CrossedSwordsIcon />
-                  Impacta
+                  💚 Cura
                 </button>
-
-                <button
-                  onClick={() => { setHit(false); setDamage('') }}
-                  style={{
-                    flex: 1, height: 36, fontSize: 13, fontWeight: 'bold', cursor: 'pointer', borderRadius: 4,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.2s', outline: 'none',
-                    opacity: hit === true ? 0.4 : 1,
-                    ...(hit === false
-                      ? {
-                          background: 'linear-gradient(180deg, #881337 0%, #4c0519 100%)',
-                          border: '2px solid #f43f5e', color: '#fcd34d',
-                          boxShadow: '0 0 12px rgba(244,63,94,0.25), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -3px 0 rgba(0,0,0,0.4)',
-                        }
-                      : {
-                          background: 'linear-gradient(180deg, #2a2e30 0%, #1b1e1f 100%)',
-                          border: '2px solid #3f4547', color: 'rgba(212,212,216,0.6)',
-                          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), inset 0 -2px 0 rgba(0,0,0,0.5)',
-                        })
-                  }}
-                >
-                  <CrossedArrowsIcon />
-                  Falla
-                </button>
-              </>
-            )}
-
-            {/* HP Value input */}
-            {hit === true && (
-              <input
-                autoFocus type="number" min={0} placeholder="0"
-                value={damage} onChange={e => setDamage(e.target.value)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' && damage && onAttackConfirm) {
-                    const hpVal = parseInt(damage) || 0
-                    if (aoeActive && targetsInAoE.length > 0) {
-                      targetsInAoE.forEach((tid, idx) => {
-                        onAttackConfirm(attackFrom!, tid, true, hpVal, calcResult.isHealing, idx === 0 ? spellLevel : undefined)
-                      })
-                    } else {
-                      onAttackConfirm(attackFrom!, attackTo!, true, hpVal, calcResult.isHealing, spellLevel)
-                    }
-                    setAttackFrom(null); setAttackTo(null)
-                  }
-                }}
-                className="no-spinners"
-                style={{
-                  width: 50, height: 36, padding: '0 4px', fontSize: 18, fontFamily: 'monospace', textAlign: 'center',
-                  background: 'rgba(0,0,0,0.65)', border: '2px solid #1e1208', color: '#d5b88a', borderRadius: 4, outline: 'none',
-                  boxSizing: 'border-box', boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.9)',
-                }}
-              />
-            )}
-
-            {/* OK Confirmation Seal */}
-            {hit !== null && (
-              <button
-                onClick={() => {
-                  if (!onAttackConfirm) return
-                  const hpVal = hit ? (parseInt(damage) || 0) : 0
-                  
-                  if (aoeActive && targetsInAoE.length > 0) {
-                    targetsInAoE.forEach((tid, idx) => {
-                      onAttackConfirm(attackFrom!, tid, hit, hpVal, calcResult.isHealing, idx === 0 ? spellLevel : undefined)
-                    })
-                  } else {
-                    onAttackConfirm(attackFrom!, attackTo!, hit, hpVal, calcResult.isHealing, spellLevel)
-                  }
-                  setAttackFrom(null); setAttackTo(null)
-                }}
-                disabled={hit === true && !damage}
-                style={{
-                  position: 'relative', width: 52, height: 52, background: 'none', border: 'none',
-                  cursor: hit === true && !damage ? 'not-allowed' : 'pointer', padding: 0, outline: 'none',
-                  transition: 'transform 0.1s, opacity 0.2s', opacity: hit === true && !damage ? 0.35 : 1, flexShrink: 0
-                }}
-                onMouseDown={e => {
-                  if (!(hit === true && !damage)) e.currentTarget.style.transform = 'scale(0.92)'
-                }}
-                onMouseUp={e => { e.currentTarget.style.transform = 'scale(1)' }}
-                onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}
-              >
-                <img
-                  src="/assets/images/wax seal (1).png" alt="Confirmar" draggable={false}
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.6))' }}
-                />
-                
-                <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 1 }}>
-                  <svg
-                    viewBox="0 0 24 24" width="18" height="18"
+              ) : (
+                // ATTACK BUTTONS
+                <>
+                  <button
+                    onClick={() => setHit(true)}
                     style={{
-                      color: 'rgba(195,115,62,0.85)',
-                      filter: 'drop-shadow(0 1px 0.8px rgba(8,2,0,0.82)) drop-shadow(0 -0.5px 0.5px rgba(255,195,130,0.28))',
-                      position: 'absolute',
+                      flex: 1, height: 36, fontSize: 13, fontWeight: 'bold', cursor: 'pointer', borderRadius: 4,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.2s', outline: 'none',
+                      opacity: hit === false ? 0.4 : 1,
+                      ...(hit === true
+                        ? {
+                            background: 'linear-gradient(180deg, #3d6a45 0%, #1c3521 100%)',
+                            border: '2px solid #528c5c', color: '#fcd34d',
+                            boxShadow: '0 0 12px rgba(74,222,128,0.25), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -3px 0 rgba(0,0,0,0.4)',
+                          }
+                        : {
+                            background: 'linear-gradient(180deg, #1e3322 0%, #122115 100%)',
+                            border: '2px solid #2e4d34', color: 'rgba(134,239,172,0.6)',
+                            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), inset 0 -2px 0 rgba(0,0,0,0.5)',
+                          })
                     }}
                   >
-                    <path d="M4 20 L20 4 M20 20 L4 4" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-                    <path d="M15 3 L21 6 L18 9 L15 6 Z" fill="currentColor" />
-                    <path d="M9 3 L3 6 L6 9 L9 6 Z" fill="currentColor" />
-                  </svg>
-                  <span style={{ fontFamily: 'Georgia, serif', fontSize: 11, fontWeight: 'bold', color: '#fcd34d', textShadow: '0 2px 3px rgba(0,0,0,0.9)', zIndex: 1, letterSpacing: '0.05em' }}>
-                    OK
-                  </span>
-                </div>
-              </button>
-            )}
-          </div>
+                    <CrossedSwordsIcon />
+                    Impacta
+                  </button>
+
+                  <button
+                    onClick={() => { setHit(false); setDamage('') }}
+                    style={{
+                      flex: 1, height: 36, fontSize: 13, fontWeight: 'bold', cursor: 'pointer', borderRadius: 4,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.2s', outline: 'none',
+                      opacity: hit === true ? 0.4 : 1,
+                      ...(hit === false
+                        ? {
+                            background: 'linear-gradient(180deg, #881337 0%, #4c0519 100%)',
+                            border: '2px solid #f43f5e', color: '#fcd34d',
+                            boxShadow: '0 0 12px rgba(244,63,94,0.25), inset 0 1px 0 rgba(255,255,255,0.15), inset 0 -3px 0 rgba(0,0,0,0.4)',
+                          }
+                        : {
+                            background: 'linear-gradient(180deg, #2a2e30 0%, #1b1e1f 100%)',
+                            border: '2px solid #3f4547', color: 'rgba(212,212,216,0.6)',
+                            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.05), inset 0 -2px 0 rgba(0,0,0,0.5)',
+                          })
+                    }}
+                  >
+                    <CrossedArrowsIcon />
+                    Falla
+                  </button>
+                </>
+              )}
+
+              {/* HP Value input */}
+              {hit === true && (
+                <input
+                  autoFocus type="number" min={0} placeholder="0"
+                  value={damage} onChange={e => setDamage(e.target.value)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && damage && onAttackConfirm) {
+                      const hpVal = parseInt(damage) || 0
+                      if (aoeActive && targetsInAoE.length > 0) {
+                        targetsInAoE.forEach((tid, idx) => {
+                          onAttackConfirm(attackFrom!, tid, true, hpVal, calcResult.isHealing, idx === 0 ? spellLevel : undefined)
+                        })
+                      } else {
+                        onAttackConfirm(attackFrom!, attackTo!, true, hpVal, calcResult.isHealing, spellLevel)
+                      }
+                      setAttackFrom(null); setAttackTo(null)
+                    }
+                  }}
+                  className="no-spinners"
+                  style={{
+                    width: 50, height: 36, padding: '0 4px', fontSize: 18, fontFamily: 'monospace', textAlign: 'center',
+                    background: 'rgba(0,0,0,0.65)', border: '2px solid #1e1208', color: '#d5b88a', borderRadius: 4, outline: 'none',
+                    boxSizing: 'border-box', boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.9)',
+                  }}
+                />
+              )}
+
+              {/* OK Confirmation Seal */}
+              {hit !== null && (
+                <button
+                  onClick={() => {
+                    if (!onAttackConfirm) return
+                    const hpVal = hit ? (parseInt(damage) || 0) : 0
+                    
+                    if (aoeActive && targetsInAoE.length > 0) {
+                      targetsInAoE.forEach((tid, idx) => {
+                        onAttackConfirm(attackFrom!, tid, hit, hpVal, calcResult.isHealing, idx === 0 ? spellLevel : undefined)
+                      })
+                    } else {
+                      onAttackConfirm(attackFrom!, attackTo!, hit, hpVal, calcResult.isHealing, spellLevel)
+                    }
+                    setAttackFrom(null); setAttackTo(null)
+                  }}
+                  disabled={hit === true && !damage}
+                  style={{
+                    position: 'relative', width: 52, height: 52, background: 'none', border: 'none',
+                    cursor: hit === true && !damage ? 'not-allowed' : 'pointer', padding: 0, outline: 'none',
+                    transition: 'transform 0.1s, opacity 0.2s', opacity: hit === true && !damage ? 0.35 : 1, flexShrink: 0
+                  }}
+                  onMouseDown={e => {
+                    if (!(hit === true && !damage)) e.currentTarget.style.transform = 'scale(0.92)'
+                  }}
+                  onMouseUp={e => { e.currentTarget.style.transform = 'scale(1)' }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)' }}
+                >
+                  <img
+                    src="/assets/images/wax seal (1).png" alt="Confirmar" draggable={false}
+                    style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none', filter: 'drop-shadow(0 3px 6px rgba(0,0,0,0.6))' }}
+                  />
+                  
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 1 }}>
+                    <svg
+                      viewBox="0 0 24 24" width="18" height="18"
+                      style={{
+                        color: 'rgba(195,115,62,0.85)',
+                        filter: 'drop-shadow(0 1px 0.8px rgba(8,2,0,0.82)) drop-shadow(0 -0.5px 0.5px rgba(255,195,130,0.28))',
+                        position: 'absolute',
+                      }}
+                    >
+                      <path d="M4 20 L20 4 M20 20 L4 4" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                      <path d="M15 3 L21 6 L18 9 L15 6 Z" fill="currentColor" />
+                      <path d="M9 3 L3 6 L6 9 L9 6 Z" fill="currentColor" />
+                    </svg>
+                    <span style={{ fontFamily: 'Georgia, serif', fontSize: 11, fontWeight: 'bold', color: '#fcd34d', textShadow: '0 2px 3px rgba(0,0,0,0.9)', zIndex: 1, letterSpacing: '0.05em' }}>
+                      OK
+                    </span>
+                  </div>
+                </button>
+              )}
+            </div>
+          )}
         </div>
       )
     })()}

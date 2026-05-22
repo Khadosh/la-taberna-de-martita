@@ -74,6 +74,18 @@ type Combatant =
 const getInitiative = (c: Combatant) => c.kind === 'player' ? c.initiative : c.npc.initiative
 const formatModInline = (mod: number) => mod >= 0 ? `+${mod}` : `${mod}`
 
+// ── HP / Stats Helpers ───────────────────────────────────────────────────────
+const maxHpFor = (c: Character) => {
+  const sheetMaxHp = (c.sheet_json as { max_hp?: number }).max_hp
+  if (sheetMaxHp) return sheetMaxHp
+  const hitDie = (c.sheet_json as { hit_die?: number }).hit_die ?? 8
+  const conMod = Math.floor(((c.stats.con ?? 10) - 10) / 2)
+  return hitDie + conMod
+}
+
+const currentHpFor = (c: Character) => c.current_hp ?? maxHpFor(c)
+const acFor = (c: Character) => c.armor_class ?? (10 + Math.floor(((c.stats.dex ?? 10) - 10) / 2))
+
 // ── Route wrapper — checks role ───────────────────────────────────────────────
 
 function TableroRoute() {
@@ -103,6 +115,10 @@ function PlayerTablero({ campaignId, session }: { campaignId: string; session: S
   const [activeMapUrl, setActiveMapUrl] = useState<string | null>(null)
   const [boardTokens, setBoardTokens] = useState<BoardToken[]>([])
   const [externalPositions, setExternalPositions] = useState<Record<string, { x: number; y: number }>>({})
+
+  // Realtime target sync states
+  const [externalTargeting, setExternalTargeting] = useState<any>(null)
+  const channelRef = useRef<any>(null)
 
   const { data: characters = [] } = useQuery({
     queryKey: ['campaign-characters', campaignId],
@@ -160,13 +176,24 @@ function PlayerTablero({ campaignId, session }: { campaignId: string; session: S
     return () => { supabase.removeChannel(channel) }
   }, [campaignId])
 
+  // Realtime: custom broadcast channels
+  useEffect(() => {
+    const channel = supabase.channel(`campaign-board-${campaignId}`)
+      .on('broadcast', { event: 'dm-targeting-updated' }, (payload) => {
+        setExternalTargeting(payload.payload)
+      })
+      .subscribe()
+    channelRef.current = channel
+    return () => { supabase.removeChannel(channel) }
+  }, [campaignId])
+
   const myCharId = characters.find(c => c.user_id === session.user.id)?.id
 
   // Build TokenData from board_tokens, merging live HP from characters query
   const tokens: TokenData[] = useMemo(() => boardTokens.map(bt => {
     const char = bt.kind === 'player' ? characters.find(c => c.id === bt.entity_id) : null
-    const maxHp = char ? (char.sheet_json?.hit_die ?? 8) + Math.floor(((char.stats.con ?? 10) - 10) / 2) : bt.max_hp ?? 1
-    const currentHp = char ? (char.current_hp ?? maxHp) : bt.current_hp ?? maxHp
+    const maxHp = char ? maxHpFor(char) : bt.max_hp ?? 1
+    const currentHp = char ? currentHpFor(char) : bt.current_hp ?? maxHp
     return {
       id: bt.entity_id,
       name: bt.label,
@@ -191,7 +218,7 @@ function PlayerTablero({ campaignId, session }: { campaignId: string; session: S
         result.push({
           id: ch.id,
           name: ch.name,
-          ac: ch.armor_class ?? (10 + Math.floor(((ch.stats.dex ?? 10) - 10) / 2)),
+          ac: acFor(ch),
           attackBonus: prof + Math.max(strMod, dexMod)
         })
       } else {
@@ -213,6 +240,44 @@ function PlayerTablero({ campaignId, session }: { campaignId: string; session: S
       .eq('entity_id', entityId)
   }
 
+  const handleSelectionChange = (state: any) => {
+    if (channelRef.current) {
+      const attackerName = tokens.find(t => t.id === state.attackFrom)?.name || ''
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'player-targeting-updated',
+        payload: {
+          ...state,
+          attackerName
+        }
+      })
+    }
+  }
+
+  const handleAttackConfirm = (
+    attackerId: string,
+    targetId: string,
+    hit: boolean,
+    damage?: number,
+    isHealing?: boolean,
+    spellLevel?: number
+  ) => {
+    if (channelRef.current) {
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'player-attack-applied',
+        payload: {
+          attackerId,
+          targetId,
+          hit,
+          damage,
+          isHealing,
+          spellLevel,
+        }
+      })
+    }
+  }
+
   if (boardTokens.length === 0) {
     return (
       <div className="bg-stone-950 flex flex-col items-center justify-center" style={{ minHeight: 'calc(100vh - 100px)' }}>
@@ -231,6 +296,10 @@ function PlayerTablero({ campaignId, session }: { campaignId: string; session: S
         onTokenMoved={onTokenMoved}
         canDrag={tokenId => tokenId === myCharId}
         characters={characters as any}
+        isPlayer={true}
+        externalTargeting={externalTargeting}
+        onSelectionChange={handleSelectionChange}
+        onAttackConfirm={handleAttackConfirm}
       />
     </div>
   )
@@ -286,6 +355,10 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
   type LogEntry = { id: string; attackerName: string; targetName: string; hit: boolean; damage?: number; isHealing?: boolean }
   const [combatLog, setCombatLog] = useState<LogEntry[]>([])
   const [showLog, setShowLog] = useState(true)
+
+  // Realtime target sync states
+  const [externalTargeting, setExternalTargeting] = useState<any>(null)
+  const channelRef = useRef<any>(null)
 
   // ── Queries ──────────────────────────────────────────────────────────────
 
@@ -375,18 +448,29 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
     return () => { supabase.removeChannel(channel) }
   }, [campaignId])
 
+  // ── Realtime: custom board interactive sync ────────────────────────────────
+  const onAttackConfirmRef = useRef(onAttackConfirm)
+  useEffect(() => {
+    onAttackConfirmRef.current = onAttackConfirm
+  }, [onAttackConfirm])
+
+  useEffect(() => {
+    const channel = supabase.channel(`campaign-board-${campaignId}`)
+      .on('broadcast', { event: 'player-targeting-updated' }, (payload) => {
+        setExternalTargeting(payload.payload)
+      })
+      .on('broadcast', { event: 'player-attack-applied' }, (payload) => {
+        const { attackerId, targetId, hit, damage, isHealing, spellLevel } = payload.payload
+        if (onAttackConfirmRef.current) {
+          onAttackConfirmRef.current(attackerId, targetId, hit, damage, isHealing, spellLevel)
+        }
+      })
+      .subscribe()
+    channelRef.current = channel
+    return () => { supabase.removeChannel(channel) }
+  }, [campaignId])
+
   // ── Helpers ──────────────────────────────────────────────────────────────
-
-  const maxHpFor = (c: Character) => {
-    const sheetMaxHp = (c.sheet_json as { max_hp?: number }).max_hp
-    if (sheetMaxHp) return sheetMaxHp
-    const hitDie = (c.sheet_json as { hit_die?: number }).hit_die ?? 8
-    const conMod = Math.floor(((c.stats.con ?? 10) - 10) / 2)
-    return hitDie + conMod
-  }
-
-  const currentHpFor = (c: Character) => c.current_hp ?? maxHpFor(c)
-  const acFor = (c: Character) => c.armor_class ?? (10 + Math.floor(((c.stats.dex ?? 10) - 10) / 2))
 
   const patchCharacter = async (id: string, patch: Record<string, unknown>) => {
     await supabase.from('characters').update(patch as never).eq('id', id)
@@ -751,6 +835,20 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
       return [{ id: c.npc.id, name: c.npc.name, kind: 'npc', currentHp: c.npc.currentHp, maxHp: c.npc.maxHp, portraitUrl: null, isActive: idx === currentTurn }]
     })
   }, [combatants, characters, currentTurn, localHp])
+
+  const handleSelectionChange = (state: any) => {
+    if (channelRef.current) {
+      const attackerName = tokens.find(t => t.id === state.attackFrom)?.name || 'GM'
+      channelRef.current.send({
+        type: 'broadcast',
+        event: 'dm-targeting-updated',
+        payload: {
+          ...state,
+          attackerName
+        }
+      })
+    }
+  }
 
   // ── Render ───────────────────────────────────────────────────────────────
 
@@ -1122,6 +1220,9 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
                 onTokenMoved={onTokenMoved}
                 onAttackConfirm={handleAttackConfirm}
                 characters={characters as any}
+                isPlayer={false}
+                externalTargeting={externalTargeting}
+                onSelectionChange={handleSelectionChange}
               />
 
               {/* Combat history log — bottom-right, read-only, collapsible */}
