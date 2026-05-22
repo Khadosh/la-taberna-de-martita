@@ -652,7 +652,14 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
 
   // ── Combat log ───────────────────────────────────────────────────────────
 
-  const handleAttackConfirm = (attackerId: string, targetId: string, hit: boolean, damage?: number, isHealing?: boolean) => {
+  const handleAttackConfirm = async (
+    attackerId: string,
+    targetId: string,
+    hit: boolean,
+    damage?: number,
+    isHealing?: boolean,
+    spellLevel?: number
+  ) => {
     if (hit && damage && damage > 0) {
       const playerChar = characters.find(c => c.id === targetId)
       if (playerChar) {
@@ -679,6 +686,34 @@ function DmTablero({ campaignId, session: _session }: { campaignId: string; sess
         targetName: target.name,
         hit, damage, isHealing,
       }, ...prev].slice(0, 30))
+    }
+
+    // Deduct spell slot if a spell level > 0 was cast
+    if (spellLevel && spellLevel > 0) {
+      const attackerChar = characters.find(c => c.id === attackerId)
+      if (attackerChar) {
+        const slotsUsed = attackerChar.sheet_json.spell_slots_used ?? {}
+        const currentUsed = slotsUsed[String(spellLevel)] ?? 0
+        const newSheet = {
+          ...attackerChar.sheet_json,
+          spell_slots_used: {
+            ...slotsUsed,
+            [String(spellLevel)]: currentUsed + 1
+          }
+        }
+        
+        // Optimistic query data update for characters list
+        queryClient.setQueryData(['campaign-characters', campaignId], (old: any) => {
+          if (!Array.isArray(old)) return old
+          return old.map(c => c.id === attackerId ? { ...c, sheet_json: newSheet } : c)
+        })
+
+        // Update database
+        await supabase
+          .from('characters')
+          .update({ sheet_json: newSheet as any })
+          .eq('id', attackerId)
+      }
     }
   }
 

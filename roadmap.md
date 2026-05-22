@@ -72,6 +72,9 @@ Sincronización de dados en mesa integrada al tablero de combate del DM (documen
 - ✅ Cálculo de distancia y rango de ataque (Melee, Arco, Lanzamiento).
 - ✅ Proyección de áreas de efecto de hechizos (Esfera, Cubo, Línea) con detección de blancos en área.
 - ✅ Resolución y log de combate con soporte para curaciones y daño multi-objetivo.
+- ✅ Deducción automática de casillas de conjuro (spell slots) en base de datos.
+- ✅ Clasificación y agrupado de conjuros por nivel en el panel de ataque.
+- ✅ Bounding limits y clamping dinámico del popup de ataque para evitar overflow en pantalla.
 
 ### Historial de sesiones
 - Lista de sesiones pasadas por campaña.

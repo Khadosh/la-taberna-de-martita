@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueries } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { dndApi, dndKeys } from '../lib/dnd-api'
 import type { SheetJson } from './character-sheet/types'
@@ -431,7 +431,14 @@ export function CombatBoard({
   externalPositions?: Record<string, Pos>
   onTokenMoved?: (entityId: string, x: number, y: number) => void
   canDrag?: (tokenId: string) => boolean
-  onAttackConfirm?: (attackerId: string, targetId: string, hit: boolean, damage?: number, isHealing?: boolean) => void
+  onAttackConfirm?: (
+    attackerId: string,
+    targetId: string,
+    hit: boolean,
+    damage?: number,
+    isHealing?: boolean,
+    spellLevel?: number
+  ) => void
   characters?: BoardCharacter[]
 }) {
   const boardRef = useRef<HTMLDivElement>(null)
@@ -440,6 +447,23 @@ export function CombatBoard({
   const draggingRef = useRef<string | null>(null)
   const dragRef = useRef<{ id: string; mx: number; my: number; tx: number; ty: number; moved: boolean } | null>(null)
   
+  // Track board container size for clamping attack popup positions
+  const [boardSize, setBoardSize] = useState({ width: 800, height: 600 })
+  useEffect(() => {
+    const board = boardRef.current
+    if (!board) return
+    const observer = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        setBoardSize({
+          width: entry.contentRect.width,
+          height: entry.contentRect.height,
+        })
+      }
+    })
+    observer.observe(board)
+    return () => observer.disconnect()
+  }, [])
+
   // Pan and Zoom
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
@@ -497,6 +521,28 @@ export function CombatBoard({
     enabled: !!selectedSpellIndex,
     staleTime: Infinity,
   })
+
+  // Fetch details for all attacker spells to group them by level in the dropdown
+  const attackerSpells = useMemo(() => attackerChar?.sheet_json.spells ?? [], [attackerChar])
+  const attackerSpellsQueries = useQueries({
+    queries: attackerSpells.map(index => ({
+      queryKey: dndKeys.spell(index),
+      queryFn: () => dndApi.spell(index),
+      staleTime: Infinity,
+    }))
+  })
+
+  const groupedAttackerSpells = useMemo(() => {
+    const groups: Record<number, { index: string; name: string }[]> = {}
+    attackerSpellsQueries.forEach(res => {
+      if (res.data) {
+        const lvl = res.data.level
+        if (!groups[lvl]) groups[lvl] = []
+        groups[lvl].push({ index: res.data.index, name: res.data.name })
+      }
+    })
+    return groups
+  }, [attackerSpellsQueries])
 
   // Detect AoE and Saving throws dynamically from spell description
   const parsedSpellConfig = useMemo(() => {
@@ -1111,17 +1157,34 @@ export function CombatBoard({
       </div>
 
       {/* Attack calculation popup */}
-      {calcResult && fromPos && toPos && (
-        <div style={{
-          position: 'absolute', left: midX, top: midY,
-          transform: 'translate(-50%, -50%)',
-          zIndex: 40, pointerEvents: 'auto',
-          background: 'radial-gradient(circle at 50% 50%, #2f1d13 0%, #150c07 100%)',
-          border: '8px solid #23140a', borderRadius: 8,
-          boxShadow: '0 20px 50px rgba(0,0,0,0.9), inset 0 0 25px rgba(0,0,0,0.95), 0 0 0 1.5px #120a05',
-          padding: '12px 14px', width: 'calc(100% - 24px)', maxWidth: 410,
-          fontFamily: 'Georgia, serif', boxSizing: 'border-box',
-        }}>
+      {(() => {
+        if (!calcResult || !fromPos || !toPos) return null
+
+        const POPUP_WIDTH = 410
+        const POPUP_HEIGHT = 440 // approximate height
+
+        // We want the popup to follow the map's zoom and pan so it floats near the targets
+        const rawPopupX = midX * zoom + pan.x
+        const rawPopupY = midY * zoom + pan.y
+
+        // Clamp to prevent the popup from going outside the viewport boundary
+        const currentPopupWidth = Math.min(POPUP_WIDTH, boardSize.width - 24)
+        const popupX = Math.max(currentPopupWidth / 2 + 12, Math.min(boardSize.width - currentPopupWidth / 2 - 12, rawPopupX))
+        const popupY = Math.max(POPUP_HEIGHT / 2 + 12, Math.min(boardSize.height - POPUP_HEIGHT / 2 - 12, rawPopupY))
+
+        const spellLevel = selectedMode === 'spell' && spellDetail ? spellDetail.level : undefined
+
+        return (
+          <div style={{
+            position: 'absolute', left: popupX, top: popupY,
+            transform: 'translate(-50%, -50%)',
+            zIndex: 40, pointerEvents: 'auto',
+            background: 'radial-gradient(circle at 50% 50%, #2f1d13 0%, #150c07 100%)',
+            border: '8px solid #23140a', borderRadius: 8,
+            boxShadow: '0 20px 50px rgba(0,0,0,0.9), inset 0 0 25px rgba(0,0,0,0.95), 0 0 0 1.5px #120a05',
+            padding: '12px 14px', width: 'calc(100% - 24px)', maxWidth: POPUP_WIDTH,
+            fontFamily: 'Georgia, serif', boxSizing: 'border-box',
+          }}>
           {/* Decorative Corner Brackets */}
           <CornerBracket rotation={0} /><CornerBracket rotation={270} />
           <CornerBracket rotation={90} /><CornerBracket rotation={180} />
@@ -1260,11 +1323,34 @@ export function CombatBoard({
                       style={{ flex: 1, background: '#1c1208', border: '1px solid #5a3c1e', color: '#d5b88a', padding: '2px 4px', fontSize: 11, borderRadius: 3, outline: 'none' }}
                     >
                       <option value="">-- Seleccionar Hechizo --</option>
-                      {(attackerChar.sheet_json.spells ?? []).map(sp => (
-                        <option key={sp} value={sp}>
-                          {sp.replace(/-/g, ' ').toUpperCase()}
-                        </option>
-                      ))}
+                      {Object.keys(groupedAttackerSpells).length > 0 ? (
+                        Object.keys(groupedAttackerSpells)
+                          .map(Number)
+                          .sort((a, b) => a - b)
+                          .map(lvl => (
+                            <optgroup
+                              key={lvl}
+                              label={lvl === 0 ? 'TRUCOS (CANTRIPS)' : `CONJUROS DE NIVEL ${lvl}`}
+                              style={{ background: '#1c1208', color: '#bc9434', fontStyle: 'normal', fontWeight: 'bold' }}
+                            >
+                              {groupedAttackerSpells[lvl].map(sp => (
+                                <option
+                                  key={sp.index}
+                                  value={sp.index}
+                                  style={{ color: '#d5b88a', fontWeight: 'normal' }}
+                                >
+                                  {sp.name}
+                                </option>
+                              ))}
+                            </optgroup>
+                          ))
+                      ) : (
+                        (attackerChar.sheet_json.spells ?? []).map(sp => (
+                          <option key={sp} value={sp}>
+                            {sp.replace(/-/g, ' ').toUpperCase()}
+                          </option>
+                        ))
+                      )}
                     </select>
                   ) : (
                     <span style={{ color: '#a8a29e' }}>Ataque mágico genérico</span>
@@ -1466,11 +1552,11 @@ export function CombatBoard({
                   if (e.key === 'Enter' && damage && onAttackConfirm) {
                     const hpVal = parseInt(damage) || 0
                     if (aoeActive && targetsInAoE.length > 0) {
-                      targetsInAoE.forEach(tid => {
-                        onAttackConfirm(attackFrom!, tid, true, hpVal, calcResult.isHealing)
+                      targetsInAoE.forEach((tid, idx) => {
+                        onAttackConfirm(attackFrom!, tid, true, hpVal, calcResult.isHealing, idx === 0 ? spellLevel : undefined)
                       })
                     } else {
-                      onAttackConfirm(attackFrom!, attackTo!, true, hpVal, calcResult.isHealing)
+                      onAttackConfirm(attackFrom!, attackTo!, true, hpVal, calcResult.isHealing, spellLevel)
                     }
                     setAttackFrom(null); setAttackTo(null)
                   }
@@ -1492,11 +1578,11 @@ export function CombatBoard({
                   const hpVal = hit ? (parseInt(damage) || 0) : 0
                   
                   if (aoeActive && targetsInAoE.length > 0) {
-                    targetsInAoE.forEach(tid => {
-                      onAttackConfirm(attackFrom!, tid, hit, hpVal, calcResult.isHealing)
+                    targetsInAoE.forEach((tid, idx) => {
+                      onAttackConfirm(attackFrom!, tid, hit, hpVal, calcResult.isHealing, idx === 0 ? spellLevel : undefined)
                     })
                   } else {
-                    onAttackConfirm(attackFrom!, attackTo!, hit, hpVal, calcResult.isHealing)
+                    onAttackConfirm(attackFrom!, attackTo!, hit, hpVal, calcResult.isHealing, spellLevel)
                   }
                   setAttackFrom(null); setAttackTo(null)
                 }}
@@ -1538,7 +1624,8 @@ export function CombatBoard({
             )}
           </div>
         </div>
-      )}
+      )
+    })()}
 
       {/* Target select helper message */}
       {attackFrom && !attackTo && (

@@ -144,7 +144,10 @@ Usamos [Conventional Commits](https://www.conventionalcommits.org/).
   - ✅ Creado selector de 4 modos de acción (Melee, Rango, Lanzar, Conjuro) con validación inteligente de rangos y desventajas.
   - ✅ Integración con inventario del personaje (armas cuerpo a cuerpo/rango y objetos arrojadizos) y conjuros conocidos.
   - ✅ Proyección visual de plantillas de área de efecto (AoE): Esferas, Cubos y Líneas con detección automática de blancos dentro del área.
-  - ✅ Soporte para conjuros de curación (botón verde de curación que suma pg en lugar de restarlos) y resolución multi-objetivo en lote.
+  - ✅ Soporte para conjuros de curación (botón verde de curación que suma pg en lugar de restarlos) y resolución en lote.
+  - ✅ Deducción automática de casillas de conjuro (spell slots) al lanzar conjuros desde el tablero de combate.
+  - ✅ Agrupación jerárquica de conjuros por nivel en el selector utilizando optgroups de HTML.
+  - ✅ Clamping y limitación dinámica del popup de ataque para asegurar contención total en el viewport.
 - **2026-05-20**: `feat: add inventory item stats panel with svg icon badges`
   - ✅ Al seleccionar un item del inventario, se fetchea `GET /api/2014/equipment/{index}` (TanStack Query, caché 10 min, lazy).
   - ✅ Panel muestra stat pills: daño (armas), CA + bonus DES (armaduras), categoría, rango, propiedades, costo.
