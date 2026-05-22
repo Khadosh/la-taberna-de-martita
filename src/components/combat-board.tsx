@@ -454,6 +454,8 @@ export function CombatBoard({
   // Combat Attack Popup states
   const [attackFrom, setAttackFrom] = useState<string | null>(null)
   const [attackTo, setAttackTo] = useState<string | null>(null)
+  const fromPos = attackFrom ? positions[attackFrom] : null
+  const toPos = attackTo ? positions[attackTo] : null
   const [hit, setHit] = useState<boolean | null>(null)
   const [damage, setDamage] = useState('')
 
@@ -756,8 +758,6 @@ export function CombatBoard({
   }
 
   // Get coordinates for active tokens
-  const fromPos = attackFrom ? positions[attackFrom] : null
-  const toPos = attackTo ? positions[attackTo] : null
   const midX = fromPos && toPos ? (fromPos.x + toPos.x) / 2 + TOKEN_SIZE / 2 : 0
   const midY = fromPos && toPos ? (fromPos.y + toPos.y) / 2 + TOKEN_SIZE / 2 : 0
 
