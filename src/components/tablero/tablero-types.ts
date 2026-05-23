@@ -48,6 +48,9 @@ export type Npc = {
   damage?: string
   npcType?: string
   loot?: NpcItem[]
+  role?: string
+  portraitUrl?: string
+  level?: number
 }
 
 export type Combatant =

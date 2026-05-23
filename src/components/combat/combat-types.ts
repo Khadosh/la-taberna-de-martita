@@ -9,6 +9,8 @@ export type TokenData = {
   portraitUrl?: string | null
   isActive: boolean
   showHp?: boolean
+  role?: string
+  level?: number
 }
 
 export type AttackEntity = {

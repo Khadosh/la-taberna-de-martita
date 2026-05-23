@@ -4,6 +4,7 @@ import { DmMapSelector } from './dm-map-selector'
 import { CLASS_ICONS } from '../../lib/class-meta'
 import { CONDITIONS, getSpellSlots } from '../../lib/dnd-constants'
 import { maxHpFor, currentHpFor, acFor, type Npc } from './tablero-types'
+import { useEncounterGenerator } from './use-encounter-generator'
 
 interface DmTableroLayoutProps {
   campaignId: string
@@ -92,6 +93,8 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
     allCombatEntities,
     handleSelectionChange,
   } = dmState
+
+  const encounterGen = useEncounterGenerator({ characters, campaignId, addNpcFromMonster })
 
   return (
     <div className="bg-stone-950 text-stone-100 flex flex-col overflow-hidden w-full" style={{ height: 'calc(100vh - 100px)' }}>
@@ -322,6 +325,7 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
             updateLootItem={updateLootItem}
             removeLootItem={removeLootItem}
             createCustomNpc={createCustomNpc}
+            encounterGen={encounterGen}
           />
 
           <CombatBoard
@@ -391,7 +395,22 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
                   return (
                     <div key={npc.id} className="bg-stone-900 border border-stone-700 rounded-lg p-2.5 space-y-2">
                       <div className="flex items-center gap-1.5">
+                        {npc.portraitUrl && (
+                          <img src={npc.portraitUrl} alt="" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                            className="w-7 h-7 rounded-full object-cover object-top border border-stone-700 shrink-0" />
+                        )}
                         <p className="text-xs font-semibold text-stone-200 flex-1 truncate">{npc.name}</p>
+                        {npc.role && (
+                          <span className={`text-[9px] px-1 py-0.5 rounded font-bold uppercase shrink-0 ${
+                            npc.role === 'melee' ? 'bg-red-900/50 text-red-400' :
+                            npc.role === 'ranged' ? 'bg-green-900/50 text-green-400' :
+                            npc.role === 'magic' ? 'bg-purple-900/50 text-purple-400' :
+                            'bg-yellow-900/50 text-yellow-400'
+                          }`}>
+                            {npc.role === 'melee' ? 'Mel' : npc.role === 'ranged' ? 'Dist' : npc.role === 'magic' ? 'Mag' : 'Sop'}
+                          </span>
+                        )}
+                        {npc.level != null && <span className="text-[9px] font-mono text-blue-400/70 shrink-0">Nv{npc.level}</span>}
                         {npc.ac != null && <span className="text-[10px] font-mono text-stone-500 shrink-0">CA {npc.ac}</span>}
                         <button onClick={() => removeNpc(npc.id)} className="text-stone-700 hover:text-red-500 transition-colors text-xs shrink-0" title="Quitar del combate">✕</button>
                       </div>

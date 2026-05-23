@@ -172,6 +172,7 @@ export interface MonsterDetail {
   actions?: MonsterAction[]
   legendary_actions?: { name: string; desc: string }[]
   reactions?: { name: string; desc: string }[]
+  image?: string  // e.g. "/api/2014/images/monsters/goblin.png"
 }
 
 export const dndApi = {
@@ -193,7 +194,7 @@ export const dndApi = {
   equipmentCategories: () => get<{ results: ApiRef[] }>('/equipment-categories'),
   equipmentCategory: (i: string) => get<{ index: string; name: string; equipment: ApiRef[] }>(`/equipment-categories/${i}`),
   monsters: () => get<{ count: number; results: MonsterSummary[] }>('/monsters'),
-  monster: (i: string) => get<MonsterDetail>(`/monsters/${i}`),
+  monster: (i: string) => get2014<MonsterDetail>(`/monsters/${i}`),
   backgroundList: () => get2014<{ results: ApiRef[] }>('/backgrounds'),
   background: (i: string) => get2014<BackgroundDetail>(`/backgrounds/${i}`),
 }

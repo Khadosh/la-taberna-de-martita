@@ -1,0 +1,3008 @@
+[
+  {
+    "index": "aboleth",
+    "name": "Aboleth",
+    "type": "aberration",
+    "cr": 10,
+    "xp": 5900,
+    "ac": 17,
+    "attackBonus": 9
+  },
+  {
+    "index": "acolyte",
+    "name": "Acolyte",
+    "type": "humanoid",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 10,
+    "attackBonus": 2
+  },
+  {
+    "index": "adult-black-dragon",
+    "name": "Adult Black Dragon",
+    "type": "dragon",
+    "cr": 14,
+    "xp": 11500,
+    "ac": 19,
+    "attackBonus": 11
+  },
+  {
+    "index": "adult-blue-dragon",
+    "name": "Adult Blue Dragon",
+    "type": "dragon",
+    "cr": 16,
+    "xp": 15000,
+    "ac": 19,
+    "attackBonus": 12
+  },
+  {
+    "index": "adult-brass-dragon",
+    "name": "Adult Brass Dragon",
+    "type": "dragon",
+    "cr": 13,
+    "xp": 10000,
+    "ac": 18,
+    "attackBonus": 11
+  },
+  {
+    "index": "adult-bronze-dragon",
+    "name": "Adult Bronze Dragon",
+    "type": "dragon",
+    "cr": 15,
+    "xp": 13000,
+    "ac": 19,
+    "attackBonus": 12
+  },
+  {
+    "index": "adult-copper-dragon",
+    "name": "Adult Copper Dragon",
+    "type": "dragon",
+    "cr": 14,
+    "xp": 11500,
+    "ac": 18,
+    "attackBonus": 11
+  },
+  {
+    "index": "adult-gold-dragon",
+    "name": "Adult Gold Dragon",
+    "type": "dragon",
+    "cr": 17,
+    "xp": 18000,
+    "ac": 19,
+    "attackBonus": 14
+  },
+  {
+    "index": "adult-green-dragon",
+    "name": "Adult Green Dragon",
+    "type": "dragon",
+    "cr": 15,
+    "xp": 13000,
+    "ac": 19,
+    "attackBonus": 11
+  },
+  {
+    "index": "adult-red-dragon",
+    "name": "Adult Red Dragon",
+    "type": "dragon",
+    "cr": 17,
+    "xp": 18000,
+    "ac": 19,
+    "attackBonus": 14
+  },
+  {
+    "index": "adult-silver-dragon",
+    "name": "Adult Silver Dragon",
+    "type": "dragon",
+    "cr": 16,
+    "xp": 15000,
+    "ac": 19,
+    "attackBonus": 13
+  },
+  {
+    "index": "adult-white-dragon",
+    "name": "Adult White Dragon",
+    "type": "dragon",
+    "cr": 13,
+    "xp": 10000,
+    "ac": 18,
+    "attackBonus": 11
+  },
+  {
+    "index": "air-elemental",
+    "name": "Air Elemental",
+    "type": "elemental",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 15,
+    "attackBonus": 8
+  },
+  {
+    "index": "ancient-black-dragon",
+    "name": "Ancient Black Dragon",
+    "type": "dragon",
+    "cr": 21,
+    "xp": 33000,
+    "ac": 22,
+    "attackBonus": 15
+  },
+  {
+    "index": "ancient-blue-dragon",
+    "name": "Ancient Blue Dragon",
+    "type": "dragon",
+    "cr": 23,
+    "xp": 50000,
+    "ac": 22,
+    "attackBonus": 16
+  },
+  {
+    "index": "ancient-brass-dragon",
+    "name": "Ancient Brass Dragon",
+    "type": "dragon",
+    "cr": 20,
+    "xp": 25000,
+    "ac": 20,
+    "attackBonus": 14
+  },
+  {
+    "index": "ancient-bronze-dragon",
+    "name": "Ancient Bronze Dragon",
+    "type": "dragon",
+    "cr": 22,
+    "xp": 41000,
+    "ac": 22,
+    "attackBonus": 16
+  },
+  {
+    "index": "ancient-copper-dragon",
+    "name": "Ancient Copper Dragon",
+    "type": "dragon",
+    "cr": 21,
+    "xp": 33000,
+    "ac": 21,
+    "attackBonus": 15
+  },
+  {
+    "index": "ancient-gold-dragon",
+    "name": "Ancient Gold Dragon",
+    "type": "dragon",
+    "cr": 24,
+    "xp": 62000,
+    "ac": 22,
+    "attackBonus": 17
+  },
+  {
+    "index": "ancient-green-dragon",
+    "name": "Ancient Green Dragon",
+    "type": "dragon",
+    "cr": 22,
+    "xp": 41000,
+    "ac": 21,
+    "attackBonus": 15
+  },
+  {
+    "index": "ancient-red-dragon",
+    "name": "Ancient Red Dragon",
+    "type": "dragon",
+    "cr": 24,
+    "xp": 62000,
+    "ac": 22,
+    "attackBonus": 17
+  },
+  {
+    "index": "ancient-silver-dragon",
+    "name": "Ancient Silver Dragon",
+    "type": "dragon",
+    "cr": 23,
+    "xp": 50000,
+    "ac": 22,
+    "attackBonus": 17
+  },
+  {
+    "index": "ancient-white-dragon",
+    "name": "Ancient White Dragon",
+    "type": "dragon",
+    "cr": 20,
+    "xp": 25000,
+    "ac": 20,
+    "attackBonus": 14
+  },
+  {
+    "index": "androsphinx",
+    "name": "Androsphinx",
+    "type": "monstrosity",
+    "cr": 17,
+    "xp": 18000,
+    "ac": 17,
+    "attackBonus": 12
+  },
+  {
+    "index": "animated-armor",
+    "name": "Animated Armor",
+    "type": "construct",
+    "cr": 1,
+    "xp": 200,
+    "ac": 18,
+    "attackBonus": 4
+  },
+  {
+    "index": "ankheg",
+    "name": "Ankheg",
+    "type": "monstrosity",
+    "cr": 2,
+    "xp": 450,
+    "ac": 14,
+    "attackBonus": 5
+  },
+  {
+    "index": "ape",
+    "name": "Ape",
+    "type": "beast",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 12,
+    "attackBonus": 5
+  },
+  {
+    "index": "archmage",
+    "name": "Archmage",
+    "type": "humanoid",
+    "cr": 12,
+    "xp": 8400,
+    "ac": 12,
+    "attackBonus": 6
+  },
+  {
+    "index": "assassin",
+    "name": "Assassin",
+    "type": "humanoid",
+    "cr": 8,
+    "xp": 3900,
+    "ac": 15,
+    "attackBonus": 6
+  },
+  {
+    "index": "awakened-shrub",
+    "name": "Awakened Shrub",
+    "type": "plant",
+    "cr": 0,
+    "xp": 10,
+    "ac": 9,
+    "attackBonus": 1
+  },
+  {
+    "index": "awakened-tree",
+    "name": "Awakened Tree",
+    "type": "plant",
+    "cr": 2,
+    "xp": 450,
+    "ac": 13,
+    "attackBonus": 6
+  },
+  {
+    "index": "axe-beak",
+    "name": "Axe Beak",
+    "type": "beast",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 11,
+    "attackBonus": 4
+  },
+  {
+    "index": "azer",
+    "name": "Azer",
+    "type": "elemental",
+    "cr": 2,
+    "xp": 450,
+    "ac": 15,
+    "attackBonus": 5
+  },
+  {
+    "index": "baboon",
+    "name": "Baboon",
+    "type": "beast",
+    "cr": 0,
+    "xp": 10,
+    "ac": 12,
+    "attackBonus": 1
+  },
+  {
+    "index": "badger",
+    "name": "Badger",
+    "type": "beast",
+    "cr": 0,
+    "xp": 10,
+    "ac": 10,
+    "attackBonus": 2
+  },
+  {
+    "index": "balor",
+    "name": "Balor",
+    "type": "fiend",
+    "cr": 19,
+    "xp": 22000,
+    "ac": 19,
+    "attackBonus": 14
+  },
+  {
+    "index": "bandit",
+    "name": "Bandit",
+    "type": "humanoid",
+    "cr": 0.125,
+    "xp": 25,
+    "ac": 12,
+    "attackBonus": 3
+  },
+  {
+    "index": "bandit-captain",
+    "name": "Bandit Captain",
+    "type": "humanoid",
+    "cr": 2,
+    "xp": 450,
+    "ac": 15,
+    "attackBonus": 5
+  },
+  {
+    "index": "barbed-devil",
+    "name": "Barbed Devil",
+    "type": "fiend",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 15,
+    "attackBonus": 6
+  },
+  {
+    "index": "basilisk",
+    "name": "Basilisk",
+    "type": "monstrosity",
+    "cr": 3,
+    "xp": 700,
+    "ac": 12,
+    "attackBonus": 5
+  },
+  {
+    "index": "bat",
+    "name": "Bat",
+    "type": "beast",
+    "cr": 0,
+    "xp": 10,
+    "ac": 12,
+    "attackBonus": 0
+  },
+  {
+    "index": "bearded-devil",
+    "name": "Bearded Devil",
+    "type": "fiend",
+    "cr": 3,
+    "xp": 700,
+    "ac": 13,
+    "attackBonus": 5
+  },
+  {
+    "index": "behir",
+    "name": "Behir",
+    "type": "monstrosity",
+    "cr": 11,
+    "xp": 7200,
+    "ac": 17,
+    "attackBonus": 10
+  },
+  {
+    "index": "berserker",
+    "name": "Berserker",
+    "type": "humanoid",
+    "cr": 2,
+    "xp": 450,
+    "ac": 13,
+    "attackBonus": 5
+  },
+  {
+    "index": "black-bear",
+    "name": "Black Bear",
+    "type": "beast",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 11,
+    "attackBonus": 3
+  },
+  {
+    "index": "black-dragon-wyrmling",
+    "name": "Black Dragon Wyrmling",
+    "type": "dragon",
+    "cr": 2,
+    "xp": 450,
+    "ac": 17,
+    "attackBonus": 4
+  },
+  {
+    "index": "black-pudding",
+    "name": "Black Pudding",
+    "type": "ooze",
+    "cr": 4,
+    "xp": 1100,
+    "ac": 7,
+    "attackBonus": 5
+  },
+  {
+    "index": "blink-dog",
+    "name": "Blink Dog",
+    "type": "fey",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 13,
+    "attackBonus": 3
+  },
+  {
+    "index": "blood-hawk",
+    "name": "Blood Hawk",
+    "type": "beast",
+    "cr": 0.125,
+    "xp": 25,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "blue-dragon-wyrmling",
+    "name": "Blue Dragon Wyrmling",
+    "type": "dragon",
+    "cr": 3,
+    "xp": 700,
+    "ac": 17,
+    "attackBonus": 5
+  },
+  {
+    "index": "boar",
+    "name": "Boar",
+    "type": "beast",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 11,
+    "attackBonus": 3
+  },
+  {
+    "index": "bone-devil",
+    "name": "Bone Devil",
+    "type": "fiend",
+    "cr": 9,
+    "xp": 5000,
+    "ac": 19,
+    "attackBonus": 8
+  },
+  {
+    "index": "brass-dragon-wyrmling",
+    "name": "Brass Dragon Wyrmling",
+    "type": "dragon",
+    "cr": 1,
+    "xp": 100,
+    "ac": 16,
+    "attackBonus": 4
+  },
+  {
+    "index": "bronze-dragon-wyrmling",
+    "name": "Bronze Dragon Wyrmling",
+    "type": "dragon",
+    "cr": 2,
+    "xp": 450,
+    "ac": 17,
+    "attackBonus": 5
+  },
+  {
+    "index": "brown-bear",
+    "name": "Brown Bear",
+    "type": "beast",
+    "cr": 1,
+    "xp": 200,
+    "ac": 11,
+    "attackBonus": 5
+  },
+  {
+    "index": "bugbear",
+    "name": "Bugbear",
+    "type": "humanoid",
+    "cr": 1,
+    "xp": 200,
+    "ac": 16,
+    "attackBonus": 4
+  },
+  {
+    "index": "bulette",
+    "name": "Bulette",
+    "type": "monstrosity",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 17,
+    "attackBonus": 7
+  },
+  {
+    "index": "camel",
+    "name": "Camel",
+    "type": "beast",
+    "cr": 0.125,
+    "xp": 25,
+    "ac": 9,
+    "attackBonus": 5
+  },
+  {
+    "index": "cat",
+    "name": "Cat",
+    "type": "beast",
+    "cr": 0,
+    "xp": 10,
+    "ac": 12,
+    "attackBonus": 0
+  },
+  {
+    "index": "centaur",
+    "name": "Centaur",
+    "type": "monstrosity",
+    "cr": 2,
+    "xp": 450,
+    "ac": 12,
+    "attackBonus": 6
+  },
+  {
+    "index": "chain-devil",
+    "name": "Chain Devil",
+    "type": "fiend",
+    "cr": 8,
+    "xp": 3900,
+    "ac": 16,
+    "attackBonus": 8
+  },
+  {
+    "index": "chimera",
+    "name": "Chimera",
+    "type": "monstrosity",
+    "cr": 6,
+    "xp": 2300,
+    "ac": 14,
+    "attackBonus": 7
+  },
+  {
+    "index": "chuul",
+    "name": "Chuul",
+    "type": "aberration",
+    "cr": 4,
+    "xp": 1100,
+    "ac": 16,
+    "attackBonus": 6
+  },
+  {
+    "index": "clay-golem",
+    "name": "Clay Golem",
+    "type": "construct",
+    "cr": 9,
+    "xp": 5000,
+    "ac": 14,
+    "attackBonus": 8
+  },
+  {
+    "index": "cloaker",
+    "name": "Cloaker",
+    "type": "aberration",
+    "cr": 8,
+    "xp": 3900,
+    "ac": 14,
+    "attackBonus": 6
+  },
+  {
+    "index": "cloud-giant",
+    "name": "Cloud Giant",
+    "type": "giant",
+    "cr": 9,
+    "xp": 5000,
+    "ac": 14,
+    "attackBonus": 12
+  },
+  {
+    "index": "cockatrice",
+    "name": "Cockatrice",
+    "type": "monstrosity",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 11,
+    "attackBonus": 3
+  },
+  {
+    "index": "commoner",
+    "name": "Commoner",
+    "type": "humanoid",
+    "cr": 0,
+    "xp": 10,
+    "ac": 10,
+    "attackBonus": 2
+  },
+  {
+    "index": "constrictor-snake",
+    "name": "Constrictor Snake",
+    "type": "beast",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "copper-dragon-wyrmling",
+    "name": "Copper Dragon Wyrmling",
+    "type": "dragon",
+    "cr": 1,
+    "xp": 200,
+    "ac": 16,
+    "attackBonus": 4
+  },
+  {
+    "index": "couatl",
+    "name": "Couatl",
+    "type": "celestial",
+    "cr": 4,
+    "xp": 1100,
+    "ac": 19,
+    "attackBonus": 8
+  },
+  {
+    "index": "crab",
+    "name": "Crab",
+    "type": "beast",
+    "cr": 0,
+    "xp": 10,
+    "ac": 11,
+    "attackBonus": 0
+  },
+  {
+    "index": "crocodile",
+    "name": "Crocodile",
+    "type": "beast",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "cult-fanatic",
+    "name": "Cult Fanatic",
+    "type": "humanoid",
+    "cr": 2,
+    "xp": 450,
+    "ac": 13,
+    "attackBonus": 4
+  },
+  {
+    "index": "cultist",
+    "name": "Cultist",
+    "type": "humanoid",
+    "cr": 0.125,
+    "xp": 25,
+    "ac": 12,
+    "attackBonus": 3
+  },
+  {
+    "index": "darkmantle",
+    "name": "Darkmantle",
+    "type": "monstrosity",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 11,
+    "attackBonus": 5
+  },
+  {
+    "index": "death-dog",
+    "name": "Death Dog",
+    "type": "monstrosity",
+    "cr": 1,
+    "xp": 200,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "deep-gnome-svirfneblin",
+    "name": "Deep Gnome (Svirfneblin)",
+    "type": "humanoid",
+    "cr": 0.5,
+    "xp": 50,
+    "ac": 15,
+    "attackBonus": 4
+  },
+  {
+    "index": "deer",
+    "name": "Deer",
+    "type": "beast",
+    "cr": 0,
+    "xp": 10,
+    "ac": 13,
+    "attackBonus": 2
+  },
+  {
+    "index": "deva",
+    "name": "Deva",
+    "type": "celestial",
+    "cr": 10,
+    "xp": 5900,
+    "ac": 17,
+    "attackBonus": 8
+  },
+  {
+    "index": "dire-wolf",
+    "name": "Dire Wolf",
+    "type": "beast",
+    "cr": 1,
+    "xp": 200,
+    "ac": 14,
+    "attackBonus": 5
+  },
+  {
+    "index": "djinni",
+    "name": "Djinni",
+    "type": "elemental",
+    "cr": 11,
+    "xp": 7200,
+    "ac": 17,
+    "attackBonus": 9
+  },
+  {
+    "index": "doppelganger",
+    "name": "Doppelganger",
+    "type": "monstrosity",
+    "cr": 3,
+    "xp": 700,
+    "ac": 14,
+    "attackBonus": 6
+  },
+  {
+    "index": "draft-horse",
+    "name": "Draft Horse",
+    "type": "beast",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 10,
+    "attackBonus": 6
+  },
+  {
+    "index": "dragon-turtle",
+    "name": "Dragon Turtle",
+    "type": "dragon",
+    "cr": 17,
+    "xp": 18000,
+    "ac": 20,
+    "attackBonus": 13
+  },
+  {
+    "index": "dretch",
+    "name": "Dretch",
+    "type": "fiend",
+    "cr": 0.25,
+    "xp": 25,
+    "ac": 11,
+    "attackBonus": 2
+  },
+  {
+    "index": "drider",
+    "name": "Drider",
+    "type": "monstrosity",
+    "cr": 6,
+    "xp": 2300,
+    "ac": 19,
+    "attackBonus": 6
+  },
+  {
+    "index": "drow",
+    "name": "Drow",
+    "type": "humanoid",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 15,
+    "attackBonus": 4
+  },
+  {
+    "index": "druid",
+    "name": "Druid",
+    "type": "humanoid",
+    "cr": 2,
+    "xp": 450,
+    "ac": 11,
+    "attackBonus": 2
+  },
+  {
+    "index": "dryad",
+    "name": "Dryad",
+    "type": "fey",
+    "cr": 1,
+    "xp": 200,
+    "ac": 11,
+    "attackBonus": 2
+  },
+  {
+    "index": "duergar",
+    "name": "Duergar",
+    "type": "humanoid",
+    "cr": 1,
+    "xp": 200,
+    "ac": 16,
+    "attackBonus": 4
+  },
+  {
+    "index": "dust-mephit",
+    "name": "Dust Mephit",
+    "type": "elemental",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "eagle",
+    "name": "Eagle",
+    "type": "beast",
+    "cr": 0,
+    "xp": 10,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "earth-elemental",
+    "name": "Earth Elemental",
+    "type": "elemental",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 17,
+    "attackBonus": 8
+  },
+  {
+    "index": "efreeti",
+    "name": "Efreeti",
+    "type": "elemental",
+    "cr": 11,
+    "xp": 7200,
+    "ac": 17,
+    "attackBonus": 10
+  },
+  {
+    "index": "elephant",
+    "name": "Elephant",
+    "type": "beast",
+    "cr": 4,
+    "xp": 1100,
+    "ac": 12,
+    "attackBonus": 8
+  },
+  {
+    "index": "elk",
+    "name": "Elk",
+    "type": "beast",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 10,
+    "attackBonus": 5
+  },
+  {
+    "index": "erinyes",
+    "name": "Erinyes",
+    "type": "fiend",
+    "cr": 12,
+    "xp": 8400,
+    "ac": 18,
+    "attackBonus": 8
+  },
+  {
+    "index": "ettercap",
+    "name": "Ettercap",
+    "type": "monstrosity",
+    "cr": 2,
+    "xp": 450,
+    "ac": 13,
+    "attackBonus": 4
+  },
+  {
+    "index": "ettin",
+    "name": "Ettin",
+    "type": "giant",
+    "cr": 4,
+    "xp": 1100,
+    "ac": 12,
+    "attackBonus": 7
+  },
+  {
+    "index": "fire-elemental",
+    "name": "Fire Elemental",
+    "type": "elemental",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 13,
+    "attackBonus": 6
+  },
+  {
+    "index": "fire-giant",
+    "name": "Fire Giant",
+    "type": "giant",
+    "cr": 9,
+    "xp": 5000,
+    "ac": 18,
+    "attackBonus": 11
+  },
+  {
+    "index": "flesh-golem",
+    "name": "Flesh Golem",
+    "type": "construct",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 9,
+    "attackBonus": 7
+  },
+  {
+    "index": "flying-snake",
+    "name": "Flying Snake",
+    "type": "beast",
+    "cr": 0.125,
+    "xp": 25,
+    "ac": 14,
+    "attackBonus": 6
+  },
+  {
+    "index": "flying-sword",
+    "name": "Flying Sword",
+    "type": "construct",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 17,
+    "attackBonus": 3
+  },
+  {
+    "index": "frog",
+    "name": "Frog",
+    "type": "beast",
+    "cr": 0,
+    "xp": 0,
+    "ac": 11,
+    "attackBonus": 0
+  },
+  {
+    "index": "frost-giant",
+    "name": "Frost Giant",
+    "type": "giant",
+    "cr": 8,
+    "xp": 3900,
+    "ac": 15,
+    "attackBonus": 9
+  },
+  {
+    "index": "gargoyle",
+    "name": "Gargoyle",
+    "type": "elemental",
+    "cr": 2,
+    "xp": 450,
+    "ac": 15,
+    "attackBonus": 4
+  },
+  {
+    "index": "gelatinous-cube",
+    "name": "Gelatinous Cube",
+    "type": "ooze",
+    "cr": 2,
+    "xp": 450,
+    "ac": 6,
+    "attackBonus": 4
+  },
+  {
+    "index": "ghast",
+    "name": "Ghast",
+    "type": "undead",
+    "cr": 2,
+    "xp": 450,
+    "ac": 13,
+    "attackBonus": 5
+  },
+  {
+    "index": "ghost",
+    "name": "Ghost",
+    "type": "undead",
+    "cr": 4,
+    "xp": 1100,
+    "ac": 11,
+    "attackBonus": 5
+  },
+  {
+    "index": "ghoul",
+    "name": "Ghoul",
+    "type": "undead",
+    "cr": 1,
+    "xp": 200,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "giant-ape",
+    "name": "Giant Ape",
+    "type": "beast",
+    "cr": 7,
+    "xp": 2900,
+    "ac": 12,
+    "attackBonus": 9
+  },
+  {
+    "index": "giant-badger",
+    "name": "Giant Badger",
+    "type": "beast",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 10,
+    "attackBonus": 3
+  },
+  {
+    "index": "giant-bat",
+    "name": "Giant Bat",
+    "type": "beast",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 13,
+    "attackBonus": 4
+  },
+  {
+    "index": "giant-boar",
+    "name": "Giant Boar",
+    "type": "beast",
+    "cr": 2,
+    "xp": 450,
+    "ac": 12,
+    "attackBonus": 5
+  },
+  {
+    "index": "giant-centipede",
+    "name": "Giant Centipede",
+    "type": "beast",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 13,
+    "attackBonus": 4
+  },
+  {
+    "index": "giant-constrictor-snake",
+    "name": "Giant Constrictor Snake",
+    "type": "beast",
+    "cr": 2,
+    "xp": 450,
+    "ac": 12,
+    "attackBonus": 6
+  },
+  {
+    "index": "giant-crab",
+    "name": "Giant Crab",
+    "type": "beast",
+    "cr": 0.125,
+    "xp": 25,
+    "ac": 15,
+    "attackBonus": 3
+  },
+  {
+    "index": "giant-crocodile",
+    "name": "Giant Crocodile",
+    "type": "beast",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 14,
+    "attackBonus": 8
+  },
+  {
+    "index": "giant-eagle",
+    "name": "Giant Eagle",
+    "type": "beast",
+    "cr": 1,
+    "xp": 200,
+    "ac": 13,
+    "attackBonus": 5
+  },
+  {
+    "index": "giant-elk",
+    "name": "Giant Elk",
+    "type": "beast",
+    "cr": 2,
+    "xp": 450,
+    "ac": 14,
+    "attackBonus": 6
+  },
+  {
+    "index": "giant-fire-beetle",
+    "name": "Giant Fire Beetle",
+    "type": "beast",
+    "cr": 0,
+    "xp": 10,
+    "ac": 13,
+    "attackBonus": 1
+  },
+  {
+    "index": "giant-frog",
+    "name": "Giant Frog",
+    "type": "beast",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 11,
+    "attackBonus": 3
+  },
+  {
+    "index": "giant-goat",
+    "name": "Giant Goat",
+    "type": "beast",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 11,
+    "attackBonus": 5
+  },
+  {
+    "index": "giant-hyena",
+    "name": "Giant Hyena",
+    "type": "beast",
+    "cr": 1,
+    "xp": 200,
+    "ac": 12,
+    "attackBonus": 5
+  },
+  {
+    "index": "giant-lizard",
+    "name": "Giant Lizard",
+    "type": "beast",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "giant-octopus",
+    "name": "Giant Octopus",
+    "type": "beast",
+    "cr": 1,
+    "xp": 200,
+    "ac": 11,
+    "attackBonus": 5
+  },
+  {
+    "index": "giant-owl",
+    "name": "Giant Owl",
+    "type": "beast",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 12,
+    "attackBonus": 3
+  },
+  {
+    "index": "giant-poisonous-snake",
+    "name": "Giant Poisonous Snake",
+    "type": "beast",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 14,
+    "attackBonus": 6
+  },
+  {
+    "index": "giant-rat",
+    "name": "Giant Rat",
+    "type": "beast",
+    "cr": 0.125,
+    "xp": 25,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "giant-rat-diseased",
+    "name": "Giant Rat (Diseased)",
+    "type": "beast",
+    "cr": 0.125,
+    "xp": 25,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "giant-scorpion",
+    "name": "Giant Scorpion",
+    "type": "beast",
+    "cr": 3,
+    "xp": 700,
+    "ac": 15,
+    "attackBonus": 4
+  },
+  {
+    "index": "giant-sea-horse",
+    "name": "Giant Sea Horse",
+    "type": "beast",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 13,
+    "attackBonus": 3
+  },
+  {
+    "index": "giant-shark",
+    "name": "Giant Shark",
+    "type": "beast",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 13,
+    "attackBonus": 9
+  },
+  {
+    "index": "giant-spider",
+    "name": "Giant Spider",
+    "type": "beast",
+    "cr": 1,
+    "xp": 200,
+    "ac": 14,
+    "attackBonus": 5
+  },
+  {
+    "index": "giant-toad",
+    "name": "Giant Toad",
+    "type": "beast",
+    "cr": 1,
+    "xp": 200,
+    "ac": 11,
+    "attackBonus": 4
+  },
+  {
+    "index": "giant-vulture",
+    "name": "Giant Vulture",
+    "type": "beast",
+    "cr": 1,
+    "xp": 200,
+    "ac": 10,
+    "attackBonus": 4
+  },
+  {
+    "index": "giant-wasp",
+    "name": "Giant Wasp",
+    "type": "beast",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "giant-weasel",
+    "name": "Giant Weasel",
+    "type": "beast",
+    "cr": 0.125,
+    "xp": 25,
+    "ac": 13,
+    "attackBonus": 5
+  },
+  {
+    "index": "giant-wolf-spider",
+    "name": "Giant Wolf Spider",
+    "type": "beast",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 13,
+    "attackBonus": 3
+  },
+  {
+    "index": "gibbering-mouther",
+    "name": "Gibbering Mouther",
+    "type": "aberration",
+    "cr": 2,
+    "xp": 450,
+    "ac": 9,
+    "attackBonus": 2
+  },
+  {
+    "index": "glabrezu",
+    "name": "Glabrezu",
+    "type": "fiend",
+    "cr": 9,
+    "xp": 5000,
+    "ac": 17,
+    "attackBonus": 9
+  },
+  {
+    "index": "gladiator",
+    "name": "Gladiator",
+    "type": "humanoid",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 16,
+    "attackBonus": 7
+  },
+  {
+    "index": "gnoll",
+    "name": "Gnoll",
+    "type": "humanoid",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 15,
+    "attackBonus": 4
+  },
+  {
+    "index": "goat",
+    "name": "Goat",
+    "type": "beast",
+    "cr": 0,
+    "xp": 10,
+    "ac": 10,
+    "attackBonus": 3
+  },
+  {
+    "index": "goblin",
+    "name": "Goblin",
+    "type": "humanoid",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 15,
+    "attackBonus": 4
+  },
+  {
+    "index": "gold-dragon-wyrmling",
+    "name": "Gold Dragon Wyrmling",
+    "type": "dragon",
+    "cr": 3,
+    "xp": 700,
+    "ac": 17,
+    "attackBonus": 6
+  },
+  {
+    "index": "gorgon",
+    "name": "Gorgon",
+    "type": "monstrosity",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 19,
+    "attackBonus": 8
+  },
+  {
+    "index": "gray-ooze",
+    "name": "Gray Ooze",
+    "type": "ooze",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 8,
+    "attackBonus": 3
+  },
+  {
+    "index": "green-dragon-wyrmling",
+    "name": "Green Dragon Wyrmling",
+    "type": "dragon",
+    "cr": 2,
+    "xp": 450,
+    "ac": 17,
+    "attackBonus": 4
+  },
+  {
+    "index": "green-hag",
+    "name": "Green Hag",
+    "type": "fey",
+    "cr": 3,
+    "xp": 700,
+    "ac": 17,
+    "attackBonus": 6
+  },
+  {
+    "index": "grick",
+    "name": "Grick",
+    "type": "monstrosity",
+    "cr": 2,
+    "xp": 450,
+    "ac": 14,
+    "attackBonus": 4
+  },
+  {
+    "index": "griffon",
+    "name": "Griffon",
+    "type": "monstrosity",
+    "cr": 2,
+    "xp": 450,
+    "ac": 12,
+    "attackBonus": 6
+  },
+  {
+    "index": "grimlock",
+    "name": "Grimlock",
+    "type": "humanoid",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 11,
+    "attackBonus": 5
+  },
+  {
+    "index": "guard",
+    "name": "Guard",
+    "type": "humanoid",
+    "cr": 0.125,
+    "xp": 25,
+    "ac": 16,
+    "attackBonus": 3
+  },
+  {
+    "index": "guardian-naga",
+    "name": "Guardian Naga",
+    "type": "monstrosity",
+    "cr": 10,
+    "xp": 5900,
+    "ac": 18,
+    "attackBonus": 8
+  },
+  {
+    "index": "gynosphinx",
+    "name": "Gynosphinx",
+    "type": "monstrosity",
+    "cr": 11,
+    "xp": 7200,
+    "ac": 17,
+    "attackBonus": 9
+  },
+  {
+    "index": "half-red-dragon-veteran",
+    "name": "Half-Red Dragon Veteran",
+    "type": "humanoid",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 18,
+    "attackBonus": 5
+  },
+  {
+    "index": "harpy",
+    "name": "Harpy",
+    "type": "monstrosity",
+    "cr": 1,
+    "xp": 200,
+    "ac": 11,
+    "attackBonus": 3
+  },
+  {
+    "index": "hawk",
+    "name": "Hawk",
+    "type": "beast",
+    "cr": 0,
+    "xp": 10,
+    "ac": 13,
+    "attackBonus": 5
+  },
+  {
+    "index": "hell-hound",
+    "name": "Hell Hound",
+    "type": "fiend",
+    "cr": 3,
+    "xp": 700,
+    "ac": 15,
+    "attackBonus": 5
+  },
+  {
+    "index": "hezrou",
+    "name": "Hezrou",
+    "type": "fiend",
+    "cr": 8,
+    "xp": 3900,
+    "ac": 16,
+    "attackBonus": 7
+  },
+  {
+    "index": "hill-giant",
+    "name": "Hill Giant",
+    "type": "giant",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 13,
+    "attackBonus": 8
+  },
+  {
+    "index": "hippogriff",
+    "name": "Hippogriff",
+    "type": "monstrosity",
+    "cr": 1,
+    "xp": 200,
+    "ac": 11,
+    "attackBonus": 5
+  },
+  {
+    "index": "hobgoblin",
+    "name": "Hobgoblin",
+    "type": "humanoid",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 18,
+    "attackBonus": 3
+  },
+  {
+    "index": "homunculus",
+    "name": "Homunculus",
+    "type": "construct",
+    "cr": 0,
+    "xp": 10,
+    "ac": 13,
+    "attackBonus": 4
+  },
+  {
+    "index": "horned-devil",
+    "name": "Horned Devil",
+    "type": "fiend",
+    "cr": 11,
+    "xp": 7200,
+    "ac": 18,
+    "attackBonus": 10
+  },
+  {
+    "index": "hunter-shark",
+    "name": "Hunter Shark",
+    "type": "beast",
+    "cr": 2,
+    "xp": 450,
+    "ac": 12,
+    "attackBonus": 6
+  },
+  {
+    "index": "hydra",
+    "name": "Hydra",
+    "type": "monstrosity",
+    "cr": 8,
+    "xp": 3900,
+    "ac": 15,
+    "attackBonus": 8
+  },
+  {
+    "index": "hyena",
+    "name": "Hyena",
+    "type": "beast",
+    "cr": 0,
+    "xp": 10,
+    "ac": 11,
+    "attackBonus": 2
+  },
+  {
+    "index": "ice-devil",
+    "name": "Ice Devil",
+    "type": "fiend",
+    "cr": 14,
+    "xp": 11500,
+    "ac": 18,
+    "attackBonus": 10
+  },
+  {
+    "index": "ice-mephit",
+    "name": "Ice Mephit",
+    "type": "elemental",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 11,
+    "attackBonus": 3
+  },
+  {
+    "index": "imp",
+    "name": "Imp",
+    "type": "fiend",
+    "cr": 1,
+    "xp": 200,
+    "ac": 13,
+    "attackBonus": 5
+  },
+  {
+    "index": "invisible-stalker",
+    "name": "Invisible Stalker",
+    "type": "elemental",
+    "cr": 6,
+    "xp": 2300,
+    "ac": 14,
+    "attackBonus": 6
+  },
+  {
+    "index": "iron-golem",
+    "name": "Iron Golem",
+    "type": "construct",
+    "cr": 16,
+    "xp": 15000,
+    "ac": 20,
+    "attackBonus": 13
+  },
+  {
+    "index": "jackal",
+    "name": "Jackal",
+    "type": "beast",
+    "cr": 0,
+    "xp": 10,
+    "ac": 12,
+    "attackBonus": 1
+  },
+  {
+    "index": "killer-whale",
+    "name": "Killer Whale",
+    "type": "beast",
+    "cr": 3,
+    "xp": 700,
+    "ac": 12,
+    "attackBonus": 6
+  },
+  {
+    "index": "knight",
+    "name": "Knight",
+    "type": "humanoid",
+    "cr": 3,
+    "xp": 700,
+    "ac": 18,
+    "attackBonus": 5
+  },
+  {
+    "index": "kobold",
+    "name": "Kobold",
+    "type": "humanoid",
+    "cr": 0.125,
+    "xp": 25,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "kraken",
+    "name": "Kraken",
+    "type": "monstrosity",
+    "cr": 23,
+    "xp": 50000,
+    "ac": 18,
+    "attackBonus": 7
+  },
+  {
+    "index": "lamia",
+    "name": "Lamia",
+    "type": "monstrosity",
+    "cr": 4,
+    "xp": 1100,
+    "ac": 13,
+    "attackBonus": 5
+  },
+  {
+    "index": "lemure",
+    "name": "Lemure",
+    "type": "fiend",
+    "cr": 0,
+    "xp": 10,
+    "ac": 7,
+    "attackBonus": 3
+  },
+  {
+    "index": "lich",
+    "name": "Lich",
+    "type": "undead",
+    "cr": 21,
+    "xp": 33000,
+    "ac": 17,
+    "attackBonus": 12
+  },
+  {
+    "index": "lion",
+    "name": "Lion",
+    "type": "beast",
+    "cr": 1,
+    "xp": 200,
+    "ac": 12,
+    "attackBonus": 5
+  },
+  {
+    "index": "lizard",
+    "name": "Lizard",
+    "type": "beast",
+    "cr": 0,
+    "xp": 10,
+    "ac": 10,
+    "attackBonus": 0
+  },
+  {
+    "index": "lizardfolk",
+    "name": "Lizardfolk",
+    "type": "humanoid",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 13,
+    "attackBonus": 4
+  },
+  {
+    "index": "mage",
+    "name": "Mage",
+    "type": "humanoid",
+    "cr": 6,
+    "xp": 2300,
+    "ac": 12,
+    "attackBonus": 5
+  },
+  {
+    "index": "magma-mephit",
+    "name": "Magma Mephit",
+    "type": "elemental",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 11,
+    "attackBonus": 3
+  },
+  {
+    "index": "magmin",
+    "name": "Magmin",
+    "type": "elemental",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 14,
+    "attackBonus": 4
+  },
+  {
+    "index": "mammoth",
+    "name": "Mammoth",
+    "type": "beast",
+    "cr": 6,
+    "xp": 2300,
+    "ac": 13,
+    "attackBonus": 10
+  },
+  {
+    "index": "manticore",
+    "name": "Manticore",
+    "type": "monstrosity",
+    "cr": 3,
+    "xp": 700,
+    "ac": 14,
+    "attackBonus": 5
+  },
+  {
+    "index": "marilith",
+    "name": "Marilith",
+    "type": "fiend",
+    "cr": 16,
+    "xp": 15000,
+    "ac": 18,
+    "attackBonus": 9
+  },
+  {
+    "index": "mastiff",
+    "name": "Mastiff",
+    "type": "beast",
+    "cr": 0.125,
+    "xp": 25,
+    "ac": 12,
+    "attackBonus": 3
+  },
+  {
+    "index": "medusa",
+    "name": "Medusa",
+    "type": "monstrosity",
+    "cr": 6,
+    "xp": 2300,
+    "ac": 15,
+    "attackBonus": 5
+  },
+  {
+    "index": "merfolk",
+    "name": "Merfolk",
+    "type": "humanoid",
+    "cr": 0.125,
+    "xp": 25,
+    "ac": 11,
+    "attackBonus": 2
+  },
+  {
+    "index": "merrow",
+    "name": "Merrow",
+    "type": "monstrosity",
+    "cr": 2,
+    "xp": 450,
+    "ac": 13,
+    "attackBonus": 6
+  },
+  {
+    "index": "mimic",
+    "name": "Mimic",
+    "type": "monstrosity",
+    "cr": 2,
+    "xp": 450,
+    "ac": 12,
+    "attackBonus": 5
+  },
+  {
+    "index": "minotaur",
+    "name": "Minotaur",
+    "type": "monstrosity",
+    "cr": 3,
+    "xp": 700,
+    "ac": 14,
+    "attackBonus": 6
+  },
+  {
+    "index": "minotaur-skeleton",
+    "name": "Minotaur Skeleton",
+    "type": "undead",
+    "cr": 2,
+    "xp": 450,
+    "ac": 12,
+    "attackBonus": 6
+  },
+  {
+    "index": "mule",
+    "name": "Mule",
+    "type": "beast",
+    "cr": 0.125,
+    "xp": 25,
+    "ac": 10,
+    "attackBonus": 2
+  },
+  {
+    "index": "mummy",
+    "name": "Mummy",
+    "type": "undead",
+    "cr": 3,
+    "xp": 700,
+    "ac": 11,
+    "attackBonus": 5
+  },
+  {
+    "index": "mummy-lord",
+    "name": "Mummy Lord",
+    "type": "undead",
+    "cr": 15,
+    "xp": 13000,
+    "ac": 17,
+    "attackBonus": 9
+  },
+  {
+    "index": "nalfeshnee",
+    "name": "Nalfeshnee",
+    "type": "fiend",
+    "cr": 13,
+    "xp": 10000,
+    "ac": 18,
+    "attackBonus": 10
+  },
+  {
+    "index": "night-hag",
+    "name": "Night Hag",
+    "type": "fiend",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 17,
+    "attackBonus": 7
+  },
+  {
+    "index": "nightmare",
+    "name": "Nightmare",
+    "type": "fiend",
+    "cr": 3,
+    "xp": 700,
+    "ac": 13,
+    "attackBonus": 6
+  },
+  {
+    "index": "noble",
+    "name": "Noble",
+    "type": "humanoid",
+    "cr": 0.125,
+    "xp": 25,
+    "ac": 15,
+    "attackBonus": 3
+  },
+  {
+    "index": "ochre-jelly",
+    "name": "Ochre Jelly",
+    "type": "ooze",
+    "cr": 2,
+    "xp": 450,
+    "ac": 8,
+    "attackBonus": 4
+  },
+  {
+    "index": "octopus",
+    "name": "Octopus",
+    "type": "beast",
+    "cr": 0,
+    "xp": 10,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "ogre",
+    "name": "Ogre",
+    "type": "giant",
+    "cr": 2,
+    "xp": 450,
+    "ac": 11,
+    "attackBonus": 6
+  },
+  {
+    "index": "ogre-zombie",
+    "name": "Ogre Zombie",
+    "type": "undead",
+    "cr": 2,
+    "xp": 450,
+    "ac": 8,
+    "attackBonus": 6
+  },
+  {
+    "index": "oni",
+    "name": "Oni",
+    "type": "giant",
+    "cr": 7,
+    "xp": 2900,
+    "ac": 16,
+    "attackBonus": 7
+  },
+  {
+    "index": "orc",
+    "name": "Orc",
+    "type": "humanoid",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 13,
+    "attackBonus": 5
+  },
+  {
+    "index": "otyugh",
+    "name": "Otyugh",
+    "type": "aberration",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 14,
+    "attackBonus": 6
+  },
+  {
+    "index": "owl",
+    "name": "Owl",
+    "type": "beast",
+    "cr": 0,
+    "xp": 10,
+    "ac": 11,
+    "attackBonus": 3
+  },
+  {
+    "index": "owlbear",
+    "name": "Owlbear",
+    "type": "monstrosity",
+    "cr": 3,
+    "xp": 700,
+    "ac": 13,
+    "attackBonus": 7
+  },
+  {
+    "index": "panther",
+    "name": "Panther",
+    "type": "beast",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "pegasus",
+    "name": "Pegasus",
+    "type": "celestial",
+    "cr": 2,
+    "xp": 450,
+    "ac": 12,
+    "attackBonus": 6
+  },
+  {
+    "index": "phase-spider",
+    "name": "Phase Spider",
+    "type": "monstrosity",
+    "cr": 3,
+    "xp": 700,
+    "ac": 13,
+    "attackBonus": 4
+  },
+  {
+    "index": "pit-fiend",
+    "name": "Pit Fiend",
+    "type": "fiend",
+    "cr": 20,
+    "xp": 25000,
+    "ac": 19,
+    "attackBonus": 14
+  },
+  {
+    "index": "planetar",
+    "name": "Planetar",
+    "type": "celestial",
+    "cr": 16,
+    "xp": 15000,
+    "ac": 19,
+    "attackBonus": 12
+  },
+  {
+    "index": "plesiosaurus",
+    "name": "Plesiosaurus",
+    "type": "beast",
+    "cr": 2,
+    "xp": 450,
+    "ac": 13,
+    "attackBonus": 6
+  },
+  {
+    "index": "poisonous-snake",
+    "name": "Poisonous Snake",
+    "type": "beast",
+    "cr": 0.125,
+    "xp": 25,
+    "ac": 13,
+    "attackBonus": 5
+  },
+  {
+    "index": "polar-bear",
+    "name": "Polar Bear",
+    "type": "beast",
+    "cr": 2,
+    "xp": 450,
+    "ac": 12,
+    "attackBonus": 7
+  },
+  {
+    "index": "pony",
+    "name": "Pony",
+    "type": "beast",
+    "cr": 0.125,
+    "xp": 25,
+    "ac": 10,
+    "attackBonus": 4
+  },
+  {
+    "index": "priest",
+    "name": "Priest",
+    "type": "humanoid",
+    "cr": 2,
+    "xp": 450,
+    "ac": 13,
+    "attackBonus": 2
+  },
+  {
+    "index": "pseudodragon",
+    "name": "Pseudodragon",
+    "type": "dragon",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 13,
+    "attackBonus": 4
+  },
+  {
+    "index": "purple-worm",
+    "name": "Purple Worm",
+    "type": "monstrosity",
+    "cr": 15,
+    "xp": 13000,
+    "ac": 18,
+    "attackBonus": 9
+  },
+  {
+    "index": "quasit",
+    "name": "Quasit",
+    "type": "fiend",
+    "cr": 1,
+    "xp": 200,
+    "ac": 13,
+    "attackBonus": 4
+  },
+  {
+    "index": "quipper",
+    "name": "Quipper",
+    "type": "beast",
+    "cr": 0,
+    "xp": 10,
+    "ac": 13,
+    "attackBonus": 5
+  },
+  {
+    "index": "rakshasa",
+    "name": "Rakshasa",
+    "type": "fiend",
+    "cr": 13,
+    "xp": 10000,
+    "ac": 16,
+    "attackBonus": 7
+  },
+  {
+    "index": "rat",
+    "name": "Rat",
+    "type": "beast",
+    "cr": 0,
+    "xp": 10,
+    "ac": 10,
+    "attackBonus": 0
+  },
+  {
+    "index": "raven",
+    "name": "Raven",
+    "type": "beast",
+    "cr": 0,
+    "xp": 10,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "red-dragon-wyrmling",
+    "name": "Red Dragon Wyrmling",
+    "type": "dragon",
+    "cr": 4,
+    "xp": 1100,
+    "ac": 17,
+    "attackBonus": 6
+  },
+  {
+    "index": "reef-shark",
+    "name": "Reef Shark",
+    "type": "beast",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "remorhaz",
+    "name": "Remorhaz",
+    "type": "monstrosity",
+    "cr": 11,
+    "xp": 7200,
+    "ac": 17,
+    "attackBonus": 11
+  },
+  {
+    "index": "rhinoceros",
+    "name": "Rhinoceros",
+    "type": "beast",
+    "cr": 2,
+    "xp": 450,
+    "ac": 11,
+    "attackBonus": 7
+  },
+  {
+    "index": "riding-horse",
+    "name": "Riding Horse",
+    "type": "beast",
+    "cr": 0.25,
+    "xp": 25,
+    "ac": 10,
+    "attackBonus": 5
+  },
+  {
+    "index": "roc",
+    "name": "Roc",
+    "type": "monstrosity",
+    "cr": 11,
+    "xp": 7200,
+    "ac": 15,
+    "attackBonus": 13
+  },
+  {
+    "index": "roper",
+    "name": "Roper",
+    "type": "monstrosity",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 20,
+    "attackBonus": 7
+  },
+  {
+    "index": "rug-of-smothering",
+    "name": "Rug of Smothering",
+    "type": "construct",
+    "cr": 2,
+    "xp": 450,
+    "ac": 12,
+    "attackBonus": 5
+  },
+  {
+    "index": "rust-monster",
+    "name": "Rust Monster",
+    "type": "monstrosity",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 14,
+    "attackBonus": 3
+  },
+  {
+    "index": "saber-toothed-tiger",
+    "name": "Saber-Toothed Tiger",
+    "type": "beast",
+    "cr": 2,
+    "xp": 450,
+    "ac": 12,
+    "attackBonus": 6
+  },
+  {
+    "index": "sahuagin",
+    "name": "Sahuagin",
+    "type": "humanoid",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 12,
+    "attackBonus": 3
+  },
+  {
+    "index": "salamander",
+    "name": "Salamander",
+    "type": "elemental",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 15,
+    "attackBonus": 7
+  },
+  {
+    "index": "satyr",
+    "name": "Satyr",
+    "type": "fey",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 14,
+    "attackBonus": 5
+  },
+  {
+    "index": "scorpion",
+    "name": "Scorpion",
+    "type": "beast",
+    "cr": 0,
+    "xp": 10,
+    "ac": 11,
+    "attackBonus": 2
+  },
+  {
+    "index": "scout",
+    "name": "Scout",
+    "type": "humanoid",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 13,
+    "attackBonus": 4
+  },
+  {
+    "index": "sea-hag",
+    "name": "Sea Hag",
+    "type": "fey",
+    "cr": 2,
+    "xp": 450,
+    "ac": 14,
+    "attackBonus": 5
+  },
+  {
+    "index": "sea-horse",
+    "name": "Sea Horse",
+    "type": "beast",
+    "cr": 0,
+    "xp": 0,
+    "ac": 11,
+    "attackBonus": 0
+  },
+  {
+    "index": "shadow",
+    "name": "Shadow",
+    "type": "undead",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "shambling-mound",
+    "name": "Shambling Mound",
+    "type": "plant",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 15,
+    "attackBonus": 7
+  },
+  {
+    "index": "shield-guardian",
+    "name": "Shield Guardian",
+    "type": "construct",
+    "cr": 7,
+    "xp": 2900,
+    "ac": 17,
+    "attackBonus": 7
+  },
+  {
+    "index": "shrieker",
+    "name": "Shrieker",
+    "type": "plant",
+    "cr": 0,
+    "xp": 10,
+    "ac": 5,
+    "attackBonus": 0
+  },
+  {
+    "index": "silver-dragon-wyrmling",
+    "name": "Silver Dragon Wyrmling",
+    "type": "dragon",
+    "cr": 2,
+    "xp": 450,
+    "ac": 17,
+    "attackBonus": 6
+  },
+  {
+    "index": "skeleton",
+    "name": "Skeleton",
+    "type": "undead",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 13,
+    "attackBonus": 4
+  },
+  {
+    "index": "solar",
+    "name": "Solar",
+    "type": "celestial",
+    "cr": 21,
+    "xp": 33000,
+    "ac": 21,
+    "attackBonus": 15
+  },
+  {
+    "index": "specter",
+    "name": "Specter",
+    "type": "undead",
+    "cr": 1,
+    "xp": 200,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "spider",
+    "name": "Spider",
+    "type": "beast",
+    "cr": 0,
+    "xp": 10,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "spirit-naga",
+    "name": "Spirit Naga",
+    "type": "monstrosity",
+    "cr": 8,
+    "xp": 3900,
+    "ac": 15,
+    "attackBonus": 7
+  },
+  {
+    "index": "sprite",
+    "name": "Sprite",
+    "type": "fey",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 15,
+    "attackBonus": 6
+  },
+  {
+    "index": "spy",
+    "name": "Spy",
+    "type": "humanoid",
+    "cr": 1,
+    "xp": 200,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "steam-mephit",
+    "name": "Steam Mephit",
+    "type": "elemental",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 10,
+    "attackBonus": 2
+  },
+  {
+    "index": "stirge",
+    "name": "Stirge",
+    "type": "beast",
+    "cr": 0.125,
+    "xp": 25,
+    "ac": 14,
+    "attackBonus": 5
+  },
+  {
+    "index": "stone-giant",
+    "name": "Stone Giant",
+    "type": "giant",
+    "cr": 7,
+    "xp": 2900,
+    "ac": 17,
+    "attackBonus": 9
+  },
+  {
+    "index": "stone-golem",
+    "name": "Stone Golem",
+    "type": "construct",
+    "cr": 10,
+    "xp": 5900,
+    "ac": 17,
+    "attackBonus": 10
+  },
+  {
+    "index": "storm-giant",
+    "name": "Storm Giant",
+    "type": "giant",
+    "cr": 13,
+    "xp": 10000,
+    "ac": 16,
+    "attackBonus": 14
+  },
+  {
+    "index": "succubus-incubus",
+    "name": "Succubus/Incubus",
+    "type": "fiend",
+    "cr": 4,
+    "xp": 1100,
+    "ac": 15,
+    "attackBonus": 5
+  },
+  {
+    "index": "swarm-of-bats",
+    "name": "Swarm of Bats",
+    "type": "swarm of Tiny beasts",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "swarm-of-beetles",
+    "name": "Swarm of Beetles",
+    "type": "swarm of Tiny beasts",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 12,
+    "attackBonus": 3
+  },
+  {
+    "index": "swarm-of-centipedes",
+    "name": "Swarm of Centipedes",
+    "type": "swarm of Tiny beasts",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 12,
+    "attackBonus": 3
+  },
+  {
+    "index": "swarm-of-insects",
+    "name": "Swarm of Insects",
+    "type": "swarm of Tiny beasts",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 12,
+    "attackBonus": 3
+  },
+  {
+    "index": "swarm-of-poisonous-snakes",
+    "name": "Swarm of Poisonous Snakes",
+    "type": "swarm of Tiny beasts",
+    "cr": 2,
+    "xp": 450,
+    "ac": 14,
+    "attackBonus": 6
+  },
+  {
+    "index": "swarm-of-quippers",
+    "name": "Swarm of Quippers",
+    "type": "swarm of Tiny beasts",
+    "cr": 1,
+    "xp": 200,
+    "ac": 13,
+    "attackBonus": 5
+  },
+  {
+    "index": "swarm-of-rats",
+    "name": "Swarm of Rats",
+    "type": "swarm of Tiny beasts",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 10,
+    "attackBonus": 2
+  },
+  {
+    "index": "swarm-of-ravens",
+    "name": "Swarm of Ravens",
+    "type": "swarm of Tiny beasts",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "swarm-of-spiders",
+    "name": "Swarm of Spiders",
+    "type": "swarm of Tiny beasts",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 12,
+    "attackBonus": 3
+  },
+  {
+    "index": "swarm-of-wasps",
+    "name": "Swarm of Wasps",
+    "type": "swarm of Tiny beasts",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 12,
+    "attackBonus": 3
+  },
+  {
+    "index": "tarrasque",
+    "name": "Tarrasque",
+    "type": "monstrosity",
+    "cr": 30,
+    "xp": 155000,
+    "ac": 25,
+    "attackBonus": 19
+  },
+  {
+    "index": "thug",
+    "name": "Thug",
+    "type": "humanoid",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 11,
+    "attackBonus": 4
+  },
+  {
+    "index": "tiger",
+    "name": "Tiger",
+    "type": "beast",
+    "cr": 1,
+    "xp": 200,
+    "ac": 12,
+    "attackBonus": 5
+  },
+  {
+    "index": "treant",
+    "name": "Treant",
+    "type": "plant",
+    "cr": 9,
+    "xp": 5000,
+    "ac": 16,
+    "attackBonus": 10
+  },
+  {
+    "index": "tribal-warrior",
+    "name": "Tribal Warrior",
+    "type": "humanoid",
+    "cr": 0.125,
+    "xp": 25,
+    "ac": 12,
+    "attackBonus": 3
+  },
+  {
+    "index": "triceratops",
+    "name": "Triceratops",
+    "type": "beast",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 13,
+    "attackBonus": 9
+  },
+  {
+    "index": "troll",
+    "name": "Troll",
+    "type": "giant",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 15,
+    "attackBonus": 7
+  },
+  {
+    "index": "tyrannosaurus-rex",
+    "name": "Tyrannosaurus Rex",
+    "type": "beast",
+    "cr": 8,
+    "xp": 3900,
+    "ac": 13,
+    "attackBonus": 10
+  },
+  {
+    "index": "unicorn",
+    "name": "Unicorn",
+    "type": "celestial",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 12,
+    "attackBonus": 7
+  },
+  {
+    "index": "vampire-bat",
+    "name": "Vampire, Bat Form",
+    "type": "undead",
+    "cr": 13,
+    "xp": 10000,
+    "ac": 16,
+    "attackBonus": 9
+  },
+  {
+    "index": "vampire-mist",
+    "name": "Vampire, Mist Form",
+    "type": "undead",
+    "cr": 13,
+    "xp": 10000,
+    "ac": 16,
+    "attackBonus": 0
+  },
+  {
+    "index": "vampire-spawn",
+    "name": "Vampire Spawn",
+    "type": "undead",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 15,
+    "attackBonus": 6
+  },
+  {
+    "index": "vampire-vampire",
+    "name": "Vampire, Vampire Form",
+    "type": "undead",
+    "cr": 13,
+    "xp": 10000,
+    "ac": 16,
+    "attackBonus": 9
+  },
+  {
+    "index": "veteran",
+    "name": "Veteran",
+    "type": "humanoid",
+    "cr": 3,
+    "xp": 700,
+    "ac": 17,
+    "attackBonus": 5
+  },
+  {
+    "index": "violet-fungus",
+    "name": "Violet Fungus",
+    "type": "plant",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 5,
+    "attackBonus": 2
+  },
+  {
+    "index": "vrock",
+    "name": "Vrock",
+    "type": "fiend",
+    "cr": 6,
+    "xp": 2300,
+    "ac": 15,
+    "attackBonus": 6
+  },
+  {
+    "index": "vulture",
+    "name": "Vulture",
+    "type": "beast",
+    "cr": 0,
+    "xp": 10,
+    "ac": 10,
+    "attackBonus": 2
+  },
+  {
+    "index": "warhorse",
+    "name": "Warhorse",
+    "type": "beast",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 11,
+    "attackBonus": 6
+  },
+  {
+    "index": "warhorse-skeleton",
+    "name": "Warhorse Skeleton",
+    "type": "undead",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 13,
+    "attackBonus": 6
+  },
+  {
+    "index": "water-elemental",
+    "name": "Water Elemental",
+    "type": "elemental",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 14,
+    "attackBonus": 7
+  },
+  {
+    "index": "weasel",
+    "name": "Weasel",
+    "type": "beast",
+    "cr": 0,
+    "xp": 10,
+    "ac": 13,
+    "attackBonus": 5
+  },
+  {
+    "index": "werebear-bear",
+    "name": "Werebear, Bear Form",
+    "type": "humanoid",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 11,
+    "attackBonus": 7
+  },
+  {
+    "index": "werebear-human",
+    "name": "Werebear, Human Form",
+    "type": "humanoid",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 10,
+    "attackBonus": 7
+  },
+  {
+    "index": "werebear-hybrid",
+    "name": "Werebear, Hybrid Form",
+    "type": "humanoid",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 11,
+    "attackBonus": 7
+  },
+  {
+    "index": "wereboar-boar",
+    "name": "Wereboar, Boar Form",
+    "type": "humanoid",
+    "cr": 4,
+    "xp": 1100,
+    "ac": 11,
+    "attackBonus": 5
+  },
+  {
+    "index": "wereboar-human",
+    "name": "Wereboar, Human Form",
+    "type": "humanoid",
+    "cr": 4,
+    "xp": 1100,
+    "ac": 10,
+    "attackBonus": 5
+  },
+  {
+    "index": "wereboar-hybrid",
+    "name": "Wereboar, Hybrid Form",
+    "type": "humanoid",
+    "cr": 4,
+    "xp": 1100,
+    "ac": 11,
+    "attackBonus": 5
+  },
+  {
+    "index": "wererat-human",
+    "name": "Wererat, Human Form",
+    "type": "humanoid",
+    "cr": 2,
+    "xp": 450,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "wererat-hybrid",
+    "name": "Wererat, Hybrid Form",
+    "type": "humanoid",
+    "cr": 2,
+    "xp": 450,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "wererat-rat",
+    "name": "Wererat, Rat Form",
+    "type": "humanoid",
+    "cr": 2,
+    "xp": 450,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "weretiger-human",
+    "name": "Weretiger, Human Form",
+    "type": "humanoid",
+    "cr": 4,
+    "xp": 1100,
+    "ac": 12,
+    "attackBonus": 5
+  },
+  {
+    "index": "weretiger-hybrid",
+    "name": "Weretiger, Hybrid Form",
+    "type": "humanoid",
+    "cr": 4,
+    "xp": 1100,
+    "ac": 12,
+    "attackBonus": 5
+  },
+  {
+    "index": "weretiger-tiger",
+    "name": "Weretiger, Tiger Form",
+    "type": "humanoid",
+    "cr": 4,
+    "xp": 1100,
+    "ac": 12,
+    "attackBonus": 5
+  },
+  {
+    "index": "werewolf-human",
+    "name": "Werewolf, Human Form",
+    "type": "humanoid",
+    "cr": 3,
+    "xp": 700,
+    "ac": 11,
+    "attackBonus": 4
+  },
+  {
+    "index": "werewolf-hybrid",
+    "name": "Werewolf, Hybrid Form",
+    "type": "humanoid",
+    "cr": 3,
+    "xp": 700,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "werewolf-wolf",
+    "name": "Werewolf, Wolf Form",
+    "type": "humanoid",
+    "cr": 3,
+    "xp": 700,
+    "ac": 12,
+    "attackBonus": 4
+  },
+  {
+    "index": "white-dragon-wyrmling",
+    "name": "White Dragon Wyrmling",
+    "type": "dragon",
+    "cr": 2,
+    "xp": 450,
+    "ac": 16,
+    "attackBonus": 4
+  },
+  {
+    "index": "wight",
+    "name": "Wight",
+    "type": "undead",
+    "cr": 3,
+    "xp": 700,
+    "ac": 14,
+    "attackBonus": 4
+  },
+  {
+    "index": "will-o-wisp",
+    "name": "Will-o'-Wisp",
+    "type": "undead",
+    "cr": 2,
+    "xp": 450,
+    "ac": 19,
+    "attackBonus": 4
+  },
+  {
+    "index": "winter-wolf",
+    "name": "Winter Wolf",
+    "type": "monstrosity",
+    "cr": 3,
+    "xp": 700,
+    "ac": 13,
+    "attackBonus": 6
+  },
+  {
+    "index": "wolf",
+    "name": "Wolf",
+    "type": "beast",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 13,
+    "attackBonus": 4
+  },
+  {
+    "index": "worg",
+    "name": "Worg",
+    "type": "monstrosity",
+    "cr": 0.5,
+    "xp": 100,
+    "ac": 13,
+    "attackBonus": 5
+  },
+  {
+    "index": "wraith",
+    "name": "Wraith",
+    "type": "undead",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 13,
+    "attackBonus": 6
+  },
+  {
+    "index": "wyvern",
+    "name": "Wyvern",
+    "type": "dragon",
+    "cr": 6,
+    "xp": 2300,
+    "ac": 13,
+    "attackBonus": 7
+  },
+  {
+    "index": "xorn",
+    "name": "Xorn",
+    "type": "elemental",
+    "cr": 5,
+    "xp": 1800,
+    "ac": 19,
+    "attackBonus": 6
+  },
+  {
+    "index": "young-black-dragon",
+    "name": "Young Black Dragon",
+    "type": "dragon",
+    "cr": 7,
+    "xp": 2900,
+    "ac": 18,
+    "attackBonus": 7
+  },
+  {
+    "index": "young-blue-dragon",
+    "name": "Young Blue Dragon",
+    "type": "dragon",
+    "cr": 9,
+    "xp": 5000,
+    "ac": 18,
+    "attackBonus": 9
+  },
+  {
+    "index": "young-brass-dragon",
+    "name": "Young Brass Dragon",
+    "type": "dragon",
+    "cr": 6,
+    "xp": 2300,
+    "ac": 17,
+    "attackBonus": 7
+  },
+  {
+    "index": "young-bronze-dragon",
+    "name": "Young Bronze Dragon",
+    "type": "dragon",
+    "cr": 8,
+    "xp": 3900,
+    "ac": 18,
+    "attackBonus": 8
+  },
+  {
+    "index": "young-copper-dragon",
+    "name": "Young Copper Dragon",
+    "type": "dragon",
+    "cr": 7,
+    "xp": 2900,
+    "ac": 17,
+    "attackBonus": 7
+  },
+  {
+    "index": "young-gold-dragon",
+    "name": "Young Gold Dragon",
+    "type": "dragon",
+    "cr": 10,
+    "xp": 5900,
+    "ac": 18,
+    "attackBonus": 10
+  },
+  {
+    "index": "young-green-dragon",
+    "name": "Young Green Dragon",
+    "type": "dragon",
+    "cr": 8,
+    "xp": 3900,
+    "ac": 18,
+    "attackBonus": 7
+  },
+  {
+    "index": "young-red-dragon",
+    "name": "Young Red Dragon",
+    "type": "dragon",
+    "cr": 10,
+    "xp": 5900,
+    "ac": 18,
+    "attackBonus": 10
+  },
+  {
+    "index": "young-silver-dragon",
+    "name": "Young Silver Dragon",
+    "type": "dragon",
+    "cr": 9,
+    "xp": 5000,
+    "ac": 18,
+    "attackBonus": 10
+  },
+  {
+    "index": "young-white-dragon",
+    "name": "Young White Dragon",
+    "type": "dragon",
+    "cr": 6,
+    "xp": 2300,
+    "ac": 17,
+    "attackBonus": 7
+  },
+  {
+    "index": "zombie",
+    "name": "Zombie",
+    "type": "undead",
+    "cr": 0.25,
+    "xp": 50,
+    "ac": 8,
+    "attackBonus": 3
+  }
+]

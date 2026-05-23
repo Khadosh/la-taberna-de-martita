@@ -100,15 +100,42 @@ export function CombatToken({
           )}
         </div>
       </div>
-      {/* Name */}
-      <p style={{
-        textAlign: 'center', fontSize: 10, fontFamily: 'Georgia, serif',
-        color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,1)',
-        marginTop: 3, lineHeight: 1.2, pointerEvents: 'none',
-        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: TOKEN_SIZE,
+      {/* Name + role */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3,
+        marginTop: 3, pointerEvents: 'none', maxWidth: TOKEN_SIZE,
       }}>
-        {data.name}
-      </p>
+        <p style={{
+          textAlign: 'center', fontSize: 10, fontFamily: 'Georgia, serif',
+          color: '#fff', textShadow: '0 1px 3px rgba(0,0,0,1)',
+          lineHeight: 1.2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+        }}>
+          {data.name}
+        </p>
+        {data.role && (() => {
+          const roleColors: Record<string, { bg: string; text: string }> = {
+            melee:   { bg: '#7f1d1d', text: '#fca5a5' },
+            ranged:  { bg: '#14532d', text: '#86efac' },
+            magic:   { bg: '#3b0764', text: '#d8b4fe' },
+            support: { bg: '#713f12', text: '#fde68a' },
+          }
+          const roleLabels: Record<string, string> = { melee: 'M', ranged: 'D', magic: 'G', support: 'S' }
+          const c = roleColors[data.role] ?? { bg: '#1c1917', text: '#a8a29e' }
+          return (
+            <span style={{
+              flexShrink: 0,
+              width: 13, height: 13, borderRadius: '50%',
+              background: c.bg, border: '1px solid rgba(0,0,0,0.6)',
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 7, fontWeight: 700, fontFamily: 'Georgia, serif',
+              color: c.text, lineHeight: 1,
+              boxShadow: '0 1px 3px rgba(0,0,0,0.8)',
+            }}>
+              {roleLabels[data.role] ?? data.role.charAt(0).toUpperCase()}
+            </span>
+          )
+        })()}
+      </div>
       {/* HP */}
       {data.showHp !== false && (
         <p style={{
@@ -117,6 +144,9 @@ export function CombatToken({
           lineHeight: 1.1, pointerEvents: 'none',
         }}>
           {data.currentHp}/{data.maxHp}
+          {data.kind === 'npc' && data.level != null && (
+            <span style={{ color: 'rgba(180,200,255,0.75)', marginLeft: 3 }}>Nv{data.level}</span>
+          )}
         </p>
       )}
     </div>
