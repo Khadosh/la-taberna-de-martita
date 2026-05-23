@@ -386,16 +386,13 @@ function Taberna() {
     setLoading(false)
   }
 
-  const tavernBgStyle: React.CSSProperties = {
-    backgroundImage: `url('/assets/images/tavern_bg.png')`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundAttachment: 'fixed',
-  }
-
   return (
-    <div className="w-full min-h-full flex-1 overflow-y-auto text-stone-200 bg-stone-950" style={tavernBgStyle}>
-      <main className="max-w-5xl mx-auto px-4 sm:px-8 py-8">
+    <div className="w-full min-h-full flex-1 overflow-y-auto p-4 sm:p-8">
+      <div className="max-w-5xl mx-auto bg-parchment-grid bg-papyrus-texture text-stone-900 border border-parchment-sienna/40 shadow-tavern-glow rounded-md p-6 sm:p-10 my-4 relative">
+        <span className="absolute -top-[3px] -left-[3px] w-4 h-4 border-t-2 border-l-2 border-stone-900" />
+        <span className="absolute -top-[3px] -right-[3px] w-4 h-4 border-t-2 border-r-2 border-stone-900" />
+        <span className="absolute -bottom-[3px] -left-[3px] w-4 h-4 border-b-2 border-l-2 border-stone-900" />
+        <span className="absolute -bottom-[3px] -right-[3px] w-4 h-4 border-b-2 border-r-2 border-stone-900" />
       
       {/* Decorative tavern ambiance banner */}
       <div className="relative h-56 sm:h-64 w-full mb-8 overflow-hidden rounded-lg border border-stone-850 shadow-2xl bg-stone-950">
@@ -416,17 +413,17 @@ function Taberna() {
       </div>
 
       {successMsg && (
-        <div className="mb-6 px-4 py-3 border border-amber-700 bg-stone-950 text-amber-200 text-sm font-serif rounded flex items-center justify-between gap-3 shadow-lg">
+        <div className="mb-6 px-4 py-3 border border-amber-800 bg-amber-900/10 text-amber-900 text-sm font-serif rounded flex items-center justify-between gap-3 shadow-md">
           <div className="flex items-center gap-2">
             <span>🎉</span>
             <span>{successMsg}</span>
           </div>
-          <button onClick={() => setSuccessMsg(null)} className="text-lg leading-none text-amber-600 hover:text-amber-300 transition-colors">&times;</button>
+          <button onClick={() => setSuccessMsg(null)} className="text-lg leading-none text-amber-800 hover:text-amber-600 transition-colors">&times;</button>
         </div>
       )}
 
       {/* Category Navigation Tabs */}
-      <div className="flex gap-2 mb-6 border-b border-stone-850">
+      <div className="flex gap-2 mb-6 border-b border-stone-400/40">
         {(['drinks', 'foods', 'lodging'] as const).map(cat => {
           const labels = { drinks: '🍺 Bebidas', foods: '🍲 Comidas', lodging: '🛏️ Alojamiento' }
           return (
@@ -435,8 +432,8 @@ function Taberna() {
               onClick={() => { setActiveCategory(cat); setSelectedService(null); setError(null) }}
               className={`px-4 py-2.5 text-xs sm:text-sm font-display tracking-wide uppercase transition-all border-b-2 -mb-[1px] ${
                 activeCategory === cat
-                  ? 'border-amber-600 text-amber-400 font-semibold'
-                  : 'border-transparent text-stone-500 hover:text-stone-300'
+                  ? 'border-parchment-sienna text-parchment-sienna font-semibold'
+                  : 'border-transparent text-stone-500 hover:text-stone-800'
               }`}
             >
               {labels[cat]}
@@ -455,20 +452,32 @@ function Taberna() {
               <button
                 key={serv.id}
                 onClick={() => handleSelectService(serv)}
-                className={`text-left p-4 border rounded-lg transition-all flex items-start gap-4 ${
+                className={`text-left p-4 border rounded transition-all flex items-start gap-4 ${
                   selectedService?.id === serv.id
-                    ? 'bg-amber-950 border-amber-500 text-amber-100 shadow-lg'
-                    : 'bg-stone-950 border-stone-850 text-stone-300 hover:bg-stone-900 hover:border-stone-700'
+                    ? 'bg-amber-900 border-amber-800 text-amber-100 shadow-md'
+                    : 'bg-amber-50/30 border-stone-300/60 text-stone-700 hover:bg-amber-100/40 hover:border-stone-500'
                 }`}
               >
-                <span className="text-3xl bg-stone-950 p-2 border border-stone-800 rounded">{serv.icon}</span>
+                <span className={`text-3xl p-2 border rounded shrink-0 transition-colors ${
+                  selectedService?.id === serv.id
+                    ? 'bg-amber-950 border-amber-700 text-amber-100'
+                    : 'bg-amber-100/60 border-stone-300 text-stone-900'
+                }`}>{serv.icon}</span>
                 <div className="flex-1 min-w-0 space-y-1">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-semibold text-sm truncate text-stone-100">{serv.name}</span>
-                    <span className="font-mono text-xs font-bold text-amber-500 shrink-0">{formatCost(serv.cost, serv.unit)}</span>
+                    <span className={`font-semibold text-sm truncate font-display ${
+                      selectedService?.id === serv.id ? 'text-amber-100' : 'text-stone-900'
+                    }`}>{serv.name}</span>
+                    <span className={`font-mono text-xs font-bold shrink-0 ${
+                      selectedService?.id === serv.id ? 'text-amber-300' : 'text-parchment-sienna'
+                    }`}>{formatCost(serv.cost, serv.unit)}</span>
                   </div>
-                  <p className="text-xs text-stone-400 font-serif leading-relaxed line-clamp-2">{serv.description}</p>
-                  <p className="text-[10px] text-amber-500 font-serif italic">{serv.benefit}</p>
+                  <p className={`text-xs font-serif leading-relaxed line-clamp-2 ${
+                    selectedService?.id === serv.id ? 'text-amber-200/90' : 'text-stone-600'
+                  }`}>{serv.description}</p>
+                  <p className={`text-[10px] font-serif italic ${
+                    selectedService?.id === serv.id ? 'text-amber-300' : 'text-parchment-sienna'
+                  }`}>{serv.benefit}</p>
                 </div>
               </button>
             ))}
@@ -478,24 +487,24 @@ function Taberna() {
         {/* Selected Service Checkout Box */}
         {selectedService && (
           <div className="w-full lg:w-80 shrink-0">
-            <div className="relative bg-stone-950 border border-stone-800 p-5 rounded-lg space-y-4 shadow-xl">
-              <button onClick={() => setSelectedService(null)} className="absolute top-3 right-3 text-stone-500 hover:text-stone-300 text-lg leading-none">✕</button>
+            <div className="relative bg-amber-50 border border-parchment-sienna/40 p-5 rounded-lg space-y-4 shadow-lg border-2">
+              <button onClick={() => setSelectedService(null)} className="absolute top-3 right-3 text-stone-500 hover:text-stone-800 text-lg leading-none">✕</button>
 
               <div className="flex items-start gap-3">
-                <span className="text-4xl bg-stone-950 p-2.5 rounded border border-stone-800 shrink-0">{selectedService.icon}</span>
+                <span className="text-4xl bg-amber-100/60 border border-stone-300 p-2.5 rounded shrink-0">{selectedService.icon}</span>
                 <div className="min-w-0">
-                  <h3 className="font-display text-sm font-bold text-stone-200 leading-tight pr-5">{selectedService.name}</h3>
-                  <span className="font-mono text-xs text-amber-500 font-bold block mt-1">{formatCost(selectedService.cost, selectedService.unit)}</span>
+                  <h3 className="font-display text-sm font-bold text-stone-900 leading-tight pr-5">{selectedService.name}</h3>
+                  <span className="font-mono text-xs text-parchment-sienna font-bold block mt-1">{formatCost(selectedService.cost, selectedService.unit)}</span>
                 </div>
               </div>
 
-              <p className="text-xs font-serif text-stone-400 leading-relaxed border-t border-b border-stone-850 py-3">
+              <p className="text-xs font-serif text-stone-600 leading-relaxed border-t border-b border-stone-300/40 py-3">
                 {selectedService.description}
               </p>
 
-              <div className="bg-amber-950 border border-amber-900 p-3 rounded">
-                <span className="text-[10px] font-display font-semibold uppercase text-amber-500 block mb-1">Efecto Especial</span>
-                <p className="text-xs text-stone-300 font-serif italic">{selectedService.benefit}</p>
+              <div className="bg-amber-900 border border-amber-800 p-3 rounded text-amber-100">
+                <span className="text-[10px] font-display font-semibold uppercase text-amber-300 block mb-1">Efecto Especial</span>
+                <p className="text-xs font-serif italic text-amber-200/95">{selectedService.benefit}</p>
               </div>
 
               {buyableChars.length > 0 ? (
@@ -508,23 +517,24 @@ function Taberna() {
                       const costCp = toCp(selectedService.cost, selectedService.unit)
                       const canAfford = charCp >= costCp
                       const maxHp = maxHpFor(c)
+                      const isSelected = consumeCharId === c.id
                       
                       return (
                         <label key={c.id} className={`flex items-center gap-2 px-2.5 py-2 border rounded cursor-pointer transition-all text-xs font-serif ${
-                          consumeCharId === c.id ? 'border-amber-500 bg-amber-950' : 'border-stone-850 bg-stone-950 hover:bg-stone-900'
+                          isSelected ? 'border-amber-800 bg-amber-900 text-amber-100 shadow-sm' : 'border-stone-300 bg-amber-50/20 hover:bg-amber-100/30 text-stone-700'
                         } ${!canAfford ? 'opacity-40' : ''}`}>
                           <input
                             type="radio" name="consume-char" value={c.id}
-                            checked={consumeCharId === c.id}
+                            checked={isSelected}
                             onChange={() => { setConsumeCharId(c.id); setError(null) }}
-                            className="accent-amber-500"
+                            className="accent-amber-700"
                             disabled={!canAfford}
                           />
                           <div className="flex-1 min-w-0">
-                            <span className="text-stone-200 block truncate font-semibold">{c.name}</span>
-                            <span className="text-[10px] text-stone-400 block font-mono">HP: {c.current_hp ?? maxHp}/{maxHp}</span>
+                            <span className={`block truncate font-semibold ${isSelected ? 'text-amber-100' : 'text-stone-900'}`}>{c.name}</span>
+                            <span className={`block font-mono text-[10px] ${isSelected ? 'text-amber-200/80' : 'text-stone-500'}`}>HP: {c.current_hp ?? maxHp}/{maxHp}</span>
                           </div>
-                          <span className={`font-mono text-[10px] shrink-0 ${canAfford ? 'text-amber-500' : 'text-red-500'}`}>
+                          <span className={`font-mono text-[10px] shrink-0 ${isSelected ? 'text-amber-300' : canAfford ? 'text-parchment-sienna' : 'text-red-700'}`}>
                             {cur.gold} MO {cur.silver > 0 ? `${cur.silver} MP` : ''}
                           </span>
                         </label>
@@ -532,12 +542,12 @@ function Taberna() {
                     })}
                   </div>
 
-                  {error && <p className="text-xs font-serif text-red-400 bg-red-950/40 border border-red-900/30 px-2 py-1.5 rounded">{error}</p>}
+                  {error && <p className="text-xs font-serif text-red-700 bg-red-50 border border-red-200 px-2 py-1.5 rounded">{error}</p>}
                   
                   <button
                     onClick={handleOrder}
                     disabled={loading || !consumeCharId}
-                    className="w-full py-2.5 text-xs font-serif bg-amber-900 hover:bg-amber-850 text-amber-100 rounded border border-amber-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold uppercase tracking-wider"
+                    className="w-full py-2.5 font-serif text-xs border border-[#6B2C06] bg-gradient-to-b from-[#9B4A10] to-[#7B3408] text-[#f5d9a8] rounded-sm transition-colors uppercase tracking-wider font-semibold hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                   >
                     {loading ? 'Preparando Orden…' : `Ordenar & Consumir`}
                   </button>
@@ -550,7 +560,7 @@ function Taberna() {
         )}
 
       </div>
-      </main>
+      </div>
     </div>
   )
 }

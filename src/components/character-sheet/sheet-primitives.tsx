@@ -1,9 +1,10 @@
 import React from 'react'
 
-// ── Shared parchment styles ───────────────────────────────────────────────────
+// ── Shared parchment styles (Unificados con Tailwind CSS v4) ───────────────────
 
 export const parchmentStyle: React.CSSProperties = {
-  background: 'radial-gradient(ellipse at 50% 30%, #f2e6c8 0%, #e8d5a8 40%, #d4b87a 100%)',
+  backgroundColor: 'var(--color-parchment-light)',
+  backgroundImage: 'radial-gradient(ellipse at 50% 30%, var(--color-parchment-light) 0%, var(--color-parchment-medium) 40%, var(--color-parchment-dark) 100%)',
 }
 
 // Fondo mesa de juego — tabla de madera oscura
@@ -16,9 +17,7 @@ export const mapBgStyle: React.CSSProperties = {
 
 // Hoja de pergamino sobre la mesa — con textura de papiro real
 export const sheetStyle: React.CSSProperties = {
-  backgroundImage: `
-      url('/assets/images/papiro.png')`
-  ,
+  backgroundImage: `url('/assets/images/papiro.png')`,
   backgroundSize: '100% 100%',
   backgroundPosition: 'center center',
   backgroundRepeat: 'no-repeat',
@@ -27,13 +26,8 @@ export const sheetStyle: React.CSSProperties = {
 
 // Marco oscuro para el panel de inventario (no parchment)
 export const darkFrameStyle: React.CSSProperties = {
-  border: '2px solid #1e1208',
-  boxShadow: `
-    0 30px 80px rgba(0,0,0,0.85),
-    0 12px 35px rgba(0,0,0,0.65),
-    0 4px 12px rgba(0,0,0,0.45),
-    inset 0 0 0 1px rgba(255,255,255,0.04)
-  `,
+  border: '2px solid var(--color-tavern-wood-dark)',
+  boxShadow: 'var(--shadow-tavern-depth)',
 }
 
 // ── Primitive layout components ───────────────────────────────────────────────

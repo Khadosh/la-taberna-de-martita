@@ -1,5 +1,63 @@
 @import "tailwindcss";
 
+@theme {
+  /* ── Tipografía ── */
+  --font-display: 'Cinzel', 'Georgia', serif;
+  --font-serif: 'Georgia', serif;
+  --font-mono: monospace;
+
+  /* ── Paleta Oscura (Taberna) ── */
+  --color-tavern-stone: #0c0a09;
+  --color-tavern-wood-dark: #180e06;
+  --color-tavern-wood-black: #0f0804;
+  --color-tavern-gold: #d5b88a;
+  --color-tavern-gold-light: #f5d9a8;
+  --color-tavern-amber: #fbbf24;
+
+  /* ── Paleta Clara (Pergamino) ── */
+  --color-parchment-light: #f2e6c8;
+  --color-parchment-medium: #e8d5a8;
+  --color-parchment-dark: #d4b87a;
+  --color-parchment-sienna: #7a5828;
+  --color-parchment-chocolate: #6b4c24;
+
+  /* ── Sombras Medievales ── */
+  --shadow-tavern-glow: 0 0 60px rgba(160, 70, 10, 0.12), 0 0 20px rgba(160, 70, 10, 0.06), 0 24px 80px rgba(0, 0, 0, 0.7);
+  --shadow-tavern-depth: 0 30px 80px rgba(0, 0, 0, 0.85), 0 12px 35px rgba(0, 0, 0, 0.65), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+/* ── Utilidades de Fondos y Texturas Medievales ── */
+
+/* Fondo de mesa de madera oscura */
+@utility bg-table-wood {
+  background-image: url('/assets/images/board_bg.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+/* Pergamino limpio con degradado */
+@utility bg-parchment-gradient {
+  background: radial-gradient(ellipse at 50% 30%, var(--color-parchment-light) 0%, var(--color-parchment-medium) 40%, var(--color-parchment-dark) 100%);
+}
+
+/* Pergamino cuadriculado técnico-medieval (Imágenes 1 y 2) */
+@utility bg-parchment-grid {
+  background: 
+    linear-gradient(rgba(120, 90, 40, 0.07) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, rgba(120, 90, 40, 0.07) 1px, transparent 1px) 0 0 / 24px 24px,
+    radial-gradient(ellipse at 50% 30%, #f6ebd0 0%, #ecdba9 50%, #d5b97b 100%);
+}
+
+/* Textura de papel real */
+@utility bg-papyrus-texture {
+  background-image: url('/assets/images/papiro.png');
+  background-size: 100% 100%;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-blend-mode: multiply;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -12,11 +70,6 @@ body,
 
 body {
   margin: 0;
-}
-
-/* ── Cinzel display font ──────────────────────────────────────────────────── */
-.font-display {
-  font-family: 'Cinzel', 'Georgia', serif;
 }
 
 /* ── Tavern atmospheric backgrounds ─────────────────────────────────────── */

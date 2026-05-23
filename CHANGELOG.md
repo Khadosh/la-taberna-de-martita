@@ -6,6 +6,11 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 
 ## [Unreleased]
 
+### style
+- Unificación de layouts de campaña bajo el fondo global de mesa de madera (`board_bg.png`) y paneles de papiro flotantes con cuadrícula sepia de 24px (basado en la guía de diseño visual).
+- Definición de tokens semánticos en el tema de Tailwind CSS v4 (`@theme` en `styles.css`) y utilidades (`bg-parchment-grid`, `bg-papyrus-texture`), eliminando el mix inconsistente de estilos en línea en React.
+- Creación de la guía de estilo de referencia en `docs/design-system.md` y alineación de guías en `CLAUDE.md` y `AGENTS.md` (renombrado a mayúsculas para cumplir estándares).
+
 ### feat
 - Tablero de combate: log de ataque integrado en el panel de cálculo — botones ✓ Pega / ✗ Falla + input de daño; confirmar aplica HP al objetivo automáticamente
 - Tablero de combate: historial de combate colapsable en esquina inferior derecha (solo lectura, semi-transparente)

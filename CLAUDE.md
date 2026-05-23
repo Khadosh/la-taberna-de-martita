@@ -56,18 +56,21 @@ Wrappers en `src/lib/dnd-api.ts` con TanStack Query keys en `dndKeys`. `staleTim
 
 ---
 
-## Gotchas críticos
+## Gotchas críticos y Sistema de Diseño
 
-### Tailwind v4 — bordes y colores
-`border` sin color explícito hereda `currentColor` del texto padre → colores inesperados.
-**Regla:** para cualquier `border`, `background` o `color` que deba ser confiable, usar **`style={{ }}`** con valores inline, NO clases Tailwind.
+### Coherencia Visual y Clases de Tailwind v4
+Toda la interfaz del proyecto debe ceñirse estrictamente a las especificaciones de diseño detalladas en [design-system.md](file:///Users/joaquinnader/coding/personal/la-taberna-de-martita/docs/design-system.md). 
 
+**Regla:** Para cualquier color de texto, fondo o borde, utilizar las clases del tema de Tailwind v4 (`bg-tavern-stone`, `text-tavern-gold`, `border-parchment-sienna/40`, etc.) definidas en `@theme` en `src/styles.css`. **Evitar estilos en línea (`style={{ }}`) o colores planos genéricos de Tailwind.**
+
+### Tailwind v4 — Bordes
+En Tailwind v4, si aplicas la clase `border` sin especificar un color, el borde heredará `currentColor` del texto del elemento padre. Para evitar esto, especifica siempre el color del borde utilizando las clases del tema:
 ```tsx
-// MAL — hereda currentColor
-<div className="border border-stone-500">
+// MAL — hereda currentColor y se ve inconsistente
+<div className="border">
 
-// BIEN — color garantizado
-<div style={{ border: '1px solid rgba(109,85,48,0.4)' }}>
+// BIEN — color controlado por el sistema de diseño
+<div className="border border-parchment-sienna/40">
 ```
 
 ### Drag & Drop (`@dnd-kit`)

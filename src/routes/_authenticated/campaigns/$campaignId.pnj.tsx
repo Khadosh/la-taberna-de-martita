@@ -167,16 +167,13 @@ function PnjGenerator() {
     queryClient.invalidateQueries({ queryKey: ['campaign-npcs', campaignId] })
   }
 
-  const pnjBgStyle: React.CSSProperties = {
-    backgroundImage: `url('/assets/images/pnj_bg.png')`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundAttachment: 'fixed',
-  }
-
   return (
-    <div className="w-full min-h-full flex-1 overflow-y-auto text-stone-900 bg-stone-950" style={pnjBgStyle}>
-      <main className="max-w-5xl mx-auto px-4 sm:px-8 py-8 space-y-10">
+    <div className="w-full min-h-full flex-1 overflow-y-auto p-4 sm:p-8">
+      <div className="max-w-5xl mx-auto bg-parchment-grid bg-papyrus-texture text-stone-900 border border-parchment-sienna/40 shadow-tavern-glow rounded-md p-6 sm:p-10 my-4 relative space-y-10">
+        <span className="absolute -top-[3px] -left-[3px] w-4 h-4 border-t-2 border-l-2 border-stone-900" />
+        <span className="absolute -top-[3px] -right-[3px] w-4 h-4 border-t-2 border-r-2 border-stone-900" />
+        <span className="absolute -bottom-[3px] -left-[3px] w-4 h-4 border-b-2 border-l-2 border-stone-900" />
+        <span className="absolute -bottom-[3px] -right-[3px] w-4 h-4 border-b-2 border-r-2 border-stone-900" />
 
         {/* Form */}
         <section>
@@ -383,7 +380,7 @@ function PnjGenerator() {
           )}
         </section>
 
-      </main>
+      </div>
     </div>
   )
 }
@@ -514,12 +511,12 @@ function Field({
 
 function Frame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative" style={{ background: 'rgba(255, 248, 230, 0.6)' }}>
+    <div className="relative bg-amber-50/20 border border-parchment-sienna/20 shadow-sm">
       <span className="absolute -top-[3px] -left-[3px] w-3 h-3 border-t-2 border-l-2 border-stone-900" />
       <span className="absolute -top-[3px] -right-[3px] w-3 h-3 border-t-2 border-r-2 border-stone-900" />
       <span className="absolute -bottom-[3px] -left-[3px] w-3 h-3 border-b-2 border-l-2 border-stone-900" />
       <span className="absolute -bottom-[3px] -right-[3px] w-3 h-3 border-b-2 border-r-2 border-stone-900" />
-      <div className="border border-stone-400/30">{children}</div>
+      <div className="border border-stone-400/10">{children}</div>
     </div>
   )
 }

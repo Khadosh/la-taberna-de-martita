@@ -93,19 +93,30 @@ function CampaignHubLanding() {
   })
 
   if (!campaign) return null
-
   const isGm = campaign.dm_id === session.user.id
 
   if (isGm) {
     return (
-      <div className="w-full min-h-full flex-1 overflow-y-auto text-stone-900 bg-stone-950" style={dmStyle}>
-        <GmView campaignId={campaignId} characters={characters} npcs={npcs} />
+      <div className="w-full min-h-full flex-1 overflow-y-auto p-4 sm:p-8">
+        <div className="max-w-6xl mx-auto bg-parchment-grid bg-papyrus-texture text-stone-900 border border-parchment-sienna/40 shadow-tavern-glow rounded-md p-6 sm:p-10 my-4 relative">
+          <Corner pos="tl" />
+          <Corner pos="tr" />
+          <Corner pos="bl" />
+          <Corner pos="br" />
+          <GmView campaignId={campaignId} characters={characters} npcs={npcs} />
+        </div>
       </div>
     )
   }
   return (
-    <div className="w-full min-h-full flex-1 overflow-y-auto text-stone-900" style={parchmentStyle}>
-      <PlayerView campaignId={campaignId} characters={characters} userId={session.user.id} />
+    <div className="w-full min-h-full flex-1 overflow-y-auto p-4 sm:p-8">
+      <div className="max-w-6xl mx-auto bg-parchment-grid bg-papyrus-texture text-stone-900 border border-parchment-sienna/40 shadow-tavern-glow rounded-md p-6 sm:p-10 my-4 relative">
+        <Corner pos="tl" />
+        <Corner pos="tr" />
+        <Corner pos="bl" />
+        <Corner pos="br" />
+        <PlayerView campaignId={campaignId} characters={characters} userId={session.user.id} />
+      </div>
     </div>
   )
 }
@@ -449,12 +460,12 @@ function CharacterCard({ character, isOwn }: { character: Character; isOwn: bool
 
 function Frame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative" style={{ background: 'rgba(255, 248, 230, 0.6)' }}>
+    <div className="relative bg-amber-50/20 border border-parchment-sienna/20 shadow-sm">
       <Corner pos="tl" />
       <Corner pos="tr" />
       <Corner pos="bl" />
       <Corner pos="br" />
-      <div className="border border-stone-400/30">
+      <div className="border border-stone-400/10">
         {children}
       </div>
     </div>

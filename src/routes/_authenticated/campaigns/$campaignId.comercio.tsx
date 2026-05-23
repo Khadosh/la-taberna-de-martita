@@ -310,16 +310,13 @@ function Comercio() {
 
   const selectedCharInventory = allInventory.filter(i => i.character_id === sellCharId)
 
-  const comercioBgStyle: React.CSSProperties = {
-    backgroundImage: `url('/assets/images/comercio_bg.png')`,
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundAttachment: 'fixed',
-  }
-
   return (
-    <div className="w-full min-h-full flex-1 overflow-y-auto text-stone-200 bg-stone-950" style={comercioBgStyle}>
-      <main className="max-w-5xl mx-auto px-4 sm:px-8 py-8">
+    <div className="w-full min-h-full flex-1 overflow-y-auto p-4 sm:p-8">
+      <div className="max-w-5xl mx-auto bg-parchment-grid bg-papyrus-texture text-stone-900 border border-parchment-sienna/40 shadow-tavern-glow rounded-md p-6 sm:p-10 my-4 relative">
+        <span className="absolute -top-[3px] -left-[3px] w-4 h-4 border-t-2 border-l-2 border-stone-900" />
+        <span className="absolute -top-[3px] -right-[3px] w-4 h-4 border-t-2 border-r-2 border-stone-900" />
+        <span className="absolute -bottom-[3px] -left-[3px] w-4 h-4 border-b-2 border-l-2 border-stone-900" />
+        <span className="absolute -bottom-[3px] -right-[3px] w-4 h-4 border-b-2 border-r-2 border-stone-900" />
       
       {/* Commerce Header banner */}
       <div className="relative h-44 sm:h-52 w-full mb-8 overflow-hidden rounded-lg border border-stone-800 shadow-2xl bg-stone-950">
@@ -336,20 +333,20 @@ function Comercio() {
       </div>
 
       {successMsg && (
-        <div className="mb-6 px-4 py-3 border border-green-800 bg-green-950/60 text-green-300 text-sm font-serif rounded flex items-center justify-between gap-3 shadow-lg">
+        <div className="mb-6 px-4 py-3 border border-green-800 bg-green-900/10 text-green-800 text-sm font-serif rounded flex items-center justify-between gap-3 shadow-md">
           <span>{successMsg}</span>
-          <button onClick={() => setSuccessMsg(null)} className="text-lg leading-none text-green-600 hover:text-green-300 transition-colors">&times;</button>
+          <button onClick={() => setSuccessMsg(null)} className="text-lg leading-none text-green-850 hover:text-green-600 transition-colors">&times;</button>
         </div>
       )}
 
       {/* Main Trade Mode Selectors */}
-      <div className="flex gap-4 mb-6 border-b border-stone-850">
+      <div className="flex gap-4 mb-6 border-b border-stone-400/40">
         <button
           onClick={() => { setTabMode('comprar'); setError(null); setSuccessMsg(null); setSelected(null) }}
           className={`px-4 py-2 text-sm font-display tracking-wide uppercase transition-all border-b-2 -mb-[1px] ${
             tabMode === 'comprar'
-              ? 'border-amber-600 text-amber-400 font-bold'
-              : 'border-transparent text-stone-500 hover:text-stone-300'
+              ? 'border-parchment-sienna text-parchment-sienna font-bold'
+              : 'border-transparent text-stone-500 hover:text-stone-800'
           }`}
         >
           🛒 Adquirir Equipo
@@ -358,8 +355,8 @@ function Comercio() {
           onClick={() => { setTabMode('vender'); setError(null); setSuccessMsg(null); setSelected(null) }}
           className={`px-4 py-2 text-sm font-display tracking-wide uppercase transition-all border-b-2 -mb-[1px] ${
             tabMode === 'vender'
-              ? 'border-amber-600 text-amber-400 font-bold'
-              : 'border-transparent text-stone-500 hover:text-stone-300'
+              ? 'border-parchment-sienna text-parchment-sienna font-bold'
+              : 'border-transparent text-stone-500 hover:text-stone-800'
           }`}
         >
           💰 Vender Botín
@@ -372,24 +369,27 @@ function Comercio() {
           
           {/* Specialty shops selector */}
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-            {SHOPS.map(shop => (
-              <button
-                key={shop.id}
-                onClick={() => { setActiveShopId(shop.id); setSearch(''); setSelected(null); setError(null) }}
-                className={`flex flex-col items-center justify-center p-3 text-center border rounded transition-all ${
-                  activeShopId === shop.id
-                    ? 'bg-amber-950 border-amber-500 text-amber-250 font-semibold shadow-inner'
-                    : 'bg-stone-950 border-stone-850 text-stone-450 hover:bg-stone-900 hover:text-stone-200'
-                }`}
-              >
-                <span className="text-xl mb-1.5">{shop.icon}</span>
-                <span className="text-xs font-serif font-semibold">{shop.label}</span>
-              </button>
-            ))}
+            {SHOPS.map(shop => {
+              const isSelected = activeShopId === shop.id
+              return (
+                <button
+                  key={shop.id}
+                  onClick={() => { setActiveShopId(shop.id); setSearch(''); setSelected(null); setError(null) }}
+                  className={`flex flex-col items-center justify-center p-3 text-center border rounded transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-amber-900 border-amber-800 text-amber-100 font-semibold shadow-inner'
+                      : 'bg-amber-50/20 border-stone-300 text-stone-600 hover:bg-amber-100/30 hover:text-stone-900'
+                  }`}
+                >
+                  <span className="text-xl mb-1.5">{shop.icon}</span>
+                  <span className="text-xs font-serif font-semibold">{shop.label}</span>
+                </button>
+              )
+            })}
           </div>
 
           {/* Shop ambiance flavor text */}
-          <div className="bg-stone-950 border border-stone-850 p-4 rounded text-xs font-serif italic text-stone-300">
+          <div className="bg-amber-100/40 border border-stone-300 p-4 rounded text-xs font-serif italic text-stone-700">
             {activeShop.flavor}
           </div>
 
@@ -400,7 +400,7 @@ function Comercio() {
                 value={search}
                 onChange={e => { setSearch(e.target.value); setSelected(null) }}
                 placeholder={`Buscar en ${activeShop.label}...`}
-                className="flex-1 px-3 py-2 text-xs font-serif bg-stone-950 border border-stone-800 text-stone-200 placeholder:text-stone-600 rounded focus:outline-none focus:border-stone-600"
+                className="flex-1 px-3 py-2 text-xs font-serif bg-amber-50/40 border border-stone-300 text-stone-900 placeholder:text-stone-500 rounded focus:outline-none focus:border-parchment-sienna/60 focus:bg-white"
               />
             </div>
 
@@ -411,32 +411,35 @@ function Comercio() {
                 {categoryQueries.isLoading ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {Array.from({ length: 8 }).map((_, i) => (
-                      <div key={i} className="h-10 bg-stone-950 border border-stone-850 animate-pulse rounded" />
+                      <div key={i} className="h-10 bg-amber-100/30 border border-stone-300/40 animate-pulse rounded" />
                     ))}
                   </div>
                 ) : items.length === 0 ? (
-                  <p className="text-sm font-serif italic text-stone-600 py-10 text-center border border-dashed border-stone-850 rounded">
+                  <p className="text-sm font-serif italic text-stone-500 py-10 text-center border border-dashed border-stone-300 rounded">
                     Ningún objeto disponible en esta categoría.
                   </p>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-[50vh] overflow-y-auto pr-1">
                     {items.map(item => {
                       const iconUrl = getItemIconUrl(item.name)
+                      const isSelected = selected?.index === item.index
                       return (
                         <button
                           key={item.index}
                           onClick={() => handleSelect(item)}
-                          className={`text-left flex items-center gap-3 px-3 py-2 text-xs font-serif border rounded transition-all ${
-                            selected?.index === item.index
-                              ? 'bg-amber-950 border-amber-500 text-amber-250 font-semibold'
-                              : 'bg-stone-950 border-stone-850 text-stone-300 hover:bg-stone-900 hover:border-stone-700'
+                          className={`text-left flex items-center gap-3 px-3 py-2 text-xs font-serif border rounded transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-amber-900 border-amber-800 text-amber-100 font-semibold shadow-sm'
+                              : 'bg-amber-50/20 border-stone-300/60 text-stone-700 hover:bg-amber-100/40 hover:border-stone-500'
                           }`}
                         >
-                          <div className="w-8 h-8 shrink-0 overflow-hidden rounded bg-stone-950 flex items-center justify-center border border-stone-800">
+                          <div className={`w-8 h-8 shrink-0 overflow-hidden rounded flex items-center justify-center border transition-colors ${
+                            isSelected ? 'bg-amber-950 border-amber-800 text-amber-100' : 'bg-amber-100/60 border-stone-300 text-stone-900'
+                          }`}>
                             {iconUrl ? (
                               <img src={iconUrl} alt="" className="w-full h-full object-cover" onError={e => { e.currentTarget.style.display = 'none' }} />
                             ) : (
-                              <span className="text-sm opacity-40">📦</span>
+                              <span className="text-sm opacity-45">📦</span>
                             )}
                           </div>
                           <span className="truncate flex-1 font-semibold">{item.name}</span>
@@ -450,14 +453,14 @@ function Comercio() {
               {/* Buying details sidebar */}
               {selected && (
                 <div className="w-full lg:w-80 shrink-0">
-                  <div className="relative bg-stone-950 border border-stone-800 p-5 rounded-lg space-y-4 shadow-xl">
-                    <button onClick={() => setSelected(null)} className="absolute top-3 right-3 text-stone-500 hover:text-stone-300 text-lg leading-none">✕</button>
+                  <div className="relative bg-amber-50 border border-parchment-sienna/40 p-5 rounded-lg space-y-4 shadow-lg border-2">
+                    <button onClick={() => setSelected(null)} className="absolute top-3 right-3 text-stone-500 hover:text-stone-800 text-lg leading-none">✕</button>
 
                     {loadingDetail ? (
                       <div className="space-y-3">
-                        <div className="h-4 w-3/4 bg-stone-800 animate-pulse rounded" />
-                        <div className="h-3 w-1/2 bg-stone-800 animate-pulse rounded" />
-                        <div className="h-10 w-full bg-stone-800 animate-pulse rounded" />
+                        <div className="h-4 w-3/4 bg-amber-100/50 animate-pulse rounded" />
+                        <div className="h-3 w-1/2 bg-amber-100/50 animate-pulse rounded" />
+                        <div className="h-10 w-full bg-amber-100/50 animate-pulse rounded" />
                       </div>
                     ) : itemDetail ? (
                       <>
@@ -465,35 +468,35 @@ function Comercio() {
                           {(() => {
                             const u = getItemIconUrl(itemDetail.name)
                             return u ? (
-                              <img src={u} alt="" className="w-12 h-12 object-cover rounded border border-stone-750 bg-stone-950 shrink-0" />
+                              <img src={u} alt="" className="w-12 h-12 object-cover rounded border border-stone-300 bg-amber-100/60 shrink-0" />
                             ) : null
                           })()}
                           <div className="min-w-0">
-                            <h3 className="font-display text-sm font-bold text-stone-200 leading-tight pr-5">{itemDetail.name}</h3>
+                            <h3 className="font-display text-sm font-bold text-stone-900 leading-tight pr-5">{itemDetail.name}</h3>
                             <p className="text-[10px] font-serif italic text-stone-500 mt-0.5 capitalize">{itemDetail.equipment_category.name}</p>
                           </div>
                         </div>
 
-                        <div className="flex gap-4 text-xs font-mono text-stone-400 bg-stone-950 px-3 py-1.5 border border-stone-850 rounded">
+                        <div className="flex gap-4 text-xs font-mono text-parchment-chocolate bg-amber-900/10 px-3 py-1.5 border border-amber-800/20 rounded">
                           {itemDetail.cost?.quantity > 0 ? (
-                            <span className="text-amber-500 font-bold">{formatCost(itemDetail.cost.quantity, itemDetail.cost.unit)}</span>
+                            <span className="text-parchment-sienna font-bold">{formatCost(itemDetail.cost.quantity, itemDetail.cost.unit)}</span>
                           ) : (
-                            <span className="text-stone-600 italic">Sin valor</span>
+                            <span className="text-stone-500 italic">Sin valor</span>
                           )}
                           {itemDetail.weight > 0 && <span>{itemDetail.weight} lb</span>}
                           {itemDetail.armor_class && (
-                            <span className="text-stone-300">CA {itemDetail.armor_class.base}{itemDetail.armor_class.dex_bonus ? '+Des' : ''}</span>
+                            <span className="text-stone-700 font-semibold">CA {itemDetail.armor_class.base}{itemDetail.armor_class.dex_bonus ? '+Des' : ''}</span>
                           )}
                         </div>
 
                         {itemDetail.desc && itemDetail.desc.length > 0 && (
-                          <p className="text-[11px] font-serif text-stone-400 leading-relaxed max-h-24 overflow-y-auto pr-1">
+                          <p className="text-[11px] font-serif text-stone-600 leading-relaxed max-h-24 overflow-y-auto pr-1">
                             {itemDetail.desc[0]}
                           </p>
                         )}
 
                         {buyableChars.length > 0 && itemDetail.cost?.quantity > 0 && (
-                          <div className="pt-3 border-t border-stone-800 space-y-3">
+                          <div className="pt-3 border-t border-stone-300/40 space-y-3">
                             <span className="text-[10px] font-display font-semibold tracking-wider uppercase text-stone-500 block">Comprar para:</span>
                             <div className="space-y-1.5">
                               {buyableChars.map(c => {
@@ -501,30 +504,31 @@ function Comercio() {
                                 const charCp = toCp(cur.gold, 'gp') + toCp(cur.silver, 'sp') + toCp(cur.copper, 'cp')
                                 const costCp = toCp(itemDetail.cost.quantity, itemDetail.cost.unit as CostUnit)
                                 const canAfford = charCp >= costCp
+                                const isSelected = buyCharId === c.id
                                 return (
                                   <label key={c.id} className={`flex items-center gap-2 px-2.5 py-2 border rounded cursor-pointer transition-all text-xs font-serif ${
-                                    buyCharId === c.id ? 'border-amber-600 bg-amber-950/15' : 'border-stone-800 bg-stone-900/60 hover:bg-stone-800/40'
+                                    isSelected ? 'border-amber-800 bg-amber-900 text-amber-100' : 'border-stone-300 bg-amber-50/20 hover:bg-amber-100/30 text-stone-700'
                                   } ${!canAfford ? 'opacity-40' : ''}`}>
                                     <input
                                       type="radio" name="buy-char" value={c.id}
-                                      checked={buyCharId === c.id}
+                                      checked={isSelected}
                                       onChange={() => { setBuyCharId(c.id); setError(null) }}
-                                      className="accent-amber-500"
+                                      className="accent-amber-700"
                                       disabled={!canAfford}
                                     />
-                                    <span className="flex-1 text-stone-200 truncate">{c.name}</span>
-                                    <span className={`font-mono text-[10px] ${canAfford ? 'text-amber-500' : 'text-red-500'}`}>
+                                    <span className={`flex-1 truncate ${isSelected ? 'text-amber-100' : 'text-stone-900'}`}>{c.name}</span>
+                                    <span className={`font-mono text-[10px] ${isSelected ? 'text-amber-300' : canAfford ? 'text-parchment-sienna' : 'text-red-700'}`}>
                                       {cur.gold} MO {cur.silver > 0 ? `${cur.silver} MP` : ''}
                                     </span>
                                   </label>
                                 )
                               })}
                             </div>
-                            {error && <p className="text-xs font-serif text-red-400 bg-red-950/40 border border-red-900/30 px-2 py-1.5 rounded">{error}</p>}
+                            {error && <p className="text-xs font-serif text-red-750 bg-red-50 border border-red-200 px-2 py-1.5 rounded">{error}</p>}
                             <button
                               onClick={handleBuy}
                               disabled={loading || !buyCharId}
-                              className="w-full py-2 text-xs font-serif bg-amber-900 hover:bg-amber-850 text-amber-100 rounded border border-amber-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold uppercase tracking-wider"
+                              className="w-full py-2 font-serif text-xs border border-[#6B2C06] bg-gradient-to-b from-[#9B4A10] to-[#7B3408] text-[#f5d9a8] rounded-sm transition-colors uppercase tracking-wider font-semibold hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                             >
                               {loading ? 'Comprando…' : `Adquirir — ${formatCost(itemDetail.cost.quantity, itemDetail.cost.unit)}`}
                             </button>
@@ -545,56 +549,59 @@ function Comercio() {
       {/* ── SELL TAB MODE ─────────────────────────────────────────────────── */}
       {tabMode === 'vender' && (
         <div className="space-y-6">
-          <div className="bg-stone-950 border border-stone-850 p-4 rounded text-xs font-serif italic text-stone-300">
+          <div className="bg-amber-100/40 border border-stone-300 p-4 rounded text-xs font-serif italic text-stone-700">
             Los mercaderes locales compran tu equipo usado al **50% de su valor comercial estándar**.
           </div>
 
           <div>
             <span className="text-[10px] font-display font-semibold tracking-wider uppercase text-stone-500 block mb-2">Inventario del Personaje</span>
             <div className="flex flex-wrap gap-2">
-              {characters.map(c => (
-                <button
-                  key={c.id}
-                  onClick={() => { setSellCharId(c.id); setSellConfirm(null) }}
-                  className={`px-3 py-1.5 text-xs font-serif border rounded transition-all ${
-                    sellCharId === c.id
-                      ? 'bg-amber-950 border-amber-500 text-amber-250 font-bold shadow-inner'
-                      : 'bg-stone-950 border-stone-850 text-stone-450 hover:bg-stone-900 hover:text-stone-200'
-                  }`}
-                >
-                  {c.name}
-                  <span className="ml-2 font-mono text-[10px] text-amber-500">{(c.sheet_json as Character['sheet_json']).currency?.gold ?? 0} MO</span>
-                </button>
-              ))}
+              {characters.map(c => {
+                const isSelected = sellCharId === c.id
+                return (
+                  <button
+                    key={c.id}
+                    onClick={() => { setSellCharId(c.id); setSellConfirm(null) }}
+                    className={`px-3 py-1.5 text-xs font-serif border rounded transition-all cursor-pointer ${
+                      isSelected
+                        ? 'bg-amber-900 border-amber-800 text-amber-100 font-bold shadow-inner'
+                        : 'bg-amber-50/20 border-stone-300 text-stone-600 hover:bg-amber-100/30 hover:text-stone-900'
+                    }`}
+                  >
+                    {c.name}
+                    <span className={`ml-2 font-mono text-[10px] ${isSelected ? 'text-amber-300' : 'text-parchment-sienna'}`}>{(c.sheet_json as Character['sheet_json']).currency?.gold ?? 0} MO</span>
+                  </button>
+                )
+              })}
             </div>
           </div>
 
           {sellCharId && (
             selectedCharInventory.length === 0 ? (
-              <p className="text-sm font-serif italic text-stone-600 py-12 text-center border border-dashed border-stone-850 rounded">
+              <p className="text-sm font-serif italic text-stone-500 py-12 text-center border border-dashed border-stone-300 rounded">
                 El inventario está vacío. No hay objetos para revender.
               </p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {selectedCharInventory.map(item => {
                   return (
-                    <div key={item.id} className="bg-stone-950 border border-stone-850 p-4 rounded-lg flex flex-col justify-between space-y-3">
+                    <div key={item.id} className="bg-amber-50/20 border border-stone-300/60 p-4 rounded-lg flex flex-col justify-between space-y-3 hover:bg-amber-100/30 transition-all">
                       <div>
-                        <h4 className="font-display text-sm font-bold text-stone-200 truncate">{item.name}</h4>
+                        <h4 className="font-display text-sm font-bold text-stone-900 truncate">{item.name}</h4>
                         {item.notes && <p className="text-[10px] font-serif italic text-stone-500 line-clamp-1 mt-0.5">{item.notes}</p>}
-                        <span className="text-xs font-mono text-stone-500 mt-1 block">Cantidad: ×{item.quantity}</span>
+                        <span className="text-xs font-mono text-stone-600 mt-1 block">Cantidad: ×{item.quantity}</span>
                       </div>
                       
-                      <div className="flex items-center justify-between pt-2 border-t border-stone-800">
+                      <div className="flex items-center justify-between pt-2 border-t border-stone-300/40">
                         {sellConfirm?.id === item.id ? (
                           <div className="flex gap-2 items-center w-full justify-between">
-                            <span className="text-[10px] font-mono text-amber-500">+{sellConfirm.resaleQty} {UNIT_LABEL[sellConfirm.resaleUnit]}</span>
+                            <span className="text-[10px] font-mono text-amber-700">+{sellConfirm.resaleQty} {UNIT_LABEL[sellConfirm.resaleUnit]}</span>
                             <div className="flex gap-1.5">
-                              <button onClick={() => setSellConfirm(null)} className="text-xs text-stone-500 hover:text-stone-300 font-serif">No</button>
+                              <button onClick={() => setSellConfirm(null)} className="text-xs text-stone-500 hover:text-stone-850 font-serif cursor-pointer">No</button>
                               <button
                                 onClick={handleSellConfirm}
                                 disabled={loading}
-                                className="text-xs px-2.5 py-1 bg-stone-950 hover:bg-stone-850 text-red-400 font-serif rounded border border-red-950 transition-colors disabled:opacity-50"
+                                className="text-xs px-2.5 py-1 bg-red-900 hover:bg-red-800 text-red-100 font-serif rounded border border-red-800 transition-colors disabled:opacity-50 cursor-pointer"
                               >
                                 Sí, vender
                               </button>
@@ -602,12 +609,9 @@ function Comercio() {
                           </div>
                         ) : (
                           <>
-                            <span className="text-[10px] font-serif text-stone-500">Valor Reventa Estimado</span>
+                            <span className="text-[10px] font-serif text-stone-650">Valor Reventa Estimado</span>
                             <button
                               onClick={() => {
-                                // Default cost parsing (if it has gp/sp/cp or typical price)
-                                // Standard resale for items: e.g. Shield (10gp) resells for 5gp. Rations (5sp) resells for 2sp 5cp (or similar)
-                                // Let's guess standard pricing categories. We default to 5 sp (0.5 gp) for unknown items
                                 let qty = 1
                                 let unit: CostUnit = 'gp'
                                 const name = item.name.toLowerCase()
@@ -631,7 +635,7 @@ function Comercio() {
                                   resaleUnit: res.unit
                                 })
                               }}
-                              className="text-xs px-3 py-1 bg-stone-950 hover:bg-stone-850 text-amber-300 rounded border border-stone-800 font-serif transition-colors"
+                              className="text-xs px-3 py-1 bg-stone-900 hover:bg-stone-850 text-amber-100 rounded border border-stone-800 font-serif transition-colors cursor-pointer"
                             >
                               Vender
                             </button>
@@ -646,14 +650,13 @@ function Comercio() {
           )}
 
           {!sellCharId && (
-            <p className="text-sm font-serif italic text-stone-600 py-12 text-center border border-dashed border-stone-850 rounded">
+            <p className="text-sm font-serif italic text-stone-500 py-12 text-center border border-dashed border-stone-300 rounded">
               Selecciona un personaje para examinar su inventario y comerciar.
             </p>
           )}
         </div>
       )}
-
-      </main>
+    </div>
     </div>
   )
 }
