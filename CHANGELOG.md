@@ -7,12 +7,16 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 ## [Unreleased]
 
 ### feat
-- **Generador Procedural de Encuentros**: generación automática de encuentros D&D 5e por arquetipo, zona y dificultad. Multi-select de arquetipos con chips + dropdown. Tabla de composición editable con roles (Melee/Distancia/Magia/Soporte) y colores. Cards individuales por criatura con retrato, stats (STR/DEX/CON/INT/WIS/CHA), velocidad, habilidades especiales con tooltip, y nivel individual. XP y HP escalados por nivel. Botín procedural ajustable. Spawn al tablero con rol, retrato y nivel persistidos en `board_tokens.npc_level`.
+- **Generador Procedural de Encuentros**: rediseño de selectores e incorporación de 38 íconos SVG temáticos para las 8 zonas y los 30 arquetipos de encuentros.
+- **Dropdown de Zona en Rejilla**: selector de Zona rediseñado como un menú flotante de cuadrícula con marcos circulares, íconos y descripciones temáticas de cada entorno.
+- **Tarjetas de Monstruo Clickables**: eliminación del botón "editar" en las tarjetas de monstruo, permitiendo abrir el modal de edición haciendo clic en cualquier parte de la tarjeta y mejorando la propagación de eventos en los botones de nivel.
 - **Nivel por unidad en encuentros**: cada criatura individual en el generador puede tener su propio nivel (ya no afecta a toda la especie al modificarlo). El nivel pre-generado se basa en el promedio de nivel del grupo ± offset según dificultad.
 - **Rol y nivel en tokens de combate**: badge circular con letra (M/D/G/S) inline con el nombre; nivel (Nv.N) visible en el token y en el card del panel derecho.
 - Migración `board_tokens.npc_level`: columna `smallint` en Supabase para persistir el nivel del NPC entre sesiones de combate.
 
 ### style
+- **Alineación de Selectores**: se unificaron las alturas de las etiquetas y de los selectores de Zona y Arquetipo a una altura fija de `h-[38px]` resolviendo la desalineación vertical en la interfaz.
+- **Tarjetas de Monstruo a Color**: remoción del filtro de escala de grises en las tarjetas de monstruo, mostrándose a color por defecto y añadiendo un resplandor dorado/bronce de halo (`box-shadow`) al pasar el cursor.
 - Unificación de layouts de campaña bajo el fondo global de mesa de madera (`board_bg.png`) y paneles de papiro flotantes con cuadrícula sepia de 24px (basado en la guía de diseño visual).
 - Definición de tokens semánticos en el tema de Tailwind CSS v4 (`@theme` en `styles.css`) y utilidades (`bg-parchment-grid`, `bg-papyrus-texture`), eliminando el mix inconsistente de estilos en línea en React.
 - Creación de la guía de estilo de referencia en `docs/design-system.md` y alineación de guías en `CLAUDE.md` y `AGENTS.md` (renombrado a mayúsculas para cumplir estándares).
