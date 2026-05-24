@@ -5,14 +5,14 @@ import { dndApi, dndKeys, type MonsterSummary } from '../../lib/dnd-api'
 import {
   type Character,
   type BoardToken,
-  type NpcItem,
   type Npc,
   type Combatant,
-  type CampaignMap,
   maxHpFor,
   currentHpFor,
   getInitiative,
 } from './tablero-types'
+import { useNpcForm } from './use-npc-form'
+import { useBoardMaps } from './use-board-maps'
 
 const db = supabase as any
 
@@ -28,6 +28,8 @@ export type LogEntry = {
 export function useDmTablero(campaignId: string) {
   const queryClient = useQueryClient()
   const npcInputRef = useRef<HTMLInputElement>(null)
+  const npcForm = useNpcForm()
+  const boardMaps = useBoardMaps(campaignId)
 
   const [localHp, setLocalHp] = useState<Record<string, number>>({})
   const hpTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
@@ -37,16 +39,9 @@ export function useDmTablero(campaignId: string) {
   const [currentTurn, setCurrentTurn] = useState(0)
   const [npcInput, setNpcInput] = useState('')
 
-  // Board state
-  const [activeMapUrl, setActiveMapUrl] = useState<string | null>(null)
+  // Board tokens state
   const [boardTokens, setBoardTokens] = useState<BoardToken[]>([])
   const [externalPositions, setExternalPositions] = useState<Record<string, { x: number; y: number }>>({})
-  const [mapUploading, setMapUploading] = useState(false)
-
-  // Map library state
-  const [mapsList, setMapsList] = useState<CampaignMap[]>([])
-  const [loadingMaps, setLoadingMaps] = useState(false)
-  const [showMapSelector, setShowMapSelector] = useState(false)
 
   // Bestiary picker
   const [showBestiary, setShowBestiary] = useState(false)
@@ -58,16 +53,6 @@ export function useDmTablero(campaignId: string) {
   const [showCampaignNpcs, setShowCampaignNpcs] = useState(false)
   const [campaignNpcSearch, setCampaignNpcSearch] = useState('')
 
-  // Custom NPC form
-  const [showNpcForm, setShowNpcForm] = useState(false)
-  const [npcFormName, setNpcFormName] = useState('')
-  const [npcFormHp, setNpcFormHp] = useState(10)
-  const [npcFormAc, setNpcFormAc] = useState(10)
-  const [npcFormAttack, setNpcFormAttack] = useState(0)
-  const [npcFormDamage, setNpcFormDamage] = useState('')
-  const [npcFormType, setNpcFormType] = useState('humanoide')
-  const [npcFormItems, setNpcFormItems] = useState<NpcItem[]>([])
-
   // Inline editing
   const [editingHp, setEditingHp] = useState<string | null>(null)
   const [conditionPickerFor, setConditionPickerFor] = useState<string | null>(null)
@@ -78,69 +63,9 @@ export function useDmTablero(campaignId: string) {
   const [combatLog, setCombatLog] = useState<LogEntry[]>([])
   const [showLog, setShowLog] = useState(true)
 
-  // Realtime target sync states
+  // Realtime target sync
   const [externalTargeting, setExternalTargeting] = useState<any>(null)
   const channelRef = useRef<any>(null)
-
-  // ── Map library operations ────────────────────────────────────────────────
-
-  const fetchMaps = useCallback(async () => {
-    setLoadingMaps(true)
-    try {
-      const { data, error } = await supabase.storage
-        .from('campaign-maps')
-        .list(campaignId, { limit: 100 })
-
-      if (error) throw error
-
-      if (data) {
-        const list = data
-          .filter(f => f.name !== '.emptyFolderPlaceholder')
-          .map(f => {
-            const { data: { publicUrl } } = supabase.storage
-              .from('campaign-maps')
-              .getPublicUrl(`${campaignId}/${f.name}`)
-
-            const friendlyName = f.name.replace(/^\d+_/, '')
-            return { name: friendlyName, rawName: f.name, url: publicUrl }
-          })
-        setMapsList(list)
-      }
-    } catch (err) {
-      console.error('Error fetching maps:', err)
-    } finally {
-      setLoadingMaps(false)
-    }
-  }, [campaignId])
-
-  const activateMap = async (url: string) => {
-    try {
-      await db.from('campaigns').update({ active_map_url: url }).eq('id', campaignId)
-      setActiveMapUrl(url)
-    } catch (err) {
-      console.error('Error activating map:', err)
-    }
-  }
-
-  const deleteMap = async (map: CampaignMap) => {
-    if (!confirm(`¿Seguro que deseas eliminar el mapa "${map.name}"?`)) return
-    try {
-      const { error } = await supabase.storage
-        .from('campaign-maps')
-        .remove([`${campaignId}/${map.rawName}`])
-
-      if (error) throw error
-
-      if (activeMapUrl === map.url) {
-        await db.from('campaigns').update({ active_map_url: null }).eq('id', campaignId)
-        setActiveMapUrl(null)
-      }
-
-      fetchMaps()
-    } catch (err) {
-      console.error('Error deleting map:', err)
-    }
-  }
 
   // ── Queries ──────────────────────────────────────────────────────────────
 
@@ -200,13 +125,12 @@ export function useDmTablero(campaignId: string) {
     return () => { supabase.removeChannel(channel) }
   }, [campaignId, queryClient])
 
-  // Load initial board tokens on mount
+  // ── Realtime: board_tokens ────────────────────────────────────────────────
+
   useEffect(() => {
     db.from('board_tokens').select('*').eq('campaign_id', campaignId)
       .then(({ data }: { data: BoardToken[] | null }) => { if (data) setBoardTokens(data) })
   }, [campaignId])
-
-  // ── Realtime: board_tokens (position updates from players) ────────────────
 
   useEffect(() => {
     const channel = supabase.channel(`dm-board-${campaignId}`)
@@ -233,26 +157,6 @@ export function useDmTablero(campaignId: string) {
     return () => { supabase.removeChannel(channel) }
   }, [campaignId])
 
-  // ── Realtime: active map ──────────────────────────────────────────────────
-
-  useEffect(() => {
-    // Load initial map
-    db.from('campaigns').select('active_map_url').eq('id', campaignId).single()
-      .then(({ data }: { data: { active_map_url?: string | null } | null }) => { if (data?.active_map_url) setActiveMapUrl(data.active_map_url) })
-
-    // Load maps library
-    fetchMaps()
-
-    const channel = supabase.channel(`dm-map-${campaignId}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'campaigns', filter: `id=eq.${campaignId}` },
-        (payload) => {
-          const url = (payload.new as { active_map_url?: string | null }).active_map_url
-          setActiveMapUrl(url ?? null)
-        })
-      .subscribe()
-    return () => { supabase.removeChannel(channel) }
-  }, [campaignId, fetchMaps])
-
   // ── Helpers ──────────────────────────────────────────────────────────────
 
   const patchCharacter = async (id: string, patch: Record<string, unknown>) => {
@@ -268,14 +172,13 @@ export function useDmTablero(campaignId: string) {
       await supabase.from('characters').update({ current_hp: clamped } as never).eq('id', id)
       await queryClient.refetchQueries({ queryKey: ['campaign-characters', campaignId] })
       setLocalHp(prev => { const n = { ...prev }; delete n[id]; return n })
-      // Sync HP to board_tokens so players see the arc update
       await db.from('board_tokens')
         .update({ current_hp: clamped, updated_at: new Date().toISOString() })
         .eq('campaign_id', campaignId).eq('entity_id', id)
     }, 600)
   }
 
-  // ── Board sync helpers ────────────────────────────────────────────────────
+  // ── Board token sync helpers ──────────────────────────────────────────────
 
   const upsertTokenToBoard = async (token: { id: string; name: string; kind: 'player' | 'npc'; currentHp: number; maxHp: number; portraitUrl: string | null; isActive: boolean; npcLevel?: number }) => {
     await db.from('board_tokens').upsert({
@@ -293,40 +196,13 @@ export function useDmTablero(campaignId: string) {
   }
 
   const removeTokenFromBoard = async (entityId: string) => {
-    await db.from('board_tokens')
-      .delete()
-      .eq('campaign_id', campaignId)
-      .eq('entity_id', entityId)
+    await db.from('board_tokens').delete().eq('campaign_id', campaignId).eq('entity_id', entityId)
   }
 
   const onTokenMoved = async (entityId: string, x: number, y: number) => {
     await db.from('board_tokens')
       .update({ x, y, updated_at: new Date().toISOString() })
-      .eq('campaign_id', campaignId)
-      .eq('entity_id', entityId)
-  }
-
-  // ── Map upload ────────────────────────────────────────────────────────────
-
-  const uploadMap = async (file: File) => {
-    setMapUploading(true)
-    try {
-      const ext = file.name.split('.').pop() ?? 'png'
-      const path = `${campaignId}/${Date.now()}.${ext}`
-      const { error: uploadError } = await supabase.storage
-        .from('campaign-maps')
-        .upload(path, file, { upsert: true })
-      if (uploadError) throw uploadError
-      const { data: { publicUrl } } = supabase.storage
-        .from('campaign-maps')
-        .getPublicUrl(path)
-      await db.from('campaigns').update({ active_map_url: publicUrl }).eq('id', campaignId)
-      setActiveMapUrl(publicUrl)
-    } catch (err) {
-      console.error('Error subiendo mapa:', err)
-    } finally {
-      setMapUploading(false)
-    }
+      .eq('campaign_id', campaignId).eq('entity_id', entityId)
   }
 
   // ── Combat ───────────────────────────────────────────────────────────────
@@ -334,13 +210,11 @@ export function useDmTablero(campaignId: string) {
   const startCombat = async () => {
     const list: Combatant[] = []
 
-    // 1. Roll initiative for all players
     for (const c of characters) {
       const dexMod = Math.floor(((c.stats.dex ?? 10) - 10) / 2)
       const init = Math.ceil(Math.random() * 20) + dexMod
       list.push({ kind: 'player', characterId: c.id, initiative: init })
 
-      // Sync player tokens to board
       const maxHp = maxHpFor(c)
       await upsertTokenToBoard({
         id: c.id, name: c.name, kind: 'player',
@@ -349,7 +223,6 @@ export function useDmTablero(campaignId: string) {
       })
     }
 
-    // 2. Roll initiative for all NPCs currently placed on the board
     const npcTokens = boardTokens.filter(bt => bt.kind === 'npc')
     for (const bt of npcTokens) {
       const init = Math.ceil(Math.random() * 20)
@@ -383,9 +256,7 @@ export function useDmTablero(campaignId: string) {
   }
 
   const nextTurn = () => setCombatants(prev => {
-    if (prev.length > 0) {
-      setCurrentTurn(t => (t + 1) % prev.length)
-    }
+    if (prev.length > 0) setCurrentTurn(t => (t + 1) % prev.length)
     return prev
   })
 
@@ -442,14 +313,10 @@ export function useDmTablero(campaignId: string) {
         const npc: Npc = {
           id: crypto.randomUUID(),
           name: count > 1 ? `${monster.name} ${i + 1}` : monster.name,
-          currentHp: scaledHp,
-          maxHp: scaledHp,
+          currentHp: scaledHp, maxHp: scaledHp,
           initiative: Math.ceil(Math.random() * 20) + dexMod,
-          ac,
-          cr: monster.challenge_rating,
-          role: opts?.role,
-          portraitUrl: opts?.portraitUrl,
-          level: opts?.level,
+          ac, cr: monster.challenge_rating,
+          role: opts?.role, portraitUrl: opts?.portraitUrl, level: opts?.level,
         }
         return { kind: 'npc' as const, npc }
       })
@@ -480,7 +347,7 @@ export function useDmTablero(campaignId: string) {
     const maxHp = cn.max_hp ?? hp
     const existing = boardTokens.filter(bt => bt.kind === 'npc' && bt.label.replace(/ \d+$/, '') === cn.name).length
     const suffix = existing > 0 ? ` ${existing + 1}` : ''
-    const loot = ((cn.sheet_json as { loot?: NpcItem[] } | null)?.loot) ?? []
+    const loot = ((cn.sheet_json as { loot?: any[] } | null)?.loot) ?? []
     const npc: Npc = {
       id: crypto.randomUUID(),
       name: `${cn.name}${suffix}`,
@@ -503,6 +370,7 @@ export function useDmTablero(campaignId: string) {
   }
 
   const createCustomNpc = async () => {
+    const { npcFormName, npcFormHp, npcFormAc, npcFormAttack, npcFormDamage, npcFormType, npcFormItems, resetNpcForm } = npcForm
     if (!npcFormName.trim() || npcFormHp < 1) return
     const npc: Npc = {
       id: crypto.randomUUID(),
@@ -522,19 +390,8 @@ export function useDmTablero(campaignId: string) {
       })
     }
     await upsertTokenToBoard({ id: npc.id, name: npc.name, kind: 'npc', currentHp: npc.currentHp, maxHp: npc.maxHp, portraitUrl: null, isActive: false })
-    setShowNpcForm(false)
-    setNpcFormName(''); setNpcFormHp(10); setNpcFormAc(10)
-    setNpcFormAttack(0); setNpcFormDamage(''); setNpcFormType('humanoide'); setNpcFormItems([])
+    resetNpcForm()
   }
-
-  const addLootItem = () =>
-    setNpcFormItems(prev => [...prev, { id: crypto.randomUUID(), name: '', qty: 1 }])
-
-  const updateLootItem = (id: string, patch: Partial<NpcItem>) =>
-    setNpcFormItems(prev => prev.map(i => i.id === id ? { ...i, ...patch } : i))
-
-  const removeLootItem = (id: string) =>
-    setNpcFormItems(prev => prev.filter(i => i.id !== id))
 
   // ── Party long rest ───────────────────────────────────────────────────────
 
@@ -552,7 +409,7 @@ export function useDmTablero(campaignId: string) {
     setShowLongRestConfirm(false)
   }
 
-  // ── Attack Calculator & Target Updates ─────────────────────────────────────
+  // ── Derived tokens & combat entities ─────────────────────────────────────
 
   const tokens = useMemo((): any[] => {
     if (combatActive) {
@@ -571,15 +428,7 @@ export function useDmTablero(campaignId: string) {
         const char = bt.kind === 'player' ? characters.find(c => c.id === bt.entity_id) : null
         const maxHp = char ? maxHpFor(char) : bt.max_hp ?? 10
         const currentHp = char ? (localHp[char.id] ?? currentHpFor(char)) : bt.current_hp ?? maxHp
-        return {
-          id: bt.entity_id,
-          name: bt.label,
-          kind: bt.kind,
-          currentHp,
-          maxHp,
-          portraitUrl: char?.portrait_url ?? bt.portrait_url ?? null,
-          isActive: false,
-        }
+        return { id: bt.entity_id, name: bt.label, kind: bt.kind, currentHp, maxHp, portraitUrl: char?.portrait_url ?? bt.portrait_url ?? null, isActive: false }
       })
     }
   }, [combatActive, combatants, boardTokens, characters, currentTurn, localHp])
@@ -593,36 +442,21 @@ export function useDmTablero(campaignId: string) {
         const strMod = Math.floor(((ch.stats.str ?? 10) - 10) / 2)
         const dexMod = Math.floor(((ch.stats.dex ?? 10) - 10) / 2)
         const prof = Math.ceil(ch.level / 4) + 1
-        result.push({
-          id: ch.id,
-          name: ch.name,
-          ac: ch.armor_class ?? (10 + dexMod),
-          attackBonus: prof + Math.max(strMod, dexMod),
-        })
+        result.push({ id: ch.id, name: ch.name, ac: ch.armor_class ?? (10 + dexMod), attackBonus: prof + Math.max(strMod, dexMod) })
       } else {
         const npcCombatant = combatants.find(c => c.kind === 'npc' && (c as any).npc.id === t.id) as { kind: 'npc'; npc: Npc } | undefined
-        result.push({
-          id: t.id,
-          name: t.name,
-          ac: npcCombatant?.npc.ac ?? 10,
-          attackBonus: npcCombatant?.npc.attackBonus ?? 0
-        })
+        result.push({ id: t.id, name: t.name, ac: npcCombatant?.npc.ac ?? 10, attackBonus: npcCombatant?.npc.attackBonus ?? 0 })
       }
     }
     return result
   }, [tokens, characters, combatants])
 
+  // ── Realtime broadcast ────────────────────────────────────────────────────
+
   const handleSelectionChange = (state: any) => {
     if (channelRef.current) {
       const attackerName = tokens.find(t => t.id === state.attackFrom)?.name || 'GM'
-      channelRef.current.send({
-        type: 'broadcast',
-        event: 'dm-targeting-updated',
-        payload: {
-          ...state,
-          attackerName
-        }
-      })
+      channelRef.current.send({ type: 'broadcast', event: 'dm-targeting-updated', payload: { ...state, attackerName } })
     }
   }
 
@@ -644,8 +478,8 @@ export function useDmTablero(campaignId: string) {
       } else {
         const npcCombatant = combatants.find(c => c.kind === 'npc' && (c as any).npc.id === targetId) as { kind: 'npc'; npc: Npc } | undefined
         if (npcCombatant) {
-          const nextHp = isHealing 
-            ? Math.min(npcCombatant.npc.maxHp ?? 100, npcCombatant.npc.currentHp + damage) 
+          const nextHp = isHealing
+            ? Math.min(npcCombatant.npc.maxHp ?? 100, npcCombatant.npc.currentHp + damage)
             : Math.max(0, npcCombatant.npc.currentHp - damage)
           updateNpc(npcCombatant.npc.id, { currentHp: nextHp })
         }
@@ -657,47 +491,27 @@ export function useDmTablero(campaignId: string) {
       : allCombatEntities.find(e => e.id === targetId)
     if (attacker && target) {
       setCombatLog(prev => [{
-        id: crypto.randomUUID(),
-        attackerName: attacker.name,
-        targetName: target.name,
-        hit, damage, isHealing,
+        id: crypto.randomUUID(), attackerName: attacker.name, targetName: target.name, hit, damage, isHealing,
       }, ...prev].slice(0, 30))
     }
 
-    // Deduct spell slot if a spell level > 0 was cast
     if (spellLevel && spellLevel > 0) {
       const attackerChar = characters.find(c => c.id === attackerId)
       if (attackerChar) {
         const slotsUsed = attackerChar.sheet_json.spell_slots_used ?? {}
         const currentUsed = slotsUsed[String(spellLevel)] ?? 0
-        const newSheet = {
-          ...attackerChar.sheet_json,
-          spell_slots_used: {
-            ...slotsUsed,
-            [String(spellLevel)]: currentUsed + 1
-          }
-        }
-        
-        // Optimistic query data update
+        const newSheet = { ...attackerChar.sheet_json, spell_slots_used: { ...slotsUsed, [String(spellLevel)]: currentUsed + 1 } }
         queryClient.setQueryData(['campaign-characters', campaignId], (old: any) => {
           if (!Array.isArray(old)) return old
           return old.map(c => c.id === attackerId ? { ...c, sheet_json: newSheet } : c)
         })
-
-        // Update database
-        await supabase
-          .from('characters')
-          .update({ sheet_json: newSheet as any })
-          .eq('id', attackerId)
+        await supabase.from('characters').update({ sheet_json: newSheet as any }).eq('id', attackerId)
       }
     }
   }, [characters, localHp, combatants, allCombatEntities, campaignId, queryClient])
 
-  // Broadcast sync logic on states updates
   const onAttackConfirmRef = useRef<any>(null)
-  useEffect(() => {
-    onAttackConfirmRef.current = handleAttackConfirm
-  }, [handleAttackConfirm])
+  useEffect(() => { onAttackConfirmRef.current = handleAttackConfirm }, [handleAttackConfirm])
 
   const combatActiveRef = useRef(combatActive)
   const combatantsRef = useRef(combatants)
@@ -705,11 +519,7 @@ export function useDmTablero(campaignId: string) {
 
   const broadcastCombatState = useCallback((active: boolean, list: Combatant[], turn: number) => {
     if (channelRef.current) {
-      channelRef.current.send({
-        type: 'broadcast',
-        event: 'combat-state-sync',
-        payload: { combatActive: active, combatants: list, currentTurn: turn }
-      })
+      channelRef.current.send({ type: 'broadcast', event: 'combat-state-sync', payload: { combatActive: active, combatants: list, currentTurn: turn } })
     }
   }, [])
 
@@ -735,11 +545,7 @@ export function useDmTablero(campaignId: string) {
         channel.send({
           type: 'broadcast',
           event: 'combat-state-sync',
-          payload: {
-            combatActive: combatActiveRef.current,
-            combatants: combatantsRef.current,
-            currentTurn: currentTurnRef.current
-          }
+          payload: { combatActive: combatActiveRef.current, combatants: combatantsRef.current, currentTurn: currentTurnRef.current }
         })
       })
       .subscribe()
@@ -754,80 +560,37 @@ export function useDmTablero(campaignId: string) {
     combatActive,
     combatants,
     currentTurn,
-    npcInput,
-    setNpcInput,
-    activeMapUrl,
+    npcInput, setNpcInput,
     boardTokens,
     externalPositions,
-    mapUploading,
-    mapsList,
-    loadingMaps,
-    showMapSelector,
-    setShowMapSelector,
-    showBestiary,
-    setShowBestiary,
-    bestiarySearch,
-    setBestiarySearch,
-    bestiaryQty,
-    setBestiaryQty,
+    showBestiary, setShowBestiary,
+    bestiarySearch, setBestiarySearch,
+    bestiaryQty, setBestiaryQty,
     addingMonster,
-    showCampaignNpcs,
-    setShowCampaignNpcs,
-    campaignNpcSearch,
-    setCampaignNpcSearch,
-    showNpcForm,
-    setShowNpcForm,
-    npcFormName,
-    setNpcFormName,
-    npcFormHp,
-    setNpcFormHp,
-    npcFormAc,
-    setNpcFormAc,
-    npcFormAttack,
-    setNpcFormAttack,
-    npcFormDamage,
-    setNpcFormDamage,
-    npcFormType,
-    setNpcFormType,
-    npcFormItems,
-    editingHp,
-    setEditingHp,
-    conditionPickerFor,
-    setConditionPickerFor,
-    showLongRestConfirm,
-    setShowLongRestConfirm,
-    showNpcBar,
-    setShowNpcBar,
+    showCampaignNpcs, setShowCampaignNpcs,
+    campaignNpcSearch, setCampaignNpcSearch,
+    editingHp, setEditingHp,
+    conditionPickerFor, setConditionPickerFor,
+    showLongRestConfirm, setShowLongRestConfirm,
+    showNpcBar, setShowNpcBar,
     combatLog,
-    showLog,
-    setShowLog,
+    showLog, setShowLog,
     externalTargeting,
-    fetchMaps,
-    activateMap,
-    deleteMap,
     characters,
     filteredMonsters,
     filteredCampaignNpcs,
     patchCharacter,
     adjustCharacterHp,
     onTokenMoved,
-    uploadMap,
-    startCombat,
-    endCombat,
-    nextTurn,
-    addNpc,
-    updateNpc,
-    removeNpc,
-    addNpcFromMonster,
-    addNpcFromCampaign,
-    createCustomNpc,
-    addLootItem,
-    updateLootItem,
-    removeLootItem,
+    startCombat, endCombat, nextTurn,
+    addNpc, updateNpc, removeNpc,
+    addNpcFromMonster, addNpcFromCampaign, createCustomNpc,
     partyLongRest,
     handleAttackConfirm,
     tokens,
     allCombatEntities,
     handleSelectionChange,
+    ...npcForm,
+    ...boardMaps,
   }
 }

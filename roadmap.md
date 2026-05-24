@@ -67,6 +67,17 @@ Sincronización de dados en mesa integrada al tablero de combate del DM (documen
 
 ## 🗺 Features más grandes (largo plazo)
 
+### Generador Procedural de Encuentros
+- ✅ Arquetipos con pool de monstruos SRD (30 arquetipos, 6 entornos)
+- ✅ Multi-select de arquetipos con chips y dropdown
+- ✅ Tabla de composición editable con roles (Melee/Distancia/Magia/Soporte) y colores
+- ✅ Cards individuales por criatura con retrato, stats, habilidades especiales con tooltip
+- ✅ Nivel por unidad (independiente entre individuos de la misma especie)
+- ✅ XP y HP escalados por nivel; dificultad pre-genera nivel relativo al grupo
+- ✅ Botín procedural ajustable (monedas + ítems)
+- ✅ Spawn al tablero con rol, retrato y nivel persistidos en BD
+- ✅ Rol y nivel visibles en tokens de combate y panel de NPCs
+
 ### Mapas de sesión (Combat Grid, Zoom/Pan & AoE Templates)
 - ✅ Subir imagen como mapa visible por el party.
 - ✅ Solo el DM puede cambiarla.

@@ -5,114 +5,12 @@ import { useState, useMemo } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { dndApi } from '../../../lib/dnd-api'
 import { getItemIconUrl } from '../../../lib/item-icons'
+import { SHOPS, type ShopId } from '../../../lib/shops-data'
+import { type CostUnit, type Currency, UNIT_MAP, UNIT_LABEL, toCp, formatCost, getResaleValue } from '../../../lib/currency'
 
 export const Route = createFileRoute('/_authenticated/campaigns/$campaignId/comercio')({
   component: Comercio,
 })
-
-// ── Specialty Shops ──────────────────────────────────────────────────────────
-
-interface ShopDef {
-  id: 'armeria' | 'provisiones' | 'alquimia' | 'establo' | 'artesanos'
-  label: string
-  icon: string
-  flavor: string
-  categories: readonly string[]
-  filter?: (name: string) => boolean
-}
-
-const SHOPS: readonly ShopDef[] = [
-  {
-    id: 'armeria',
-    label: 'Armería',
-    icon: '⚔️',
-    flavor: 'El martilleo de la forja resuena mientras observas hileras de espadas templadas, escudos de acero y cotas de malla relucientes.',
-    categories: ['weapon', 'armor'],
-  },
-  {
-    id: 'provisiones',
-    label: 'Provisiones',
-    icon: '🎒',
-    flavor: 'Cuerdas de cáñamo, antorchas, raciones secas y todo el equipo esencial que un explorador necesita para adentrarse en las ruinas.',
-    categories: ['adventuring-gear'],
-    filter: (name: string) => !isMagicOrAlchemy(name),
-  },
-  {
-    id: 'alquimia',
-    label: 'Alquimia y Magia',
-    icon: '🧪',
-    flavor: 'Frascos con líquidos luminiscentes, ungüentos extraños y pergaminos cargados con leves rastros de energía arcana.',
-    categories: ['adventuring-gear'],
-    filter: (name: string) => isMagicOrAlchemy(name),
-  },
-  {
-    id: 'establo',
-    label: 'Establo y Transportes',
-    icon: '🐴',
-    flavor: 'El olor a heno fresco y el relinchar de corceles. Aquí puedes adquirir caballos, mulas, monturas y carruajes de viaje.',
-    categories: ['mounts-and-other-animals', 'tack-harness-and-drawn-vehicles'],
-  },
-  {
-    id: 'artesanos',
-    label: 'Gremio de Artesanos',
-    icon: '🛠️',
-    flavor: 'Herramientas de precisión para toda clase de oficios, desde ganzúas de ladrón hasta instrumentos musicales de fina madera.',
-    categories: ['tools'],
-  },
-]
-
-
-type ShopId = typeof SHOPS[number]['id']
-
-function isMagicOrAlchemy(name: string): boolean {
-  const n = name.toLowerCase()
-  return (
-    n.includes('potion') ||
-    n.includes('scroll') ||
-    n.includes('oil') ||
-    n.includes('vial') ||
-    n.includes('acid') ||
-    n.includes('poison') ||
-    n.includes('antitoxin') ||
-    n.includes('ink') ||
-    n.includes('alchemist') ||
-    n.includes('herbalism') ||
-    n.includes('holy water') ||
-    n.includes('perfume')
-  )
-}
-
-// ── Currency Helpers ──────────────────────────────────────────────────────────
-
-type CostUnit = 'gp' | 'sp' | 'cp'
-type CurrencyKey = 'gold' | 'silver' | 'copper'
-type Currency = { gold: number; silver: number; copper: number }
-
-const UNIT_MAP: Record<CostUnit, CurrencyKey> = { gp: 'gold', sp: 'silver', cp: 'copper' }
-const UNIT_LABEL: Record<CostUnit, string> = { gp: 'MO', sp: 'MP', cp: 'MC' }
-
-function toCp(qty: number, unit: CostUnit) {
-  if (unit === 'gp') return qty * 100
-  if (unit === 'sp') return qty * 10
-  return qty
-}
-
-function formatCost(qty: number, unit: string) {
-  return `${qty} ${UNIT_LABEL[unit as CostUnit] ?? unit.toUpperCase()}`
-}
-
-function getResaleValue(costQty: number, costUnit: CostUnit): { quantity: number; unit: CostUnit } {
-  const totalCp = toCp(costQty, costUnit)
-  const resaleCp = Math.max(1, Math.floor(totalCp / 2))
-  
-  if (resaleCp >= 100 && resaleCp % 100 === 0) {
-    return { quantity: resaleCp / 100, unit: 'gp' }
-  }
-  if (resaleCp >= 10 && resaleCp % 10 === 0) {
-    return { quantity: resaleCp / 10, unit: 'sp' }
-  }
-  return { quantity: resaleCp, unit: 'cp' }
-}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
