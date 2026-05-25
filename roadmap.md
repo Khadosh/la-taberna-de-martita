@@ -23,6 +23,7 @@
 | Generador de PNJs persistentes | ✅ |
 | Bestiario + Spellbook | ✅ |
 | Taberna y Comercio (tiendas y consumo) | ✅ |
+| Generador de objetos custom con imagen IA | ✅ |
 | Tirador de dados flotante | ✅ |
 | Visual overhaul: papiro, cuero, latón, wax seals | ✅ |
 | Realtime sync (HP, condiciones) | ✅ |
