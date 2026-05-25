@@ -12,8 +12,83 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
+      board_tokens: {
+        Row: {
+          campaign_id: string
+          current_hp: number | null
+          entity_id: string
+          kind: string
+          label: string
+          max_hp: number | null
+          npc_level: number | null
+          portrait_url: string | null
+          updated_at: string
+          x: number
+          y: number
+        }
+        Insert: {
+          campaign_id: string
+          current_hp?: number | null
+          entity_id: string
+          kind: string
+          label?: string
+          max_hp?: number | null
+          npc_level?: number | null
+          portrait_url?: string | null
+          updated_at?: string
+          x?: number
+          y?: number
+        }
+        Update: {
+          campaign_id?: string
+          current_hp?: number | null
+          entity_id?: string
+          kind?: string
+          label?: string
+          max_hp?: number | null
+          npc_level?: number | null
+          portrait_url?: string | null
+          updated_at?: string
+          x?: number
+          y?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_tokens_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_players: {
         Row: {
           campaign_id: string
@@ -49,18 +124,21 @@ export type Database = {
       }
       campaigns: {
         Row: {
+          active_map_url: string | null
           created_at: string | null
           dm_id: string
           id: string
           name: string
         }
         Insert: {
+          active_map_url?: string | null
           created_at?: string | null
           dm_id: string
           id?: string
           name: string
         }
         Update: {
+          active_map_url?: string | null
           created_at?: string | null
           dm_id?: string
           id?: string
@@ -80,6 +158,7 @@ export type Database = {
         Row: {
           character_id: string
           created_at: string | null
+          custom_item_id: string | null
           id: string
           name: string
           notes: string | null
@@ -89,6 +168,7 @@ export type Database = {
         Insert: {
           character_id: string
           created_at?: string | null
+          custom_item_id?: string | null
           id?: string
           name: string
           notes?: string | null
@@ -98,6 +178,7 @@ export type Database = {
         Update: {
           character_id?: string
           created_at?: string | null
+          custom_item_id?: string | null
           id?: string
           name?: string
           notes?: string | null
@@ -110,6 +191,13 @@ export type Database = {
             columns: ["character_id"]
             isOneToOne: false
             referencedRelation: "characters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "character_inventory_custom_item_id_fkey"
+            columns: ["custom_item_id"]
+            isOneToOne: false
+            referencedRelation: "custom_items"
             referencedColumns: ["id"]
           },
         ]
@@ -185,6 +273,56 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      custom_items: {
+        Row: {
+          campaign_id: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          image_url: string | null
+          item_type: string
+          name: string
+          properties: Json
+          rarity: string
+          weight_lbs: number
+        }
+        Insert: {
+          campaign_id: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          item_type?: string
+          name: string
+          properties?: Json
+          rarity?: string
+          weight_lbs?: number
+        }
+        Update: {
+          campaign_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          item_type?: string
+          name?: string
+          properties?: Json
+          rarity?: string
+          weight_lbs?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "custom_items_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
             referencedColumns: ["id"]
           },
         ]
@@ -510,6 +648,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },

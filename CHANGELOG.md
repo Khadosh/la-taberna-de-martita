@@ -7,9 +7,15 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 ## [Unreleased]
 
 ### feat
+- **Generador de objetos custom**: formulario unificado en la pestaña "Creaciones" de Comercio (solo GM). Soporta nombre, descripción, tipo, rareza, bonus de ataque/CA, modificadores de stats, resistencias al daño, hechizos con cargas y recarga, bonus de velocidad, regeneración de HP, bonus de HP máximo y objetos malditos. Integrado a `character_inventory` con FK `custom_item_id`.
+- **Imagen en objetos custom**: soporte para subir imagen o generarla con IA (fal.ai FLUX). La URL temporal se convierte a base64 en el cliente antes de guardar para persistencia indefinida en la miniatura y el panel de detalle.
+- **Asignación de objetos a personajes**: modal de selección de personaje desde el panel de Creaciones; requiere política RLS `inventory_all_dm` para que el GM pueda escribir en inventarios ajenos.
+- Migración `custom_items`: tabla con propiedades jsonb (bonuses, hechizos, maldición, etc.) y FK en `character_inventory`.
+- Migración `inventory_dm_policy`: política RLS que permite al DM modificar el inventario de cualquier personaje de su campaña.
 - **Generador Procedural de Encuentros**: rediseño de selectores e incorporación de 38 íconos SVG temáticos para las 8 zonas y los 30 arquetipos de encuentros.
 - **Dropdown de Zona en Rejilla**: selector de Zona rediseñado como un menú flotante de cuadrícula con marcos circulares, íconos y descripciones temáticas de cada entorno.
 - **Tarjetas de Monstruo Clickables**: eliminación del botón "editar" en las tarjetas de monstruo, permitiendo abrir el modal de edición haciendo clic en cualquier parte de la tarjeta y mejorando la propagación de eventos en los botones de nivel.
+- **Generador Procedural de Encuentros**: generación automática de encuentros D&D 5e por arquetipo, zona y dificultad. Multi-select de arquetipos con chips + dropdown. Tabla de composición editable con roles (Melee/Distancia/Magia/Soporte) y colores. Cards individuales por criatura con retrato, stats (STR/DEX/CON/INT/WIS/CHA), velocidad, habilidades especiales con tooltip, y nivel individual. XP y HP escalados por nivel. Botín procedural ajustable. Spawn al tablero con rol, retrato y nivel persistidos en `board_tokens.npc_level`.
 - **Nivel por unidad en encuentros**: cada criatura individual en el generador puede tener su propio nivel (ya no afecta a toda la especie al modificarlo). El nivel pre-generado se basa en el promedio de nivel del grupo ± offset según dificultad.
 - **Rol y nivel en tokens de combate**: badge circular con letra (M/D/G/S) inline con el nombre; nivel (Nv.N) visible en el token y en el card del panel derecho.
 - Migración `board_tokens.npc_level`: columna `smallint` en Supabase para persistir el nivel del NPC entre sesiones de combate.

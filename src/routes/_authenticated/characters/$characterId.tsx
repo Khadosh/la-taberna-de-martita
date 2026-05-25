@@ -84,10 +84,16 @@ function CharacterSheet() {
     queryKey: ['inventory', characterId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('character_inventory').select('*')
-        .eq('character_id', characterId).order('created_at', { ascending: true })
+        .from('character_inventory')
+        .select('*, custom_items(image_url)')
+        .eq('character_id', characterId)
+        .order('created_at', { ascending: true })
       if (error) throw error
-      return data
+      return data.map(item => ({
+        ...item,
+        image_url: (item.custom_items as { image_url: string | null } | null)?.image_url ?? undefined,
+        custom_items: undefined,
+      }))
     },
     enabled: !!character,
   })

@@ -78,3 +78,15 @@ export function D20Icon(props: React.SVGProps<SVGSVGElement>) {
     </svg>
   )
 }
+
+export function ChestIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
+      <rect x="2" y="10" width="20" height="12" rx="2" />
+      <path d="M2 10a4 4 0 0 1 4-4h12a4 4 0 0 1 4 4" />
+      <path d="M2 10h20" />
+      <path d="M10 16h4" />
+      <circle cx="12" cy="16" r="1" fill="currentColor" />
+    </svg>
+  )
+}

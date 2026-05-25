@@ -7,6 +7,7 @@ import { dndApi } from '../../../lib/dnd-api'
 import { getItemIconUrl } from '../../../lib/item-icons'
 import { SHOPS, type ShopId } from '../../../lib/shops-data'
 import { type CostUnit, type Currency, UNIT_MAP, UNIT_LABEL, toCp, formatCost, getResaleValue } from '../../../lib/currency'
+import { CustomItemsTab } from '../../../components/campaigns/custom-items-tab'
 
 export const Route = createFileRoute('/_authenticated/campaigns/$campaignId/comercio')({
   component: Comercio,
@@ -21,7 +22,7 @@ type Character = {
   sheet_json: { currency?: Currency }
 }
 
-type TabMode = 'comprar' | 'vender'
+type TabMode = 'comprar' | 'vender' | 'creaciones'
 
 function Comercio() {
   const { campaignId } = Route.useParams()
@@ -259,6 +260,18 @@ function Comercio() {
         >
           💰 Vender Botín
         </button>
+        {isGm && (
+          <button
+            onClick={() => { setTabMode('creaciones'); setError(null); setSuccessMsg(null); setSelected(null) }}
+            className={`px-4 py-2 text-sm font-display tracking-wide uppercase transition-all border-b-2 -mb-[1px] ${
+              tabMode === 'creaciones'
+                ? 'border-parchment-sienna text-parchment-sienna font-bold'
+                : 'border-transparent text-stone-500 hover:text-stone-800'
+            }`}
+          >
+            ✦ Creaciones
+          </button>
+        )}
       </div>
 
       {/* ── BUY TAB MODE ──────────────────────────────────────────────────── */}
@@ -553,6 +566,15 @@ function Comercio() {
             </p>
           )}
         </div>
+      )}
+
+      {/* ── CREACIONES TAB (GM only) ─────────────────────────────────────────── */}
+      {tabMode === 'creaciones' && (
+        <CustomItemsTab
+          campaignId={campaignId}
+          userId={session.user.id}
+          isDm={isGm}
+        />
       )}
     </div>
     </div>

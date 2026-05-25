@@ -197,6 +197,7 @@ export const dndApi = {
   monster: (i: string) => get2014<MonsterDetail>(`/monsters/${i}`),
   backgroundList: () => get2014<{ results: ApiRef[] }>('/backgrounds'),
   background: (i: string) => get2014<BackgroundDetail>(`/backgrounds/${i}`),
+  allSpells: () => get<{ count: number; results: ApiRef[] }>('/spells'),
 }
 
 export const dndKeys = {
@@ -218,6 +219,7 @@ export const dndKeys = {
   equipmentCategory: (i: string) => ['dnd', 'equipment-category', i] as const,
   monsters: ['dnd', 'monsters'] as const,
   monster: (i: string) => ['dnd', 'monsters', i] as const,
+  allSpells: ['dnd', 'spells'] as const,
   backgrounds: ['dnd', 'backgrounds'] as const,
   background: (i: string) => ['dnd', 'backgrounds', i] as const,
 }
