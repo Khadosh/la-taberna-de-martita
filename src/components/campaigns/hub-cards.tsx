@@ -4,6 +4,7 @@ import { getSpellSlots } from '../../lib/dnd-constants'
 import { CLASS_ICONS } from '../../lib/class-meta'
 import type { Tables } from '../../lib/database.types'
 import { Frame, Divider, BlockHeader, StatBox, InfoBox } from './hub-primitives'
+import { BACKGROUNDS } from '../../lib/dnd-backgrounds'
 
 export type Character = {
   id: string
@@ -21,6 +22,8 @@ export type Character = {
     hit_die?: number
     skill_proficiencies?: string[]
     currency?: { gold: number; silver: number; copper: number }
+    background?: string
+    expertise?: string[]
   }
   profiles?: { username: string | null } | null
 }
@@ -168,7 +171,20 @@ export function CharacterCard({ character, isOwn }: { character: Character; isOw
   const currentHp = character.current_hp ?? maxHp
   const hpPct = Math.max(0, Math.min((currentHp / maxHp) * 100, 100))
   const ac = character.armor_class ?? (10 + dexMod)
-  const passivePerception = 10 + wisMod + (sheet.skill_proficiencies?.includes('perception') ? prof : 0)
+  const bgKey = sheet.background
+  const bgDetail = bgKey ? BACKGROUNDS[bgKey] : null
+  const bgSkills = bgDetail?.skills?.map(s => s.toLowerCase().replace(/\s+/g, '-')) ?? []
+
+  const hasPerceptionProf =
+    (sheet.skill_proficiencies ?? []).includes('skill-perception') ||
+    (sheet.skill_proficiencies ?? []).includes('perception') ||
+    bgSkills.includes('perception')
+
+  const hasPerceptionExpertise =
+    (sheet.expertise ?? []).includes('skill-perception') ||
+    (sheet.expertise ?? []).includes('perception')
+
+  const passivePerception = 10 + wisMod + (hasPerceptionProf ? prof : 0) + (hasPerceptionExpertise ? prof : 0)
   const gaco = prof + Math.max(strMod, dexMod)
 
   const savings = (sheet.saving_throws ?? [])

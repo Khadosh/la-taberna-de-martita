@@ -281,6 +281,7 @@ function CharacterSheet() {
                     expertise={sheet.expertise ?? []}
                     weaponProficiencies={sheet.weapon_proficiencies ?? []}
                     profBonus={profBonus}
+                    backgroundKey={sheet.background}
                     setModal={setModal}
                   />
                 )}

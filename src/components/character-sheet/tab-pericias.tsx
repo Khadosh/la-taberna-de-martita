@@ -58,7 +58,13 @@ export function TabPericias({
 }: TabPericiasProps) {
   const [openProf, setOpenProf] = useState<string | null>(null)
   
-  const profSet = new Set(skillProficiencies.map(p => p.replace(/^skill-/, '')))
+  const bgDetail = backgroundKey ? BACKGROUNDS[backgroundKey] : null
+  const bgSkills = bgDetail?.skills?.map(s => s.toLowerCase().replace(/\s+/g, '-')) ?? []
+
+  const profSet = new Set([
+    ...skillProficiencies.map(p => p.replace(/^skill-/, '')),
+    ...bgSkills
+  ])
   const expertiseSet = new Set(expertise.map(e => e.replace(/^skill-/, '')))
 
   // Group skills by ability
@@ -83,7 +89,6 @@ export function TabPericias({
   const thievesToolsExpertise = expertiseSet.has('thieves-tools')
   const thievesToolsTotal = dexMod + profBonus + (thievesToolsExpertise ? profBonus : 0)
 
-  const bgDetail = backgroundKey ? BACKGROUNDS[backgroundKey] : null
   const bgTool = bgDetail?.tool
 
   const weaponProfsFiltered = weaponProficiencies.filter(p => p !== 'thieves-tools')
@@ -170,7 +175,7 @@ export function TabPericias({
                   </span>
                 </div>
               )}
-              {bgTool && (
+              {bgTool && (!isRogue || !bgTool.toLowerCase().includes('ladrón')) && (
                 <div className="flex items-center gap-2 px-2 py-1 bg-stone-100/20 border-l-2 border-stone-400">
                   <svg width="8" height="8" viewBox="0 0 8 8" fill="#57534e" className="shrink-0">
                     <path d="M4 0L8 4L4 8L0 4Z"/>
