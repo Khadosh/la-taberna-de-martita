@@ -1,13 +1,9 @@
-/**
- * Tab "Pericias": todos los skills agrupados por stat con modificador calculado.
- * Inspirado en el panel izquierdo de BG3.
- */
 import { useState } from 'react'
 import { ABILITY_LABELS } from '../../lib/dnd-api'
 import { SheetLabel, SheetRow } from './sheet-primitives'
 import type { InfoModalData } from './types'
+import { BACKGROUNDS } from '../../lib/dnd-backgrounds'
 
-// D&D 5e: skill → governing ability
 const SKILL_TO_ABILITY: Record<string, string> = {
   acrobatics: 'dex', 'animal-handling': 'wis', arcana: 'int',
   athletics: 'str', deception: 'cha', history: 'int',
@@ -32,12 +28,13 @@ const ABILITY_ORDER = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const
 interface TabPericiasProps {
   stats: Record<string, number>
   skillProficiencies: string[]
+  expertise: string[]
   weaponProficiencies: string[]
   profBonus: number
+  backgroundKey?: string
   setModal: (m: InfoModalData) => void
 }
 
-// D&D 5e SRD — armas incluidas en cada categoría amplia
 const PROF_WEAPONS: Record<string, string[]> = {
   'simple-weapons': [
     'Club', 'Dagger', 'Greatclub', 'Handaxe', 'Javelin',
@@ -57,11 +54,12 @@ function abilityMod(score: number) { return Math.floor((score - 10) / 2) }
 function fmtMod(m: number) { return m >= 0 ? `+${m}` : String(m) }
 
 export function TabPericias({
-  stats, skillProficiencies, weaponProficiencies, profBonus,
+  stats, skillProficiencies, expertise, weaponProficiencies, profBonus, backgroundKey
 }: TabPericiasProps) {
   const [openProf, setOpenProf] = useState<string | null>(null)
-  // Normalize proficiency keys (may come as "skill-acrobatics" or "acrobatics")
+  
   const profSet = new Set(skillProficiencies.map(p => p.replace(/^skill-/, '')))
+  const expertiseSet = new Set(expertise.map(e => e.replace(/^skill-/, '')))
 
   // Group skills by ability
   const byAbility = ABILITY_ORDER.map(ability => {
@@ -71,11 +69,24 @@ export function TabPericias({
         const abilityScore = stats[ability] ?? 10
         const mod = abilityMod(abilityScore)
         const hasProficiency = profSet.has(skillIndex)
-        const total = mod + (hasProficiency ? profBonus : 0)
-        return { skillIndex, mod: total, hasProficiency }
+        const hasExpertise = expertiseSet.has(skillIndex)
+        const total = mod + (hasProficiency ? profBonus : 0) + (hasExpertise ? profBonus : 0)
+        return { skillIndex, mod: total, hasProficiency, hasExpertise }
       })
     return { ability, score: stats[ability] ?? 10, skills }
   })
+
+  // Weapons and Tools lists
+  const isRogue = weaponProficiencies.includes('thieves-tools')
+  const dexScore = stats.dex ?? 10
+  const dexMod = abilityMod(dexScore)
+  const thievesToolsExpertise = expertiseSet.has('thieves-tools')
+  const thievesToolsTotal = dexMod + profBonus + (thievesToolsExpertise ? profBonus : 0)
+
+  const bgDetail = backgroundKey ? BACKGROUNDS[backgroundKey] : null
+  const bgTool = bgDetail?.tool
+
+  const weaponProfsFiltered = weaponProficiencies.filter(p => p !== 'thieves-tools')
 
   return (
     <div>
@@ -86,14 +97,23 @@ export function TabPericias({
           <div className="mt-3 space-y-4">
             {byAbility.map(({ ability, score, skills }) => (
               <div key={ability}>
-                <p className="text-[10px] font-serif uppercase tracking-widest pb-0.5 mb-2" style={{ color: '#6b4c24', borderBottom: '1px solid rgba(109,85,48,0.35)' }}>
+                <p className="text-[10px] font-serif uppercase tracking-widest pb-0.5 mb-2 font-semibold" style={{ color: '#6b4c24', borderBottom: '1px solid rgba(109,85,48,0.35)' }}>
                   {ABILITY_LABELS[ability]} ({fmtMod(abilityMod(score))})
                 </p>
                 <div className="space-y-0.5">
-                  {skills.map(({ skillIndex, mod, hasProficiency }) => (
+                  {skills.map(({ skillIndex, mod, hasProficiency, hasExpertise }) => (
                     <div key={skillIndex} className="flex items-center gap-2 px-2 py-1"
-                      style={hasProficiency ? { background: 'rgba(180,100,15,0.07)', borderLeft: '2px solid rgba(180,100,15,0.5)' } : {}}>
-                      {hasProficiency ? (
+                      style={hasExpertise ? { background: 'rgba(180,100,15,0.11)', borderLeft: '2px solid rgba(180,100,15,0.75)' } : hasProficiency ? { background: 'rgba(180,100,15,0.04)', borderLeft: '2px solid rgba(180,100,15,0.35)' } : {}}>
+                      {hasExpertise ? (
+                        <div className="flex gap-0.5 shrink-0">
+                          <svg width="8" height="8" viewBox="0 0 8 8" fill="#b45309">
+                            <path d="M4 0L8 4L4 8L0 4Z"/>
+                          </svg>
+                          <svg width="8" height="8" viewBox="0 0 8 8" fill="#b45309">
+                            <path d="M4 0L8 4L4 8L0 4Z"/>
+                          </svg>
+                        </div>
+                      ) : hasProficiency ? (
                         <svg width="8" height="8" viewBox="0 0 8 8" fill="#b45309" className="shrink-0">
                           <path d="M4 0L8 4L4 8L0 4Z"/>
                         </svg>
@@ -102,10 +122,11 @@ export function TabPericias({
                           <circle cx="4" cy="4" r="2.5"/>
                         </svg>
                       )}
-                      <span className="text-xs font-serif flex-1" style={{ color: hasProficiency ? '#4a2e0c' : '#57534e' }}>
+                      <span className="text-xs font-serif flex-1" style={{ color: hasExpertise ? '#3f1a04' : hasProficiency ? '#4a2e0c' : '#57534e' }}>
                         {SKILL_NAMES_ES[skillIndex] ?? skillIndex}
+                        {hasExpertise && <span className="text-[9px] font-sans font-semibold text-amber-700 ml-1.5 uppercase tracking-wide">Especialista</span>}
                       </span>
-                      <span className="text-xs font-mono font-bold" style={{ color: hasProficiency ? '#92400e' : '#78716c' }}>
+                      <span className="text-xs font-mono font-bold" style={{ color: hasExpertise ? '#b45309' : hasProficiency ? '#92400e' : '#78716c' }}>
                         {fmtMod(mod)}
                       </span>
                     </div>
@@ -117,20 +138,70 @@ export function TabPericias({
         </div>
       </SheetRow>
 
+      {/* Tool Proficiencies */}
+      {(isRogue || bgTool) && (
+        <SheetRow className="border-t border-stone-500/30">
+          <div className="flex-1 p-4">
+            <SheetLabel>Competencia con Herramientas</SheetLabel>
+            <div className="mt-3 space-y-2">
+              {isRogue && (
+                <div className="flex items-center gap-2 px-2 py-1"
+                  style={thievesToolsExpertise ? { background: 'rgba(180,100,15,0.11)', borderLeft: '2px solid rgba(180,100,15,0.75)' } : { background: 'rgba(180,100,15,0.04)', borderLeft: '2px solid rgba(180,100,15,0.35)' }}>
+                  {thievesToolsExpertise ? (
+                    <div className="flex gap-0.5 shrink-0">
+                      <svg width="8" height="8" viewBox="0 0 8 8" fill="#b45309">
+                        <path d="M4 0L8 4L4 8L0 4Z"/>
+                      </svg>
+                      <svg width="8" height="8" viewBox="0 0 8 8" fill="#b45309">
+                        <path d="M4 0L8 4L4 8L0 4Z"/>
+                      </svg>
+                    </div>
+                  ) : (
+                    <svg width="8" height="8" viewBox="0 0 8 8" fill="#b45309" className="shrink-0">
+                      <path d="M4 0L8 4L4 8L0 4Z"/>
+                    </svg>
+                  )}
+                  <span className="text-xs font-serif flex-1 text-stone-800">
+                    Herramientas de ladrón (DES)
+                    {thievesToolsExpertise && <span className="text-[9px] font-sans font-semibold text-amber-700 ml-1.5 uppercase tracking-wide">Especialista</span>}
+                  </span>
+                  <span className="text-xs font-mono font-bold text-amber-800">
+                    {fmtMod(thievesToolsTotal)}
+                  </span>
+                </div>
+              )}
+              {bgTool && (
+                <div className="flex items-center gap-2 px-2 py-1 bg-stone-100/20 border-l-2 border-stone-400">
+                  <svg width="8" height="8" viewBox="0 0 8 8" fill="#57534e" className="shrink-0">
+                    <path d="M4 0L8 4L4 8L0 4Z"/>
+                  </svg>
+                  <span className="text-xs font-serif flex-1 text-stone-600">
+                    {bgTool} <span className="text-[10px] text-stone-500 font-sans italic">(Trasfondo)</span>
+                  </span>
+                  <span className="text-xs font-mono font-bold text-stone-500">
+                    {fmtMod(profBonus)}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </SheetRow>
+      )}
+
       {/* Weapon proficiencies */}
-      {weaponProficiencies.length > 0 && (
+      {weaponProfsFiltered.length > 0 && (
         <SheetRow className="border-t border-stone-500/30">
           <div className="flex-1 p-4">
             <SheetLabel>Competencias con armas</SheetLabel>
             <div className="flex flex-wrap gap-1.5 mt-3">
-              {weaponProficiencies.map(p => {
+              {weaponProfsFiltered.map(p => {
                 const weapons = PROF_WEAPONS[p]
                 const isOpen = openProf === p
                 return (
                   <div key={p} className="relative">
                     <button
                       onClick={() => setOpenProf(isOpen ? null : p)}
-                      className="px-2 py-0.5 text-xs font-serif capitalize transition-colors"
+                      className="px-2 py-0.5 text-xs font-serif capitalize transition-colors cursor-pointer"
                       style={{
                         border: '1px solid rgba(109,85,48,0.55)',
                         color: '#4a2e0c',
@@ -154,12 +225,12 @@ export function TabPericias({
                       >
                         {weapons ? (
                           <>
-                            <p className="text-[9px] uppercase tracking-widest font-serif mb-1.5" style={{ color: '#7a5828' }}>
+                            <p className="text-[9px] uppercase tracking-widest font-serif mb-1.5 font-semibold" style={{ color: '#7a5828' }}>
                               {p === 'simple-weapons' ? 'Armas simples (14)' : `Armas marciales (${weapons.length})`}
                             </p>
-                            <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                            <div className="flex flex-wrap gap-x-3 gap-y-0.5 font-serif">
                               {weapons.map(w => (
-                                <span key={w} className="text-[10px] font-serif" style={{ color: '#3a2010' }}>{w}</span>
+                                <span key={w} className="text-[10px]" style={{ color: '#3a2010' }}>{w}</span>
                               ))}
                             </div>
                           </>

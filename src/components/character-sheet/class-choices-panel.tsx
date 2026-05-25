@@ -6,7 +6,19 @@ import type { SheetJson } from './types'
 import {
   FIGHTING_STYLES_BY_CLASS, FAVORED_ENEMIES, KNOWN_SPELL_CASTERS,
   FIGHTING_STYLE_MIN_LEVEL, CLASSES_WITH_FAVORED_ENEMY,
+  SUBCLASS_SELECTION_LEVELS, getExpertiseCount
 } from '../../lib/class-choices'
+
+const SKILL_NAMES_ES: Record<string, string> = {
+  acrobatics: 'Acrobacias', 'animal-handling': 'Trato con animales',
+  arcana: 'Conocimiento arcano', athletics: 'Atletismo',
+  deception: 'Engaño', history: 'Historia', insight: 'Perspicacia',
+  intimidation: 'Intimidación', investigation: 'Investigación',
+  medicine: 'Medicina', nature: 'Naturaleza', perception: 'Percepción',
+  performance: 'Actuación', persuasion: 'Persuasión', religion: 'Religión',
+  'sleight-of-hand': 'Juego de manos', stealth: 'Sigilo', survival: 'Supervivencia',
+  'thieves-tools': 'Herramientas de ladrón',
+}
 
 function maxCastableLevel(spellcasting?: Record<string, number | undefined>): number {
   if (!spellcasting) return 0
@@ -30,6 +42,8 @@ export function ClassChoicesPanel({
   const [favoredEnemy, setFavoredEnemy] = useState('')
   const [newSpells, setNewSpells] = useState<string[]>([])
   const [spellSearch, setSpellSearch] = useState('')
+  const [subclass, setSubclass] = useState('')
+  const [selectedExpertises, setSelectedExpertises] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
 
   const classKey = characterClass.toLowerCase()
@@ -44,6 +58,14 @@ export function ClassChoicesPanel({
     level >= 1 &&
     (!sheet.favored_enemy || sheet.favored_enemy.length === 0)
 
+  const subclassReqLevel = SUBCLASS_SELECTION_LEVELS[classKey] ?? 1
+  const needsSubclass = level >= subclassReqLevel && !sheet.subclass
+
+  const expectedExpertise = getExpertiseCount(classKey, level)
+  const currentExpertise = sheet.expertise ?? []
+  const expertiseToLearn = Math.max(0, expectedExpertise - currentExpertise.length)
+  const needsExpertise = expertiseToLearn > 0
+
   const isKnownCaster = KNOWN_SPELL_CASTERS.includes(classKey)
 
   const { data: classLevels } = useQuery({
@@ -51,6 +73,13 @@ export function ClassChoicesPanel({
     queryFn: () => dndApi.classLevels(classKey),
     staleTime: Infinity,
     enabled: isKnownCaster && level >= 2,
+  })
+
+  const { data: classSubclasses } = useQuery({
+    queryKey: dndKeys.classSubclasses(classKey),
+    queryFn: () => dndApi.classSubclasses(classKey),
+    enabled: needsSubclass && open,
+    staleTime: Infinity,
   })
 
   const currentLevelData = classLevels?.find(l => l.level === level)
@@ -86,11 +115,23 @@ export function ClassChoicesPanel({
     .filter(s => !spellSearch || s!.name.toLowerCase().includes(spellSearch.toLowerCase()))
     .sort((a, b) => a!.level - b!.level || a!.name.localeCompare(b!.name))
 
-  const hasAny = needsFightingStyle || needsFavoredEnemy || needsSpells
+  const hasAny = needsFightingStyle || needsFavoredEnemy || needsSpells || needsSubclass || needsExpertise
 
   if (!isOwner || !hasAny) return null
 
   const fightingStyles = FIGHTING_STYLES_BY_CLASS[classKey] ?? FIGHTING_STYLES_BY_CLASS['fighter']
+
+  const bgSkills = sheet.background_skills?.map((s: string) => s.toLowerCase().replace(/\s+/g, '-')) ?? []
+  const currentSkills = sheet.skill_proficiencies ?? []
+  const eligibleExpertises = [
+    ...currentSkills,
+    ...bgSkills,
+  ]
+  if (classKey === 'rogue') {
+    eligibleExpertises.push('thieves-tools')
+  }
+  const uniqueEligibles = Array.from(new Set(eligibleExpertises))
+    .filter(x => !currentExpertise.includes(x))
 
   const toggleSpell = (index: string) => {
     if (newSpells.includes(index)) {
@@ -100,10 +141,20 @@ export function ClassChoicesPanel({
     }
   }
 
+  const toggleExpertise = (index: string) => {
+    if (selectedExpertises.includes(index)) {
+      setSelectedExpertises(selectedExpertises.filter(x => x !== index))
+    } else if (selectedExpertises.length < expertiseToLearn) {
+      setSelectedExpertises([...selectedExpertises, index])
+    }
+  }
+
   const fsValid = !needsFightingStyle || fightingStyle !== ''
   const feValid = !needsFavoredEnemy || favoredEnemy !== ''
   const spValid = !needsSpells || newSpells.length === spellsToLearn
-  const canSave = fsValid && feValid && spValid
+  const scValid = !needsSubclass || subclass !== ''
+  const exValid = !needsExpertise || selectedExpertises.length === expertiseToLearn
+  const canSave = fsValid && feValid && spValid && scValid && exValid
 
   const handleSave = async () => {
     setSaving(true)
@@ -111,12 +162,20 @@ export function ClassChoicesPanel({
     if (fightingStyle) patch.fighting_style = fightingStyle
     if (favoredEnemy) patch.favored_enemy = [...(sheet.favored_enemy ?? []), favoredEnemy]
     if (newSpells.length > 0) patch.spells = [...(sheet.spells ?? []), ...newSpells]
+    if (subclass) patch.subclass = subclass
+    if (selectedExpertises.length > 0) patch.expertise = [...currentExpertise, ...selectedExpertises]
+    
     await patchSheet(patch)
     setSaving(false)
     setOpen(false)
+    setFightingStyle('')
+    setFavoredEnemy('')
+    setNewSpells([])
+    setSubclass('')
+    setSelectedExpertises([])
   }
 
-  const pendingCount = [needsFightingStyle, needsFavoredEnemy, needsSpells].filter(Boolean).length
+  const pendingCount = [needsFightingStyle, needsFavoredEnemy, needsSpells, needsSubclass, needsExpertise].filter(Boolean).length
 
   return (
     <div className="mx-3 mt-3 mb-1">
@@ -124,7 +183,7 @@ export function ClassChoicesPanel({
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="w-full text-left border px-4 py-3 flex items-center gap-3 transition-colors"
+          className="w-full text-left border px-4 py-3 flex items-center gap-3 transition-colors cursor-pointer"
           style={{
             background: 'rgba(180,100,20,0.08)',
             border: '1px solid rgba(180,100,20,0.35)',
@@ -147,9 +206,23 @@ export function ClassChoicesPanel({
           style={{ ...parchmentStyle, border: '1px solid rgba(180,100,20,0.4)', boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}
         >
           <div className="flex items-center justify-between border-b border-stone-400 pb-3">
-            <p className="text-sm font-semibold font-serif text-stone-800">Completar elecciones de clase</p>
-            <button onClick={() => setOpen(false)} className="text-stone-400 hover:text-stone-600 text-xs font-serif">cerrar</button>
+            <p className="text-sm font-semibold font-serif text-stone-800 font-serif">Completar elecciones de clase</p>
+            <button onClick={() => setOpen(false)} className="text-stone-400 hover:text-stone-600 text-xs font-serif cursor-pointer">cerrar</button>
           </div>
+
+          {needsSubclass && classSubclasses && (
+            <div className="space-y-2">
+              <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">Especialidad / Subclase</p>
+              <select value={subclass} onChange={e => setSubclass(e.target.value)}
+                style={{ background: 'rgba(255,255,255,0.4)', border: '1px solid rgba(120,70,20,0.35)' }}
+                className="w-full px-3 py-2 text-stone-900 font-serif text-sm focus:outline-none">
+                <option value="">Elegir especialidad...</option>
+                {classSubclasses.results.map((sc: any) => (
+                  <option key={sc.index} value={sc.index}>{sc.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {needsFightingStyle && (
             <div className="space-y-2">
@@ -157,7 +230,7 @@ export function ClassChoicesPanel({
               <div className="grid gap-1.5">
                 {fightingStyles.map(fs => (
                   <button key={fs.id} onClick={() => setFightingStyle(fs.id)}
-                    className={`text-left border px-3 py-2 transition-colors ${fightingStyle === fs.id
+                    className={`text-left border px-3 py-2 transition-colors cursor-pointer ${fightingStyle === fs.id
                       ? 'border-amber-700 bg-amber-100/50 ring-1 ring-amber-600'
                       : 'border-stone-300 hover:border-amber-600 hover:bg-amber-50/30'
                     }`}>
@@ -175,13 +248,37 @@ export function ClassChoicesPanel({
               <div className="grid grid-cols-2 gap-1.5">
                 {FAVORED_ENEMIES.map(enemy => (
                   <button key={enemy} onClick={() => setFavoredEnemy(enemy)}
-                    className={`text-left border px-3 py-2 text-xs font-serif transition-colors ${favoredEnemy === enemy
+                    className={`text-left border px-3 py-2 text-xs font-serif transition-colors cursor-pointer ${favoredEnemy === enemy
                       ? 'border-amber-700 bg-amber-100/50 ring-1 ring-amber-600 text-stone-800 font-semibold'
                       : 'border-stone-300 hover:border-amber-600 hover:bg-amber-50/30 text-stone-600'
                     }`}>
                     {enemy}
                   </button>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {needsExpertise && uniqueEligibles.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">
+                Especialización (Expertise) — Elegí {expertiseToLearn}
+              </p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {uniqueEligibles.map(idx => {
+                  const selected = selectedExpertises.includes(idx)
+                  const name = SKILL_NAMES_ES[idx] ?? idx.replace('-', ' ')
+                  const maxed = !selected && selectedExpertises.length >= expertiseToLearn
+                  return (
+                    <button key={idx} disabled={maxed} onClick={() => toggleExpertise(idx)}
+                      className={`text-left border px-3 py-1.5 text-xs font-serif transition-colors cursor-pointer ${selected
+                        ? 'border-amber-750 bg-amber-100/55 text-amber-900 font-semibold'
+                        : maxed ? 'border-stone-200 opacity-40 cursor-not-allowed' : 'border-stone-300 hover:border-amber-600 hover:bg-amber-50/30 text-stone-600'
+                      }`}>
+                      {name}
+                    </button>
+                  )
+                })}
               </div>
             </div>
           )}
@@ -214,7 +311,7 @@ export function ClassChoicesPanel({
                   return (
                     <button key={spell!.index} onClick={() => canSelect && toggleSpell(spell!.index)}
                       disabled={!canSelect}
-                      className={`w-full text-left border px-3 py-1.5 transition-colors ${selected
+                      className={`w-full text-left border px-3 py-1.5 transition-colors cursor-pointer ${selected
                         ? 'border-amber-700 bg-amber-100/50 ring-1 ring-amber-600'
                         : canSelect ? 'border-stone-300 hover:border-amber-600 hover:bg-amber-50/30' : 'border-stone-200 opacity-40 cursor-not-allowed'
                       }`}>
@@ -230,11 +327,11 @@ export function ClassChoicesPanel({
 
           <div className="flex gap-2 border-t border-stone-300 pt-3">
             <button onClick={() => setOpen(false)}
-              className="flex-1 px-3 py-2 text-xs border border-stone-400 text-stone-500 hover:bg-stone-200/50 font-serif transition-colors">
+              className="flex-1 px-3 py-2 text-xs border border-stone-400 text-stone-500 hover:bg-stone-200/50 font-serif transition-colors cursor-pointer">
               Cancelar
             </button>
             <button onClick={handleSave} disabled={!canSave || saving}
-              className="flex-1 px-3 py-2 text-xs bg-amber-800 hover:bg-amber-700 disabled:opacity-40 text-amber-100 font-serif transition-colors font-semibold">
+              className="flex-1 px-3 py-2 text-xs bg-amber-800 hover:bg-amber-700 disabled:opacity-40 text-amber-100 font-serif transition-colors font-semibold cursor-pointer">
               {saving ? 'Guardando...' : 'Guardar elecciones'}
             </button>
           </div>

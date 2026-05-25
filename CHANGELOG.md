@@ -7,7 +7,13 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 ## [Unreleased]
 
 ### feat
-- **Refactor encounter generator** (1418 → 6 archivos ≤453 líneas): extracción de `encounter-constants.ts`, `encounter-icons.tsx`, `encounter-sub-components.tsx`, `monster-card.tsx`, `encounter-modal.tsx`; regla de 500 líneas documentada en `CLAUDE.md`.
+- **Expertise e Iconos en Pericias**: Soporte completo para Expertise (Especialización) en la hoja de personajes. Duplica el bono de competencia en tiradas de habilidades y herramientas. Se muestran dos diamantes dorados `◆◆` y el badge "Especialista" en los modificadores.
+- **Backfill de Habilidades y Subclases**: Banner interactivo en `ClassChoicesPanel` que detecta y guía a personajes preexistentes o creados a alto nivel para autocompletar de forma retroactiva sus subclases y expertises faltantes.
+- **Creador de Personajes y Subida de Nivel oficiales**: Restricción del selector de subclase en el creador al nivel oficial de la clase (D&D 5e). El modal de Level Up y el creador ahora manejan la selección de especializaciones (Expertise) basadas en el nivel del personaje.
+
+### refactor
+- **Arquitectura de Hoja de Personaje modular (< 500 líneas)**: Separación de pasos de creación en `creation-steps/` (`step1` al `step6` + `primitives.tsx`) y extracción de consultas y handlers de `$characterId.tsx` al custom hook `use-character-sheet.ts`, reduciendo las vistas principales a menos de 350 líneas de maquetación limpia.
+
 - **Generador de objetos custom**: formulario unificado en la pestaña "Creaciones" de Comercio (solo GM). Soporta nombre, descripción, tipo, rareza, bonus de ataque/CA, modificadores de stats, resistencias al daño, hechizos con cargas y recarga, bonus de velocidad, regeneración de HP, bonus de HP máximo y objetos malditos. Integrado a `character_inventory` con FK `custom_item_id`.
 - **Imagen en objetos custom**: soporte para subir imagen o generarla con IA (fal.ai FLUX). La URL temporal se convierte a base64 en el cliente antes de guardar para persistencia indefinida en la miniatura y el panel de detalle.
 - **Asignación de objetos a personajes**: modal de selección de personaje desde el panel de Creaciones; requiere política RLS `inventory_all_dm` para que el GM pueda escribir en inventarios ajenos.

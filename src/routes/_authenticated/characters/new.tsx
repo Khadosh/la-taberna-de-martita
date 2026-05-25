@@ -7,12 +7,17 @@ import { supabase } from '../../../lib/supabase'
 import { dndApi, dndKeys } from '../../../lib/dnd-api'
 import type { SpellDetail } from '../../../lib/dnd-api'
 import { BACKGROUNDS } from '../../../lib/dnd-backgrounds'
+import { getExpertiseCount, SUBCLASS_SELECTION_LEVELS } from '../../../lib/class-choices'
 import {
-  type Draft, type Stats, EMPTY_STATS, STAT_KEYS, rollAll,
-  inputStyle, cardStyle, btnStyle,
-  Step1BasicInfo, Step2Stats, Step3Background,
-  Step4Proficiencies, Step5Spells, Step6Summary,
+  type Draft, type Stats, EMPTY_STATS, STAT_KEYS, rollAll
 } from './character-creation-steps'
+import { inputStyle, cardStyle, btnStyle } from './creation-steps/primitives'
+import { Step1BasicInfo } from './creation-steps/step1-basic-info'
+import { Step2Stats } from './creation-steps/step2-stats'
+import { Step3Background } from './creation-steps/step3-background'
+import { Step4Proficiencies } from './creation-steps/step4-proficiencies'
+import { Step5Spells } from './creation-steps/step5-spells'
+import { Step6Summary } from './creation-steps/step6-summary'
 
 export const Route = createFileRoute('/_authenticated/characters/new')({
   component: NewCharacter,
@@ -33,6 +38,7 @@ function NewCharacter() {
     stats: EMPTY_STATS,
     backgroundKey: '', bgBonus2: '', bgBonus1: '',
     skillProficiencies: [], spells: [], backstory: '', campaignId: '',
+    expertise: [],
   })
 
   const patch = (update: Partial<Draft>) => setDraft(d => ({ ...d, ...update }))
@@ -95,13 +101,21 @@ function NewCharacter() {
     if (step === 3) return !!(draft.backgroundKey && draft.bgBonus2 && draft.bgBonus1 && draft.bgBonus2 !== draft.bgBonus1)
     if (step === 4) {
       const choices = classDetail?.proficiency_choices[0]
-      return !choices || draft.skillProficiencies.length === choices.choose
+      const skillsOk = !choices || draft.skillProficiencies.length === choices.choose
+      const expectedExpertise = getExpertiseCount(draft.classIndex, draft.level)
+      const expertiseOk = (draft.expertise ?? []).length === expectedExpertise
+      return skillsOk && expertiseOk
     }
     return true
   }
 
   const handleSave = async () => {
     setError(null)
+    const subclassReqLevel = SUBCLASS_SELECTION_LEVELS[draft.classIndex] ?? 1
+    const shouldSaveSubclass = draft.level >= subclassReqLevel && draft.subclassIndex
+    const expectedExpertise = getExpertiseCount(draft.classIndex, draft.level)
+    const expertiseToSave = (draft.expertise ?? []).slice(0, expectedExpertise)
+
     const { error } = await supabase.from('characters').insert({
       user_id: session.user.id,
       name: draft.name.trim(),
@@ -117,17 +131,19 @@ function NewCharacter() {
         background_bonuses: backgroundBonuses,
         background_skills: selectedBg?.skills ?? [],
         skill_proficiencies: draft.skillProficiencies,
+        expertise: expertiseToSave,
         weapon_proficiencies: classDetail?.proficiencies.map((p: any) => p.index) ?? [],
         spells: draft.spells,
         hit_die: classDetail?.hit_die ?? 8,
         saving_throws: classDetail?.saving_throws.map((s: any) => s.index) ?? [],
-        ...(draft.subclassIndex ? { subclass: draft.subclassIndex } : {}),
+        ...(shouldSaveSubclass ? { subclass: draft.subclassIndex } : {}),
       },
     })
     if (error) { setError(error.message); return }
     await queryClient.invalidateQueries({ queryKey: ['characters'] })
     navigate({ to: '/' })
   }
+
 
   return (
     <div className="min-h-screen bg-stone-tavern text-stone-100">

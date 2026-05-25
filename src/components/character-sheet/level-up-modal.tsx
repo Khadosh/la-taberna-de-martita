@@ -2,11 +2,23 @@ import { useState } from 'react'
 import { useQuery, useQueries } from '@tanstack/react-query'
 import { dndApi, dndKeys } from '../../lib/dnd-api'
 import { parchmentStyle } from './sheet-primitives'
-import { FIGHTING_STYLES_BY_CLASS, FAVORED_ENEMIES } from '../../lib/class-choices'
+import { FIGHTING_STYLES_BY_CLASS, FAVORED_ENEMIES, SUBCLASS_SELECTION_LEVELS, getExpertiseCount } from '../../lib/class-choices'
+import type { SheetJson } from './types'
 
 const STAT_LABELS_FULL: Record<string, string> = {
   str: 'Fuerza', dex: 'Destreza', con: 'Constitución',
   int: 'Inteligencia', wis: 'Sabiduría', cha: 'Carisma',
+}
+
+const SKILL_NAMES_ES: Record<string, string> = {
+  acrobatics: 'Acrobacias', 'animal-handling': 'Trato con animales',
+  arcana: 'Conocimiento arcano', athletics: 'Atletismo',
+  deception: 'Engaño', history: 'Historia', insight: 'Perspicacia',
+  intimidation: 'Intimidación', investigation: 'Investigación',
+  medicine: 'Medicina', nature: 'Naturaleza', perception: 'Percepción',
+  performance: 'Actuación', persuasion: 'Persuasión', religion: 'Religión',
+  'sleight-of-hand': 'Juego de manos', stealth: 'Sigilo', survival: 'Supervivencia',
+  'thieves-tools': 'Herramientas de ladrón',
 }
 
 function maxCastableLevel(spellcasting?: { [key: string]: number | undefined }): number {
@@ -25,12 +37,14 @@ export function LevelUpModal({
   fightingStyle, setFightingStyle,
   favoredEnemy, setFavoredEnemy,
   newSpells, setNewSpells,
+  expertise, setExpertise,
   currentSubclass,
   currentFightingStyle,
   currentFavoredEnemies,
+  currentExpertise = [],
   onConfirm, onCancel,
 }: {
-  character: { name: string; class: string }
+  character: { name: string; class: string; sheet_json: unknown }
   level: number
   hitDie: number
   conMod: number
@@ -47,9 +61,12 @@ export function LevelUpModal({
   setFavoredEnemy: (v: string) => void
   newSpells: string[]
   setNewSpells: (v: string[]) => void
+  expertise: string[]
+  setExpertise: (v: string[]) => void
   currentSubclass?: string
   currentFightingStyle?: string
   currentFavoredEnemies?: string[]
+  currentExpertise?: string[]
   onConfirm: () => void
   onCancel: () => void
 }) {
@@ -73,12 +90,10 @@ export function LevelUpModal({
   const features = targetLevel?.features ?? []
 
   const hasAsi = (targetLevel?.ability_score_bonuses ?? 0) > 0 && !currentSubclass?.includes('asi-done-' + nextLevel)
-  const needsSubclass = features.some(f =>
-    ['archetype', 'tradition', 'oath', 'origin', 'circle', 'domain', 'patron', 'path',
-      'college', 'school', 'roguish', 'ranger', 'sorcerous', 'subclass'].some(kw =>
-      f.name.toLowerCase().includes(kw) || f.index.includes(kw)
-    )
-  ) && !currentSubclass
+  
+  // Subclass logic by configuration
+  const subclassReqLevel = SUBCLASS_SELECTION_LEVELS[classIndex] ?? 1
+  const needsSubclass = nextLevel === subclassReqLevel && !currentSubclass
 
   const hasFightingStyleFeature = !currentFightingStyle && features.some(f =>
     f.name.toLowerCase().includes('fighting style') || f.index.includes('fighting-style')
@@ -87,7 +102,13 @@ export function LevelUpModal({
     f.index.includes('favored-enemy') || f.name.toLowerCase().includes('favored enemy')
   )
 
-  // Spell learning: only for known-casters (has spells_known in level data)
+  // Expertise logic
+  const nextLevelExpertiseCount = getExpertiseCount(classIndex, nextLevel)
+  const currentLevelExpertiseCount = getExpertiseCount(classIndex, level)
+  const expertiseToLearn = Math.max(0, nextLevelExpertiseCount - currentLevelExpertiseCount)
+  const needsExpertise = expertiseToLearn > 0
+
+  // Spell learning
   const spellsKnownNow = currentLevelData?.spellcasting?.spells_known ?? 0
   const spellsKnownNext = targetLevel?.spellcasting?.spells_known ?? 0
   const spellsToLearn = Math.max(0, spellsKnownNext - spellsKnownNow)
@@ -135,19 +156,42 @@ export function LevelUpModal({
 
   const fightingStyles = FIGHTING_STYLES_BY_CLASS[classIndex] ?? FIGHTING_STYLES_BY_CLASS['fighter']
 
+  // Eligible expertise list
+  const sheet = (character.sheet_json as SheetJson) ?? {}
+  const bgSkills = sheet.background_skills?.map((s: string) => s.toLowerCase().replace(/\s+/g, '-')) ?? []
+  const currentSkills = sheet.skill_proficiencies ?? []
+  const eligibleExpertises = [
+    ...currentSkills,
+    ...bgSkills,
+  ]
+  if (classIndex === 'rogue') {
+    eligibleExpertises.push('thieves-tools')
+  }
+  const uniqueEligibles = Array.from(new Set(eligibleExpertises))
+    .filter(x => !currentExpertise.includes(x))
+
   const hpValid = hpInput && parseInt(hpInput) >= 1
   const subclassValid = !needsSubclass || subclass
   const asiValid = !hasAsi || totalAsiPoints === maxAsiPoints
   const fightingStyleValid = !hasFightingStyleFeature || fightingStyle !== ''
   const favoredEnemyValid = !hasFavoredEnemyFeature || favoredEnemy !== ''
   const spellsValid = !needsSpells || newSpells.length === spellsToLearn
-  const canConfirm = hpValid && subclassValid && asiValid && fightingStyleValid && favoredEnemyValid && spellsValid
+  const expertiseValid = !needsExpertise || expertise.length === expertiseToLearn
+  const canConfirm = hpValid && subclassValid && asiValid && fightingStyleValid && favoredEnemyValid && spellsValid && expertiseValid
 
   const toggleSpell = (index: string) => {
     if (newSpells.includes(index)) {
       setNewSpells(newSpells.filter(s => s !== index))
     } else if (newSpells.length < spellsToLearn) {
       setNewSpells([...newSpells, index])
+    }
+  }
+
+  const toggleExpertise = (index: string) => {
+    if (expertise.includes(index)) {
+      setExpertise(expertise.filter(e => e !== index))
+    } else if (expertise.length < expertiseToLearn) {
+      setExpertise([...expertise, index])
     }
   }
 
@@ -201,7 +245,7 @@ export function LevelUpModal({
                 <button
                   key={fs.id}
                   onClick={() => setFightingStyle(fs.id)}
-                  className={`text-left border p-3 transition-colors ${fightingStyle === fs.id
+                  className={`text-left border p-3 transition-colors cursor-pointer ${fightingStyle === fs.id
                     ? 'border-amber-700 bg-amber-100/50 ring-1 ring-amber-600'
                     : 'border-stone-400 hover:border-amber-600 hover:bg-amber-50/30'
                   }`}
@@ -227,7 +271,7 @@ export function LevelUpModal({
                 <button
                   key={enemy}
                   onClick={() => setFavoredEnemy(enemy)}
-                  className={`text-left border px-3 py-2 text-xs font-serif transition-colors ${favoredEnemy === enemy
+                  className={`text-left border px-3 py-2 text-xs font-serif transition-colors cursor-pointer ${favoredEnemy === enemy
                     ? 'border-amber-700 bg-amber-100/50 ring-1 ring-amber-600 text-stone-800 font-semibold'
                     : 'border-stone-400 hover:border-amber-600 hover:bg-amber-50/30 text-stone-600'
                   }`}
@@ -235,6 +279,33 @@ export function LevelUpModal({
                   {enemy}
                 </button>
               ))}
+            </div>
+          </div>
+        )}
+
+        {needsExpertise && uniqueEligibles.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">
+              Especialización (Expertise) — Elegí {expertiseToLearn}
+            </p>
+            <p className="text-xs text-stone-500 font-serif italic">
+              Duplica tu bono de competencia en las habilidades seleccionadas.
+            </p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {uniqueEligibles.map(idx => {
+                const selected = expertise.includes(idx)
+                const name = SKILL_NAMES_ES[idx] ?? idx.replace('-', ' ')
+                const maxed = !selected && expertise.length >= expertiseToLearn
+                return (
+                  <button key={idx} disabled={maxed} onClick={() => toggleExpertise(idx)}
+                    className={`text-left border px-3 py-2 text-xs font-serif transition-colors cursor-pointer ${selected
+                      ? 'border-amber-750 bg-amber-105/55 text-amber-900 font-semibold ring-1 ring-amber-650'
+                      : maxed ? 'border-stone-200 opacity-40 cursor-not-allowed' : 'border-stone-400 hover:border-amber-600 hover:bg-amber-50/30 text-stone-600'
+                    }`}>
+                    {name}
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}
@@ -274,7 +345,7 @@ export function LevelUpModal({
                     key={spell!.index}
                     onClick={() => canSelect && toggleSpell(spell!.index)}
                     disabled={!canSelect}
-                    className={`w-full text-left border px-3 py-2 transition-colors ${selected
+                    className={`w-full text-left border px-3 py-2 transition-colors cursor-pointer ${selected
                       ? 'border-amber-700 bg-amber-100/50 ring-1 ring-amber-600'
                       : canSelect
                         ? 'border-stone-300 hover:border-amber-600 hover:bg-amber-50/30'
@@ -312,9 +383,9 @@ export function LevelUpModal({
                     </p>
                     <div className="flex items-center justify-center gap-1 mt-1">
                       <button disabled={bonus <= 0} onClick={() => setAsi({ ...asi, [k]: bonus - 1 })}
-                        className="w-5 h-5 text-xs border border-stone-400 text-stone-500 disabled:opacity-30 hover:bg-stone-200/50 leading-none font-mono">−</button>
+                        className="w-5 h-5 text-xs border border-stone-400 text-stone-500 disabled:opacity-30 hover:bg-stone-200/50 leading-none font-mono cursor-pointer">−</button>
                       <button disabled={!canAdd} onClick={() => setAsi({ ...asi, [k]: bonus + 1 })}
-                        className="w-5 h-5 text-xs border border-stone-400 text-stone-500 disabled:opacity-30 hover:bg-stone-200/50 leading-none font-mono">+</button>
+                        className="w-5 h-5 text-xs border border-stone-400 text-stone-500 disabled:opacity-30 hover:bg-stone-200/50 leading-none font-mono cursor-pointer">+</button>
                     </div>
                   </div>
                 )
@@ -339,7 +410,7 @@ export function LevelUpModal({
               className="flex-1 px-3 py-2 text-lg font-mono text-center border border-stone-500 bg-amber-50/80 focus:outline-none focus:border-amber-700"
             />
             <button onClick={() => setHpInput(String(avgHp))}
-              className="px-3 py-2 text-xs border border-stone-400 text-stone-600 hover:bg-stone-200/50 font-serif transition-colors">
+              className="px-3 py-2 text-xs border border-stone-400 text-stone-600 hover:bg-stone-200/50 font-serif transition-colors cursor-pointer">
               Promedio ({avgHp})
             </button>
           </div>
@@ -347,11 +418,11 @@ export function LevelUpModal({
 
         <div className="flex gap-2 pt-2 border-t border-stone-400">
           <button onClick={onCancel}
-            className="flex-1 px-3 py-2 text-sm border border-stone-400 text-stone-500 hover:bg-stone-200/50 font-serif transition-colors">
+            className="flex-1 px-3 py-2 text-sm border border-stone-400 text-stone-500 hover:bg-stone-200/50 font-serif transition-colors cursor-pointer">
             Cancelar
           </button>
           <button onClick={onConfirm} disabled={!canConfirm}
-            className="flex-1 px-3 py-2 text-sm bg-amber-800 hover:bg-amber-700 disabled:opacity-40 text-amber-100 font-serif transition-colors font-semibold">
+            className="flex-1 px-3 py-2 text-sm bg-amber-800 hover:bg-amber-700 disabled:opacity-40 text-amber-100 font-serif transition-colors font-semibold cursor-pointer">
             <svg width="13" height="13" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="inline-block mr-1">
               <line x1="5" y1="8.5" x2="5" y2="1.5"/><polyline points="2,4.5 5,1.5 8,4.5"/>
             </svg>
@@ -373,7 +444,7 @@ function SubclassOption({ index, selected, onSelect }: { index: string; selected
   return (
     <button
       onClick={onSelect}
-      className={`text-left border p-3 transition-colors ${selected
+      className={`text-left border p-3 transition-colors cursor-pointer ${selected
         ? 'border-amber-700 bg-amber-100/50 ring-1 ring-amber-600'
         : 'border-stone-400 hover:border-amber-600 hover:bg-amber-50/30'
       }`}

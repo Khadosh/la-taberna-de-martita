@@ -2,6 +2,9 @@
 
 export type SheetJson = {
   skill_proficiencies?: string[]
+  expertise?: string[]
+  tool_proficiencies?: string[]
+  background_skills?: string[]
   weapon_proficiencies?: string[]
   spells?: string[]
   saving_throws?: string[]

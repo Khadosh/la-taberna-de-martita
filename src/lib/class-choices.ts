@@ -38,3 +38,32 @@ export const FIGHTING_STYLE_MIN_LEVEL: Record<string, number> = {
 }
 
 export const CLASSES_WITH_FAVORED_ENEMY = ['ranger']
+
+// Minimum level at which each class chooses its subclass (archetype/domain/tradition/etc.)
+export const SUBCLASS_SELECTION_LEVELS: Record<string, number> = {
+  barbarian: 3,
+  bard: 3,
+  cleric: 1,
+  druid: 2,
+  fighter: 3,
+  monk: 3,
+  paladin: 3,
+  ranger: 3,
+  rogue: 3,
+  sorcerer: 1,
+  warlock: 1,
+  wizard: 2,
+}
+
+// Get the total number of expertise choices a class has at a given level
+export function getExpertiseCount(classIndex: string, level: number): number {
+  const cls = classIndex.toLowerCase()
+  if (cls === 'rogue') {
+    return level >= 6 ? 4 : level >= 1 ? 2 : 0
+  }
+  if (cls === 'bard') {
+    return level >= 10 ? 4 : level >= 3 ? 2 : 0
+  }
+  return 0
+}
+
