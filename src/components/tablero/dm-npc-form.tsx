@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router'
 import { type NpcItem } from './tablero-types'
 import { formatModInline } from './tablero-types'
 import { type useEncounterGenerator } from './use-encounter-generator'
-import { EncounterModal } from './encounter-generator-panel'
+import { EncounterModal } from './encounter-modal'
 
 interface DmNpcFormProps {
   campaignId: string

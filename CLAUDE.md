@@ -148,6 +148,29 @@ git commit -m "feat: descripción corta en minúsculas sin punto final"
 
 ---
 
+## Límite de 500 líneas por archivo
+
+**Regla estricta:** ningún archivo `.tsx` o `.ts` puede superar 500 líneas.
+
+Cuando un archivo se acerca o supera el límite:
+1. Identificar grupos de funciones/componentes cohesivos y extraerlos a archivos separados.
+2. Constantes compartidas entre varios archivos nuevos → archivo `*-constants.ts` dedicado.
+3. Iconos SVG inline masivos → archivo `*-icons.tsx` dedicado.
+4. Sub-componentes de UI sin estado propio del padre → archivo `*-sub-components.tsx` o nombre descriptivo.
+5. Verificar con `wc -l <archivo>` antes de commitear.
+
+**Patrón de nombramiento para splits:**
+```
+encounter-generator-panel.tsx   → componente principal (< 500 líneas)
+encounter-constants.ts          → constantes compartidas
+encounter-icons.tsx             → SVGs y componentes de íconos
+encounter-sub-components.tsx    → componentes auxiliares pequeños
+monster-card.tsx                → componentes de tarjeta específicos
+encounter-modal.tsx             → modal wrapper
+```
+
+---
+
 ## No hacer
 
 - No usar `psql` para migraciones — siempre `supabase CLI`
@@ -157,3 +180,4 @@ git commit -m "feat: descripción corta en minúsculas sin punto final"
 - No agregar comentarios de código salvo para WHY no-obvio
 - No usar emojis en el código ni en respuestas salvo que el usuario los use
 - No crear tests sin pedido explícito (no hay infrastructure de testing activa)
+- **No dejar archivos de más de 500 líneas** — refactorizar antes de commitear

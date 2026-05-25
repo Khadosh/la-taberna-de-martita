@@ -7,6 +7,7 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 ## [Unreleased]
 
 ### feat
+- **Refactor encounter generator** (1418 → 6 archivos ≤453 líneas): extracción de `encounter-constants.ts`, `encounter-icons.tsx`, `encounter-sub-components.tsx`, `monster-card.tsx`, `encounter-modal.tsx`; regla de 500 líneas documentada en `CLAUDE.md`.
 - **Generador de objetos custom**: formulario unificado en la pestaña "Creaciones" de Comercio (solo GM). Soporta nombre, descripción, tipo, rareza, bonus de ataque/CA, modificadores de stats, resistencias al daño, hechizos con cargas y recarga, bonus de velocidad, regeneración de HP, bonus de HP máximo y objetos malditos. Integrado a `character_inventory` con FK `custom_item_id`.
 - **Imagen en objetos custom**: soporte para subir imagen o generarla con IA (fal.ai FLUX). La URL temporal se convierte a base64 en el cliente antes de guardar para persistencia indefinida en la miniatura y el panel de detalle.
 - **Asignación de objetos a personajes**: modal de selección de personaje desde el panel de Creaciones; requiere política RLS `inventory_all_dm` para que el GM pueda escribir en inventarios ajenos.
