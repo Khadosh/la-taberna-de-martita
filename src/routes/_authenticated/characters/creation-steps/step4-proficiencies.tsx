@@ -62,13 +62,18 @@ export function Step4Proficiencies({ draft, patch, classDetail, selectedBg }: St
         </div>
       )}
 
-      {selectedBg && selectedBg.skills.length > 0 && (
+      {selectedBg && (selectedBg.skills.length > 0 || selectedBg.tool) && (
         <div style={cardStyle} className="p-4 space-y-2">
-          <p className="text-xs text-stone-500 font-display tracking-widest uppercase font-serif">Pericias de trasfondo ({selectedBg.name})</p>
+          <p className="text-xs text-stone-500 font-display tracking-widest uppercase font-serif">Competencias de trasfondo ({selectedBg.name})</p>
           <div className="flex flex-wrap gap-1.5">
             {selectedBg.skills.map((s: string) => (
               <span key={s} className="px-2 py-0.5 text-xs font-serif text-amber-400/70 border border-amber-900/30">{s}</span>
             ))}
+            {selectedBg.tool && (
+              <span className="px-2 py-0.5 text-xs font-serif text-amber-550/70 border border-amber-900/40 bg-amber-950/10">
+                🛠️ {selectedBg.tool}
+              </span>
+            )}
           </div>
         </div>
       )}
@@ -85,10 +90,11 @@ export function Step4Proficiencies({ draft, patch, classDetail, selectedBg }: St
             {choice.from.options.map((opt: any) => {
               const idx = opt.item.index
               const name = opt.item.name.replace('Skill: ', '')
-              const selected = draft.skillProficiencies.includes(idx)
+              const isBgSkill = bgSkills.includes(idx)
+              const selected = draft.skillProficiencies.includes(idx) || isBgSkill
               const maxed = !selected && draft.skillProficiencies.length >= choice.choose
               return (
-                <button key={idx} disabled={maxed}
+                <button key={idx} disabled={isBgSkill || maxed}
                   onClick={() => {
                     const nextSkills = selected
                       ? draft.skillProficiencies.filter(s => s !== idx)
@@ -103,12 +109,20 @@ export function Step4Proficiencies({ draft, patch, classDetail, selectedBg }: St
                     })
                   }}
                   className={`px-3 py-2 text-sm text-left transition-colors border font-serif ${
-                    selected ? 'border-amber-700/80 text-amber-200 bg-amber-900/10'
+                    isBgSkill ? 'border-amber-900/30 text-amber-500/50 bg-amber-950/5 cursor-default'
+                    : selected ? 'border-amber-700/80 text-amber-200 bg-amber-900/10'
                     : maxed ? 'border-stone-800 text-stone-700 cursor-not-allowed'
                     : 'border-stone-700/60 text-stone-400 hover:border-amber-800/60 hover:text-stone-200'
                   }`}
                 >
-                  {SKILL_NAMES_ES[idx] ?? name}
+                  <span className="flex items-center justify-between gap-1">
+                    <span>{SKILL_NAMES_ES[idx] ?? name}</span>
+                    {isBgSkill && (
+                      <span className="text-[8px] uppercase tracking-widest text-amber-500/60 font-mono font-bold bg-amber-950/30 px-1 border border-amber-900/20">
+                        Trasfondo
+                      </span>
+                    )}
+                  </span>
                 </button>
               )
             })}
