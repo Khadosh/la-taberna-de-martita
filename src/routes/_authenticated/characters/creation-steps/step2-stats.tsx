@@ -1,4 +1,5 @@
 import { abilityModifier, modifierColor, ABILITY_LABELS, ABILITY_FULL } from '../../../../lib/dnd-api'
+import { BACKGROUNDS } from '../../../../lib/dnd-backgrounds'
 import { StepTitle, inputStyle, cardStyle } from './primitives'
 import type { Draft } from '../character-creation-steps'
 import { EMPTY_STATS, STAT_KEYS, rollAll } from '../character-creation-steps'
@@ -11,6 +12,11 @@ interface Step2Props {
 }
 
 export function Step2Stats({ draft, patch, statMode, setStatMode }: Step2Props) {
+  const selectedBg = draft.backgroundKey ? BACKGROUNDS[draft.backgroundKey] : null
+  const backgroundBonuses = selectedBg && draft.bgBonus2 && draft.bgBonus1
+    ? { [draft.bgBonus2]: 2, [draft.bgBonus1]: 1 }
+    : {}
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
@@ -60,28 +66,44 @@ export function Step2Stats({ draft, patch, statMode, setStatMode }: Step2Props) 
             })}
           </div>
           <div className="grid grid-cols-2 gap-2.5">
-            {STAT_KEYS.map(key => (
-              <div key={key} style={cardStyle} className="flex items-center gap-3 p-3">
-                <div className="w-12 shrink-0">
-                  <p className="font-display text-amber-400/80 text-xs tracking-wider">{ABILITY_LABELS[key]}</p>
-                  <p className="text-[10px] text-stone-600 font-serif">{ABILITY_FULL[key]}</p>
-                </div>
-                <select
-                  value={draft.stats[key] || ''}
-                  onChange={e => patch({ stats: { ...draft.stats, [key]: +e.target.value } })}
-                  style={inputStyle} className="flex-1 px-2 py-1.5 text-stone-100 font-mono text-sm focus:outline-none"
-                >
-                  <option value="">—</option>
-                  {draft.rolledValues.map((v, i) => <option key={i} value={v}>{v}</option>)}
-                </select>
-                {draft.stats[key] > 0 && (
-                  <div className="text-right w-12 shrink-0">
-                    <p className="text-sm font-mono text-stone-200">{draft.stats[key]}</p>
-                    <p className={`text-xs font-mono ${modifierColor(draft.stats[key])}`}>{abilityModifier(draft.stats[key])}</p>
+            {STAT_KEYS.map(key => {
+              const base = draft.stats[key] || 0
+              const bonus = backgroundBonuses[key] || 0
+              const total = base ? base + bonus : 0
+              return (
+                <div key={key} style={cardStyle} className="flex items-center justify-between p-3 gap-2">
+                  <div className="w-14 shrink-0">
+                    <p className="font-display text-amber-400/80 text-xs tracking-wider uppercase">{ABILITY_LABELS[key]}</p>
+                    <p className="text-[9px] text-stone-500 font-serif">{ABILITY_FULL[key]}</p>
                   </div>
-                )}
-              </div>
-            ))}
+                  
+                  <div className="flex items-center gap-1.5 flex-1 min-w-0 justify-center">
+                    <select
+                      value={draft.stats[key] || ''}
+                      onChange={e => patch({ stats: { ...draft.stats, [key]: +e.target.value } })}
+                      style={inputStyle} className="w-16 px-1 py-1.5 text-stone-100 font-mono text-xs focus:outline-none text-center"
+                    >
+                      <option value="">—</option>
+                      {draft.rolledValues.map((v, i) => <option key={i} value={v}>{v}</option>)}
+                    </select>
+                    
+                    {bonus > 0 && (
+                      <span className="text-[10px] px-1.5 py-0.5 bg-amber-950/40 border border-amber-800/40 text-amber-400 font-mono rounded-sm shrink-0">
+                        +{bonus}
+                      </span>
+                    )}
+                  </div>
+
+                  {total > 0 && (
+                    <div className="text-right w-16 shrink-0 border-l border-stone-850/30 pl-2">
+                      <p className="text-[9px] text-stone-500 font-serif">Total</p>
+                      <p className="text-sm font-mono font-bold text-amber-200">{total}</p>
+                      <p className={`text-[10px] font-mono ${modifierColor(total)}`}>{abilityModifier(total)}</p>
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </>
       ) : (
@@ -91,26 +113,39 @@ export function Step2Stats({ draft, patch, statMode, setStatMode }: Step2Props) 
           </p>
           <div className="grid grid-cols-2 gap-2.5">
             {STAT_KEYS.map(key => {
-              const total = draft.stats[key] || 0
+              const base = draft.stats[key] || 0
+              const bonus = backgroundBonuses[key] || 0
+              const total = base ? base + bonus : 0
               return (
-                <div key={key} style={cardStyle} className="flex items-center gap-3 p-3">
-                  <div className="w-12 shrink-0">
-                    <p className="font-display text-amber-400/80 text-xs tracking-wider">{ABILITY_LABELS[key]}</p>
-                    <p className="text-[10px] text-stone-600 font-serif">{ABILITY_FULL[key]}</p>
+                <div key={key} style={cardStyle} className="flex items-center justify-between p-3 gap-2">
+                  <div className="w-14 shrink-0">
+                    <p className="font-display text-amber-400/80 text-xs tracking-wider uppercase">{ABILITY_LABELS[key]}</p>
+                    <p className="text-[9px] text-stone-500 font-serif">{ABILITY_FULL[key]}</p>
                   </div>
-                  <input type="number" min={3} max={20} placeholder="—"
-                    value={draft.stats[key] || ''}
-                    onChange={e => {
-                      const v = Math.min(20, Math.max(0, parseInt(e.target.value) || 0))
-                      patch({ stats: { ...draft.stats, [key]: v } })
-                    }}
-                    style={inputStyle}
-                    className="flex-1 px-3 py-1.5 text-stone-100 font-mono text-lg font-bold text-center focus:outline-none w-0"
-                  />
-                  {draft.stats[key] >= 3 && (
-                    <div className="text-right w-12 shrink-0">
-                      <p className="text-sm font-mono text-stone-200">{total}</p>
-                      <p className={`text-xs font-mono ${modifierColor(total)}`}>{abilityModifier(total)}</p>
+
+                  <div className="flex items-center gap-2 flex-1 justify-center">
+                    <input type="number" min={3} max={15} placeholder="Base"
+                      value={draft.stats[key] || ''}
+                      onChange={e => {
+                        const v = Math.min(15, Math.max(0, parseInt(e.target.value) || 0))
+                        patch({ stats: { ...draft.stats, [key]: v } })
+                      }}
+                      style={inputStyle}
+                      className="w-16 px-1 py-1 text-stone-100 font-mono text-sm font-bold text-center focus:outline-none"
+                    />
+
+                    {bonus > 0 && (
+                      <span className="text-[10px] px-1.5 py-0.5 bg-amber-950/40 border border-amber-800/40 text-amber-400 font-mono rounded-sm shrink-0">
+                        +{bonus}
+                      </span>
+                    )}
+                  </div>
+
+                  {total > 0 && (
+                    <div className="text-right w-16 shrink-0 border-l border-stone-850/30 pl-2">
+                      <p className="text-[9px] text-stone-500 font-serif">Total</p>
+                      <p className="text-sm font-mono font-bold text-amber-200">{total}</p>
+                      <p className={`text-[10px] font-mono ${modifierColor(total)}`}>{abilityModifier(total)}</p>
                     </div>
                   )}
                 </div>
@@ -120,7 +155,7 @@ export function Step2Stats({ draft, patch, statMode, setStatMode }: Step2Props) 
         </>
       )}
 
-      <p className="text-xs text-stone-600 font-serif italic">Los bonificadores +2/+1 del trasfondo se asignan en el siguiente paso.</p>
+      <p className="text-xs text-stone-550 font-serif italic">Incluye los modificadores +2 y +1 de Trasfondo seleccionados en el Paso 1 (máx. base 15).</p>
     </div>
   )
 }

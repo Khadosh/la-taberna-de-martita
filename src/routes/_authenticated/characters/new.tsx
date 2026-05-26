@@ -97,7 +97,7 @@ function NewCharacter() {
       return basicOk && bgOk
     }
     if (step === 2) {
-      if (statMode === 'manual') return STAT_KEYS.every(k => draft.stats[k] >= 3 && draft.stats[k] <= 20)
+      if (statMode === 'manual') return STAT_KEYS.every(k => draft.stats[k] >= 3 && draft.stats[k] <= 15)
       const unassigned = STAT_KEYS.filter(k => !draft.stats[k])
       return unassigned.length === 0 && new Set(Object.values(draft.stats)).size === 6
     }

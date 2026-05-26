@@ -1,8 +1,30 @@
-import { CLASS_ICONS } from '../../../../lib/class-meta'
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { Info } from 'lucide-react'
+import { dndApi, dndKeys } from '../../../../lib/dnd-api'
 import { SUBCLASS_SELECTION_LEVELS } from '../../../../lib/class-choices'
 import { BACKGROUNDS, ABILITY_LABELS_ES, type Background } from '../../../../lib/dnd-backgrounds'
 import { cardStyle } from './primitives'
 import type { Draft } from '../character-creation-steps'
+
+const BACKGROUND_ICONS: Record<string, string> = {
+  acolyte: 'Acolyte',
+  artisan: 'Guild_Artisan',
+  charlatan: 'Charlatan',
+  criminal: 'Criminal',
+  entertainer: 'Entertainer',
+  farmer: 'Folk_Hero',
+  guard: 'Soldier',
+  guide: 'Outlander',
+  hermit: 'Sage',
+  merchant: 'Guild_Artisan',
+  noble: 'Noble',
+  sage: 'Sage',
+  sailor: 'Outlander',
+  scribe: 'Sage',
+  soldier: 'Soldier',
+  wayfarer: 'Urchin',
+}
 
 interface Step1Props {
   draft: Draft
@@ -45,9 +67,14 @@ const RACE_FLAVOR: Record<string, { desc: string; traits: string }> = {
 export function Step1BasicInfo({
   draft, patch, races, classes, raceDetail, classDetail, classSubclasses, selectedBg
 }: Step1Props) {
-  const classIcon = CLASS_ICONS[draft.classIndex] ?? '🎲'
   const subclassReqLevel = SUBCLASS_SELECTION_LEVELS[draft.classIndex] ?? 1
   const showSubclass = draft.classIndex && draft.level >= subclassReqLevel
+
+  const [infoModalData, setInfoModalData] = useState<{
+    type: 'class' | 'race' | 'subclass' | 'background'
+    indexOrKey: string
+    name: string
+  } | null>(null)
 
   // Selected details values
   const currentClassName = classes?.results.find((c: any) => c.index === draft.classIndex)?.name || ''
@@ -127,6 +154,18 @@ export function Step1BasicInfo({
                       </div>
                       <p className="text-[12px] text-stone-300 text-shadow-2 font-serif mt-1 ">{flavor.desc}</p>
                     </div>
+                    {/* Info Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setInfoModalData({ type: 'race', indexOrKey: r.index, name: r.name });
+                      }}
+                      className="absolute right-2.5 bottom-2.5 z-20 p-1 flex items-center justify-center rounded-full bg-stone-900/60 border border-stone-850 hover:border-amber-500/60 text-stone-400 hover:text-amber-300 transition-all shadow-sm"
+                      title="Ver detalles"
+                    >
+                      <Info className="w-3.5 h-3.5" />
+                    </button>
                   </button>
                 )
               })}
@@ -140,7 +179,6 @@ export function Step1BasicInfo({
               {classes?.results.map((c: any) => {
                 const isSelected = draft.classIndex === c.index
                 const flavor = CLASS_FLAVOR[c.index] ?? { desc: 'Una clase de héroe.', tags: [] }
-                const classIcon = CLASS_ICONS[c.index] ?? '🎲'
                 return (
                   <button
                     key={c.index}
@@ -159,10 +197,14 @@ export function Step1BasicInfo({
                   >
                     <div className="z-10 flex-1 pr-14">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm shrink-0">{classIcon}</span>
+                        <img
+                          src={`/assets/images/classes/${c.index}_avatar.png`}
+                          className="w-8 h-8 rounded-full border border-tavern-gold/40 shrink-0 bg-stone-950 object-cover object-center"
+                          alt=""
+                        />
                         <p className="text-xs font-display tracking-wide font-bold uppercase">{c.name}</p>
                       </div>
-                      <p className="text-[10px] text-stone-500 font-serif mt-1 leading-snug line-clamp-1">{flavor.desc}</p>
+                      <p className="text-[12px] text-stone-300 font-serif mt-1">{flavor.desc}</p>
                     </div>
 
                     {/* Attribute tags */}
@@ -173,6 +215,18 @@ export function Step1BasicInfo({
                         </span>
                       ))}
                     </div>
+                    {/* Info Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setInfoModalData({ type: 'class', indexOrKey: c.index, name: c.name });
+                      }}
+                      className="absolute right-2.5 bottom-2.5 z-20 p-1 flex items-center justify-center rounded-full bg-stone-900/60 border border-stone-850 hover:border-amber-500/60 text-stone-400 hover:text-amber-300 transition-all shadow-sm"
+                      title="Ver detalles"
+                    >
+                      <Info className="w-3.5 h-3.5" />
+                    </button>
                   </button>
                 )
               })}
@@ -192,16 +246,30 @@ export function Step1BasicInfo({
                     key={s.index}
                     type="button"
                     onClick={() => patch({ subclassIndex: s.index })}
-                    className={`text-left p-3 border transition-all ${isSelected
+                    className={`relative text-left p-3 border transition-all pr-10 ${isSelected
                       ? 'border-amber-600/90 text-amber-100 bg-amber-950/20 shadow-sm'
                       : 'border-stone-800 text-stone-400 hover:border-amber-800/40 hover:text-stone-200'
                       }`}
                     style={isSelected ? { background: 'rgba(120,60,10,0.15)', border: '1px solid rgba(180,100,20,0.7)' } : cardStyle}
                   >
-                    <p className="text-sm font-display tracking-wide font-semibold">{s.name}</p>
-                    <p className="text-[10px] text-stone-600 font-serif mt-0.5 italic">
-                      Se desbloquea al Nivel {subclassReqLevel}
-                    </p>
+                    <div>
+                      <p className="text-sm font-display tracking-wide font-semibold">{s.name}</p>
+                      <p className="text-[10px] text-stone-600 font-serif mt-0.5 italic">
+                        Se desbloquea al Nivel {subclassReqLevel}
+                      </p>
+                    </div>
+                    {/* Info Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setInfoModalData({ type: 'subclass', indexOrKey: s.index, name: s.name });
+                      }}
+                      className="absolute right-2.5 bottom-2.5 z-20 p-1 flex items-center justify-center rounded-full bg-stone-900/60 border border-stone-850 hover:border-amber-500/60 text-stone-400 hover:text-amber-300 transition-all shadow-sm"
+                      title="Ver detalles"
+                    >
+                      <Info className="w-3.5 h-3.5" />
+                    </button>
                   </button>
                 )
               })}
@@ -220,19 +288,45 @@ export function Step1BasicInfo({
                   key={key}
                   type="button"
                   onClick={() => patch({ backgroundKey: key, bgBonus2: '', bgBonus1: '' })}
-                  className={`text-left p-3 border transition-all ${isSelected
-                    ? 'border-amber-600/90 text-amber-100 bg-amber-950/20 shadow-sm'
-                    : 'border-stone-800 text-stone-400 hover:border-amber-800/40 hover:text-stone-250'
-                    }`}
-                  style={isSelected ? { background: 'rgba(120,60,10,0.15)', border: '1px solid rgba(180,100,20,0.7)' } : cardStyle}
+                  className="relative text-left p-3 border transition-all overflow-hidden flex items-start gap-2.5 pr-10 rounded-sm h-[84px] w-full"
+                  style={{
+                    backgroundImage: isSelected
+                      ? `linear-gradient(100deg, rgba(24, 14, 6, 0.96) 25%, rgba(120, 60, 10, 0.3) 55%, rgba(120, 60, 10, 0.15) 100%), url('/assets/images/backgrounds/${key}.png')`
+                      : `linear-gradient(100deg, rgba(15, 8, 4, 0.98) 25%, rgba(24, 14, 6, 0.8) 55%, rgba(24, 14, 6, 0.45) 100%), url('/assets/images/backgrounds/${key}.png')`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'right center',
+                    borderColor: isSelected ? 'rgba(180, 100, 20, 0.85)' : 'rgba(120, 70, 20, 0.22)',
+                    boxShadow: isSelected ? 'inset 0 0 10px rgba(180, 100, 20, 0.25), 0 2px 6px rgba(0, 0, 0, 0.4)' : 'none',
+                  }}
                 >
-                  <div className="flex justify-between items-baseline gap-1">
-                    <p className="text-xs font-display tracking-wide font-bold uppercase">{bg.name}</p>
-                    <p className="text-[9px] font-mono text-amber-500/70 uppercase tracking-widest shrink-0">
-                      {bg.abilities.map(a => ABILITY_LABELS_ES[a]).join(' · ')}
-                    </p>
+                  <img
+                    src={`/assets/icons/bg3/30px-Background_${BACKGROUND_ICONS[key] || 'Noble'}_Icon.png.webp`}
+                    className="z-10 w-8 h-8 rounded-sm border border-tavern-gold/40 bg-stone-950 shrink-0 object-cover mt-0.5"
+                    alt=""
+                  />
+                  <div className="z-10 flex-1 min-w-0 pr-2">
+                    <div className="flex justify-between items-baseline gap-1">
+                      <p className="text-xs font-display tracking-wide font-bold uppercase truncate">{bg.name}</p>
+                      <div className="flex gap-1">
+                        {bg.abilities.map(a =>
+                          <span className="w-fit px-1 py-0.5 rounded text-[8px] font-mono text-amber-500/70 uppercase tracking-wide truncate mr-1 border border-amber-500/70 bg-amber-950/20">{ABILITY_LABELS_ES[a]}</span>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-[12px] text-stone-300 font-serif mt-1 leading-snug line-clamp-2">{bg.desc}</p>
                   </div>
-                  <p className="text-[10px] text-stone-550 font-serif mt-1 leading-snug line-clamp-1">{bg.desc}</p>
+                  {/* Info Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setInfoModalData({ type: 'background', indexOrKey: key, name: bg.name });
+                    }}
+                    className="absolute right-2.5 bottom-2.5 z-20 p-1 flex items-center justify-center rounded-full bg-stone-900/60 border border-stone-850 hover:border-amber-500/60 text-stone-400 hover:text-amber-300 transition-all shadow-sm"
+                    title="Ver detalles"
+                  >
+                    <Info className="w-3.5 h-3.5" />
+                  </button>
                 </button>
               )
             })}
@@ -315,31 +409,42 @@ export function Step1BasicInfo({
       <div className="lg:col-span-4 lg:sticky lg:top-6 space-y-4">
         <div className="relative w-full aspect-[3/4] bg-stone-950 rounded-t-[180px] rounded-b-md border border-tavern-gold/40 shadow-tavern-depth flex flex-col justify-end overflow-hidden">
           {/* Gold Decorative Arch Line */}
-          <div className="absolute inset-x-2 top-2 bottom-2 rounded-t-[150px] rounded-b-sm border border-tavern-gold/20 pointer-events-none" />
+          <div className="absolute inset-2 rounded-t-[170px] border border-tavern-gold/20 pointer-events-none" />
 
-          {/* Background Split: 50% Class & 50% Race */}
-          {(draft.classIndex || draft.raceIndex) ? (
-            <div className="absolute inset-0 z-0 flex">
+          {/* Tripartite Background Vitral */}
+          {(draft.classIndex || draft.raceIndex || draft.backgroundKey) ? (
+            <div className="absolute inset-0 z-0 flex flex-col">
+              {/* Top half: Race (Left) & Class (Right) */}
+              <div className="flex w-full h-[75%]">
+                <div
+                  className="w-1/2 h-full bg-cover bg-center transition-all duration-300"
+                  style={{
+                    backgroundImage: draft.raceIndex ? `url('/assets/images/races/${draft.raceIndex}.png')` : 'none',
+                    backgroundColor: '#0c0a09',
+                  }}
+                />
+                <div
+                  className="w-1/2 h-full bg-cover bg-center transition-all duration-300 border-l border-stone-900/50"
+                  style={{
+                    backgroundImage: draft.classIndex ? `url('/assets/images/classes/${draft.classIndex}.png')` : 'none',
+                    backgroundColor: '#0c0a09',
+                  }}
+                />
+              </div>
+              {/* Bottom half: Background */}
               <div
-                className="w-1/2 h-full bg-cover bg-center transition-all duration-300"
+                className="w-full h-[25%] bg-cover bg-center border-t border-stone-900/40 transition-all duration-300"
                 style={{
-                  backgroundImage: draft.classIndex ? `url('/assets/images/classes/${draft.classIndex}.png')` : 'none',
-                  backgroundColor: '#0c0a09',
-                }}
-              />
-              <div
-                className="w-1/2 h-full bg-cover bg-center transition-all duration-300 border-l border-stone-900/40"
-                style={{
-                  backgroundImage: draft.raceIndex ? `url('/assets/images/races/${draft.raceIndex}.png')` : 'none',
+                  backgroundImage: draft.backgroundKey ? `url('/assets/images/backgrounds/${draft.backgroundKey}.png')` : 'none',
                   backgroundColor: '#0c0a09',
                 }}
               />
               {/* Radial gradient vignette to dim and integrate split backgrounds */}
-              <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/80 to-stone-900/40 z-10" />
+              <div className="absolute inset-0 bg-gradient-to-t from-stone-950/40 via-stone-950/15 to-transparent z-10 pointer-events-none" />
             </div>
           ) : (
             <div className="absolute inset-0 z-0 bg-stone-900/60 flex items-center justify-center">
-              <p className="text-stone-700 font-serif italic text-xs">Sin clase ni raza elegida</p>
+
             </div>
           )}
 
@@ -349,66 +454,259 @@ export function Step1BasicInfo({
           overflow-hidden border-2 border-tavern-gold shadow-lg 
           bg-stone-900/50 flex items-center justify-center  mt-18
           ">
-            {draft.raceIndex ? (
+            {draft.raceIndex && (
               <img
                 src={`/assets/images/races/${draft.raceIndex}_avatar.png`}
-                className="w-[full] h-full object-cover object-center"
+                className="w-full h-full object-cover object-center"
                 alt={currentRaceName}
               />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-4xl text-stone-600">👤</div>
             )}
           </div>
 
-          {/* Text overlays */}
-          <div className="relative z-20 px-6 pb-6 text-center space-y-1.5 mt-auto">
-            <h3 className="font-display text-lg font-bold tracking-wider text-stone-100 uppercase truncate h-6">
-              {draft.name.trim()}
+          {/* Text overlays with Integrated Summary */}
+          <div className="relative z-20 px-6 pb-5 text-center space-y-2 mt-auto bg-gradient-to-t from-stone-950/85 via-stone-950/45 to-transparent pt-8 backdrop-blur-[1px]">
+            <h3 className="font-display text-lg font-bold tracking-wider text-stone-100 uppercase truncate h-6" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.95)' }}>
+              {draft.name.trim() || 'Aventurero'}
             </h3>
 
-            <p className="font-display text-xs tracking-widest text-amber-500/80 uppercase font-semibold h-4">
+            <p className="font-display text-xs tracking-widest text-amber-500/80 uppercase font-semibold h-4 flex items-center justify-center gap-1.5" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.95)' }}>
               {currentClassName || currentRaceName ? (
                 <>
-                  {classIcon} {currentClassName || 'Clase'} {currentRaceName && `· ${currentRaceName}`}
+                  {draft.classIndex && (
+                    <img
+                      src={`/assets/images/classes/${draft.classIndex}_avatar.png`}
+                      className="w-4 h-4 rounded-full border border-tavern-gold/40 bg-stone-950 object-cover"
+                      alt=""
+                    />
+                  )}
+                  <span>
+                    {currentClassName || 'Clase'} {currentRaceName && `· ${currentRaceName}`}
+                  </span>
                 </>
               ) : (
                 'Crea tu Aventurero'
               )}
             </p>
 
-            <div className="text-[11px] font-mono text-stone-500">
+            <div className="text-[11px] font-mono text-stone-400" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.95)' }}>
               Nivel: <span className="text-stone-300 font-bold">{draft.level}</span>
             </div>
+
+            {/* INTEGRATED SUMMARY SPECS */}
+            {(classDetail || raceDetail || selectedBg) && (
+              <div className="pt-2 border-t border-stone-850/30 mt-2 text-[10px] text-stone-400 font-serif leading-relaxed text-left space-y-1 max-w-[240px] mx-auto" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.95)' }}>
+                {classDetail && (
+                  <p className="truncate">
+                    <span className="font-sans uppercase text-[8px] tracking-wider text-stone-500 font-bold">Clase:</span> d{classDetail.hit_die} HG · Salvaciones: {classDetail.saving_throws.map((s: any) => s.name).join(', ')}
+                  </p>
+                )}
+                {raceDetail && (
+                  <p className="truncate">
+                    <span className="font-sans uppercase text-[8px] tracking-wider text-stone-500 font-bold">Especie:</span> Movimiento {raceDetail.speed} pies.
+                  </p>
+                )}
+                {selectedBg && (
+                  <p className="truncate">
+                    <span className="font-sans uppercase text-[8px] tracking-wider text-stone-500 font-bold">Trasfondo:</span> {selectedBg.name}
+                    {draft.bgBonus2 && draft.bgBonus1 && ` (+2 ${ABILITY_LABELS_ES[draft.bgBonus2]}, +1 ${ABILITY_LABELS_ES[draft.bgBonus1]})`}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
-
-        {/* Technical summary specs (grimorio parchment card at bottom of preview) */}
-        {(classDetail || raceDetail) && (
-          <div className="bg-parchment-gradient border border-parchment-sienna/40 p-4 rounded-sm shadow-md text-[#3f1a04] space-y-3">
-            <h4 className="font-display text-sm font-bold uppercase border-b border-[#6b4c24]/20 pb-1.5 text-[#5a3a14]">
-              Resumen de Creación
-            </h4>
-            <div className="space-y-1.5 text-[11px] font-serif leading-snug">
-              {classDetail && (
-                <p>
-                  <span className="font-sans uppercase text-[9px] tracking-wider text-stone-600 font-bold">Clase:</span> d{classDetail.hit_die} Dado de Golpe · Salvaciones: {classDetail.saving_throws.map((s: any) => s.name).join(', ')}
-                </p>
-              )}
-              {raceDetail && (
-                <p>
-                  <span className="font-sans uppercase text-[9px] tracking-wider text-stone-600 font-bold">Especie:</span> Movimiento {raceDetail.speed} pies.
-                </p>
-              )}
-              {selectedBg && (
-                <p>
-                  <span className="font-sans uppercase text-[9px] tracking-wider text-stone-600 font-bold">Trasfondo:</span> {selectedBg.name}
-                  {draft.bgBonus2 && draft.bgBonus1 && ` (+2 ${ABILITY_LABELS_ES[draft.bgBonus2]}, +1 ${ABILITY_LABELS_ES[draft.bgBonus1]})`}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
       </div>
+
+      {infoModalData && (
+        <DetailModal
+          type={infoModalData.type}
+          indexOrKey={infoModalData.indexOrKey}
+          name={infoModalData.name}
+          onClose={() => setInfoModalData(null)}
+        />
+      )}
+    </div>
+  )
+}
+
+// ── Detail Modal Component ───────────────────────────────────────────────────
+
+interface DetailModalProps {
+  type: 'class' | 'race' | 'subclass' | 'background'
+  indexOrKey: string
+  name: string
+  onClose: () => void
+}
+
+function DetailModal({ type, indexOrKey, name, onClose }: DetailModalProps) {
+  const { data: raceInfo, isLoading: loadingRace } = useQuery({
+    queryKey: dndKeys.race(indexOrKey),
+    queryFn: () => dndApi.race(indexOrKey),
+    enabled: type === 'race',
+  })
+
+  const { data: classInfo, isLoading: loadingClass } = useQuery({
+    queryKey: dndKeys.klass(indexOrKey),
+    queryFn: () => dndApi.klass(indexOrKey),
+    enabled: type === 'class',
+  })
+
+  const { data: subclassInfo, isLoading: loadingSubclass } = useQuery({
+    queryKey: dndKeys.subclass(indexOrKey),
+    queryFn: () => dndApi.subclass(indexOrKey),
+    enabled: type === 'subclass',
+  })
+
+  const isLoading = (type === 'race' && loadingRace) ||
+    (type === 'class' && loadingClass) ||
+    (type === 'subclass' && loadingSubclass)
+
+  const bgInfo = type === 'background' ? BACKGROUNDS[indexOrKey] : null
+
+  return (
+    <div
+      className="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={onClose}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        className="relative max-w-md w-full p-6 space-y-4 rounded-md border border-[#6b4c24]/50 shadow-2xl overflow-hidden font-serif"
+        style={{
+          background: 'linear-gradient(165deg, #1d120a 0%, #0f0804 100%)',
+        }}
+      >
+        <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-tavern-gold/40 to-transparent" />
+
+        <div className="flex items-start justify-between border-b border-[#6b4c24]/20 pb-3">
+          <div>
+            <span className="text-[9px] uppercase tracking-widest text-amber-500/70 font-sans font-bold">
+              Detalles de {type === 'class' ? 'Clase' : type === 'race' ? 'Especie' : type === 'subclass' ? 'Subclase' : 'Trasfondo'}
+            </span>
+            <h3 className="font-display text-lg font-bold text-amber-100 tracking-wide mt-0.5">{name}</h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="text-stone-500 hover:text-amber-200 transition-colors text-lg leading-none p-1 font-sans"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="space-y-3 overflow-y-auto max-h-96 pr-1 text-sm text-stone-300 leading-relaxed font-serif">
+          {isLoading ? (
+            <div className="py-8 text-center text-stone-500 font-sans text-xs tracking-wider uppercase animate-pulse">
+              Cargando del grimorio...
+            </div>
+          ) : (
+            <>
+              {type === 'race' && raceInfo && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2 text-xs font-sans text-stone-400 bg-stone-950/40 p-2.5 border border-[#6b4c24]/10 rounded-sm">
+                    <p><span className="text-amber-500/80 font-semibold">Velocidad:</span> {raceInfo.speed} pies</p>
+                    <p className="col-span-2">
+                      <span className="text-amber-500/80 font-semibold">Competencias:</span>{' '}
+                      {raceInfo.ability_bonuses?.map(ab => `${ab.ability_score.name} +${ab.bonus}`).join(', ') || 'Ninguna'}
+                    </p>
+                  </div>
+
+                  {raceInfo.traits && raceInfo.traits.length > 0 && (
+                    <div className="space-y-2 pt-2">
+                      <h4 className="text-xs uppercase font-sans tracking-wide text-amber-500/80 font-bold border-b border-[#6b4c24]/10 pb-1">Rasgos raciales:</h4>
+                      <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                        {raceInfo.traits.map(t => (
+                          <TraitItem key={t.index} traitIndex={t.index} traitName={t.name} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {type === 'class' && classInfo && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-2 text-xs font-sans text-stone-400 bg-stone-950/40 p-2.5 border border-[#6b4c24]/10 rounded-sm">
+                    <p><span className="text-amber-500/80 font-semibold">Dado de Golpe:</span> d{classInfo.hit_die}</p>
+                    <p><span className="text-amber-500/80 font-semibold">Salvaciones:</span> {classInfo.saving_throws.map(s => s.name).join(', ')}</p>
+                    <p className="col-span-2">
+                      <span className="text-amber-500/80 font-semibold">Competencias en armas/armaduras:</span>{' '}
+                      {classInfo.proficiencies.map(p => p.name).join(', ') || 'Ninguna'}
+                    </p>
+                  </div>
+
+                  {classInfo.proficiency_choices && classInfo.proficiency_choices.length > 0 && (
+                    <div className="pt-1 text-xs">
+                      <span className="text-amber-500/80 font-sans font-bold uppercase tracking-wider block mb-1">Elegir habilidades:</span>
+                      <p className="text-stone-400 italic">{classInfo.proficiency_choices[0].desc}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {type === 'subclass' && subclassInfo && (
+                <div className="space-y-3">
+                  {subclassInfo.subclass_flavor && (
+                    <p className="italic text-amber-250/70 border-l-2 border-[#6b4c24]/30 pl-3">
+                      "{subclassInfo.subclass_flavor}"
+                    </p>
+                  )}
+                  <div className="space-y-2">
+                    {subclassInfo.desc ? (
+                      Array.isArray(subclassInfo.desc) ? (
+                        subclassInfo.desc.map((p, idx) => <p key={idx}>{p}</p>)
+                      ) : (
+                        <p>{subclassInfo.desc}</p>
+                      )
+                    ) : (
+                      <p className="text-stone-500 italic">Sin descripción disponible.</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {type === 'background' && bgInfo && (
+                <div className="space-y-3">
+                  <p>{bgInfo.desc}</p>
+                  <div className="grid grid-cols-2 gap-2 text-xs font-sans text-stone-400 bg-stone-950/40 p-2.5 border border-[#6b4c24]/10 rounded-sm">
+                    <p className="col-span-2">
+                      <span className="text-amber-500/80 font-semibold">Características asociadas (elige +2 y +1):</span>{' '}
+                      {bgInfo.abilities.map(a => ABILITY_LABELS_ES[a]).join(', ')}
+                    </p>
+                    <p className="col-span-2">
+                      <span className="text-amber-500/80 font-semibold">Pericias automáticas:</span>{' '}
+                      {bgInfo.skills.join(', ')}
+                    </p>
+                    {bgInfo.tool && (
+                      <p className="col-span-2">
+                        <span className="text-amber-500/80 font-semibold">Herramientas:</span> {bgInfo.tool}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TraitItem({ traitIndex, traitName }: { traitIndex: string; traitName: string }) {
+  const { data, isLoading } = useQuery({
+    queryKey: dndKeys.trait(traitIndex),
+    queryFn: () => dndApi.trait(traitIndex),
+  })
+
+  return (
+    <div className="bg-stone-950/25 border border-stone-900 p-2.5 rounded-sm space-y-1">
+      <h5 className="text-xs font-sans font-semibold text-amber-200/90">{traitName}</h5>
+      {isLoading ? (
+        <p className="text-[10px] text-stone-500 italic animate-pulse">Cargando detalles...</p>
+      ) : data?.desc ? (
+        <p className="text-[11px] text-stone-400 leading-snug">{data.desc.join(' ')}</p>
+      ) : (
+        <p className="text-[10px] text-stone-500 italic">Sin descripción.</p>
+      )}
     </div>
   )
 }

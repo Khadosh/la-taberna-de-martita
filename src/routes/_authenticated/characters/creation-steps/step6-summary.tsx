@@ -38,7 +38,15 @@ export function Step6Summary({ draft, patch, raceDetail, classDetail, totalStats
       <div style={cardStyle} className="p-4 space-y-3 text-sm">
         <p className="text-xs text-stone-500 font-display tracking-widest uppercase mb-3 font-serif">Resumen</p>
         <div className="flex items-center gap-3 mb-2">
-          <span className="text-2xl">{classIcon}</span>
+          {draft.classIndex ? (
+            <img
+              src={`/assets/images/classes/${draft.classIndex}_avatar.png`}
+              className="w-10 h-10 rounded-full border border-tavern-gold/40 bg-stone-950 object-cover"
+              alt=""
+            />
+          ) : (
+            <span className="text-2xl">{classIcon}</span>
+          )}
           <div>
             <p className="text-stone-200 font-serif font-semibold">{draft.name}</p>
             <p className="text-stone-500 text-xs font-serif capitalize">{raceDetail?.name} · {classDetail?.name} · Nivel {draft.level}</p>

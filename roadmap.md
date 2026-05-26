@@ -63,6 +63,10 @@ Sincronización de dados en mesa integrada al tablero de combate del DM (documen
 | Scrolls indeseados en el tablero y barra de scroll descentrada → solucionado dinámicamente en CampaignLayout | ✅ |
 | Reemplazo de emojis genéricos por iconos SVG premium y personalizados en la barra de navegación de la campaña | ✅ |
 | Configuración de fondos atmosféricos de pantalla específicos para cada pestaña del hub de campaña (Overview, PNJs, Hechizos, Comercio, Taberna, Habilidades) | ✅ |
+| Reemplazo de emojis en la creación de personajes por retratos e ilustraciones premium | ✅ |
+| Carga de 16 ilustraciones de trasfondos (Backgrounds) y optimización de todas las imágenes (resize 512px) | ✅ |
+| Vitral tripartito en creación (75% clase/raza, 25% trasfondo) con sombreado de textos y glassmorphism | ✅ |
+| Límite de estadísticas base a 15 y cálculo dinámico de modificadores de trasfondo | ✅ |
 
 ---
 
