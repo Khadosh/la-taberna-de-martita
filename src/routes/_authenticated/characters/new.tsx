@@ -14,7 +14,6 @@ import {
 import { inputStyle, cardStyle, btnStyle } from './creation-steps/primitives'
 import { Step1BasicInfo } from './creation-steps/step1-basic-info'
 import { Step2Stats } from './creation-steps/step2-stats'
-import { Step3Background } from './creation-steps/step3-background'
 import { Step4Proficiencies } from './creation-steps/step4-proficiencies'
 import { Step5Spells } from './creation-steps/step5-spells'
 import { Step6Summary } from './creation-steps/step6-summary'
@@ -89,17 +88,20 @@ function NewCharacter() {
   }, { ...EMPTY_STATS })
 
   const isCaster = !!classDetail?.spellcasting
-  const totalSteps = isCaster ? 6 : 5
+  const totalSteps = isCaster ? 5 : 4
 
   const canProceed = (): boolean => {
-    if (step === 1) return !!(draft.name.trim() && draft.raceIndex && draft.classIndex)
+    if (step === 1) {
+      const basicOk = !!(draft.name.trim() && draft.raceIndex && draft.classIndex)
+      const bgOk = !!(draft.backgroundKey && draft.bgBonus2 && draft.bgBonus1 && draft.bgBonus2 !== draft.bgBonus1)
+      return basicOk && bgOk
+    }
     if (step === 2) {
       if (statMode === 'manual') return STAT_KEYS.every(k => draft.stats[k] >= 3 && draft.stats[k] <= 20)
       const unassigned = STAT_KEYS.filter(k => !draft.stats[k])
       return unassigned.length === 0 && new Set(Object.values(draft.stats)).size === 6
     }
-    if (step === 3) return !!(draft.backgroundKey && draft.bgBonus2 && draft.bgBonus1 && draft.bgBonus2 !== draft.bgBonus1)
-    if (step === 4) {
+    if (step === 3) {
       const choices = classDetail?.proficiency_choices[0]
       const skillsOk = !choices || draft.skillProficiencies.length === choices.choose
       const expectedExpertise = getExpertiseCount(draft.classIndex, draft.level)
@@ -161,7 +163,7 @@ function NewCharacter() {
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto px-4 sm:px-8 py-8">
+      <div className={`${step === 1 ? 'max-w-6xl' : 'max-w-2xl'} mx-auto px-4 sm:px-8 py-8`}>
         {/* Step indicator */}
         <div className="flex items-center mb-8">
           {Array.from({ length: totalSteps }, (_, i) => (
@@ -181,18 +183,16 @@ function NewCharacter() {
         {step === 1 && (
           <Step1BasicInfo draft={draft} patch={patch}
             races={races} classes={classes}
-            raceDetail={raceDetail} classDetail={classDetail} classSubclasses={classSubclasses} />
+            raceDetail={raceDetail} classDetail={classDetail} classSubclasses={classSubclasses}
+            selectedBg={selectedBg} />
         )}
         {step === 2 && (
           <Step2Stats draft={draft} patch={patch} statMode={statMode} setStatMode={setStatMode} />
         )}
-        {step === 3 && (
-          <Step3Background draft={draft} patch={patch} selectedBg={selectedBg} />
-        )}
-        {step === 4 && classDetail && (
+        {step === 3 && classDetail && (
           <Step4Proficiencies draft={draft} patch={patch} classDetail={classDetail} selectedBg={selectedBg} />
         )}
-        {step === 5 && isCaster && classSpells && (
+        {step === 4 && isCaster && classSpells && (
           <Step5Spells draft={draft} patch={patch}
             classSpells={classSpells} classDetail={classDetail} setSpellModal={setSpellModal} />
         )}
