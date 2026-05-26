@@ -105,8 +105,8 @@ export function Step1BasicInfo({
                     className="relative text-left p-3 border transition-all overflow-hidden flex items-center justify-between rounded-sm h-[84px] w-full"
                     style={{
                       backgroundImage: isSelected
-                        ? `linear-gradient(100deg, rgba(24, 14, 6, 0.96) 55%, rgba(120, 60, 10, 0.5) 85%, rgba(120, 60, 10, 0.25) 100%), url('/assets/images/races/${r.index}.png')`
-                        : `linear-gradient(100deg, rgba(15, 8, 4, 0.98) 55%, rgba(24, 14, 6, 0.8) 85%, rgba(24, 14, 6, 0.45) 100%), url('/assets/images/races/${r.index}.png')`,
+                        ? `linear-gradient(100deg, rgba(24, 14, 6, 0.96) 25%, rgba(120, 60, 10, 0.5) 35%, rgba(120, 60, 10, 0.15) 100%), url('/assets/images/races/${r.index}.png')`
+                        : `linear-gradient(100deg, rgba(15, 8, 4, 0.98) 25%, rgba(24, 14, 6, 0.8) 55%, rgba(24, 14, 6, 0.45) 100%), url('/assets/images/races/${r.index}.png')`,
                       backgroundSize: 'cover',
                       backgroundPosition: 'right center',
                       borderColor: isSelected ? 'rgba(180, 100, 20, 0.85)' : 'rgba(120, 70, 20, 0.22)',
@@ -115,16 +115,17 @@ export function Step1BasicInfo({
                   >
                     <div className="z-10 flex-1 pr-14">
                       <div className="flex items-center gap-2">
-                        {/* Spritesheet Avatar miniature instead of emoji */}
                         <img
                           src={`/assets/images/races/${r.index}_avatar.png`}
-                          className="w-7 h-7 rounded-full border border-tavern-gold/40 object-cover shrink-0 bg-stone-950"
+                          className="w-8 h-8 rounded-full border border-tavern-gold/40  shrink-0 bg-stone-950"
                           alt=""
                         />
-                        <p className="text-xs font-display tracking-wide font-bold uppercase">{r.name}</p>
+                        <div className="flex flex-col">
+                          <p className="text-xs font-display tracking-wide font-bold uppercase">{r.name}</p>
+                          <p className="text-[8px] text-amber-500/70 font-mono mt-1 uppercase tracking-wide truncate">{flavor.traits}</p>
+                        </div>
                       </div>
-                      <p className="text-[10px] text-stone-500 font-serif mt-1 leading-snug line-clamp-1">{flavor.desc}</p>
-                      <p className="text-[8px] text-amber-500/70 font-mono mt-1 uppercase tracking-wide truncate">{flavor.traits}</p>
+                      <p className="text-[12px] text-stone-300 text-shadow-2 font-serif mt-1 ">{flavor.desc}</p>
                     </div>
                   </button>
                 )
@@ -148,8 +149,8 @@ export function Step1BasicInfo({
                     className="relative text-left p-3 border transition-all overflow-hidden flex items-center justify-between rounded-sm h-[84px] w-full"
                     style={{
                       backgroundImage: isSelected
-                        ? `linear-gradient(100deg, rgba(24, 14, 6, 0.96) 55%, rgba(120, 60, 10, 0.5) 85%, rgba(120, 60, 10, 0.25) 100%), url('/assets/images/classes/${c.index}.png')`
-                        : `linear-gradient(100deg, rgba(15, 8, 4, 0.98) 55%, rgba(24, 14, 6, 0.8) 85%, rgba(24, 14, 6, 0.45) 100%), url('/assets/images/classes/${c.index}.png')`,
+                        ? `linear-gradient(100deg, rgba(24, 14, 6, 0.96) 25%, rgba(120, 60, 10, 0.3) 55%, rgba(120, 60, 10, 0.15) 100%), url('/assets/images/classes/${c.index}.png')`
+                        : `linear-gradient(100deg, rgba(15, 8, 4, 0.98) 25%, rgba(24, 14, 6, 0.8) 55%, rgba(24, 14, 6, 0.45) 100%), url('/assets/images/classes/${c.index}.png')`,
                       backgroundSize: 'cover',
                       backgroundPosition: 'right center',
                       borderColor: isSelected ? 'rgba(180, 100, 20, 0.85)' : 'rgba(120, 70, 20, 0.22)',
@@ -163,7 +164,7 @@ export function Step1BasicInfo({
                       </div>
                       <p className="text-[10px] text-stone-500 font-serif mt-1 leading-snug line-clamp-1">{flavor.desc}</p>
                     </div>
-                    
+
                     {/* Attribute tags */}
                     <div className="absolute right-2 top-2.5 z-10">
                       {flavor.tags.slice(0, 1).map(t => (
@@ -191,11 +192,10 @@ export function Step1BasicInfo({
                     key={s.index}
                     type="button"
                     onClick={() => patch({ subclassIndex: s.index })}
-                    className={`text-left p-3 border transition-all ${
-                      isSelected
-                        ? 'border-amber-600/90 text-amber-100 bg-amber-950/20 shadow-sm'
-                        : 'border-stone-800 text-stone-400 hover:border-amber-800/40 hover:text-stone-200'
-                    }`}
+                    className={`text-left p-3 border transition-all ${isSelected
+                      ? 'border-amber-600/90 text-amber-100 bg-amber-950/20 shadow-sm'
+                      : 'border-stone-800 text-stone-400 hover:border-amber-800/40 hover:text-stone-200'
+                      }`}
                     style={isSelected ? { background: 'rgba(120,60,10,0.15)', border: '1px solid rgba(180,100,20,0.7)' } : cardStyle}
                   >
                     <p className="text-sm font-display tracking-wide font-semibold">{s.name}</p>
@@ -220,11 +220,10 @@ export function Step1BasicInfo({
                   key={key}
                   type="button"
                   onClick={() => patch({ backgroundKey: key, bgBonus2: '', bgBonus1: '' })}
-                  className={`text-left p-3 border transition-all ${
-                    isSelected
-                      ? 'border-amber-600/90 text-amber-100 bg-amber-950/20 shadow-sm'
-                      : 'border-stone-800 text-stone-400 hover:border-amber-800/40 hover:text-stone-250'
-                  }`}
+                  className={`text-left p-3 border transition-all ${isSelected
+                    ? 'border-amber-600/90 text-amber-100 bg-amber-950/20 shadow-sm'
+                    : 'border-stone-800 text-stone-400 hover:border-amber-800/40 hover:text-stone-250'
+                    }`}
                   style={isSelected ? { background: 'rgba(120,60,10,0.15)', border: '1px solid rgba(180,100,20,0.7)' } : cardStyle}
                 >
                   <div className="flex justify-between items-baseline gap-1">
@@ -249,7 +248,7 @@ export function Step1BasicInfo({
                 Elige dos de las tres características asociadas para aplicar tus modificadores (+2 y +1):
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="text-[10px] text-stone-500 font-display tracking-widest uppercase block">Bono +2 a...</label>
@@ -261,11 +260,10 @@ export function Step1BasicInfo({
                         key={a}
                         type="button"
                         onClick={() => patch({ bgBonus2: a, bgBonus1: draft.bgBonus1 === a ? '' : draft.bgBonus1 })}
-                        className={`flex-1 py-1.5 text-center text-xs font-mono font-bold border transition-all ${
-                          isSelected
-                            ? 'border-amber-600/90 text-amber-250 bg-amber-950/20'
-                            : 'border-stone-800 text-stone-500 hover:border-stone-600 hover:text-stone-300'
-                        }`}
+                        className={`flex-1 py-1.5 text-center text-xs font-mono font-bold border transition-all ${isSelected
+                          ? 'border-amber-600/90 text-amber-250 bg-amber-950/20'
+                          : 'border-stone-800 text-stone-500 hover:border-stone-600 hover:text-stone-300'
+                          }`}
                         style={isSelected ? { background: 'rgba(120,60,10,0.15)', border: '1px solid rgba(180,100,20,0.7)' } : cardStyle}
                       >
                         {ABILITY_LABELS_ES[a]}
@@ -287,13 +285,12 @@ export function Step1BasicInfo({
                         type="button"
                         disabled={isUsedFor2}
                         onClick={() => patch({ bgBonus1: a })}
-                        className={`flex-1 py-1.5 text-center text-xs font-mono font-bold border transition-all ${
-                          isUsedFor2
-                            ? 'opacity-20 border-stone-900 text-stone-800 cursor-not-allowed'
-                            : isSelected
+                        className={`flex-1 py-1.5 text-center text-xs font-mono font-bold border transition-all ${isUsedFor2
+                          ? 'opacity-20 border-stone-900 text-stone-800 cursor-not-allowed'
+                          : isSelected
                             ? 'border-amber-600/90 text-amber-250 bg-amber-950/20'
                             : 'border-stone-800 text-stone-500 hover:border-stone-600 hover:text-stone-300'
-                        }`}
+                          }`}
                         style={!isUsedFor2 && isSelected ? { background: 'rgba(120,60,10,0.15)', border: '1px solid rgba(180,100,20,0.7)' } : cardStyle}
                       >
                         {ABILITY_LABELS_ES[a]}
@@ -316,10 +313,10 @@ export function Step1BasicInfo({
 
       {/* RIGHT COLUMN: Interactive Arched Portrait Preview Frame */}
       <div className="lg:col-span-4 lg:sticky lg:top-6 space-y-4">
-        <div className="relative w-full aspect-[3/4] bg-stone-950 rounded-t-[160px] rounded-b-md border border-tavern-gold/40 shadow-tavern-depth flex flex-col justify-end overflow-hidden">
+        <div className="relative w-full aspect-[3/4] bg-stone-950 rounded-t-[180px] rounded-b-md border border-tavern-gold/40 shadow-tavern-depth flex flex-col justify-end overflow-hidden">
           {/* Gold Decorative Arch Line */}
           <div className="absolute inset-x-2 top-2 bottom-2 rounded-t-[150px] rounded-b-sm border border-tavern-gold/20 pointer-events-none" />
-          
+
           {/* Background Split: 50% Class & 50% Race */}
           {(draft.classIndex || draft.raceIndex) ? (
             <div className="absolute inset-0 z-0 flex">
@@ -347,11 +344,15 @@ export function Step1BasicInfo({
           )}
 
           {/* Large Gold Portrait Frame with Crop Avatar */}
-          <div className="relative z-20 w-36 h-36 mx-auto rounded-full overflow-hidden border-2 border-tavern-gold shadow-lg bg-stone-900/60 flex items-center justify-center mb-4 mt-8">
+          <div className="
+          relative z-20 w-40 h-40 mx-auto rounded-full p-2
+          overflow-hidden border-2 border-tavern-gold shadow-lg 
+          bg-stone-900/50 flex items-center justify-center  mt-18
+          ">
             {draft.raceIndex ? (
               <img
                 src={`/assets/images/races/${draft.raceIndex}_avatar.png`}
-                className="w-full h-full object-cover object-center"
+                className="w-[full] h-full object-cover object-center"
                 alt={currentRaceName}
               />
             ) : (
@@ -362,9 +363,9 @@ export function Step1BasicInfo({
           {/* Text overlays */}
           <div className="relative z-20 px-6 pb-6 text-center space-y-1.5 mt-auto">
             <h3 className="font-display text-lg font-bold tracking-wider text-stone-100 uppercase truncate h-6">
-              {draft.name.trim() || 'Gomito'}
+              {draft.name.trim()}
             </h3>
-            
+
             <p className="font-display text-xs tracking-widest text-amber-500/80 uppercase font-semibold h-4">
               {currentClassName || currentRaceName ? (
                 <>
@@ -374,7 +375,7 @@ export function Step1BasicInfo({
                 'Crea tu Aventurero'
               )}
             </p>
-            
+
             <div className="text-[11px] font-mono text-stone-500">
               Nivel: <span className="text-stone-300 font-bold">{draft.level}</span>
             </div>
