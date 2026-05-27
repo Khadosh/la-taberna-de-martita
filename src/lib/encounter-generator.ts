@@ -37,6 +37,8 @@ export type CreatureRow = {
   counts: Record<Role, number>
   // Per-unit level overrides: key = "${role}-${index}", value = level
   unitLevels?: Record<string, number>
+  // Custom spells to assign on spawn (overrides monster defaults)
+  customSpells?: string[]
 }
 
 // Derived from rows for XP math and spawn
@@ -48,6 +50,7 @@ export type EncounterUnit = {
   cr: number
   xp: number
   level: number
+  customSpells?: string[]
 }
 
 export type LootItemEntry = {
@@ -140,6 +143,7 @@ export function unitsFromRows(rows: CreatureRow[]): EncounterUnit[] {
           cr: row.cr,
           xp: xpAtLevel(row.xp, unitLevel),
           level: unitLevel,
+          customSpells: row.customSpells,
         })
       }
     }

@@ -5,6 +5,74 @@ import { CornerBracket } from '../combat/combat-helpers'
 import { ABILITY_KEYS, type AbilityKey, DND_IMG_BASE, ROLE_BADGE, ROLE_COL_HEADER, abMod } from './encounter-constants'
 import { ROLE_ICONS } from './encounter-icons'
 import { CountStepper, SpecialAbilityTag } from './encounter-sub-components'
+import { getMonsterSpells } from '../../data/monster-spells'
+
+function SpellEditor({ defaultSpells, value, onChange }: {
+  defaultSpells: string[]
+  value: string[] | undefined
+  onChange: (v: string[] | undefined) => void
+}) {
+  const active = value ?? defaultSpells
+  const [input, setInput] = useState('')
+
+  function addSpell(raw: string) {
+    const trimmed = raw.trim().toLowerCase().replace(/\s+/g, '-')
+    if (!trimmed || active.includes(trimmed)) return
+    onChange([...active, trimmed])
+  }
+
+  function removeSpell(s: string) {
+    const next = active.filter(x => x !== s)
+    onChange(next.length > 0 ? next : [])
+  }
+
+  function handleKey(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault()
+      addSpell(input)
+      setInput('')
+    }
+  }
+
+  const isDefault = value === undefined && defaultSpells.length > 0
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <label className="text-xs text-[#8a6b3e] font-serif">Hechizos al spawnear</label>
+        {!isDefault && defaultSpells.length > 0 && (
+          <button type="button" onClick={() => onChange(undefined)}
+            className="text-[8px] text-[#8a6b3e] hover:text-[#bc9434] transition-colors cursor-pointer font-mono"
+          >reset</button>
+        )}
+      </div>
+      <div className="flex flex-wrap gap-1 min-h-[22px]">
+        {active.map(s => (
+          <span key={s}
+            className="flex items-center gap-0.5 text-[9px] px-1.5 py-0.5 rounded-sm font-mono"
+            style={{ background: 'rgba(139,92,246,0.15)', border: '1px solid rgba(139,92,246,0.4)', color: '#c4b5fd' }}
+          >
+            {s.replace(/-/g, ' ')}
+            <button type="button" onClick={() => removeSpell(s)}
+              className="ml-0.5 opacity-60 hover:opacity-100 cursor-pointer leading-none"
+            >×</button>
+          </span>
+        ))}
+        {active.length === 0 && (
+          <span className="text-[9px] text-[#8a6b3e]/60 font-mono italic">ninguno</span>
+        )}
+      </div>
+      <input
+        type="text" value={input}
+        onChange={e => setInput(e.target.value)}
+        onKeyDown={handleKey}
+        onBlur={() => { if (input.trim()) { addSpell(input); setInput('') } }}
+        placeholder="fireball, shield... (Enter para añadir)"
+        className="w-full px-2 py-1 bg-black/40 border border-[#3c2414] text-[#d5b88a] text-[10px] font-mono focus:outline-none focus:border-[#bc9434] rounded-sm placeholder:text-[#8a6b3e]/50"
+      />
+    </div>
+  )
+}
 
 export function MonsterRowEditorModal({ row, onClose, onUpdate }: {
   row: CreatureRow
@@ -89,6 +157,12 @@ export function MonsterRowEditorModal({ row, onClose, onUpdate }: {
             </div>
           </div>
         )}
+
+        <SpellEditor
+          defaultSpells={getMonsterSpells(row.monsterIndex)}
+          value={local.customSpells}
+          onChange={v => set({ customSpells: v })}
+        />
 
         <div className="flex justify-end gap-2 pt-2 border-t border-[#3c2414]">
           <button onClick={onClose} className="text-xs text-[#8a6b3e] hover:text-[#bc9434] font-serif transition-colors cursor-pointer">
@@ -203,6 +277,24 @@ export function MonsterCard({ row, role, index, unitLevel, onEdit, onLevelChange
             )}
           </div>
         )}
+
+        {(role === 'magic' || role === 'support') && (() => {
+          const spells = row.customSpells ?? getMonsterSpells(row.monsterIndex)
+          if (spells.length === 0) return null
+          return (
+            <div className="flex flex-wrap gap-0.5 border-t border-[#b8a983]/40 pt-1">
+              {spells.slice(0, 4).map(s => (
+                <span key={s} className="text-[6px] px-1 py-px rounded-sm font-mono"
+                  style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.35)', color: '#a78bfa' }}>
+                  {s.replace(/-/g, ' ')}
+                </span>
+              ))}
+              {spells.length > 4 && (
+                <span className="text-[6px] text-purple-500 font-mono font-bold">+{spells.length - 4}</span>
+              )}
+            </div>
+          )
+        })()}
 
         <div className="flex items-center gap-1 border-t border-[#b8a983]/40 pt-1 mt-0.5" onClick={e => e.stopPropagation()}>
           <span className="text-[8px] text-[#5c4322] font-serif flex-1 font-semibold">Nivel</span>

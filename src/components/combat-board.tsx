@@ -113,6 +113,7 @@ export function CombatBoard({
     dragRef,
     attackerChar,
     attackerInventory,
+    attackerNpcSpells,
     isExternalActive,
     aoeRadiusPixels,
   } = useCombatBoard({
@@ -349,6 +350,7 @@ export function CombatBoard({
           gridSize={gridSize}
           attackerChar={attackerChar}
           attackerInventory={attackerInventory}
+          attackerNpcSpells={attackerNpcSpells}
           selectedMode={selectedMode}
           setSelectedMode={setSelectedMode}
           selectedWeaponId={selectedWeaponId}

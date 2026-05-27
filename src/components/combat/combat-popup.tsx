@@ -29,6 +29,7 @@ type CombatPopupProps = {
 
   attackerChar: any
   attackerInventory: any[]
+  attackerNpcSpells?: string[]
 
   selectedMode: 'melee' | 'ranged' | 'thrown' | 'spell'
   setSelectedMode: (mode: 'melee' | 'ranged' | 'thrown' | 'spell') => void
@@ -71,7 +72,7 @@ type CombatPopupProps = {
 export function CombatPopup({
   isPlayer, isExternalActive, externalTargeting, calcResult,
   toPos, midX, midY, zoom, pan, boardSize, distanceFtGrid,
-  attackerChar, attackerInventory,
+  attackerChar, attackerInventory, attackerNpcSpells,
   selectedMode, setSelectedMode,
   selectedWeaponId, setSelectedWeaponId,
   selectedSpellIndex, setSelectedSpellIndex,
@@ -124,7 +125,10 @@ export function CombatPopup({
     staleTime: 60 * 1000 * 10,
   })
 
-  const attackerSpells = useMemo(() => attackerChar?.sheet_json.spells ?? [], [attackerChar])
+  const attackerSpells = useMemo(
+    () => attackerChar?.sheet_json.spells ?? attackerNpcSpells ?? [],
+    [attackerChar, attackerNpcSpells],
+  )
   const attackerSpellsQueries = useQueries({
     queries: attackerSpells.map((index: string) => ({
       queryKey: dndKeys.spell(index),
@@ -260,6 +264,7 @@ export function CombatPopup({
           selectedMode={selectedMode} setSelectedMode={setSelectedMode}
           rangeConfig={rangeConfig} distanceFtGrid={distanceFtGrid}
           attackerChar={attackerChar} attackerInventory={attackerInventory}
+          attackerNpcSpells={attackerNpcSpells}
           selectedWeaponId={selectedWeaponId} setSelectedWeaponId={setSelectedWeaponId}
           selectedSpellIndex={selectedSpellIndex} setSelectedSpellIndex={setSelectedSpellIndex}
           spellDetail={spellDetail} groupedAttackerSpells={groupedAttackerSpells}

@@ -22,6 +22,7 @@ interface CombatModePanelProps {
   distanceFtGrid: number
   attackerChar: any
   attackerInventory: any[]
+  attackerNpcSpells?: string[]
   selectedWeaponId: string | null
   setSelectedWeaponId: (id: string | null) => void
   selectedSpellIndex: string | null
@@ -51,7 +52,7 @@ const MODES = [
 export function CombatModePanel({
   selectedMode, setSelectedMode,
   rangeConfig, distanceFtGrid,
-  attackerChar, attackerInventory,
+  attackerChar, attackerInventory, attackerNpcSpells,
   selectedWeaponId, setSelectedWeaponId,
   selectedSpellIndex, setSelectedSpellIndex,
   spellDetail, groupedAttackerSpells,
@@ -163,7 +164,7 @@ export function CombatModePanel({
           <div style={{ fontSize: 11, color: '#e7e5e4', display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span>Conjuro:</span>
-              {attackerChar ? (
+              {(attackerChar || (attackerNpcSpells?.length ?? 0) > 0) ? (
                 <select value={selectedSpellIndex ?? ''}
                   onChange={e => { setSelectedSpellIndex(e.target.value || null); setAoeActive(false); setAoePosition(null) }}
                   style={{ flex: 1, background: '#1c1208', border: '1px solid #5a3c1e', color: '#d5b88a', padding: '2px 4px', fontSize: 11, borderRadius: 3, outline: 'none' }}
@@ -181,7 +182,7 @@ export function CombatModePanel({
                       </optgroup>
                     ))
                   ) : (
-                    (attackerChar.sheet_json.spells ?? []).map((sp: any) => (
+                    (attackerChar?.sheet_json.spells ?? attackerNpcSpells ?? []).map((sp: any) => (
                       <option key={sp} value={sp}>{sp.replace(/-/g, ' ').toUpperCase()}</option>
                     ))
                   )}

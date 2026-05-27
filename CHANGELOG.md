@@ -6,10 +6,16 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 
 ## [Unreleased]
 
+### fix
+- **Oro excesivo en loot**: corregida escala de oro en todos los perfiles (30 arquetipos). `defaultGoldScale` cambiado de `Math.max(1, level)` a `1 + (level-1)*0.1`. Rangos de oro reducidos a valores D&D realistas (ej. `guardia-real` pasó de `[20,80]×5.4 = 108–432 po` a `[6,20]×1.2 = 7–24 po` a nivel 3).
+- **Hechizos para cualquier NPC**: el modal de edición de criaturas del generador ahora muestra un editor de hechizos para cualquier criatura (no solo los predefinidos). Se pueden agregar hechizos escribiendo el índice y presionando Enter; los hechizos personalizados se propagan al spawn y quedan disponibles en el dropdown de combate. `customSpells` propagado a través de `CreatureRow` → `EncounterUnit` → `addNpcFromMonster`.
+
 ### feat
 - **Expertise e Iconos en Pericias**: Soporte completo para Expertise (Especialización) en la hoja de personajes. Duplica el bono de competencia en tiradas de habilidades y herramientas. Se muestran dos diamantes dorados `◆◆` y el badge "Especialista" en los modificadores.
 - **Backfill de Habilidades y Subclases**: Banner interactivo en `ClassChoicesPanel` que detecta y guía a personajes preexistentes o creados a alto nivel para autocompletar de forma retroactiva sus subclases y expertises faltantes.
 - **Creador de Personajes y Subida de Nivel oficiales**: Restricción del selector de subclase en el creador al nivel oficial de la clase (D&D 5e). El modal de Level Up y el creador ahora manejan la selección de especializaciones (Expertise) basadas en el nivel del personaje.
+- **Sistema de Loot por Arquetipo**: implementación completa del spec `loot-system-spec.md`. Tipos en `src/loot/types.ts`, función `rollLoot` con RNG inyectable en `src/loot/roll.ts`, 30 `LootProfile` temáticos cubriendo los 8 environments, ensamble en `src/loot/profiles/index.ts` con `getArchetypesWithLoot()`. Script de ingest one-shot en `scripts/ingest-loot.ts`. Campo `loot?: LootProfile` agregado al tipo `Archetype`.
+- **Hechizos por defecto en NPCs mágicos**: los NPCs con índice de monstruo spellcaster (`mage`, `priest`, `cult-fanatic`, `druid`, `archmage`, `warlock`) reciben una lista de hechizos por defecto al spawnearse desde el generador de encuentros. El dropdown de conjuros del popup de combate ahora funciona para NPCs, mostrando sus hechizos agrupados por nivel igual que los personajes jugadores.
 
 ### refactor
 - **Arquitectura de Hoja de Personaje modular (< 500 líneas)**: Separación de pasos de creación en `creation-steps/` (`step1` al `step6` + `primitives.tsx`) y extracción de consultas y handlers de `$characterId.tsx` al custom hook `use-character-sheet.ts`, reduciendo las vistas principales a menos de 350 líneas de maquetación limpia.

@@ -13,6 +13,7 @@ import {
 } from './tablero-types'
 import { useNpcForm } from './use-npc-form'
 import { useBoardMaps } from './use-board-maps'
+import { getMonsterSpells } from '../../data/monster-spells'
 
 const db = supabase as any
 
@@ -302,13 +303,14 @@ export function useDmTablero(campaignId: string) {
     await removeTokenFromBoard(id)
   }
 
-  const addNpcFromMonster = async (summary: MonsterSummary, count: number, opts?: { role?: string; portraitUrl?: string; level?: number }) => {
+  const addNpcFromMonster = async (summary: MonsterSummary, count: number, opts?: { role?: string; portraitUrl?: string; level?: number; customSpells?: string[] }) => {
     setAddingMonster(true)
     try {
       const monster = await dndApi.monster(summary.index)
       const dexMod = Math.floor(((monster.dexterity ?? 10) - 10) / 2)
       const ac = monster.armor_class[0]?.value
       const scaledHp = Math.floor(monster.hit_points * Math.max(1, opts?.level ?? 1))
+      const defaultSpells = opts?.customSpells ?? getMonsterSpells(summary.index)
       const newCombatants: Combatant[] = Array.from({ length: count }, (_, i) => {
         const npc: Npc = {
           id: crypto.randomUUID(),
@@ -317,6 +319,7 @@ export function useDmTablero(campaignId: string) {
           initiative: Math.ceil(Math.random() * 20) + dexMod,
           ac, cr: monster.challenge_rating,
           role: opts?.role, portraitUrl: opts?.portraitUrl, level: opts?.level,
+          spells: defaultSpells.length > 0 ? defaultSpells : undefined,
         }
         return { kind: 'npc' as const, npc }
       })
@@ -421,7 +424,7 @@ export function useDmTablero(campaignId: string) {
           const curHp = localHp[ch.id] ?? currentHpFor(ch)
           return [{ id: ch.id, name: ch.name, kind: 'player', currentHp: curHp, maxHp, portraitUrl: ch.portrait_url, isActive: idx === currentTurn }]
         }
-        return [{ id: c.npc.id, name: c.npc.name, kind: 'npc', currentHp: c.npc.currentHp, maxHp: c.npc.maxHp, portraitUrl: c.npc.portraitUrl ?? null, role: c.npc.role, level: c.npc.level, isActive: idx === currentTurn }]
+        return [{ id: c.npc.id, name: c.npc.name, kind: 'npc', currentHp: c.npc.currentHp, maxHp: c.npc.maxHp, portraitUrl: c.npc.portraitUrl ?? null, role: c.npc.role, level: c.npc.level, spells: c.npc.spells, isActive: idx === currentTurn }]
       })
     } else {
       return boardTokens.map(bt => {

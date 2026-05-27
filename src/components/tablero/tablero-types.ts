@@ -51,6 +51,7 @@ export type Npc = {
   role?: string
   portraitUrl?: string
   level?: number
+  spells?: string[]
 }
 
 export type Combatant =

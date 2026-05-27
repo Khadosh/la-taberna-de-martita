@@ -131,6 +131,11 @@ export function useCombatBoard({
   // Fetch inventory for active attacker (players only)
   const attackerChar = useMemo(() => characters.find(c => c.id === effAttackFrom), [characters, effAttackFrom])
 
+  const attackerNpcSpells = useMemo(() => {
+    const attackerToken = tokens.find(t => t.id === effAttackFrom)
+    return attackerToken?.kind === 'npc' ? (attackerToken.spells ?? []) : []
+  }, [tokens, effAttackFrom])
+
   const { data: attackerInventory = [] } = useQuery({
     queryKey: ['inventory', effAttackFrom],
     queryFn: async () => {
@@ -363,6 +368,7 @@ export function useCombatBoard({
     handleBoardClick,
     attackerChar,
     attackerInventory,
+    attackerNpcSpells,
     isExternalActive,
     aoeRadiusPixels,
     spellDetail,

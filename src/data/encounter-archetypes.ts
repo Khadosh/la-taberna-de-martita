@@ -14,6 +14,7 @@ export type Archetype = {
   environment: string
   levelRange: [number, number]
   pool: ArchetypeEntry[]
+  loot?: import('../loot/types').LootProfile
 }
 
 export const ARCHETYPES: Archetype[] = [

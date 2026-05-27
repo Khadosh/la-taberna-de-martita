@@ -18,15 +18,18 @@ import {
   type LootItemEntry,
   type MonsterIndexEntry,
 } from '../../lib/encounter-generator'
-import { ARCHETYPES, ENVIRONMENTS, type Archetype } from '../../data/encounter-archetypes'
+import { ENVIRONMENTS, type Archetype } from '../../data/encounter-archetypes'
 import type { Role } from '../../data/encounter-archetypes'
 import type { Character } from './tablero-types'
 import type { MonsterSummary } from '../../lib/dnd-api'
+import { getArchetypesWithLoot } from '../../loot/profiles/index'
+import { rollLoot, type LootResult } from '../../loot/roll'
 
 import monsterIndexRaw from '../../data/monster-index.json'
 
 const MONSTER_INDEX = monsterIndexRaw as MonsterIndexEntry[]
 const DRAFT_KEY = 'encounter-draft-v4'
+const ARCHETYPES = getArchetypesWithLoot()
 
 type Draft = {
   archetypeIds: string[]
@@ -45,13 +48,33 @@ function loadDraft(): Draft | null {
 
 const DEFAULT_LOOT: Loot = { currency: { gp: 0, sp: 0, cp: 0 }, items: [] }
 
+function lootResultsToLoot(results: LootResult[]): Loot {
+  const gp = results.reduce((s, r) => s + r.gold, 0)
+  const merged: Record<string, number> = {}
+  for (const { items } of results) {
+    for (const { item, quantity } of items) {
+      merged[item.name] = (merged[item.name] ?? 0) + quantity
+    }
+  }
+  return {
+    currency: { gp, sp: 0, cp: 0 },
+    items: Object.entries(merged).map(([name, qty]) => ({ id: uid(), name, qty })),
+  }
+}
+
+function rollArchetypeLoot(archetypes: Archetype[], partyLevel: number): Loot {
+  const withLoot = archetypes.filter(a => a.loot)
+  if (withLoot.length === 0) return generateLoot([])
+  return lootResultsToLoot(withLoot.map(a => rollLoot(a, { partyLevel })))
+}
+
 export { ARCHETYPES, ENVIRONMENTS, LOOT_ITEM_OPTIONS, MONSTER_INDEX, xpAtLevel, hpAtLevel }
 export type { Archetype }
 
 export function useEncounterGenerator(params: {
   characters: Character[]
   campaignId: string
-  addNpcFromMonster: (summary: MonsterSummary, count: number, opts?: { role?: string; portraitUrl?: string; level?: number }) => Promise<void>
+  addNpcFromMonster: (summary: MonsterSummary, count: number, opts?: { role?: string; portraitUrl?: string; level?: number; customSpells?: string[] }) => Promise<void>
 }) {
   const { characters, campaignId, addNpcFromMonster } = params
 
@@ -155,9 +178,14 @@ export function useEncounterGenerator(params: {
       return
     }
 
+    const avgLevel = characters.length
+      ? Math.round(characters.reduce((s, c) => s + c.level, 0) / characters.length)
+      : 1
+    const rolledLoot = rollArchetypeLoot(selectedArchetypes, avgLevel)
+
     setRows(result.rows)
-    setLoot(result.loot)
-    saveDraft({ archetypeIds: selectedArchetypeIds, selectedEnv, difficulty, rows: result.rows, loot: result.loot })
+    setLoot(rolledLoot)
+    saveDraft({ archetypeIds: selectedArchetypeIds, selectedEnv, difficulty, rows: result.rows, loot: rolledLoot })
 
     // Clear cache for these indices so re-generation always fetches fresh stats
     result.rows.forEach(r => detailsFetchedRef.current.delete(r.monsterIndex))
@@ -229,10 +257,14 @@ export function useEncounterGenerator(params: {
   }, [saveDraft])
 
   const regenerateLoot = useCallback(() => {
-    const next = generateLoot(rows)
+    const selectedArchetypes = ARCHETYPES.filter(a => selectedArchetypeIds.includes(a.id))
+    const partyLevel = characters.length
+      ? Math.round(characters.reduce((s, c) => s + c.level, 0) / characters.length)
+      : 1
+    const next = rollArchetypeLoot(selectedArchetypes, partyLevel)
     setLoot(next)
     saveDraft({ loot: next })
-  }, [rows, saveDraft])
+  }, [rows, selectedArchetypeIds, characters, saveDraft])
 
   const updateRowLevel = useCallback((rowId: string, delta: number) => {
     setRows(prev => {
@@ -308,7 +340,7 @@ export function useEncounterGenerator(params: {
         if (!detail) continue
         const summary: MonsterSummary = { index: detail.index, name: detail.name }
         const portraitUrl = `https://www.dnd5eapi.co/api/2014/images/monsters/${unit.monsterIndex}.png`
-        await addNpcFromMonster(summary, 1, { role: unit.role, portraitUrl, level: unit.level })
+        await addNpcFromMonster(summary, 1, { role: unit.role, portraitUrl, level: unit.level, customSpells: unit.customSpells })
       }
 
       const { data: { user } } = await supabase.auth.getUser()

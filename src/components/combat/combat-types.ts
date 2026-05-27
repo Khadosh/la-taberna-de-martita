@@ -11,6 +11,7 @@ export type TokenData = {
   showHp?: boolean
   role?: string
   level?: number
+  spells?: string[]
 }
 
 export type AttackEntity = {
