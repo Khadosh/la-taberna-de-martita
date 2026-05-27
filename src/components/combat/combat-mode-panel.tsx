@@ -23,6 +23,7 @@ interface CombatModePanelProps {
   attackerChar: any
   attackerInventory: any[]
   attackerNpcSpells?: string[]
+  attackerToken?: TokenData
   selectedWeaponId: string | null
   setSelectedWeaponId: (id: string | null) => void
   selectedSpellIndex: string | null
@@ -53,6 +54,7 @@ export function CombatModePanel({
   selectedMode, setSelectedMode,
   rangeConfig, distanceFtGrid,
   attackerChar, attackerInventory, attackerNpcSpells,
+  attackerToken,
   selectedWeaponId, setSelectedWeaponId,
   selectedSpellIndex, setSelectedSpellIndex,
   spellDetail, groupedAttackerSpells,
@@ -96,6 +98,20 @@ export function CombatModePanel({
 
         {selectedMode === 'melee' && (
           <div style={{ fontSize: 11, color: '#e7e5e4' }}>
+            {attackerToken?.kind === 'npc' && attackerToken.weapons && attackerToken.weapons.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '2px 0 6px 0' }}>
+                <span style={{ fontSize: 11 }}>Arma NPC:</span>
+                <select value={selectedWeaponId ?? ''}
+                  onChange={e => setSelectedWeaponId(e.target.value || null)}
+                  style={{ flex: 1, background: '#1c1208', border: '1px solid #5a3c1e', color: '#d5b88a', padding: '2px 4px', fontSize: 11, borderRadius: 3, outline: 'none' }}
+                >
+                  <option value="">-- Daño General ({attackerToken.damage || 'Sin daño'}) --</option>
+                  {attackerToken.weapons.map((w, idx) => (
+                    <option key={idx} value={String(idx)}>{w.name} ({w.damage})</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <p style={{ margin: '4px 0' }}>⚔️ Arma: <strong style={{ color: '#d5b88a' }}>{rangeConfig.label}</strong></p>
             <p style={{ margin: '4px 0' }}>📏 Alcance: <strong>{rangeConfig.normal} ft</strong></p>
             {rangeConfig.status === 'too_far' && (
@@ -108,6 +124,20 @@ export function CombatModePanel({
 
         {selectedMode === 'ranged' && (
           <div style={{ fontSize: 11, color: '#e7e5e4' }}>
+            {attackerToken?.kind === 'npc' && attackerToken.weapons && attackerToken.weapons.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '2px 0 6px 0' }}>
+                <span style={{ fontSize: 11 }}>Arma NPC:</span>
+                <select value={selectedWeaponId ?? ''}
+                  onChange={e => setSelectedWeaponId(e.target.value || null)}
+                  style={{ flex: 1, background: '#1c1208', border: '1px solid #5a3c1e', color: '#d5b88a', padding: '2px 4px', fontSize: 11, borderRadius: 3, outline: 'none' }}
+                >
+                  <option value="">-- Daño General ({attackerToken.damage || 'Sin daño'}) --</option>
+                  {attackerToken.weapons.map((w, idx) => (
+                    <option key={idx} value={String(idx)}>{w.name} ({w.damage})</option>
+                  ))}
+                </select>
+              </div>
+            )}
             <p style={{ margin: '4px 0' }}>🏹 Arma: <strong style={{ color: '#d5b88a' }}>{rangeConfig.label}</strong></p>
             <p style={{ margin: '4px 0' }}>📏 Rango de tiro: <strong>{rangeConfig.normal}/{rangeConfig.long} ft</strong></p>
             {rangeConfig.status === 'too_far' && (

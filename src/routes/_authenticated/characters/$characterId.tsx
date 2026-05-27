@@ -119,7 +119,21 @@ function CharacterSheet() {
     <div className="h-screen flex flex-col overflow-hidden text-stone-900" style={mapBgStyle}>
       {/* Header */}
       <header className="flex-shrink-0 border-b-2 border-stone-800 bg-stone-900 px-4 sm:px-8 py-2.5 flex items-center gap-3 z-30">
-        <button onClick={() => window.history.back()} className="text-amber-400 hover:text-amber-200 text-sm font-serif">← Volver</button>
+        <button
+          onClick={() => {
+            const hasInternalReferrer = document.referrer && document.referrer.startsWith(window.location.origin)
+            if (hasInternalReferrer) {
+              window.history.back()
+            } else if (character.campaign_id) {
+              navigate({ to: '/campaigns/$campaignId', params: { campaignId: character.campaign_id } })
+            } else {
+              navigate({ to: '/' })
+            }
+          }}
+          className="text-amber-400 hover:text-amber-200 text-sm font-serif"
+        >
+          ← Volver
+        </button>
         <div className="w-px h-4 bg-stone-700 mx-2" />
         <div className="flex-1 truncate">
           <p className="text-amber-200 font-serif font-semibold text-sm truncate">{character.name}</p>

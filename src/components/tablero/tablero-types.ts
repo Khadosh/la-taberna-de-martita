@@ -52,6 +52,8 @@ export type Npc = {
   portraitUrl?: string
   level?: number
   spells?: string[]
+  weapons?: { name: string; damage: string }[]
+  equipmentNotes?: string
 }
 
 export type Combatant =
@@ -80,4 +82,27 @@ export interface CampaignMap {
   name: string
   url: string
   rawName: string
+}
+
+const PALETTE = [
+  '#f87171', // Red/Coral
+  '#fb923c', // Orange/Amber
+  '#fbbf24', // Amber/Yellow
+  '#34d399', // Emerald/Green
+  '#2dd4bf', // Teal
+  '#60a5fa', // Blue
+  '#818cf8', // Indigo
+  '#a78bfa', // Purple
+  '#f472b6', // Pink
+  '#fb7185', // Rose
+]
+
+export function getDeterministicColor(id: string): string {
+  if (!id) return '#fbbf24'
+  let hash = 0
+  for (let i = 0; i < id.length; i++) {
+    hash = id.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const idx = Math.abs(hash) % PALETTE.length
+  return PALETTE[idx]
 }

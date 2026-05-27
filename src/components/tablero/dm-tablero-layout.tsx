@@ -1,9 +1,10 @@
+import { useState } from 'react'
 import { CombatBoard } from '../combat-board'
 import { DmNpcForm } from './dm-npc-form'
 import { DmMapSelector } from './dm-map-selector'
 import { CLASS_ICONS } from '../../lib/class-meta'
 import { CONDITIONS, getSpellSlots } from '../../lib/dnd-constants'
-import { maxHpFor, currentHpFor, acFor, type Npc } from './tablero-types'
+import { maxHpFor, currentHpFor, acFor, type Npc, getDeterministicColor } from './tablero-types'
 import { useEncounterGenerator } from './use-encounter-generator'
 
 interface DmTableroLayoutProps {
@@ -53,6 +54,10 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
     npcFormDamage,
     setNpcFormDamage,
     npcFormItems,
+    npcFormSpells,
+    npcFormWeapons,
+    npcFormEquipment,
+    setNpcFormEquipment,
     editingHp,
     setEditingHp,
     conditionPickerFor,
@@ -87,12 +92,21 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
     addLootItem,
     updateLootItem,
     removeLootItem,
+    addFormWeapon,
+    updateFormWeapon,
+    removeFormWeapon,
+    addFormSpell,
+    removeFormSpell,
     partyLongRest,
     handleAttackConfirm,
     tokens,
     allCombatEntities,
     handleSelectionChange,
   } = dmState
+
+  const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false)
+  const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false)
+  const [hoveredTokenId, setHoveredTokenId] = useState<string | null>(null)
 
   const encounterGen = useEncounterGenerator({ characters, campaignId, addNpcFromMonster })
 
@@ -101,7 +115,7 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
       <div className="flex flex-1 overflow-hidden">
         
         {/* LEFT: Party */}
-        <aside className="w-72 border-r border-stone-800 flex flex-col overflow-y-auto bg-stone-900/50">
+        <aside className={`transition-all duration-300 ${leftPanelCollapsed ? 'w-0 overflow-hidden opacity-0 border-r-0' : 'w-72 border-r border-stone-800'} flex flex-col overflow-y-auto bg-stone-900/50`}>
           <div className="px-4 pt-4 pb-2">
             <p className="text-xs tracking-widest text-stone-500 uppercase font-serif">Partido · {characters.length}</p>
           </div>
@@ -117,8 +131,14 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
               const hpPct = Math.max(0, Math.min((curHp / maxHp) * 100, 100))
               const hpColor = hpPct > 50 ? 'bg-green-700' : hpPct > 25 ? 'bg-amber-600' : 'bg-red-700'
               const conds: string[] = c.conditions ?? []
+              const isHovered = hoveredTokenId === c.id
+              const tokenColor = getDeterministicColor(c.id)
               return (
-                <div key={c.id} className="bg-stone-900 border border-stone-700 rounded-lg p-3 space-y-2">
+                <div key={c.id}
+                  onMouseEnter={() => setHoveredTokenId(c.id)}
+                  onMouseLeave={() => setHoveredTokenId(null)}
+                  style={isHovered ? { borderColor: tokenColor, boxShadow: `0 0 10px ${tokenColor}40` } : {}}
+                  className={`bg-stone-900 border rounded-lg p-3 space-y-2 transition-all duration-200 ${isHovered ? 'border-amber-500' : 'border-stone-700'}`}>
                   <div className="flex items-center gap-2">
                     <span className="text-lg">{CLASS_ICONS[c.class] ?? '🎲'}</span>
                     <div className="flex-1 min-w-0">
@@ -226,6 +246,25 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
         {/* CENTER: Board */}
         <main className="flex-1 flex flex-col overflow-hidden relative">
           
+          {/* Floating sidebar collapse buttons */}
+          <button
+            onClick={() => setLeftPanelCollapsed(c => !c)}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-20 w-5 h-12 bg-stone-900/90 border border-l-0 border-stone-700 hover:border-amber-600 text-stone-400 hover:text-amber-300 flex items-center justify-center rounded-r shadow-lg transition-all cursor-pointer select-none"
+            title={leftPanelCollapsed ? "Mostrar personajes" : "Colapsar personajes"}
+          >
+            {leftPanelCollapsed ? '▶' : '◀'}
+          </button>
+
+          {combatActive && (
+            <button
+              onClick={() => setRightPanelCollapsed(c => !c)}
+              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-5 h-12 bg-stone-900/90 border border-r-0 border-stone-700 hover:border-amber-600 text-stone-400 hover:text-amber-300 flex items-center justify-center rounded-l shadow-lg transition-all cursor-pointer select-none"
+              title={rightPanelCollapsed ? "Mostrar enemigos" : "Colapsar enemigos"}
+            >
+              {rightPanelCollapsed ? '◀' : '▶'}
+            </button>
+          )}
+          
           {/* Top Control Bar */}
           <div className="border-b border-stone-800 bg-stone-900/90 px-4 py-2 flex items-center gap-3 shrink-0">
             {combatActive ? (
@@ -239,7 +278,7 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
                 </span>
                 <div className="flex-1" />
                 <button onClick={endCombat}
-                  className="px-3 py-1.5 border border-stone-600 text-stone-400 hover:border-red-700 hover:text-red-400 font-serif text-xs transition-colors">
+                  className="px-3 py-1.5 border border-red-900/50 bg-red-950/60 text-red-200 hover:bg-red-900 hover:border-red-700 hover:text-red-100 font-serif text-xs transition-colors rounded shadow shadow-red-950/50">
                   Fin Combate
                 </button>
               </>
@@ -321,9 +360,18 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
             npcFormDamage={npcFormDamage}
             setNpcFormDamage={setNpcFormDamage}
             npcFormItems={npcFormItems}
+            npcFormSpells={npcFormSpells}
+            npcFormWeapons={npcFormWeapons}
+            npcFormEquipment={npcFormEquipment}
+            setNpcFormEquipment={setNpcFormEquipment}
             addLootItem={addLootItem}
             updateLootItem={updateLootItem}
             removeLootItem={removeLootItem}
+            addFormWeapon={addFormWeapon}
+            updateFormWeapon={updateFormWeapon}
+            removeFormWeapon={removeFormWeapon}
+            addFormSpell={addFormSpell}
+            removeFormSpell={removeFormSpell}
             createCustomNpc={createCustomNpc}
             encounterGen={encounterGen}
           />
@@ -339,6 +387,8 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
             isPlayer={false}
             externalTargeting={externalTargeting}
             onSelectionChange={handleSelectionChange}
+            hoveredTokenId={hoveredTokenId}
+            onHoverToken={setHoveredTokenId}
           />
 
           {/* Combat history log — bottom-right, read-only, collapsible */}
@@ -378,7 +428,7 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
 
         {/* RIGHT: NPCs en combate */}
         {combatActive && (
-          <aside className="w-64 border-l border-stone-800 flex flex-col overflow-y-auto bg-stone-900/50 shrink-0">
+          <aside className={`transition-all duration-300 ${rightPanelCollapsed ? 'w-0 overflow-hidden opacity-0 border-l-0' : 'w-64 border-l border-stone-800'} flex flex-col overflow-y-auto bg-stone-900/50 shrink-0`}>
             <div className="px-4 pt-4 pb-2">
               <p className="text-xs tracking-widest text-stone-500 uppercase font-serif">
                 NPCs · {combatants.filter(c => c.kind === 'npc').length}
@@ -392,8 +442,14 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
                   const npc = (c as { kind: 'npc'; npc: Npc }).npc
                   const hpPct = Math.max(0, Math.min((npc.currentHp / npc.maxHp) * 100, 100))
                   const hpColor = hpPct > 50 ? 'bg-green-700' : hpPct > 25 ? 'bg-amber-600' : 'bg-red-700'
+                  const isHovered = hoveredTokenId === npc.id
+                  const tokenColor = getDeterministicColor(npc.id)
                   return (
-                    <div key={npc.id} className="bg-stone-900 border border-stone-700 rounded-lg p-2.5 space-y-2">
+                    <div key={npc.id}
+                      onMouseEnter={() => setHoveredTokenId(npc.id)}
+                      onMouseLeave={() => setHoveredTokenId(null)}
+                      style={isHovered ? { borderColor: tokenColor, boxShadow: `0 0 10px ${tokenColor}40` } : {}}
+                      className={`bg-stone-900 border rounded-lg p-2.5 space-y-2 transition-all duration-200 ${isHovered ? 'border-amber-500' : 'border-stone-700'}`}>
                       <div className="flex items-center gap-1.5">
                         {npc.portraitUrl && (
                           <img src={npc.portraitUrl} alt="" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}

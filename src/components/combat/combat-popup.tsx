@@ -11,6 +11,44 @@ import type { TokenData, Pos } from './combat-types'
 import { CombatModePanel } from './combat-mode-panel'
 import { CombatActionRow } from './combat-action-row'
 
+function rollDiceExpression(expr: string): { total: number; detail: string } {
+  const clean = expr.replace(/\s+/g, '').toLowerCase()
+  const regex = /([+-]?)(?:(\d*)d(\d+)|(\d+))/g
+  let match
+  let total = 0
+  const parts: string[] = []
+  if (!clean) return { total: 0, detail: '' }
+  let hasMatch = false
+  while ((match = regex.exec(clean)) !== null) {
+    if (match[0] === '') break
+    hasMatch = true
+    const sign = match[1] === '-' ? -1 : 1
+    const signStr = match[1] === '-' ? '-' : (parts.length > 0 ? '+' : '')
+    if (match[2] !== undefined || match[3] !== undefined) {
+      const count = match[2] ? parseInt(match[2], 10) : 1
+      const sides = parseInt(match[3], 10)
+      const rolls: number[] = []
+      for (let i = 0; i < count; i++) {
+        rolls.push(1 + Math.floor(Math.random() * sides))
+      }
+      const sum = rolls.reduce((a, b) => a + b, 0)
+      total += sign * sum
+      const rollsStr = rolls.length > 1 ? `(${rolls.join('+')})` : `${rolls[0]}`
+      parts.push(`${signStr}${rollsStr}`)
+    } else if (match[4] !== undefined) {
+      const value = parseInt(match[4], 10)
+      total += sign * value
+      parts.push(`${signStr}${value}`)
+    }
+  }
+  if (!hasMatch) {
+    const n = parseInt(clean, 10)
+    if (!isNaN(n)) return { total: n, detail: `${n}` }
+    return { total: 0, detail: '0' }
+  }
+  return { total, detail: `${parts.join('')} = ${total}` }
+}
+
 type CombatPopupProps = {
   isPlayer: boolean
   isExternalActive: boolean
@@ -83,11 +121,19 @@ export function CombatPopup({
   targetsInAoE, tokens,
   onClose, onAttackConfirm, rangeConfig,
 }: CombatPopupProps) {
+  const effAttackFromId = calcResult.attackerId ?? ''
+  const effAttackToId = calcResult.defenderId ?? ''
+
+  const attackerToken = useMemo(() => {
+    return tokens.find(t => t.id === effAttackFromId)
+  }, [tokens, effAttackFromId])
+
   const [popupOffset, setPopupOffset] = useState({ x: 0, y: 0 })
   const [isDragging, setIsDragging] = useState(false)
   const dragStartRef = useRef({ x: 0, y: 0, ox: 0, oy: 0 })
   const [hit, setHit] = useState<boolean | null>(null)
   const [damageInput, setDamageInput] = useState('')
+  const [rollDetail, setRollDetail] = useState<string | null>(null)
 
   // ── Drag handlers ──────────────────────────────────────────────────────────
 
@@ -149,11 +195,67 @@ export function CombatPopup({
     return groups
   }, [attackerSpellsQueries])
 
+  // ── Damage roll resolution ───────────────────────────────────────────────
+
+  const activeDamageExpression = useMemo(() => {
+    if (selectedMode === 'spell') {
+      const spellDmg = spellDetail as any
+      if (spellDmg?.damage?.damage_at_character_level) {
+        const level = attackerChar?.level ?? attackerToken?.level ?? 1
+        const dmgAtLvl = spellDmg.damage.damage_at_character_level
+        const keys = Object.keys(dmgAtLvl).map(Number).sort((a, b) => b - a)
+        const matchKey = keys.find(k => k <= level) ?? keys[keys.length - 1]
+        if (matchKey !== undefined) return dmgAtLvl[matchKey]
+      }
+      if (spellDmg?.damage?.damage_at_slot_level) {
+        const lvl = spellDmg.level ?? 1
+        const dmgAtSlot = spellDmg.damage.damage_at_slot_level
+        if (dmgAtSlot[lvl]) return dmgAtSlot[lvl]
+      }
+      return ''
+    }
+
+    if (attackerToken?.kind === 'npc') {
+      const npcWeapons = (attackerToken.weapons as { name: string; damage: string }[]) ?? []
+      const weaponIndex = parseInt(selectedWeaponId ?? '')
+      const selectedWeapon = isNaN(weaponIndex) ? null : npcWeapons[weaponIndex]
+      if (selectedWeapon) {
+        return selectedWeapon.damage
+      }
+      return attackerToken.damage ?? ''
+    }
+
+    if (selectedMode === 'melee') {
+      const mainHandItemId = attackerChar?.sheet_json.equipped_slots?.main_hand
+      const weapon = attackerInventory.find(i => i.id === mainHandItemId)
+      return weapon?.damage ?? ''
+    }
+    if (selectedMode === 'ranged') {
+      const rangedItemId = attackerChar?.sheet_json.equipped_slots?.ranged
+      const weapon = attackerInventory.find(i => i.id === rangedItemId)
+      return weapon?.damage ?? ''
+    }
+    if (selectedMode === 'thrown') {
+      const item = attackerInventory.find(i => i.id === selectedWeaponId)
+      return item?.damage ?? ''
+    }
+
+    return ''
+  }, [selectedMode, attackerChar, attackerToken, selectedWeaponId, spellDetail, attackerInventory])
+
+  const handleRollDamage = () => {
+    if (!activeDamageExpression) return
+    const { total, detail } = rollDiceExpression(activeDamageExpression)
+    setDamageInput(String(total))
+    setRollDetail(detail)
+  }
+
   // ── Reset on context change ────────────────────────────────────────────────
 
   useEffect(() => {
     setHit(null)
     setDamageInput('')
+    setRollDetail(null)
   }, [selectedMode, selectedSpellIndex, selectedWeaponId, calcResult.attackerName, calcResult.defenderName])
 
   // ── Positioning ────────────────────────────────────────────────────────────
@@ -169,8 +271,6 @@ export function CombatPopup({
   // ── Confirm ────────────────────────────────────────────────────────────────
 
   const spellLevel = selectedMode === 'spell' && spellDetail ? spellDetail.level : undefined
-  const effAttackFromId = calcResult.attackerId ?? ''
-  const effAttackToId = calcResult.defenderId ?? ''
 
   const handleActionConfirm = () => {
     if (!onAttackConfirm) return
@@ -265,6 +365,7 @@ export function CombatPopup({
           rangeConfig={rangeConfig} distanceFtGrid={distanceFtGrid}
           attackerChar={attackerChar} attackerInventory={attackerInventory}
           attackerNpcSpells={attackerNpcSpells}
+          attackerToken={attackerToken}
           selectedWeaponId={selectedWeaponId} setSelectedWeaponId={setSelectedWeaponId}
           selectedSpellIndex={selectedSpellIndex} setSelectedSpellIndex={setSelectedSpellIndex}
           spellDetail={spellDetail} groupedAttackerSpells={groupedAttackerSpells}
@@ -334,6 +435,9 @@ export function CombatPopup({
         damageInput={damageInput} setDamageInput={setDamageInput}
         calcResult={calcResult}
         onConfirm={handleActionConfirm}
+        activeDamageExpression={activeDamageExpression}
+        onRollDamage={handleRollDamage}
+        rollDetail={rollDetail}
       />
     </div>
   )

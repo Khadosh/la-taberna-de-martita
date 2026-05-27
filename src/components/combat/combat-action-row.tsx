@@ -6,6 +6,9 @@ interface CombatActionRowProps {
   setDamageInput: (v: string) => void
   calcResult: any
   onConfirm: () => void
+  activeDamageExpression?: string
+  onRollDamage?: () => void
+  rollDetail?: string | null
 }
 
 export function CombatActionRow({
@@ -16,6 +19,9 @@ export function CombatActionRow({
   setDamageInput,
   calcResult,
   onConfirm,
+  activeDamageExpression,
+  onRollDamage,
+  rollDetail,
 }: CombatActionRowProps) {
   if (isExternalActive) {
     return (
@@ -83,30 +89,49 @@ export function CombatActionRow({
       )}
 
       {(hit !== null || calcResult.isHealing) && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, width: 145 }}>
-          <input
-            type="number"
-            placeholder={calcResult.isHealing ? 'Cura' : 'Daño'}
-            value={damageInput}
-            onChange={e => setDamageInput(e.target.value)}
-            className="no-spinners"
-            style={{
-              width: 62, height: 34, background: '#0a0502', border: '1px solid #5a3c1e', borderRadius: 4,
-              color: calcResult.isHealing ? '#86efac' : '#fca5a5',
-              textAlign: 'center', fontSize: 14, fontFamily: 'monospace', outline: 'none',
-            }}
-          />
-          <button
-            onClick={onConfirm}
-            style={{
-              flex: 1, height: 34,
-              background: 'linear-gradient(180deg, #8a6b3e 0%, #5c4322 100%)',
-              border: '1px solid #d5b88a', color: '#f5f5f4', fontSize: 11, fontWeight: 'bold', borderRadius: 4,
-              cursor: 'pointer', transition: 'all 0.15s', textShadow: '0 1px 2px rgba(0,0,0,0.5)',
-            }}
-          >
-            Aplicar
-          </button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4, width: 145 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <input
+              type="number"
+              placeholder={calcResult.isHealing ? 'Cura' : 'Daño'}
+              value={damageInput}
+              onChange={e => setDamageInput(e.target.value)}
+              className="no-spinners"
+              style={{
+                width: 62, height: 34, background: '#0a0502', border: '1px solid #5a3c1e', borderRadius: 4,
+                color: calcResult.isHealing ? '#86efac' : '#fca5a5',
+                textAlign: 'center', fontSize: 14, fontFamily: 'monospace', outline: 'none',
+              }}
+            />
+            <button
+              onClick={onConfirm}
+              style={{
+                flex: 1, height: 34,
+                background: 'linear-gradient(180deg, #8a6b3e 0%, #5c4322 100%)',
+                border: '1px solid #d5b88a', color: '#f5f5f4', fontSize: 11, fontWeight: 'bold', borderRadius: 4,
+                cursor: 'pointer', transition: 'all 0.15s', textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+              }}
+            >
+              Aplicar
+            </button>
+          </div>
+          {activeDamageExpression && onRollDamage && (
+            <button
+              onClick={onRollDamage}
+              style={{
+                background: '#3c2414', border: '1px solid #8a6b3e', color: '#d5b88a',
+                fontSize: 9, borderRadius: 3, padding: '2px 4px', cursor: 'pointer', outline: 'none',
+                fontFamily: 'monospace', width: '100%', textAlign: 'center', fontWeight: 'bold'
+              }}
+            >
+              🎲 {activeDamageExpression}
+            </button>
+          )}
+          {rollDetail && (
+            <span style={{ fontSize: 8, color: '#fbbf24', fontStyle: 'italic', display: 'block', textAlign: 'center', fontFamily: 'monospace', lineHeight: 1.1 }}>
+              {rollDetail}
+            </span>
+          )}
         </div>
       )}
     </div>

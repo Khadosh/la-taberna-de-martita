@@ -7,7 +7,7 @@ import type { Tables, TablesInsert } from '../../../lib/database.types'
 import { SectionHeader } from '../../../components/campaigns/pnj/pnj-primitives'
 import { NpcCard } from '../../../components/campaigns/pnj/npc-card'
 import { NpcFormPanel } from '../../../components/campaigns/pnj/npc-form-panel'
-import { type NpcForm, type Stats, DEFAULT_STATS, EMPTY_FORM, toIntOrNull } from '../../../components/campaigns/pnj/pnj-types'
+import { type NpcForm, type Stats, DEFAULT_STATS, EMPTY_FORM, toIntOrNull, calculateSuggestedHp } from '../../../components/campaigns/pnj/pnj-types'
 
 export const Route = createFileRoute('/_authenticated/campaigns/$campaignId/pnj')({
   component: PnjGenerator,
@@ -22,6 +22,9 @@ function PnjGenerator() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+  
+  // Track last auto-calculated HP to respect manual overrides
+  const [lastAutoHp, setLastAutoHp] = useState<number | null>(null)
 
   const { data: races } = useQuery({ queryKey: dndKeys.races, queryFn: dndApi.races })
   const { data: classes } = useQuery({ queryKey: dndKeys.classes, queryFn: dndApi.classes })
@@ -37,18 +40,46 @@ function PnjGenerator() {
   })
 
   const patchForm = <K extends keyof NpcForm>(k: K, v: NpcForm[K]) =>
-    setForm(f => ({ ...f, [k]: v }))
+    setForm(f => {
+      const next = { ...f, [k]: v }
+      if (k === 'class' || k === 'level') {
+        const currentMaxHp = f.max_hp.trim()
+        const isAutoHp = !currentMaxHp || (lastAutoHp !== null && currentMaxHp === String(lastAutoHp))
+        if (isAutoHp) {
+          const suggested = calculateSuggestedHp(next.level, next.class, next.stats.con)
+          next.max_hp = String(suggested)
+          next.current_hp = String(suggested)
+          setLastAutoHp(suggested)
+        }
+      }
+      return next
+    })
 
   const patchStat = (k: keyof Stats, v: number) =>
-    setForm(f => ({ ...f, stats: { ...f.stats, [k]: v } }))
+    setForm(f => {
+      const next = { ...f, stats: { ...f.stats, [k]: v } }
+      if (k === 'con') {
+        const currentMaxHp = f.max_hp.trim()
+        const isAutoHp = !currentMaxHp || (lastAutoHp !== null && currentMaxHp === String(lastAutoHp))
+        if (isAutoHp) {
+          const suggested = calculateSuggestedHp(next.level, next.class, next.stats.con)
+          next.max_hp = String(suggested)
+          next.current_hp = String(suggested)
+          setLastAutoHp(suggested)
+        }
+      }
+      return next
+    })
 
   const resetForm = () => {
     setForm(EMPTY_FORM())
     setEditingId(null)
+    setLastAutoHp(null)
   }
 
   const loadForEdit = (npc: Npc) => {
     const stats = (npc.stats as Stats | null) ?? DEFAULT_STATS
+    const sheet = (npc.sheet_json as { spells?: string[]; weapons?: { id: string; name: string; damage: string }[]; equipment_notes?: string } | null) ?? {}
     setForm({
       name: npc.name,
       race: npc.race ?? '',
@@ -64,8 +95,13 @@ function PnjGenerator() {
       backstory: npc.backstory ?? '',
       notes: npc.notes ?? '',
       is_hidden: npc.is_hidden,
+      spells: sheet.spells ?? [],
+      weapons: sheet.weapons ?? [],
+      equipment_notes: sheet.equipment_notes ?? '',
     })
     setEditingId(npc.id)
+    const suggested = calculateSuggestedHp(npc.level, npc.class ?? '', stats.con)
+    setLastAutoHp(suggested)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -75,6 +111,11 @@ function PnjGenerator() {
     try {
       const max_hp = toIntOrNull(form.max_hp)
       const current_hp = toIntOrNull(form.current_hp) ?? max_hp
+      
+      // Fallback damage expression from weapons if not set in form
+      const fallbackDamage = form.weapons.length > 0 ? form.weapons[0].damage : ''
+      const resolvedDamage = form.damage.trim() || fallbackDamage || null
+
       const payload = {
         campaign_id: campaignId,
         name: form.name.trim(),
@@ -87,10 +128,15 @@ function PnjGenerator() {
         current_hp,
         armor_class: toIntOrNull(form.armor_class),
         attack_bonus: toIntOrNull(form.attack_bonus),
-        damage: form.damage.trim() || null,
+        damage: resolvedDamage,
         backstory: form.backstory.trim() || null,
         notes: form.notes.trim() || null,
         is_hidden: form.is_hidden,
+        sheet_json: {
+          spells: form.spells,
+          weapons: form.weapons,
+          equipment_notes: form.equipment_notes,
+        } as any,
       }
       if (editingId) {
         await supabase.from('npcs').update(payload).eq('id', editingId)

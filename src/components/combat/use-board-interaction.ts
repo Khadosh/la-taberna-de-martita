@@ -140,16 +140,27 @@ export function useBoardInteraction({
     }
   }, [activeDragId, zoom, canDrag, onTokenMoved])
 
+  const clampPan = (newPan: { x: number; y: number }, currentZoom: number) => {
+    const minX = boardSize.width * (1 - currentZoom)
+    const minY = boardSize.height * (1 - currentZoom)
+    return {
+      x: currentZoom >= 1.0 ? Math.min(0, Math.max(minX, newPan.x)) : newPan.x,
+      y: currentZoom >= 1.0 ? Math.min(0, Math.max(minY, newPan.y)) : newPan.y,
+    }
+  }
+
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     e.preventDefault()
-    const nextZoom = e.deltaY < 0 ? Math.min(zoom + 0.1, 4) : Math.max(zoom - 0.1, 0.5)
+    const factor = 1 - e.deltaY * 0.0006
+    const nextZoom = Math.min(Math.max(zoom * factor, 1.0), 4)
     const rect = e.currentTarget.getBoundingClientRect()
     const mouseX = e.clientX - rect.left
     const mouseY = e.clientY - rect.top
     const canvasMouseX = (mouseX - pan.x) / zoom
     const canvasMouseY = (mouseY - pan.y) / zoom
+    const nextPan = clampPan({ x: mouseX - canvasMouseX * nextZoom, y: mouseY - canvasMouseY * nextZoom }, nextZoom)
     setZoom(nextZoom)
-    setPan({ x: mouseX - canvasMouseX * nextZoom, y: mouseY - canvasMouseY * nextZoom })
+    setPan(nextPan)
   }
 
   const handleBgPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -168,7 +179,8 @@ export function useBoardInteraction({
   const handleBgPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (isPanning) {
       e.stopPropagation()
-      setPan({ x: e.clientX - panStartRef.current.x, y: e.clientY - panStartRef.current.y })
+      const nextPan = clampPan({ x: e.clientX - panStartRef.current.x, y: e.clientY - panStartRef.current.y }, zoom)
+      setPan(nextPan)
     }
   }
 

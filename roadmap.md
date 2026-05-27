@@ -68,6 +68,22 @@ Sincronización de dados en mesa integrada al tablero de combate del DM (documen
 | Vitral tripartito en creación (75% clase/raza, 25% trasfondo) con sombreado de textos y glassmorphism | ✅ |
 | Límite de estadísticas base a 15 y cálculo dinámico de modificadores de trasfondo | ✅ |
 
+### 🛠 3. Tablero de Batalla, Creación de PNJ, Notas y Establo (Sesión 3)
+
+| Item | Estado |
+|------|--------|
+| Color destacado en el CTA de fin de combate | ✅ |
+| Color distintivo único por ficha en tablero y brillo interactivo en hover ficha-lista | ✅ |
+| Optimización de sensibilidad de scroll y clamping de escala negativa en mapas pequeños | ✅ |
+| Paneles laterales colapsables en la vista del DM | ✅ |
+| Creación de PNJ: auto-escalado de HP máximo al cambiar nivel/clase | ✅ |
+| Creación de PNJ: selector interactivo de raza con pestañas de Razas Clásicas (traducidas) y Monstruos desde la API de D&D 5e | ✅ |
+| Creación de PNJ: selección de libro de conjuros desde la API de D&D | ✅ |
+| Creación de PNJ: notas libres para equipamiento y pertenencias | ✅ |
+| Creación de PNJ: agregar armas personalizadas y tirar daño de arma específico en popup de combate | ✅ |
+| Diario de Campaña: pestaña interactiva "Notas" con notas públicas y privadas (CRUD + Supabase) | ✅ |
+| Migración de Establos a la Taberna, con compra automática de monturas, cobro de monedas y registro de compra | ✅ |
+
 ---
 
 ## 🗺 Features más grandes (largo plazo)

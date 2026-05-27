@@ -1,9 +1,11 @@
 import React from 'react'
 import type { TokenData, Pos } from './combat-types'
 import { TOKEN_SIZE, R, CIRC, arcColor } from './combat-helpers'
+import { getDeterministicColor } from '../tablero/tablero-types'
 
 export function CombatToken({
   data, pos, isFrom, isTo, inAoE, onPointerDown, onContextMenu,
+  hoveredTokenId, onHoverToken,
 }: {
   data: TokenData
   pos: Pos
@@ -12,24 +14,37 @@ export function CombatToken({
   inAoE?: boolean
   onPointerDown: (e: React.PointerEvent) => void
   onContextMenu?: (e: React.MouseEvent) => void
+  hoveredTokenId?: string | null
+  onHoverToken?: (id: string | null) => void
 }) {
   const pct = data.maxHp > 0 ? Math.max(0, Math.min(1, data.currentHp / data.maxHp)) : 0
   const arc = pct * CIRC
   const color = arcColor(pct)
   const half = TOKEN_SIZE / 2
+  const tokenColor = getDeterministicColor(data.id)
+  const isHovered = hoveredTokenId === data.id
 
   return (
     <div
       style={{
         position: 'absolute', left: pos.x, top: pos.y,
         width: TOKEN_SIZE, touchAction: 'none', cursor: 'grab',
-        zIndex: isFrom || isTo ? 20 : 10,
+        zIndex: isHovered ? 35 : (isFrom || isTo ? 20 : 10),
         pointerEvents: 'auto',
       }}
       onPointerDown={onPointerDown}
       onContextMenu={onContextMenu}
+      onMouseEnter={() => onHoverToken?.(data.id)}
+      onMouseLeave={() => onHoverToken?.(null)}
     >
       <div style={{ position: 'relative', width: TOKEN_SIZE, height: TOKEN_SIZE }}>
+        {/* Hover Glow Ring */}
+        {isHovered && (
+          <div style={{
+            position: 'absolute', inset: -6, borderRadius: '50%', pointerEvents: 'none',
+            boxShadow: `0 0 0 3.5px ${tokenColor}, 0 0 20px ${tokenColor}`,
+          }} />
+        )}
         {/* AoE Highlight Ring */}
         {inAoE && (
           <div style={{
@@ -62,9 +77,9 @@ export function CombatToken({
         {/* HP arc SVG */}
         {data.showHp !== false && (
           <svg
-            width={TOKEN_SIZE} height={TOKEN_SIZE}
-            viewBox={`0 0 ${TOKEN_SIZE} ${TOKEN_SIZE}`}
-            style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+             width={TOKEN_SIZE} height={TOKEN_SIZE}
+             viewBox={`0 0 ${TOKEN_SIZE} ${TOKEN_SIZE}`}
+             style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
           >
             <circle cx={half} cy={half} r={R} fill="none" stroke="rgba(0,0,0,0.55)" strokeWidth={7} />
             <circle
@@ -80,7 +95,7 @@ export function CombatToken({
         <div style={{
           position: 'absolute', inset: 9, borderRadius: '50%', overflow: 'hidden',
           background: data.kind === 'player' ? '#1a2e1e' : '#2e1a1a',
-          border: '1.5px solid rgba(0,0,0,0.6)',
+          border: `2px solid ${tokenColor}`,
           boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.4)',
         }}>
           {data.portraitUrl ? (

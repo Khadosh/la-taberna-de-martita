@@ -1,4 +1,7 @@
 import { Link } from '@tanstack/react-router'
+import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { dndApi, dndKeys } from '../../lib/dnd-api'
 import { type NpcItem } from './tablero-types'
 import { formatModInline } from './tablero-types'
 import { type useEncounterGenerator } from './use-encounter-generator'
@@ -44,9 +47,18 @@ interface DmNpcFormProps {
   npcFormDamage: string
   setNpcFormDamage: (val: string) => void
   npcFormItems: NpcItem[]
+  npcFormSpells: string[]
+  npcFormWeapons: { id: string; name: string; damage: string }[]
+  npcFormEquipment: string
+  setNpcFormEquipment: (val: string) => void
   addLootItem: () => void
   updateLootItem: (id: string, patch: Partial<NpcItem>) => void
   removeLootItem: (id: string) => void
+  addFormWeapon: () => void
+  updateFormWeapon: (id: string, patch: Partial<{ name: string; damage: string }>) => void
+  removeFormWeapon: (id: string) => void
+  addFormSpell: (spell: string) => void
+  removeFormSpell: (spell: string) => void
   createCustomNpc: () => Promise<void>
 
   encounterGen: ReturnType<typeof useEncounterGenerator>
@@ -89,12 +101,28 @@ export function DmNpcForm({
   npcFormDamage,
   setNpcFormDamage,
   npcFormItems,
+  npcFormSpells,
+  npcFormWeapons,
+  npcFormEquipment,
+  setNpcFormEquipment,
   addLootItem,
   updateLootItem,
   removeLootItem,
+  addFormWeapon,
+  updateFormWeapon,
+  removeFormWeapon,
+  addFormSpell,
+  removeFormSpell,
   createCustomNpc,
   encounterGen,
 }: DmNpcFormProps) {
+  const [spellSearch, setSpellSearch] = useState('')
+  const { data: allSpellsData } = useQuery({
+    queryKey: dndKeys.allSpells,
+    queryFn: dndApi.allSpells,
+    staleTime: Infinity,
+  })
+
   if (!showNpcBar) return null
 
   return (
@@ -258,6 +286,106 @@ export function DmNpcForm({
                 className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-mono placeholder-stone-700 focus:outline-none focus:border-stone-500" />
             </div>
           </div>
+          
+          {/* Weapons */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs text-stone-600 font-serif">Armas y Ataques</label>
+              <button type="button" onClick={addFormWeapon} className="text-xs px-2 py-0.5 border border-stone-700 text-stone-500 hover:border-stone-500 hover:text-stone-300 font-serif transition-colors cursor-pointer">
+                + Agregar Arma
+              </button>
+            </div>
+            <div className="space-y-1.5">
+              {npcFormWeapons.map(w => (
+                <div key={w.id} className="flex gap-2 items-center">
+                  <input
+                    value={w.name}
+                    onChange={e => updateFormWeapon(w.id, { name: e.target.value })}
+                    placeholder="Nombre del Arma (ej: Espada Larga)"
+                    className="flex-1 px-2 py-1 bg-stone-900 border border-stone-700 text-stone-300 text-xs font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500"
+                  />
+                  <input
+                    value={w.damage}
+                    onChange={e => updateFormWeapon(w.id, { damage: e.target.value })}
+                    placeholder="Daño (ej: 1d8+2)"
+                    className="w-24 px-2 py-1 bg-stone-900 border border-stone-700 text-stone-300 text-xs font-mono text-center focus:outline-none focus:border-stone-500"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => removeFormWeapon(w.id)}
+                    className="text-stone-600 hover:text-red-500 text-xs font-serif shrink-0 cursor-pointer"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Spells */}
+          <div>
+            <label className="block text-xs text-stone-600 font-serif mb-1">Libro de Hechizos</label>
+            <div className="relative">
+              <input
+                value={spellSearch}
+                onChange={e => setSpellSearch(e.target.value)}
+                placeholder="Buscar y agregar conjuro..."
+                className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500"
+              />
+              {spellSearch.trim().length > 1 && (
+                <div className="absolute left-0 right-0 mt-1 z-30 bg-stone-900 border border-stone-750 max-h-40 overflow-y-auto shadow-lg divide-y divide-stone-800">
+                  {allSpellsData?.results
+                    .filter(s => s.name.toLowerCase().includes(spellSearch.toLowerCase()))
+                    .slice(0, 8)
+                    .map(spell => (
+                      <button
+                        key={spell.index}
+                        type="button"
+                        onClick={() => {
+                          addFormSpell(spell.index)
+                          setSpellSearch('')
+                        }}
+                        className="w-full text-left px-3 py-1.5 text-xs text-stone-300 hover:bg-stone-850 font-serif transition-colors cursor-pointer"
+                      >
+                        {spell.name}
+                      </button>
+                    ))}
+                </div>
+              )}
+            </div>
+            {npcFormSpells.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-1.5">
+                {npcFormSpells.map(sIndex => (
+                  <span
+                    key={sIndex}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 border border-amber-900 bg-amber-900/10 text-amber-500 text-xs rounded capitalize font-serif"
+                  >
+                    {sIndex.replace(/-/g, ' ')}
+                    <button
+                      type="button"
+                      onClick={() => removeFormSpell(sIndex)}
+                      className="text-[9px] text-amber-600 hover:text-red-400 font-bold ml-1 cursor-pointer"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Equipment Notes */}
+          <div>
+            <label className="block text-xs text-stone-600 font-serif mb-1">Equipamiento y Pertrechos</label>
+            <textarea
+              value={npcFormEquipment}
+              onChange={e => setNpcFormEquipment(e.target.value)}
+              rows={2}
+              placeholder="Cota de malla, escudo, 15 flechas..."
+              className="w-full p-2.5 bg-stone-900 border border-stone-700 text-stone-200 text-xs font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500 resize-none"
+            />
+          </div>
+
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="text-xs text-stone-600 font-serif">Botín</label>

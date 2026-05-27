@@ -351,6 +351,9 @@ export function useDmTablero(campaignId: string) {
     const existing = boardTokens.filter(bt => bt.kind === 'npc' && bt.label.replace(/ \d+$/, '') === cn.name).length
     const suffix = existing > 0 ? ` ${existing + 1}` : ''
     const loot = ((cn.sheet_json as { loot?: any[] } | null)?.loot) ?? []
+    const spells = ((cn.sheet_json as { spells?: string[] } | null)?.spells) ?? []
+    const weapons = ((cn.sheet_json as { weapons?: { name: string; damage: string }[] } | null)?.weapons) ?? []
+    const equipmentNotes = ((cn.sheet_json as { equipment_notes?: string } | null)?.equipment_notes) ?? ''
     const npc: Npc = {
       id: crypto.randomUUID(),
       name: `${cn.name}${suffix}`,
@@ -361,6 +364,9 @@ export function useDmTablero(campaignId: string) {
       damage: cn.damage ?? undefined,
       npcType: cn.race ?? undefined,
       loot,
+      spells,
+      weapons,
+      equipmentNotes,
     }
     if (combatActive) {
       setCombatants(prev => {
@@ -373,7 +379,7 @@ export function useDmTablero(campaignId: string) {
   }
 
   const createCustomNpc = async () => {
-    const { npcFormName, npcFormHp, npcFormAc, npcFormAttack, npcFormDamage, npcFormType, npcFormItems, resetNpcForm } = npcForm
+    const { npcFormName, npcFormHp, npcFormAc, npcFormAttack, npcFormDamage, npcFormType, npcFormItems, npcFormSpells, npcFormWeapons, npcFormEquipment, resetNpcForm } = npcForm
     if (!npcFormName.trim() || npcFormHp < 1) return
     const npc: Npc = {
       id: crypto.randomUUID(),
@@ -384,6 +390,9 @@ export function useDmTablero(campaignId: string) {
       damage: npcFormDamage.trim() || undefined,
       npcType: npcFormType,
       loot: npcFormItems.filter(i => i.name.trim()),
+      spells: npcFormSpells,
+      weapons: npcFormWeapons.filter(w => w.name.trim()),
+      equipmentNotes: npcFormEquipment,
     }
     if (combatActive) {
       setCombatants(prev => {
@@ -424,7 +433,7 @@ export function useDmTablero(campaignId: string) {
           const curHp = localHp[ch.id] ?? currentHpFor(ch)
           return [{ id: ch.id, name: ch.name, kind: 'player', currentHp: curHp, maxHp, portraitUrl: ch.portrait_url, isActive: idx === currentTurn }]
         }
-        return [{ id: c.npc.id, name: c.npc.name, kind: 'npc', currentHp: c.npc.currentHp, maxHp: c.npc.maxHp, portraitUrl: c.npc.portraitUrl ?? null, role: c.npc.role, level: c.npc.level, spells: c.npc.spells, isActive: idx === currentTurn }]
+        return [{ id: c.npc.id, name: c.npc.name, kind: 'npc', currentHp: c.npc.currentHp, maxHp: c.npc.maxHp, portraitUrl: c.npc.portraitUrl ?? null, role: c.npc.role, level: c.npc.level, spells: c.npc.spells, weapons: c.npc.weapons, equipmentNotes: c.npc.equipmentNotes, damage: c.npc.damage, isActive: idx === currentTurn }]
       })
     } else {
       return boardTokens.map(bt => {

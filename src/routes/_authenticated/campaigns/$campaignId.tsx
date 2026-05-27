@@ -4,7 +4,7 @@ import type { Session } from '@supabase/supabase-js'
 import { useState } from 'react'
 import { supabase } from '../../../lib/supabase'
 import { DiceModule } from '../../../lib/dice'
-import { ScrollIcon, HoodIcon, CrossedSwordsIcon, BeerIcon, SpellbookIcon, ScalesIcon, D20Icon } from '../../../components/icons/campaign-icons'
+import { ScrollIcon, HoodIcon, CrossedSwordsIcon, BeerIcon, SpellbookIcon, ScalesIcon, D20Icon, BookOpenIcon } from '../../../components/icons/campaign-icons'
 
 export const Route = createFileRoute('/_authenticated/campaigns/$campaignId')({
   component: CampaignLayout,
@@ -19,6 +19,7 @@ type TabDef = {
   | '/campaigns/$campaignId/habilidades'
   | '/campaigns/$campaignId/taberna'
   | '/campaigns/$campaignId/tablero'
+  | '/campaigns/$campaignId/notas'
   label: string
   icon: React.ReactNode
   exact?: boolean
@@ -30,6 +31,7 @@ const GM_TABS: TabDef[] = [
   { to: '/campaigns/$campaignId/pnj', label: 'PNJs', icon: <HoodIcon /> },
   { to: '/campaigns/$campaignId/tablero', label: 'Tablero', icon: <CrossedSwordsIcon /> },
   { to: '/campaigns/$campaignId/taberna', label: 'Taberna', icon: <BeerIcon /> },
+  { to: '/campaigns/$campaignId/notas', label: 'Notas', icon: <BookOpenIcon /> },
   { to: '/campaigns/$campaignId/hechizos', label: 'Hechizos', icon: <SpellbookIcon /> },
   { to: '/campaigns/$campaignId/comercio', label: 'Comercio', icon: <ScalesIcon /> },
   { to: '/campaigns/$campaignId/habilidades', label: 'Habilidades', icon: <D20Icon /> },
@@ -40,6 +42,7 @@ const PLAYER_TABS: TabDef[] = [
   { to: '/campaigns/$campaignId', label: 'Mi Party', icon: <ScrollIcon />, exact: true },
   { to: '/campaigns/$campaignId/tablero', label: 'Tablero', icon: <CrossedSwordsIcon /> },
   { to: '/campaigns/$campaignId/taberna', label: 'Taberna', icon: <BeerIcon /> },
+  { to: '/campaigns/$campaignId/notas', label: 'Notas', icon: <BookOpenIcon /> },
   { to: '/campaigns/$campaignId/hechizos', label: 'Hechizos', icon: <SpellbookIcon /> },
   { to: '/campaigns/$campaignId/comercio', label: 'Comercio', icon: <ScalesIcon /> },
   { to: '/campaigns/$campaignId/habilidades', label: 'Habilidades', icon: <D20Icon /> },

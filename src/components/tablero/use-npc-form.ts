@@ -10,6 +10,11 @@ export function useNpcForm() {
   const [npcFormDamage, setNpcFormDamage] = useState('')
   const [npcFormType, setNpcFormType] = useState('humanoide')
   const [npcFormItems, setNpcFormItems] = useState<NpcItem[]>([])
+  
+  // Custom NPC extensions: spells, weapons, equipment notes
+  const [npcFormSpells, setNpcFormSpells] = useState<string[]>([])
+  const [npcFormWeapons, setNpcFormWeapons] = useState<{ id: string; name: string; damage: string }[]>([])
+  const [npcFormEquipment, setNpcFormEquipment] = useState('')
 
   const addLootItem = () =>
     setNpcFormItems(prev => [...prev, { id: crypto.randomUUID(), name: '', qty: 1 }])
@@ -20,6 +25,21 @@ export function useNpcForm() {
   const removeLootItem = (id: string) =>
     setNpcFormItems(prev => prev.filter(i => i.id !== id))
 
+  const addFormWeapon = () =>
+    setNpcFormWeapons(prev => [...prev, { id: crypto.randomUUID(), name: '', damage: '' }])
+
+  const updateFormWeapon = (id: string, patch: Partial<{ name: string; damage: string }>) =>
+    setNpcFormWeapons(prev => prev.map(w => w.id === id ? { ...w, ...patch } : w))
+
+  const removeFormWeapon = (id: string) =>
+    setNpcFormWeapons(prev => prev.filter(w => w.id !== id))
+
+  const addFormSpell = (spell: string) =>
+    setNpcFormSpells(prev => prev.includes(spell) ? prev : [...prev, spell])
+
+  const removeFormSpell = (spell: string) =>
+    setNpcFormSpells(prev => prev.filter(x => x !== spell))
+
   const resetNpcForm = () => {
     setShowNpcForm(false)
     setNpcFormName('')
@@ -29,6 +49,9 @@ export function useNpcForm() {
     setNpcFormDamage('')
     setNpcFormType('humanoide')
     setNpcFormItems([])
+    setNpcFormSpells([])
+    setNpcFormWeapons([])
+    setNpcFormEquipment('')
   }
 
   return {
@@ -40,7 +63,12 @@ export function useNpcForm() {
     npcFormDamage, setNpcFormDamage,
     npcFormType, setNpcFormType,
     npcFormItems,
+    npcFormSpells, setNpcFormSpells,
+    npcFormWeapons, setNpcFormWeapons,
+    npcFormEquipment, setNpcFormEquipment,
     addLootItem, updateLootItem, removeLootItem,
+    addFormWeapon, updateFormWeapon, removeFormWeapon,
+    addFormSpell, removeFormSpell,
     resetNpcForm,
   }
 }

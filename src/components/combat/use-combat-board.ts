@@ -194,7 +194,42 @@ export function useCombatBoard({
   const midY = fromPos && toPos ? (fromPos.y + toPos.y) / 2 + TOKEN_SIZE / 2 : 0
 
   const rangeConfig = useMemo(() => {
-    if (!attackerChar) return { label: 'Melee', normal: 5, long: 5, status: 'ok' as const }
+    if (!attackerChar) {
+      const attackerToken = tokens.find(t => t.id === effAttackFrom)
+      if (attackerToken?.kind === 'npc') {
+        const npcWeapons = (attackerToken.weapons as { name: string; damage: string }[]) ?? []
+        const weaponIndex = parseInt(selectedWeaponId ?? '')
+        const selectedWeapon = isNaN(weaponIndex) ? null : npcWeapons[weaponIndex]
+        
+        if (selectedWeapon) {
+          const wName = selectedWeapon.name.toLowerCase()
+          const isRanged = wName.includes('arco') || wName.includes('ballesta') || wName.includes('crossbow') || wName.includes('bow') || wName.includes('honda') || wName.includes('dardo') || wName.includes('daga')
+          const hasReach = ['lanza', 'alabarda', 'látigo', 'halberd', 'glaive', 'pike', 'whip', 'reach', 'alcance'].some(w => wName.includes(w))
+          
+          if (isRanged) {
+            let normal = 80, long = 320
+            if (wName.includes('largo') || wName.includes('longbow')) { normal = 150; long = 600 }
+            else if (wName.includes('mano') || wName.includes('hand')) { normal = 30; long = 120 }
+            else if (wName.includes('pesad') || wName.includes('heavy')) { normal = 100; long = 400 }
+            else if (wName.includes('honda') || wName.includes('sling')) { normal = 30; long = 120 }
+            else if (wName.includes('dardo') || wName.includes('dart') || wName.includes('daga') || wName.includes('dagger')) { normal = 20; long = 60 }
+            let status: 'ok' | 'disadvantage_long' | 'too_far' = 'ok'
+            if (distanceFtGrid > long) status = 'too_far'
+            else if (distanceFtGrid > normal) status = 'disadvantage_long'
+            const isThreatened = tokens.some(t => t.id !== effAttackFrom && t.kind === 'npc' && positions[t.id] &&
+              Math.max(Math.round(Math.abs(positions[t.id].x - fromPos!.x) / gridSize), Math.round(Math.abs(positions[t.id].y - fromPos!.y) / gridSize)) * 5 <= 5
+            )
+            return { label: selectedWeapon.name, normal, long, status, disadvantageThreat: isThreatened }
+          } else {
+            const reach = hasReach ? 10 : 5
+            const status = distanceFtGrid <= reach ? 'ok' as const : 'too_far' as const
+            return { label: selectedWeapon.name, normal: reach, long: reach, status }
+          }
+        }
+      }
+      const token = tokens.find(t => t.id === effAttackFrom)
+      return { label: token?.name ? `Ataque de ${token.name}` : 'Cuerpo a Cuerpo', normal: 5, long: 5, status: distanceFtGrid <= 5 ? 'ok' as const : 'too_far' as const }
+    }
 
     if (effSelectedMode === 'melee') {
       const mainHandItemId = attackerChar.sheet_json.equipped_slots?.main_hand

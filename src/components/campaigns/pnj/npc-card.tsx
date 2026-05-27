@@ -18,6 +18,7 @@ export function NpcCard({ npc, onEdit, onDelete, confirmingDelete, onCancelDelet
   const stats = npc.stats as Stats | null
   const role = ROLES.find(r => r.value === npc.role)
   const icon = npc.class ? CLASS_ICONS[npc.class] : '👤'
+  const sheet = (npc.sheet_json as { spells?: string[]; weapons?: { id: string; name: string; damage: string }[]; equipment_notes?: string } | null) ?? {}
 
   return (
     <Frame>
@@ -49,7 +50,7 @@ export function NpcCard({ npc, onEdit, onDelete, confirmingDelete, onCancelDelet
             {npc.max_hp != null && <span>❤ {npc.current_hp ?? npc.max_hp}/{npc.max_hp}</span>}
             {npc.armor_class != null && <span>🛡 {npc.armor_class}</span>}
             {npc.attack_bonus != null && <span>⚔ {formatMod(npc.attack_bonus)}</span>}
-            {npc.damage && <span className="text-stone-600">{npc.damage}</span>}
+            {npc.damage && <span className="text-stone-650 font-bold">{npc.damage}</span>}
           </div>
         )}
 
@@ -61,6 +62,53 @@ export function NpcCard({ npc, onEdit, onDelete, confirmingDelete, onCancelDelet
                 <p className="text-[11px] font-mono text-stone-900">{formatMod(abilityMod(stats[k]))}</p>
               </div>
             ))}
+          </div>
+        )}
+
+        {sheet.weapons && sheet.weapons.length > 0 && (
+          <div className="text-xs text-stone-850 font-serif border-t border-stone-300/30 pt-1.5 space-y-0.5">
+            <span className="font-semibold text-stone-900 block text-[10px] uppercase tracking-wider">Ataques / Armas:</span>
+            <div className="flex flex-wrap gap-x-2 gap-y-1">
+              {sheet.weapons.map((w, i) => (
+                <span key={i} className="px-1.5 py-0.5 bg-stone-100 border border-stone-300 text-[10px] text-stone-800 rounded font-mono">
+                  ⚔️ {w.name} ({w.damage})
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {sheet.spells && sheet.spells.length > 0 && (
+          <div className="text-xs text-stone-850 font-serif space-y-0.5">
+            <span className="font-semibold text-stone-900 block text-[10px] uppercase tracking-wider">Conjuros:</span>
+            <div className="flex flex-wrap gap-1">
+              {sheet.spells.map((s, i) => (
+                <span key={i} className="px-1.5 py-0.5 bg-amber-50 border border-amber-800/30 text-[10px] text-amber-900 rounded capitalize">
+                  ✨ {s.replace(/-/g, ' ')}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {sheet.equipment_notes && (
+          <div className="text-xs text-stone-700 font-serif border-t border-stone-300/30 pt-1.5">
+            <span className="font-semibold text-stone-900 text-[10px] uppercase tracking-wider block">Equipamiento:</span>
+            <p className="text-[11px] text-stone-600 whitespace-pre-line leading-relaxed">{sheet.equipment_notes}</p>
+          </div>
+        )}
+
+        {npc.backstory && (
+          <div className="text-xs text-stone-700 font-serif border-t border-stone-300/30 pt-1.5">
+            <span className="font-semibold text-stone-900 text-[10px] uppercase tracking-wider block">Trasfondo:</span>
+            <p className="text-[11px] text-stone-600 leading-relaxed">{npc.backstory}</p>
+          </div>
+        )}
+
+        {npc.notes && (
+          <div className="text-xs text-stone-700 font-serif border-t border-stone-300/30 pt-1.5 bg-yellow-50/20 p-1.5 border border-yellow-200/40 rounded">
+            <span className="font-semibold text-stone-900 text-[10px] uppercase tracking-wider block">Notas DM (Privado):</span>
+            <p className="text-[11px] text-stone-600 leading-relaxed">{npc.notes}</p>
           </div>
         )}
 

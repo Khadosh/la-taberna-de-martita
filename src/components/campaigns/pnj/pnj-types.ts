@@ -15,6 +15,9 @@ export type NpcForm = {
   backstory: string
   notes: string
   is_hidden: boolean
+  spells: string[]
+  weapons: { id: string; name: string; damage: string }[]
+  equipment_notes: string
 }
 
 export const STAT_KEYS = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const
@@ -38,6 +41,9 @@ export const EMPTY_FORM = (): NpcForm => ({
   max_hp: '', current_hp: '', armor_class: '',
   attack_bonus: '', damage: '',
   backstory: '', notes: '', is_hidden: false,
+  spells: [],
+  weapons: [],
+  equipment_notes: '',
 })
 
 export const abilityMod = (score: number) => Math.floor((score - 10) / 2)
@@ -57,4 +63,28 @@ export function rollAllStats(): Stats {
     return rolls[1] + rolls[2] + rolls[3]
   }
   return { str: roll(), dex: roll(), con: roll(), int: roll(), wis: roll(), cha: roll() }
+}
+
+export const CLASS_HIT_DIE: Record<string, number> = {
+  barbarian: 12,
+  fighter: 10,
+  paladin: 10,
+  ranger: 10,
+  cleric: 8,
+  druid: 8,
+  monk: 8,
+  rogue: 8,
+  warlock: 8,
+  bard: 8,
+  wizard: 6,
+  sorcerer: 6,
+}
+
+export function calculateSuggestedHp(level: number, className: string, conScore: number): number {
+  const hitDie = CLASS_HIT_DIE[className.toLowerCase()] ?? 8
+  const conMod = abilityMod(conScore)
+  const firstLevel = Math.max(1, hitDie + conMod)
+  if (level <= 1) return firstLevel
+  const subsequentLevelHp = Math.max(1, Math.floor(hitDie / 2) + 1 + conMod)
+  return firstLevel + (level - 1) * subsequentLevelHp
 }

@@ -1,10 +1,11 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { supabase } from '../../../lib/supabase'
-import { type Currency, UNIT_MAP, toCp, formatCost } from '../../../lib/currency'
+import { type Currency, type CostUnit, UNIT_MAP, toCp, formatCost } from '../../../lib/currency'
 import { type ServiceItem, DRINKS, FOODS, LODGINGS } from '../../../lib/tavern-services-data'
+import { dndApi } from '../../../lib/dnd-api'
 
 export const Route = createFileRoute('/_authenticated/campaigns/$campaignId/taberna')({
   component: Taberna,
@@ -47,8 +48,9 @@ function Taberna() {
   const { session } = Route.useRouteContext() as { session: Session }
   const queryClient = useQueryClient()
 
-  const [activeCategory, setActiveCategory] = useState<'drinks' | 'foods' | 'lodging'>('drinks')
+  const [activeCategory, setActiveCategory] = useState<'drinks' | 'foods' | 'lodging' | 'stables'>('drinks')
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null)
+  const [selectedStablesItem, setSelectedStablesItem] = useState<{ index: string; name: string } | null>(null)
   const [consumeCharId, setConsumeCharId] = useState<string>('')
   
   const [error, setError] = useState<string | null>(null)
@@ -77,18 +79,44 @@ function Taberna() {
     },
   })
 
+  // Stables categories queries
+  const stablesCategoryQuery = useQuery({
+    queryKey: ['stables-categories'],
+    queryFn: async () => {
+      const results = await Promise.all([
+        dndApi.equipmentCategory('mounts-and-other-animals'),
+        dndApi.equipmentCategory('tack-harness-and-drawn-vehicles')
+      ])
+      const merged = results.flatMap(r => r.equipment)
+      const unique = Array.from(new Map(merged.map(item => [item.index, item])).values())
+      return unique
+    },
+    enabled: activeCategory === 'stables',
+  })
+
+  // Selected stables item details
+  const { data: stablesItemDetail, isLoading: loadingStablesDetail } = useQuery({
+    queryKey: ['dnd', 'equipment', selectedStablesItem?.index],
+    queryFn: () => dndApi.equipmentDetail(selectedStablesItem!.index),
+    enabled: activeCategory === 'stables' && !!selectedStablesItem,
+  })
+
   const isGm = campaign?.dm_id === session.user.id
   const ownChar = characters.find(c => c.user_id === session.user.id)
   const buyableChars = isGm ? characters : (ownChar ? [ownChar] : [])
 
-  const currentServices = {
-    drinks: DRINKS,
-    foods: FOODS,
-    lodging: LODGINGS,
-  }[activeCategory]
+  const currentServices = useMemo(() => {
+    if (activeCategory === 'stables') return []
+    return {
+      drinks: DRINKS,
+      foods: FOODS,
+      lodging: LODGINGS,
+    }[activeCategory] || []
+  }, [activeCategory])
 
   const handleSelectService = (serv: ServiceItem) => {
     setSelectedService(serv)
+    setSelectedStablesItem(null)
     setConsumeCharId(buyableChars[0]?.id ?? '')
     setError(null)
     setSuccessMsg(null)
@@ -156,7 +184,7 @@ function Taberna() {
       return
     }
 
-    // Optional: Write log message to session notes so it's logged persistently!
+    // Write log message to session notes
     await supabase.from('session_notes').insert({
       campaign_id: campaignId,
       author_id: session.user.id,
@@ -171,6 +199,78 @@ function Taberna() {
 
     setSuccessMsg(effect.logMsg)
     setSelectedService(null)
+    setLoading(false)
+  }
+
+  // ── MIGRATED STABLES BUY ACTION ───────────────────────────────────────────
+
+  const handleStablesBuy = async () => {
+    if (!stablesItemDetail || !consumeCharId) return
+    const char = characters.find(c => c.id === consumeCharId)
+    if (!char) return
+
+    const cost = stablesItemDetail.cost
+    if (!cost || cost.quantity === 0) return
+
+    const unit = cost.unit as CostUnit
+    const currencyKey = UNIT_MAP[unit] ?? 'gold'
+    const currency = char.sheet_json.currency ?? { gold: 0, silver: 0, copper: 0 }
+    const charTotalCp = toCp(currency.gold, 'gp') + toCp(currency.silver, 'sp') + toCp(currency.copper, 'cp')
+    const costCp = toCp(cost.quantity, unit)
+
+    if (charTotalCp < costCp) {
+      setError(`${char.name} no tiene suficiente dinero (necesita ${formatCost(cost.quantity, unit)}).`)
+      return
+    }
+
+    setLoading(true)
+    setError(null)
+
+    // 1. Deduct currency
+    const newCurrency = { ...currency, [currencyKey]: (currency[currencyKey] ?? 0) - cost.quantity }
+    const { error: sheetErr } = await supabase
+      .from('characters')
+      .update({ sheet_json: { ...(char.sheet_json as object), currency: newCurrency } as never })
+      .eq('id', consumeCharId)
+
+    if (sheetErr) {
+      setError('Error al descontar el dinero.')
+      setLoading(false)
+      return
+    }
+
+    // 2. Add to inventory
+    const { error: invErr } = await supabase.from('character_inventory').insert({
+      character_id: consumeCharId,
+      name: stablesItemDetail.name,
+      quantity: 1,
+      weight_lbs: stablesItemDetail.weight ?? 0,
+      notes: stablesItemDetail.desc?.[0] ?? 'Comprado en los Establos de la Taberna.',
+    })
+
+    if (invErr) {
+      setError('Error al agregar al inventario.')
+      setLoading(false)
+      return
+    }
+
+    // 3. Write log message to session notes
+    const logMsg = `🐴 ${char.name} compró ${stablesItemDetail.name} por ${formatCost(cost.quantity, unit)} en los establos.`
+    await supabase.from('session_notes').insert({
+      campaign_id: campaignId,
+      author_id: session.user.id,
+      title: '🐴 Compra en Establo',
+      body: logMsg,
+      is_private: false,
+    })
+
+    // Invalidate queries
+    queryClient.invalidateQueries({ queryKey: ['campaign-characters', campaignId] })
+    queryClient.invalidateQueries({ queryKey: ['inventory', consumeCharId] })
+    queryClient.invalidateQueries({ queryKey: ['campaign-inventory', campaignId] })
+
+    setSuccessMsg(logMsg)
+    setSelectedStablesItem(null)
     setLoading(false)
   }
 
@@ -212,12 +312,17 @@ function Taberna() {
 
       {/* Category Navigation Tabs */}
       <div className="flex gap-2 mb-6 border-b border-stone-400/40">
-        {(['drinks', 'foods', 'lodging'] as const).map(cat => {
-          const labels = { drinks: '🍺 Bebidas', foods: '🍲 Comidas', lodging: '🛏️ Alojamiento' }
+        {(['drinks', 'foods', 'lodging', 'stables'] as const).map(cat => {
+          const labels = { drinks: '🍺 Bebidas', foods: '🍲 Comidas', lodging: '🛏️ Alojamiento', stables: '🐴 Establo' }
           return (
             <button
               key={cat}
-              onClick={() => { setActiveCategory(cat); setSelectedService(null); setError(null) }}
+              onClick={() => {
+                setActiveCategory(cat)
+                setSelectedService(null)
+                setSelectedStablesItem(null)
+                setError(null)
+              }}
               className={`px-4 py-2.5 text-xs sm:text-sm font-display tracking-wide uppercase transition-all border-b-2 -mb-[1px] ${
                 activeCategory === cat
                   ? 'border-parchment-sienna text-parchment-sienna font-semibold'
@@ -235,115 +340,209 @@ function Taberna() {
         
         {/* Services Menu List */}
         <div className="flex-1 min-w-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {currentServices.map(serv => (
-              <button
-                key={serv.id}
-                onClick={() => handleSelectService(serv)}
-                className={`text-left p-4 border rounded transition-all flex items-start gap-4 ${
-                  selectedService?.id === serv.id
-                    ? 'bg-amber-900 border-amber-800 text-amber-100 shadow-md'
-                    : 'bg-amber-50/30 border-stone-300/60 text-stone-700 hover:bg-amber-100/40 hover:border-stone-500'
-                }`}
-              >
-                <span className={`text-3xl p-2 border rounded shrink-0 transition-colors ${
-                  selectedService?.id === serv.id
-                    ? 'bg-amber-950 border-amber-700 text-amber-100'
-                    : 'bg-amber-100/60 border-stone-300 text-stone-900'
-                }`}>{serv.icon}</span>
-                <div className="flex-1 min-w-0 space-y-1">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className={`font-semibold text-sm truncate font-display ${
-                      selectedService?.id === serv.id ? 'text-amber-100' : 'text-stone-900'
-                    }`}>{serv.name}</span>
-                    <span className={`font-mono text-xs font-bold shrink-0 ${
+          {activeCategory === 'stables' ? (
+            stablesCategoryQuery.isLoading ? (
+              <p className="text-stone-600 italic font-serif">Cargando establos...</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {(stablesCategoryQuery.data ?? []).map(item => {
+                  const isSelected = selectedStablesItem?.index === item.index
+                  return (
+                    <button
+                      key={item.index}
+                      onClick={() => {
+                        setSelectedStablesItem(item)
+                        setSelectedService(null)
+                        setConsumeCharId(buyableChars[0]?.id ?? '')
+                        setError(null)
+                        setSuccessMsg(null)
+                      }}
+                      className={`text-left p-4 border rounded transition-all flex items-start gap-4 cursor-pointer ${
+                        isSelected
+                          ? 'bg-amber-900 border-amber-800 text-amber-100 shadow-md'
+                          : 'bg-amber-50/30 border-stone-300/60 text-stone-700 hover:bg-amber-100/40 hover:border-stone-500'
+                      }`}
+                    >
+                      <span className={`text-3xl p-2 border rounded shrink-0 transition-colors ${
+                        isSelected
+                          ? 'bg-amber-950 border-amber-700 text-amber-100'
+                          : 'bg-amber-100/60 border-stone-300 text-stone-900'
+                      }`}>🐴</span>
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <span className={`font-semibold text-sm truncate font-display block ${
+                          isSelected ? 'text-amber-100' : 'text-stone-900'
+                        }`}>{item.name}</span>
+                        <p className={`text-xs font-serif leading-relaxed line-clamp-2 ${
+                          isSelected ? 'text-amber-200/90' : 'text-stone-600'
+                        }`}>Caballos, monturas, mulas y vehículos de viaje.</p>
+                      </div>
+                    </button>
+                  )
+                })}
+              </div>
+            )
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {currentServices.map(serv => (
+                <button
+                  key={serv.id}
+                  onClick={() => handleSelectService(serv)}
+                  className={`text-left p-4 border rounded transition-all flex items-start gap-4 cursor-pointer ${
+                    selectedService?.id === serv.id
+                      ? 'bg-amber-900 border-amber-800 text-amber-100 shadow-md'
+                      : 'bg-amber-50/30 border-stone-300/60 text-stone-700 hover:bg-amber-100/40 hover:border-stone-500'
+                  }`}
+                >
+                  <span className={`text-3xl p-2 border rounded shrink-0 transition-colors ${
+                    selectedService?.id === serv.id
+                      ? 'bg-amber-950 border-amber-700 text-amber-100'
+                      : 'bg-amber-100/60 border-stone-300 text-stone-900'
+                  }`}>{serv.icon}</span>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`font-semibold text-sm truncate font-display ${
+                        selectedService?.id === serv.id ? 'text-amber-100' : 'text-stone-900'
+                      }`}>{serv.name}</span>
+                      <span className={`font-mono text-xs font-bold shrink-0 ${
+                        selectedService?.id === serv.id ? 'text-amber-300' : 'text-parchment-sienna'
+                      }`}>{formatCost(serv.cost, serv.unit)}</span>
+                    </div>
+                    <p className={`text-xs font-serif leading-relaxed line-clamp-2 ${
+                      selectedService?.id === serv.id ? 'text-amber-200/90' : 'text-stone-600'
+                    }`}>{serv.description}</p>
+                    <p className={`text-[10px] font-serif italic ${
                       selectedService?.id === serv.id ? 'text-amber-300' : 'text-parchment-sienna'
-                    }`}>{formatCost(serv.cost, serv.unit)}</span>
+                    }`}>{serv.benefit}</p>
                   </div>
-                  <p className={`text-xs font-serif leading-relaxed line-clamp-2 ${
-                    selectedService?.id === serv.id ? 'text-amber-200/90' : 'text-stone-600'
-                  }`}>{serv.description}</p>
-                  <p className={`text-[10px] font-serif italic ${
-                    selectedService?.id === serv.id ? 'text-amber-300' : 'text-parchment-sienna'
-                  }`}>{serv.benefit}</p>
-                </div>
-              </button>
-            ))}
-          </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Selected Service Checkout Box */}
-        {selectedService && (
+        {/* Selected Checkout Box */}
+        {(selectedService || (activeCategory === 'stables' && selectedStablesItem)) && (
           <div className="w-full lg:w-80 shrink-0">
-            <div className="relative bg-amber-50 border border-parchment-sienna/40 p-5 rounded-lg space-y-4 shadow-lg border-2">
-              <button onClick={() => setSelectedService(null)} className="absolute top-3 right-3 text-stone-500 hover:text-stone-800 text-lg leading-none">✕</button>
-
-              <div className="flex items-start gap-3">
-                <span className="text-4xl bg-amber-100/60 border border-stone-300 p-2.5 rounded shrink-0">{selectedService.icon}</span>
-                <div className="min-w-0">
-                  <h3 className="font-display text-sm font-bold text-stone-900 leading-tight pr-5">{selectedService.name}</h3>
-                  <span className="font-mono text-xs text-parchment-sienna font-bold block mt-1">{formatCost(selectedService.cost, selectedService.unit)}</span>
-                </div>
+            {activeCategory === 'stables' && loadingStablesDetail ? (
+              <div className="bg-amber-50 border border-parchment-sienna/40 p-5 rounded-lg shadow-lg border-2">
+                <p className="text-xs italic text-stone-500 font-serif">Cargando detalles...</p>
               </div>
+            ) : (
+              <div className="relative bg-amber-50 border border-parchment-sienna/40 p-5 rounded-lg space-y-4 shadow-lg border-2">
+                <button
+                  onClick={() => {
+                    setSelectedService(null)
+                    setSelectedStablesItem(null)
+                    setError(null)
+                  }}
+                  className="absolute top-3 right-3 text-stone-500 hover:text-stone-800 text-lg leading-none cursor-pointer"
+                >✕</button>
 
-              <p className="text-xs font-serif text-stone-600 leading-relaxed border-t border-b border-stone-300/40 py-3">
-                {selectedService.description}
-              </p>
+                {activeCategory === 'stables' && stablesItemDetail ? (
+                  <>
+                    <div className="flex items-start gap-3">
+                      <span className="text-4xl bg-amber-100/60 border border-stone-300 p-2.5 rounded shrink-0">🐴</span>
+                      <div className="min-w-0">
+                        <h3 className="font-display text-sm font-bold text-stone-900 leading-tight pr-5">{stablesItemDetail.name}</h3>
+                        <span className="font-mono text-xs text-parchment-sienna font-bold block mt-1">
+                          {stablesItemDetail.cost
+                            ? formatCost(stablesItemDetail.cost.quantity, stablesItemDetail.cost.unit)
+                            : 'Gratis'}
+                        </span>
+                      </div>
+                    </div>
 
-              <div className="bg-amber-900 border border-amber-800 p-3 rounded text-amber-100">
-                <span className="text-[10px] font-display font-semibold uppercase text-amber-300 block mb-1">Efecto Especial</span>
-                <p className="text-xs font-serif italic text-amber-200/95">{selectedService.benefit}</p>
-              </div>
+                    <p className="text-xs font-serif text-stone-600 leading-relaxed border-t border-b border-stone-300/40 py-3">
+                      {stablesItemDetail.desc && stablesItemDetail.desc.length > 0
+                        ? stablesItemDetail.desc.join('\n')
+                        : 'Monturas, mulas, carruajes y pertrechos de establo de la taberna para viajes de larga distancia.'}
+                    </p>
 
-              {buyableChars.length > 0 ? (
-                <div className="space-y-3 pt-1">
-                  <span className="text-[10px] font-display font-semibold tracking-wider uppercase text-stone-500 block">Consumidor:</span>
-                  <div className="space-y-1.5">
-                    {buyableChars.map(c => {
-                      const cur = c.sheet_json.currency ?? { gold: 0, silver: 0, copper: 0 }
-                      const charCp = toCp(cur.gold, 'gp') + toCp(cur.silver, 'sp') + toCp(cur.copper, 'cp')
-                      const costCp = toCp(selectedService.cost, selectedService.unit)
-                      const canAfford = charCp >= costCp
-                      const maxHp = maxHpFor(c)
-                      const isSelected = consumeCharId === c.id
-                      
-                      return (
-                        <label key={c.id} className={`flex items-center gap-2 px-2.5 py-2 border rounded cursor-pointer transition-all text-xs font-serif ${
-                          isSelected ? 'border-amber-800 bg-amber-900 text-amber-100 shadow-sm' : 'border-stone-300 bg-amber-50/20 hover:bg-amber-100/30 text-stone-700'
-                        } ${!canAfford ? 'opacity-40' : ''}`}>
-                          <input
-                            type="radio" name="consume-char" value={c.id}
-                            checked={isSelected}
-                            onChange={() => { setConsumeCharId(c.id); setError(null) }}
-                            className="accent-amber-700"
-                            disabled={!canAfford}
-                          />
-                          <div className="flex-1 min-w-0">
-                            <span className={`block truncate font-semibold ${isSelected ? 'text-amber-100' : 'text-stone-900'}`}>{c.name}</span>
-                            <span className={`block font-mono text-[10px] ${isSelected ? 'text-amber-200/80' : 'text-stone-500'}`}>HP: {c.current_hp ?? maxHp}/{maxHp}</span>
-                          </div>
-                          <span className={`font-mono text-[10px] shrink-0 ${isSelected ? 'text-amber-300' : canAfford ? 'text-parchment-sienna' : 'text-red-700'}`}>
-                            {cur.gold} MO {cur.silver > 0 ? `${cur.silver} MP` : ''}
-                          </span>
-                        </label>
-                      )
-                    })}
+                    <div className="bg-amber-900 border border-amber-800 p-3 rounded text-amber-100">
+                      <span className="text-[10px] font-display font-semibold uppercase text-amber-300 block mb-1">Detalles Técnicos</span>
+                      <p className="text-xs font-serif italic text-amber-200/95">
+                        Peso: {stablesItemDetail.weight ?? 0} lbs | Categoría: {stablesItemDetail.equipment_category?.name ?? 'Establo'}
+                      </p>
+                    </div>
+                  </>
+                ) : selectedService ? (
+                  <>
+                    <div className="flex items-start gap-3">
+                      <span className="text-4xl bg-amber-100/60 border border-stone-300 p-2.5 rounded shrink-0">{selectedService.icon}</span>
+                      <div className="min-w-0">
+                        <h3 className="font-display text-sm font-bold text-stone-900 leading-tight pr-5">{selectedService.name}</h3>
+                        <span className="font-mono text-xs text-parchment-sienna font-bold block mt-1">{formatCost(selectedService.cost, selectedService.unit)}</span>
+                      </div>
+                    </div>
+
+                    <p className="text-xs font-serif text-stone-600 leading-relaxed border-t border-b border-stone-300/40 py-3">
+                      {selectedService.description}
+                    </p>
+
+                    <div className="bg-amber-900 border border-amber-800 p-3 rounded text-amber-100">
+                      <span className="text-[10px] font-display font-semibold uppercase text-amber-300 block mb-1">Efecto Especial</span>
+                      <p className="text-xs font-serif italic text-amber-200/95">{selectedService.benefit}</p>
+                    </div>
+                  </>
+                ) : null}
+
+                {buyableChars.length > 0 ? (
+                  <div className="space-y-3 pt-1">
+                    <span className="text-[10px] font-display font-semibold tracking-wider uppercase text-stone-500 block">
+                      {activeCategory === 'stables' ? 'Comprador:' : 'Consumidor:'}
+                    </span>
+                    <div className="space-y-1.5">
+                      {buyableChars.map(c => {
+                        const cur = c.sheet_json.currency ?? { gold: 0, silver: 0, copper: 0 }
+                        const charCp = toCp(cur.gold, 'gp') + toCp(cur.silver, 'sp') + toCp(cur.copper, 'cp')
+                        
+                        // Parse cost for stables or service
+                        const costQty = activeCategory === 'stables' && stablesItemDetail?.cost ? stablesItemDetail.cost.quantity : (selectedService ? selectedService.cost : 0)
+                        const costUnit = activeCategory === 'stables' && stablesItemDetail?.cost ? stablesItemDetail.cost.unit as CostUnit : (selectedService ? selectedService.unit : 'gp')
+                        const costCp = toCp(costQty, costUnit)
+                        
+                        const canAfford = charCp >= costCp
+                        const maxHp = maxHpFor(c)
+                        const isSelected = consumeCharId === c.id
+                        
+                        return (
+                          <label key={c.id} className={`flex items-center gap-2 px-2.5 py-2 border rounded cursor-pointer transition-all text-xs font-serif ${
+                            isSelected ? 'border-amber-800 bg-amber-900 text-amber-100 shadow-sm' : 'border-stone-300 bg-amber-50/20 hover:bg-amber-100/30 text-stone-700'
+                          } ${!canAfford ? 'opacity-40' : ''}`}>
+                            <input
+                              type="radio" name="consume-char" value={c.id}
+                              checked={isSelected}
+                              onChange={() => { setConsumeCharId(c.id); setError(null) }}
+                              className="accent-amber-700"
+                              disabled={!canAfford}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <span className={`block truncate font-semibold ${isSelected ? 'text-amber-100' : 'text-stone-900'}`}>{c.name}</span>
+                              <span className={`block font-mono text-[10px] ${isSelected ? 'text-amber-200/80' : 'text-stone-500'}`}>HP: {c.current_hp ?? maxHp}/{maxHp}</span>
+                            </div>
+                            <span className={`font-mono text-[10px] shrink-0 ${isSelected ? 'text-amber-300' : canAfford ? 'text-parchment-sienna' : 'text-red-700'}`}>
+                              {cur.gold} MO {cur.silver > 0 ? `${cur.silver} MP` : ''}
+                            </span>
+                          </label>
+                        )
+                      })}
+                    </div>
+
+                    {error && <p className="text-xs font-serif text-red-700 bg-red-50 border border-red-200 px-2 py-1.5 rounded">{error}</p>}
+                    
+                    <button
+                      onClick={activeCategory === 'stables' ? handleStablesBuy : handleOrder}
+                      disabled={loading || !consumeCharId}
+                      className="w-full py-2.5 font-serif text-xs border border-[#6B2C06] bg-gradient-to-b from-[#9B4A10] to-[#7B3408] text-[#f5d9a8] rounded-sm transition-colors uppercase tracking-wider font-semibold hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    >
+                      {loading ? 'Procesando transacción…' : activeCategory === 'stables' ? 'Comprar Montura' : 'Ordenar & Consumir'}
+                    </button>
                   </div>
-
-                  {error && <p className="text-xs font-serif text-red-700 bg-red-50 border border-red-200 px-2 py-1.5 rounded">{error}</p>}
-                  
-                  <button
-                    onClick={handleOrder}
-                    disabled={loading || !consumeCharId}
-                    className="w-full py-2.5 font-serif text-xs border border-[#6B2C06] bg-gradient-to-b from-[#9B4A10] to-[#7B3408] text-[#f5d9a8] rounded-sm transition-colors uppercase tracking-wider font-semibold hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                  >
-                    {loading ? 'Preparando Orden…' : `Ordenar & Consumir`}
-                  </button>
-                </div>
-              ) : (
-                <p className="text-xs font-serif text-stone-500 italic">No posees personajes en esta campaña.</p>
-              )}
-            </div>
+                ) : (
+                  <p className="text-xs font-serif text-stone-500 italic">No posees personajes en esta campaña.</p>
+                )}
+              </div>
+            )}
           </div>
         )}
 

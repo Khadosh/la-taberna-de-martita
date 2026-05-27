@@ -1,5 +1,5 @@
 export interface ShopDef {
-  id: 'armeria' | 'provisiones' | 'alquimia' | 'establo' | 'artesanos'
+  id: 'armeria' | 'provisiones' | 'alquimia' | 'artesanos'
   label: string
   icon: string
   flavor: string
@@ -42,13 +42,6 @@ export const SHOPS: readonly ShopDef[] = [
     flavor: 'Frascos con líquidos luminiscentes, ungüentos extraños y pergaminos cargados con leves rastros de energía arcana.',
     categories: ['adventuring-gear'],
     filter: (name: string) => isMagicOrAlchemy(name),
-  },
-  {
-    id: 'establo',
-    label: 'Establo y Transportes',
-    icon: '🐴',
-    flavor: 'El olor a heno fresco y el relinchar de corceles. Aquí puedes adquirir caballos, mulas, monturas y carruajes de viaje.',
-    categories: ['mounts-and-other-animals', 'tack-harness-and-drawn-vehicles'],
   },
   {
     id: 'artesanos',

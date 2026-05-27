@@ -12,6 +12,9 @@ export type TokenData = {
   role?: string
   level?: number
   spells?: string[]
+  weapons?: { name: string; damage: string }[]
+  equipmentNotes?: string
+  damage?: string
 }
 
 export type AttackEntity = {

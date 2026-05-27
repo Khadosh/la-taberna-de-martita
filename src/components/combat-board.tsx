@@ -18,6 +18,8 @@ export function CombatBoard({
   isPlayer = false,
   externalTargeting = null,
   onSelectionChange,
+  hoveredTokenId = null,
+  onHoverToken,
 }: {
   tokens: TokenData[]
   allEntities: AttackEntity[]
@@ -58,6 +60,8 @@ export function CombatBoard({
     aoePosition: Pos | null
     groundTargetPos: Pos | null
   }) => void
+  hoveredTokenId?: string | null
+  onHoverToken?: (id: string | null) => void
 }) {
   const {
     boardRef,
@@ -257,6 +261,8 @@ export function CombatBoard({
                 isFrom={isFrom}
                 isTo={isTo}
                 inAoE={inAoE}
+                hoveredTokenId={hoveredTokenId}
+                onHoverToken={onHoverToken}
                 onPointerDown={e => {
                   if (e.button === 2) {
                     e.stopPropagation()
