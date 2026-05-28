@@ -125,11 +125,10 @@ export function Step1BasicInfo({
                 const isSelected = draft.raceIndex === r.index
                 const flavor = RACE_FLAVOR[r.index] ?? { desc: 'Especie del multiverso.', traits: 'Rasgos comunes' }
                 return (
-                  <button
+                  <div
                     key={r.index}
-                    type="button"
                     onClick={() => patch({ raceIndex: r.index })}
-                    className="relative text-left p-3 border transition-all overflow-hidden flex items-center justify-between rounded-sm h-[84px] w-full"
+                    className="relative text-left p-3 border transition-all overflow-hidden flex items-center justify-between rounded-sm h-[84px] w-full cursor-pointer"
                     style={{
                       backgroundImage: isSelected
                         ? `linear-gradient(100deg, rgba(24, 14, 6, 0.96) 25%, rgba(120, 60, 10, 0.5) 35%, rgba(120, 60, 10, 0.15) 100%), url('/assets/images/races/${r.index}.png')`
@@ -166,7 +165,7 @@ export function Step1BasicInfo({
                     >
                       <Info className="w-3.5 h-3.5" />
                     </button>
-                  </button>
+                  </div>
                 )
               })}
             </div>
@@ -180,11 +179,10 @@ export function Step1BasicInfo({
                 const isSelected = draft.classIndex === c.index
                 const flavor = CLASS_FLAVOR[c.index] ?? { desc: 'Una clase de héroe.', tags: [] }
                 return (
-                  <button
+                  <div
                     key={c.index}
-                    type="button"
                     onClick={() => patch({ classIndex: c.index, subclassIndex: '', spells: [], skillProficiencies: [], expertise: [] })}
-                    className="relative text-left p-3 border transition-all overflow-hidden flex items-center justify-between rounded-sm h-[84px] w-full"
+                    className="relative text-left p-3 border transition-all overflow-hidden flex items-center justify-between rounded-sm h-[84px] w-full cursor-pointer"
                     style={{
                       backgroundImage: isSelected
                         ? `linear-gradient(100deg, rgba(24, 14, 6, 0.96) 25%, rgba(120, 60, 10, 0.3) 55%, rgba(120, 60, 10, 0.15) 100%), url('/assets/images/classes/${c.index}.png')`
@@ -227,7 +225,7 @@ export function Step1BasicInfo({
                     >
                       <Info className="w-3.5 h-3.5" />
                     </button>
-                  </button>
+                  </div>
                 )
               })}
             </div>
@@ -242,11 +240,10 @@ export function Step1BasicInfo({
               {classSubclasses.results.map((s: any) => {
                 const isSelected = draft.subclassIndex === s.index
                 return (
-                  <button
+                  <div
                     key={s.index}
-                    type="button"
                     onClick={() => patch({ subclassIndex: s.index })}
-                    className={`relative text-left p-3 border transition-all pr-10 ${isSelected
+                    className={`relative text-left p-3 border transition-all pr-10 cursor-pointer ${isSelected
                       ? 'border-amber-600/90 text-amber-100 bg-amber-950/20 shadow-sm'
                       : 'border-stone-800 text-stone-400 hover:border-amber-800/40 hover:text-stone-200'
                       }`}
@@ -270,7 +267,7 @@ export function Step1BasicInfo({
                     >
                       <Info className="w-3.5 h-3.5" />
                     </button>
-                  </button>
+                  </div>
                 )
               })}
             </div>
@@ -284,11 +281,10 @@ export function Step1BasicInfo({
             {Object.entries(BACKGROUNDS).map(([key, bg]) => {
               const isSelected = draft.backgroundKey === key
               return (
-                <button
+                <div
                   key={key}
-                  type="button"
                   onClick={() => patch({ backgroundKey: key, bgBonus2: '', bgBonus1: '' })}
-                  className="relative text-left p-3 border transition-all overflow-hidden flex items-start gap-2.5 pr-10 rounded-sm h-[84px] w-full"
+                  className="relative text-left p-3 border transition-all overflow-hidden flex items-start gap-2.5 pr-10 rounded-sm h-[84px] w-full cursor-pointer"
                   style={{
                     backgroundImage: isSelected
                       ? `linear-gradient(100deg, rgba(24, 14, 6, 0.96) 25%, rgba(120, 60, 10, 0.3) 55%, rgba(120, 60, 10, 0.15) 100%), url('/assets/images/backgrounds/${key}.png')`
@@ -309,7 +305,7 @@ export function Step1BasicInfo({
                       <p className="text-xs font-display tracking-wide font-bold uppercase truncate">{bg.name}</p>
                       <div className="flex gap-1">
                         {bg.abilities.map(a =>
-                          <span className="w-fit px-1 py-0.5 rounded text-[8px] font-mono text-amber-500/70 uppercase tracking-wide truncate mr-1 border border-amber-500/70 bg-amber-950/20">{ABILITY_LABELS_ES[a]}</span>
+                          <span key={a} className="w-fit px-1 py-0.5 rounded text-[8px] font-mono text-amber-500/70 uppercase tracking-wide truncate mr-1 border border-amber-500/70 bg-amber-950/20">{ABILITY_LABELS_ES[a]}</span>
                         )}
                       </div>
                     </div>
@@ -327,7 +323,7 @@ export function Step1BasicInfo({
                   >
                     <Info className="w-3.5 h-3.5" />
                   </button>
-                </button>
+                </div>
               )
             })}
           </div>

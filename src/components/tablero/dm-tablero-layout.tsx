@@ -140,7 +140,15 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
                   style={isHovered ? { borderColor: tokenColor, boxShadow: `0 0 10px ${tokenColor}40` } : {}}
                   className={`bg-stone-900 border rounded-lg p-3 space-y-2 transition-all duration-200 ${isHovered ? 'border-amber-500' : 'border-stone-700'}`}>
                   <div className="flex items-center gap-2">
-                    <span className="text-lg">{CLASS_ICONS[c.class] ?? '🎲'}</span>
+                    {CLASS_ICONS[c.class] ? (
+                      <img
+                        src={CLASS_ICONS[c.class]}
+                        className="w-6 h-6 rounded-full border border-tavern-gold/40 bg-stone-950 object-cover object-center shrink-0"
+                        alt=""
+                      />
+                    ) : (
+                      <span className="text-lg">🎲</span>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-stone-100 truncate">{c.name}</p>
                       <p className="text-xs text-stone-500 capitalize">{c.race} {c.class} · Nv.{c.level}</p>

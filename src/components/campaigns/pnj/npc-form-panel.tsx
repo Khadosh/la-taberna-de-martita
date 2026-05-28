@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { dndApi, dndKeys } from '../../../lib/dnd-api'
-import { CLASS_ICONS } from '../../../lib/class-meta'
 import { Frame, Block, Field, inputClass } from './pnj-primitives'
 import { type NpcForm, type Stats, STAT_KEYS, STAT_LABELS, ROLES, abilityMod, formatMod, rollAllStats } from './pnj-types'
 
@@ -180,7 +179,7 @@ export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm,
                 <option value="">— ninguna —</option>
                 {classes?.results.map(c => (
                   <option key={c.index} value={c.index}>
-                    {CLASS_ICONS[c.index] ?? ''} {c.name}
+                    {c.name}
                   </option>
                 ))}
               </select>

@@ -67,6 +67,7 @@ Sincronización de dados en mesa integrada al tablero de combate del DM (documen
 | Carga de 16 ilustraciones de trasfondos (Backgrounds) y optimización de todas las imágenes (resize 512px) | ✅ |
 | Vitral tripartito en creación (75% clase/raza, 25% trasfondo) con sombreado de textos y glassmorphism | ✅ |
 | Límite de estadísticas base a 15 y cálculo dinámico de modificadores de trasfondo | ✅ |
+| Reemplazo de emojis de clases de D&D por avatares premium en todas las hojas y vistas | ✅ |
 
 ### 🛠 3. Tablero de Batalla, Creación de PNJ, Notas y Establo (Sesión 3)
 

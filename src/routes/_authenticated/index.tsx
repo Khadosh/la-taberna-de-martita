@@ -174,7 +174,15 @@ function CharacterCard({ character }: { character: Tables<'characters'> }) {
               {character.race} · {character.class} · Nv. {character.level}
             </p>
           </div>
-          <span className="text-xl leading-none mt-0.5">{icon}</span>
+          {icon.startsWith('/') ? (
+            <img
+              src={icon}
+              className="w-7 h-7 rounded-full border border-tavern-gold/40 bg-stone-950 object-cover object-center shrink-0 mt-0.5"
+              alt=""
+            />
+          ) : (
+            <span className="text-xl leading-none mt-0.5">{icon}</span>
+          )}
         </div>
         <div className="grid grid-cols-6 gap-1">
           {(['str', 'dex', 'con', 'int', 'wis', 'cha'] as const).map(k => (

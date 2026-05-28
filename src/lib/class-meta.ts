@@ -1,7 +1,16 @@
 export const CLASS_ICONS: Record<string, string> = {
-  fighter: '⚔️', wizard: '🧙', rogue: '🗡️', cleric: '✨', druid: '🌿',
-  ranger: '🏹', paladin: '🛡️', barbarian: '🪓', bard: '🎵',
-  monk: '🥋', sorcerer: '🔮', warlock: '💀',
+  fighter: '/assets/images/classes/fighter_avatar.png',
+  wizard: '/assets/images/classes/wizard_avatar.png',
+  rogue: '/assets/images/classes/rogue_avatar.png',
+  cleric: '/assets/images/classes/cleric_avatar.png',
+  druid: '/assets/images/classes/druid_avatar.png',
+  ranger: '/assets/images/classes/ranger_avatar.png',
+  paladin: '/assets/images/classes/paladin_avatar.png',
+  barbarian: '/assets/images/classes/barbarian_avatar.png',
+  bard: '/assets/images/classes/bard_avatar.png',
+  monk: '/assets/images/classes/monk_avatar.png',
+  sorcerer: '/assets/images/classes/sorcerer_avatar.png',
+  warlock: '/assets/images/classes/warlock_avatar.png',
 }
 
 export const CLASS_COLORS: Record<string, string> = {

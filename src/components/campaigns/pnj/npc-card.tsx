@@ -42,7 +42,15 @@ export function NpcCard({ npc, onEdit, onDelete, confirmingDelete, onCancelDelet
               </p>
             )}
           </div>
-          <span className="text-2xl shrink-0">{icon}</span>
+          {icon.startsWith('/') ? (
+            <img
+              src={icon}
+              className="w-8 h-8 rounded-full border border-stone-300 bg-stone-950 object-cover object-center shrink-0"
+              alt=""
+            />
+          ) : (
+            <span className="text-2xl shrink-0">{icon}</span>
+          )}
         </div>
 
         {(npc.max_hp != null || npc.armor_class != null) && (
