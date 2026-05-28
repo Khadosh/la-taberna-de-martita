@@ -1,183 +1,164 @@
 # CLAUDE.md — La Taberna de Martita
 
-Instrucciones de trabajo para Claude Code. Leer antes de tocar cualquier archivo.
+Este documento sirve como guía de inducción, arquitectura y desarrollo para cualquier IA u desarrollador trabajando en **La Taberna de Martita**, un companion web medieval-fantasy premium para Dungeons & Dragons 5ª Edición (SRD) disponible en [la-taberna-de-martita.quest](https://la-taberna-de-martita.quest).
 
 ---
 
-## Stack
+## 🛠️ Stack Tecnológico
 
-| Capa | Tech |
-|---|---|
-| Framework | React 19, SPA pura (sin SSR) |
-| Router | TanStack Router v1 (file-based, `src/routes/`) |
-| Data fetching | TanStack Query v5 |
-| Auth + DB | Supabase (Auth + Postgres con RLS) |
-| Estilos | **Tailwind CSS v4** (`@import "tailwindcss"`) |
-| Build | Vite |
-| Package manager | pnpm |
-| Deploy | Vercel → `la-taberna-de-martita.quest` |
-| D&D data | dnd5eapi.co (primaria), Open5e (fallback) |
+| Capa | Tecnología |
+| :--- | :--- |
+| **Framework** | React 19, Single Page Application (SPA) sin Server-Side Rendering (SSR) |
+| **Enrutador** | TanStack Router v1 (enrutamiento basado en archivos, `src/routes/`) |
+| **Data Fetching** | TanStack Query v5 (React Query) |
+| **Auth + Base de Datos** | Supabase (Autenticación, Base de datos PostgreSQL con RLS y Realtime Sync) |
+| **Estilos** | **Tailwind CSS v4** (`@import "tailwindcss"` en `src/styles.css`) |
+| **Build & Bundler** | Vite |
+| **Manejador de Paquetes**| pnpm |
+| **Despliegue (Deploy)** | Vercel |
+| **Base de Reglas D&D**  | [dnd5eapi.co](https://www.dnd5eapi.co) (primaria), Open5e (fallback) |
 
 ---
 
-## Comandos
+## 🚀 Comandos de Desarrollo
 
 ```bash
-pnpm dev          # dev server en localhost:5173
-pnpm build        # build producción
-npx tsc --noEmit  # verificar tipos (correr antes de commitear)
+pnpm dev          # Servidor de desarrollo en http://localhost:5173
+pnpm build        # Construye la aplicación para producción (Vite build)
+npx tsc --noEmit  # Verifica tipos de TypeScript (correr obligatoriamente antes de commits)
 ```
 
-**Migraciones Supabase:** siempre usar `supabase` CLI, **nunca `psql`**.
-
+### Gestión de Base de Datos (Supabase CLI)
+**Regla estricta:** Utilizar siempre Supabase CLI para migraciones. **Nunca usar `psql` directamente** ni aplicar cambios manuales que rompan el historial de migraciones.
 ```bash
-supabase migration new <nombre>
-supabase db push
+supabase migration new <nombre_migracion>   # Crea una nueva migración SQL
+supabase db push                            # Aplica los cambios locales a la base de datos de desarrollo
 ```
 
 ---
 
-## Arquitectura clave
+## 📦 Características y Capacidades (Features)
 
-### Rutas protegidas
-Todas las rutas de la app viven bajo `src/routes/_authenticated/`. El layout raíz en `__root.tsx` maneja auth.
+El sistema está dividido en varios módulos dinámicos diseñados bajo una dirección de arte medieval. A continuación se detalla cada funcionalidad y el flujo de interacción técnica:
 
-### Datos de personaje
-- `characters.stats` → JSONB `Record<string, number>` (str, dex, con, int, wis, cha)
-- `characters.sheet_json` → JSONB tipado como `SheetJson` (ver `src/components/character-sheet/types.ts`)
-- `character_inventory` → tabla separada con join por `character_id`
-- Equipo equipado: `sheet_json.equipped_items: string[]` + `sheet_json.equipped_slots: Partial<Record<SlotKey, string>>`
+### 1. Panel de Control (Dashboard)
+*   **Capacidad:** Pantalla inicial (`src/routes/_authenticated/index.tsx`) donde el usuario gestiona sus campañas (como jugador o DM) y sus personajes.
+*   **Interacción:**
+    *   **Tus personajes:** Muestra cartas de personajes con su nivel, HP actual en tiempo real y modificadores. Acceso directo a la hoja detallada.
+    *   **Campañas - GM:** Permite crear campañas nuevas (`/campaigns/new`) y copiar el enlace de invitación (`/join/$campaignId`) para compartir.
+    *   **Campañas - Jugador:** Lista campañas a las que el usuario se ha unido como jugador.
+    *   **Accesos rápidos:** Barra superior para acceder al Bestiario, Conjuros o cerrar sesión.
 
-### Optimistic updates
-`patchSheet()` en `$characterId.tsx` usa `queryClient.setQueryData()` antes de la llamada Supabase para respuesta inmediata.
+### 2. Creación de Personaje Avanzada
+*   **Capacidad:** Wizard guiado (`src/routes/_authenticated/characters/new.tsx`) que consume la API de D&D 5e.
+*   **Interacción:**
+    *   **Vitral Tripartito:** Interfaz inmersiva (75% clase/raza, 25% trasfondo) con glassmorphism.
+    *   **Selección:** Elección de Raza, Clase (con listado de dados de golpe y competencias) y Trasfondo (Background) con ilustraciones premium y límite de atributos base a 15 con modificadores.
 
-### D&D API
-Wrappers en `src/lib/dnd-api.ts` con TanStack Query keys en `dndKeys`. `staleTime: Infinity` para datos de reglas (nunca cambian).
+### 3. Hoja de Personaje Interactiva (Character Sheet)
+*   **Capacidad:** La hoja interactiva (`src/routes/_authenticated/characters/$characterId.tsx`) está dividida en dos secciones principales en escritorio (pergamino claro y marco de madera oscuro).
+*   **Estado y Mutabilidad:** Administrado por el hook `useCharacterSheet()`. Modifica la base de datos a través de `patchSheet()` y `patchCharacter()` utilizando **actualizaciones optimistas** vía TanStack Query para evitar latencia (HP lag) en la UI.
+*   **Sub-módulos e Interacción:**
+    *   **Retrato con IA:** Permite subir una imagen local o generar una ilustración de fantasía usando un servicio de retrato IA integrado.
+    *   **Pestaña Resumen (`TabResumen`):**
+        *   *Atributos:* Fuerza, Destreza, Constitución, Inteligencia, Sabiduría, Carisma.
+        *   *HP & CA:* Edición inline de vida actual, vida máxima y Clase de Armadura (CA).
+        *   *XP & Level Up:* Barra de progreso de XP. Si el personaje cumple con el umbral (`XP_THRESHOLDS`), se habilita el modal de **Subida de Nivel** (`level-up-modal.tsx`), el cual permite añadir dados de vida, elegir subclases, dotes de mejora de características (ASI), enemigos predilectos y conjuros nuevos.
+        *   *Condiciones (Sellos de Cera):* Wax seals interactivos para aplicar/remover los 17 estados de D&D 5e.
+        *   *Mecánicas de Descanso:* Rápido (gasto de dados de golpe `hitDie` para curarse) y Largo (restauración total, casillas de conjuro y dados de golpe).
+    *   **Pestaña Pericias (`TabPericias`):** Salvaciones de características y habilidades con sus modificadores calculados automáticamente más competencias y trasfondos.
+    *   **Pestaña Hechizos (`TabHechizos`):** Gestión de conjuros aprendidos y slots de hechizos disponibles/usados por nivel.
+    *   **Pestaña Historia (`TabHistoria`):** Notas de trasfondo narrativo y opción de borrar el personaje.
+    *   **Panel de Inventario e Interactividad (`InventoryPanel`):**
+        *   *Paper Doll (Maniquí Humanoide):* Interfaz visual de 11 ranuras de equipamiento (cabeza, cuello, pecho, manos, anillos, pies, etc.).
+        *   *Drag & Drop:* Utiliza `@dnd-kit/core` para arrastrar ítems de inventario al maniquí. **Gotcha:** `PointerSensor` debe configurarse con `activationConstraint: { distance: 6 }` para evitar que los clicks actúen como arrastres.
+        *   *Control de Carga:* Cálculo dinámico del peso total cargado frente al límite del personaje (Fuerza × 15 lbs).
 
----
+### 4. La Taberna de Martita (Tavern Services)
+*   **Capacidad:** Zona social y de descanso de campaña (`src/routes/_authenticated/campaigns/$campaignId.taberna.tsx`).
+*   **Interacción:**
+    *   **Bebidas, Comidas y Alojamiento:** Menú de servicios con costo en monedas (oro, plata, cobre). Consumir resta automáticamente el dinero de la ficha del personaje seleccionado, aplica efectos (ganancia de HP, restauración de ranuras por descanso) y escribe un registro automático en el Diario de Aventura.
+    *   **Los Establos:** Compra de monturas (caballos, mulas), carruajes y pertrechos de viaje directo de la API de D&D. Al comprar, descuenta el dinero y añade el ítem al inventario del personaje seleccionado.
 
-## Gotchas críticos y Sistema de Diseño
+### 5. Comercio de Campaña (General Trade)
+*   **Capacidad:** Sistema comercial unificado (`src/routes/_authenticated/campaigns/$campaignId.comercio.tsx`) con 3 pestañas principales:
+*   **Interacción:**
+    *   **Adquirir Equipo (Comprar):** Tiendas temáticas (Armería, Alquimia, Sastrería, etc.) que importan ítems directamente de la base de datos de D&D. Permite buscar y adquirir equipamiento para un personaje específico si cuenta con fondos suficientes (calculado vía `toCp` en `src/lib/currency.ts`).
+    *   **Vender Botín (Vender):** Los jugadores pueden revender ítems de su inventario a las tiendas a cambio de monedas por el **50% de su valor comercial**.
+    *   **Creaciones (GM Only):** Permite al Game Master diseñar ítems customizados, añadirles nombres, descripciones y generar ilustraciones con IA.
 
-### Coherencia Visual y Clases de Tailwind v4
-Toda la interfaz del proyecto debe ceñirse estrictamente a las especificaciones de diseño detalladas en [design-system.md](file:///Users/joaquinnader/coding/personal/la-taberna-de-martita/docs/design-system.md). 
+### 6. Diario de Campaña (Session Notes)
+*   **Capacidad:** Registro colaborativo de bitácoras de juego (`src/routes/_authenticated/campaigns/$campaignId.notas.tsx`).
+*   **Interacción:** Creación y edición (CRUD) de notas públicas (visibles para toda la mesa) o privadas (visibles solo para el autor y el DM). Registra la fecha de la sesión y el autor.
 
-**Regla:** Para cualquier color de texto, fondo o borde, utilizar las clases del tema de Tailwind v4 (`bg-tavern-stone`, `text-tavern-gold`, `border-parchment-sienna/40`, etc.) definidas en `@theme` en `src/styles.css`. **Evitar estilos en línea (`style={{ }}`) o colores planos genéricos de Tailwind.**
+### 7. Tablero de Batalla y Pantalla de Combate (Combat Board)
+*   **Capacidad:** Sistema de cuadrícula en tiempo real (`src/routes/_authenticated/campaigns/$campaignId.tablero.tsx`) para representar encuentros tácticos.
+*   **Interacción:**
+    *   **Vista del DM (`DmTableroLayout`):** Controla el mapa de fondo (`dm-map-selector.tsx`), colapsa paneles laterales, añade NPCs a la iniciativa, mueve fichas y despliega plantillas AoE.
+    *   **Vista del Jugador (`PlayerTablero`):** Observa la cuadrícula de combate interactiva en tiempo real y el feed de iniciativa.
+    *   **Generador de Encuentros Procedural (`encounter-generator-panel.tsx`):** El DM puede seleccionar arquetipos temáticos (ej: "Emboscada Goblin", "Patrulla No-muerta") de entre ~30 disponibles. El generador escala los HP/XP de los monstruos según el nivel de la party y los spawnea directamente a la cuadrícula con roles tácticos diferenciados por colores.
+    *   **Sistema de Botín (Loot System):** Integra el motor de recompensas `rollLoot` (`src/loot/roll.ts`). Escala linealmente el oro según el nivel de la party, tira chances de drops mundanos/mágicos del pool temático del arquetipo e inyecta ítems "firma" (Signature Items) con identidad de criatura (ej: Colmillo de Araña, Contrato Infernal).
+    *   **Herramientas de Combate:** Resolución de daño, proyección de plantillas de Área de Efecto (Esferas, Cubos, Líneas) con detección automática de tokens, y deducción automática de slots de hechizos al atacar.
 
-### Tailwind v4 — Bordes
-En Tailwind v4, si aplicas la clase `border` sin especificar un color, el borde heredará `currentColor` del texto del elemento padre. Para evitar esto, especifica siempre el color del borde utilizando las clases del tema:
-```tsx
-// MAL — hereda currentColor y se ve inconsistente
-<div className="border">
+### 8. Buscadores y Compendios (Bestiary & Spellbook)
+*   **Capacidad:** Bases de datos SRD consultables sin salir de la app (`bestiary.tsx` y `spellbook.tsx`).
+*   **Interacción:**
+    *   **Bestiario:** Filtro y selección de criaturas de D&D 5e para ver sus estadísticas completas, bloques de atributos, resistencias, sentidos, acciones y habilidades legendarias.
+    *   **Conjuros (Spellbook):** Buscador de conjuros con filtros multicriterio por Clase de Lanzador (Bardo, Mago, Clérigo, etc.) y Nivel de Conjuro (Trucos a Nivel 9).
 
-// BIEN — color controlado por el sistema de diseño
-<div className="border border-parchment-sienna/40">
-```
-
-### Drag & Drop (`@dnd-kit`)
-- `PointerSensor` con `activationConstraint: { distance: 6 }` para evitar activación accidental
-- IDs de draggable: `inventory-${item.id}` | `slot-${slotKey}`
-- `ActiveDrag` type: `{ kind: 'inventory' | 'slot'; itemId: string; itemName: string; fromSlot?: SlotKey }`
-- Compatibilidad de slots: `inferSlot(itemName)` en `src/lib/equip-slots.ts`; si retorna `null`, mostrar `SlotPickerModal`
-
-### `$characterId.tsx` — rutas con `$`
-Git requiere escape: `git add "src/routes/_authenticated/characters/\$characterId.tsx"`
-
-### Supabase Realtime
-Ya configurado en `$characterId.tsx` con `supabase.channel()`. Invalida el query al recibir cambios de Postgres.
-
----
-
-## Estructura de componentes — Hoja de Personaje
-
-```
-src/components/character-sheet/
-├── types.ts              # SheetJson, InfoModalData, etc.
-├── sheet-primitives.tsx  # sheetStyle, mapBgStyle, SheetLabel, SheetRow, QuickPill, SheetTabBar
-├── sheet-badges.tsx      # TraitBadge, FeatureCard, InfoModal
-├── condition-seals.tsx   # WaxSeal SVG para condiciones (17 condiciones D&D 5e)
-├── tab-resumen.tsx       # Tab principal: stats, HP/CA/XP, class features, condiciones
-├── tab-pericias.tsx      # Pericias y saving throws
-├── tab-hechizos.tsx      # Gestión de hechizos y spell slots
-├── tab-historia.tsx      # Backstory y borrar personaje
-├── paper-doll.tsx        # Humanoid SVG con 11 slots de equipo + drag & drop
-├── inventory-panel.tsx   # Panel derecho: paper doll + grid de inventario + catálogo
-└── level-up-modal.tsx    # Modal de subida de nivel
-```
-
-El padre de todos es `src/routes/_authenticated/characters/$characterId.tsx` que mantiene todo el estado y handlers.
-
----
-
-## Sistema visual
-
-### Fondo pergamino (`sheetStyle`)
-- `backgroundColor: '#f0e4c8'` + `backgroundImage: url('/assets/images/papiro.png')`
-- `backgroundBlendMode: 'multiply'` con `backgroundSize: '105% auto'`
-- El 5% de zoom corta los bordes negros del PNG
-
-### Tab bar de cuero
-Gradiente `#3a2410 → #271608` con tachones de latón via `radial-gradient` en `backgroundImage`.
-
-### Stat boxes metálicas
-- Cuerpo: gradiente oscuro basado en valor del stat (`statBodyRgb(val)`)
-- Badge del modificador: coloreado rojo→gris→verde según el mod (`modBadgeColors(mod)`)
-- Bevel metalico: `box-shadow` con `inset` claro arriba-izquierda, oscuro abajo-derecha
-
-### Wax seals (condiciones)
-Tres capas CSS: sombra difusa + anillo exterior de cera + disco central con gradiente radial. Ícono SVG embossed encima. Ver `condition-seals.tsx`.
-
-### Inventario (panel derecho)
-`darkFrameStyle` — oscuro, madera, sin parchment. Deliberadamente diferente al sheet.
+### 9. Dados Flotantes (Dice Module)
+*   **Capacidad:** Lanzador tridimensional interactivo (`src/lib/dice/` y `DiceModule`) accesible para todos los jugadores y DMs desde el header de campaña y de personaje.
+*   **Interacción:** Permite tirar sets de d4, d6, d8, d10, d12, d20 y d100 de forma rápida con modificadores matemáticos D&D integrados.
 
 ---
 
-## Convenciones de commit
+## 🎨 Sistema de Diseño y Coherencia Visual
 
-Conventional Commits: `feat`, `fix`, `refactor`, `chore`, `docs`, `style`
+Toda la interfaz del proyecto debe ceñirse estrictamente a las especificaciones de diseño detalladas en [design-system.md](file:///Users/joaquinnader/coding/personal/la-taberna-de-martita/docs/design-system.md).
 
-```bash
-git commit -m "feat: descripción corta en minúsculas sin punto final"
-```
+### Metáforas Visuales
+1.  **La Mesa de Juego (Estética Oscura/Taberna):**
+    *   *Uso:* Fondo global, pantalla de DM, login, bordes de inventario y maniquí.
+    *   *Tokens:* `bg-tavern-stone` (`#0c0a09`), `bg-table-wood` (madera real), `text-tavern-gold` (`#d5b88a`) y `shadow-tavern-glow`.
+2.  **Documentos de Aventura (Estética Clara/Pergamino):**
+    *   *Uso:* Hojas de personaje, compendios, notas e informes.
+    *   *Tokens:* `bg-parchment-grid` (cuadrícula sepia), `bg-papyrus-texture` (blend multiply), tipografías en `text-parchment-chocolate` (`#6b4c24`) o `text-parchment-sienna` (`#7a5828`). **Evitar el negro puro (#000) o grises modernos sobre pergamino.**
 
-**Antes de cada commit**, actualizar obligatoriamente:
-1. `CHANGELOG.md` — agregar entrada bajo `## [Unreleased]` con el tipo y descripción del cambio
-2. `ROADMAP.md` — marcar como completado o actualizar el ítem correspondiente si aplica
-
-**No commitear** cambios visuales experimentales hasta que el usuario los apruebe.
-**No pushear** sin confirmación explícita del usuario.
-
----
-
-## Límite de 500 líneas por archivo
-
-**Regla estricta:** ningún archivo `.tsx` o `.ts` puede superar 500 líneas.
-
-Cuando un archivo se acerca o supera el límite:
-1. Identificar grupos de funciones/componentes cohesivos y extraerlos a archivos separados.
-2. Constantes compartidas entre varios archivos nuevos → archivo `*-constants.ts` dedicado.
-3. Iconos SVG inline masivos → archivo `*-icons.tsx` dedicado.
-4. Sub-componentes de UI sin estado propio del padre → archivo `*-sub-components.tsx` o nombre descriptivo.
-5. Verificar con `wc -l <archivo>` antes de commitear.
-
-**Patrón de nombramiento para splits:**
-```
-encounter-generator-panel.tsx   → componente principal (< 500 líneas)
-encounter-constants.ts          → constantes compartidas
-encounter-icons.tsx             → SVGs y componentes de íconos
-encounter-sub-components.tsx    → componentes auxiliares pequeños
-monster-card.tsx                → componentes de tarjeta específicos
-encounter-modal.tsx             → modal wrapper
-```
+### Tipografía Semántica
+*   `font-display` (*Cinzel*): Títulos principales narrativos, nombres de hechizos/personajes (mayúsculas con tracking ancho).
+*   `font-serif` (*Georgia*): Descripciones de habilidades, bitácoras, lore narrativo.
+*   `font-mono` (*Monospace*): Números de juego, HP, CA, modificadores de características (ej: `+3`), distancias en pies y niveles.
 
 ---
 
-## No hacer
+## 🔒 Reglas Críticas de Desarrollo
 
-- No usar `psql` para migraciones — siempre `supabase CLI`
-- No agregar `!important` ni clases Tailwind para colores de borde (ver gotcha arriba)
-- No commitear automáticamente — siempre confirmar con el usuario primero
-- No crear archivos de documentación sin que el usuario los pida
-- No agregar comentarios de código salvo para WHY no-obvio
-- No usar emojis en el código ni en respuestas salvo que el usuario los use
-- No crear tests sin pedido explícito (no hay infrastructure de testing activa)
-- **No dejar archivos de más de 500 líneas** — refactorizar antes de commitear
+### 1. Límite Estricto de 500 Líneas por Archivo
+**Regla inquebrantable:** Ningún archivo `.tsx` o `.ts` debe exceder las 500 líneas de código.
+*   Si un archivo se acerca a este límite, se debe modularizar inmediatamente dividiendo responsabilidades:
+    *   Extraer sub-componentes visuales a archivos locales o a `*-sub-components.tsx`.
+    *   Mover constantes pesadas o estáticas a `*-constants.ts`.
+    *   Mover los SVGs inline masivos a un archivo dedicado `*-icons.tsx` o `components/icons/`.
+    *   Extraer la lógica compleja de estado a hooks personalizados `use-*`.
+
+### 2. Gotcha de Bordes en Tailwind v4
+En Tailwind v4, aplicar la clase `border` sin color específico hace que este herede `currentColor` del elemento padre. Esto causa inconsistencias visuales sobre fondos claros u oscuros.
+*   **Mal:** `<div className="border">`
+*   **Bien:** `<div className="border border-parchment-sienna/40">` o `<div className="border border-stone-800">`
+
+### 3. Evitar Estilos en Línea y Mezcla CSS/React
+No utilizar estilos inline (`style={{ backgroundColor: '...' }}`) para colores del tema. Emplear únicamente las clases de Tailwind v4 configuradas en el manual de diseño.
+
+### 4. Flujo de Commits
+*   Seguir la especificación de **Conventional Commits** (`feat`, `fix`, `refactor`, `chore`, `docs`, `style`).
+*   **Actualización obligatoria pre-commit:** Antes de hacer commit, se debe actualizar:
+    1.  `CHANGELOG.md`: Añadir entrada bajo la sección `## [Unreleased]`.
+    2.  `ROADMAP.md`: Actualizar el progreso o marcar tareas completadas.
+*   **No hacer push** sin la aprobación explícita o confirmación del usuario.
+
+### 5. Qué NO hacer
+*   No usar `psql` para cambios de base de datos — siempre Supabase CLI.
+*   No introducir `!important` para sobreescribir colores de borde.
+*   No escribir código sin comentarios justificando el *POR QUÉ* (evitar comentarios obvios del *QUÉ* hace el código).
+*   No añadir dependencias externas sin consultar al usuario.
+*   No crear frameworks de tests adicionales sin orden explícita.
