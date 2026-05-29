@@ -22,6 +22,7 @@ export type SheetJson = {
     max_bonus?: number
     category: string
   }
+  shield_bonus?: number
   currency?: { gold: number; silver: number; copper: number }
   max_hp?: number
   fighting_style?: string

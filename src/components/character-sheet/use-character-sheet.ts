@@ -330,27 +330,42 @@ export function useCharacterSheet(characterId: string) {
       ? [...current, itemId]
       : current.filter(id => id !== itemId)
 
+    // Determine the slot the item occupies (equip) or occupied (unequip)
+    const targetSlot: SlotKey | null = isEquipping
+      ? (item ? inferSlot(item.name, currentSlots) : null)
+      : (Object.entries(currentSlots).find(([, v]) => v === itemId)?.[0] as SlotKey ?? null)
+
+    if (isEquipping && !targetSlot) return
+
     let newSlots: Partial<Record<SlotKey, string>>
-    if (isEquipping && item) {
-      const slot = inferSlot(item.name, currentSlots)
-      if (!slot) return
-      const displaced = currentSlots[slot]
+    if (isEquipping) {
+      const displaced = currentSlots[targetSlot!]
       if (displaced && displaced !== itemId) {
         newEquipped = newEquipped.filter(id => id !== displaced)
       }
-      newSlots = { ...currentSlots, [slot]: itemId }
+      newSlots = { ...currentSlots, [targetSlot!]: itemId }
     } else {
       newSlots = Object.fromEntries(
         Object.entries(currentSlots).filter(([, v]) => v !== itemId)
       ) as Partial<Record<SlotKey, string>>
     }
 
+    // UNEQUIP: armor (tracked in equipped_armor)
     if (!isEquipping && sheet.equipped_armor && item?.name === sheet.equipped_armor.name) {
       await patchSheet({ equipped_items: newEquipped, equipped_slots: newSlots, equipped_armor: undefined })
       await patchCharacter({ armor_class: 10 + dexMod })
       return
     }
 
+    // UNEQUIP: shield (detect by off_hand slot — inferSlot only assigns off_hand to shields)
+    if (!isEquipping && targetSlot === 'off_hand' && sheet.shield_bonus != null) {
+      const acVal = character.armor_class ?? (10 + dexMod)
+      await patchSheet({ equipped_items: newEquipped, equipped_slots: newSlots, shield_bonus: undefined })
+      await patchCharacter({ armor_class: Math.max(10 + dexMod, acVal - sheet.shield_bonus) })
+      return
+    }
+
+    // EQUIP: armor (notes start with "CA " — encoded at purchase time or manually)
     if (isEquipping && item?.notes?.startsWith('CA ')) {
       const match = item.notes.match(/CA (\d+)/)
       if (match) {
@@ -369,11 +384,12 @@ export function useCharacterSheet(characterId: string) {
       }
     }
 
-    if (isEquipping && item?.notes?.startsWith('Escudo')) {
-      const shieldMatch = item.notes.match(/\+(\d+)/)
+    // EQUIP: shield (detect by off_hand slot — more reliable than checking notes format)
+    if (isEquipping && targetSlot === 'off_hand') {
+      const shieldMatch = item?.notes?.match(/\+(\d+)/)
       const shieldBonus = shieldMatch ? parseInt(shieldMatch[1]) : 2
       const acVal = character.armor_class ?? (10 + dexMod)
-      await patchSheet({ equipped_items: newEquipped, equipped_slots: newSlots })
+      await patchSheet({ equipped_items: newEquipped, equipped_slots: newSlots, shield_bonus: shieldBonus })
       await patchCharacter({ armor_class: acVal + shieldBonus })
       return
     }

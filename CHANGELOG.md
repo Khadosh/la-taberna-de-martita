@@ -6,6 +6,9 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 
 ## [Unreleased]
 
+### feat
+- **CA automática al equipar armadura o escudo**: al comprar armadura desde el comercio, las notas del ítem se prefijan con la CA en el formato que `toggleEquip` interpreta (`CA 14 + DES (máx 2)` para media, `CA 16` para pesada, `Escudo +2` para escudos). Equipar el ítem desde la hoja actualiza automáticamente el valor de CA del personaje. Desequipar revierte la CA correctamente (armadura → base 10+DES; escudo → resta el bonus guardado en `sheet_json.shield_bonus`). El escudo se detecta por slot `off_hand` (más robusto que parsear el texto de las notas).
+
 ### fix
 - **Tokens del tablero no se reposicionan al colapsar paneles**: el `ResizeObserver` ahora rescala todas las posiciones de tokens proporcionalmente en cada cambio de tamaño del board. Los tokens siguen el resize suavemente durante la transición CSS sin necesidad de moverlos manualmente.
 

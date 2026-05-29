@@ -154,12 +154,29 @@ function Comercio() {
 
     if (sheetErr) { setError('Error al descontar el dinero.'); setLoading(false); return }
 
+    // Encode armor/shield CA into notes prefix so toggleEquip can auto-calculate AC
+    let itemNotes = itemDetail.desc?.[0] ?? null
+    if (itemDetail.armor_class) {
+      const { base, dex_bonus, max_bonus } = itemDetail.armor_class
+      let armorNote: string
+      if (itemDetail.armor_category === 'Shield') {
+        armorNote = `Escudo +${base}`
+      } else {
+        armorNote = `CA ${base}`
+        if (dex_bonus) {
+          armorNote += ' + DES'
+          if (max_bonus != null) armorNote += ` (máx ${max_bonus})`
+        }
+      }
+      itemNotes = itemNotes ? `${armorNote} · ${itemNotes}` : armorNote
+    }
+
     const { error: invErr } = await supabase.from('character_inventory').insert({
       character_id: buyCharId,
       name: itemDetail.name,
       quantity: 1,
       weight_lbs: itemDetail.weight ?? 0,
-      notes: itemDetail.desc?.[0] ?? null,
+      notes: itemNotes,
     })
 
     if (invErr) { setError('Error al agregar al inventario.'); setLoading(false); return }
