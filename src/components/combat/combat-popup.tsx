@@ -10,6 +10,7 @@ import {
 import type { TokenData, Pos } from './combat-types'
 import { CombatModePanel } from './combat-mode-panel'
 import { CombatActionRow } from './combat-action-row'
+import { guessWeaponSlug } from '../../lib/weapon-utils'
 
 function rollDiceExpression(expr: string): { total: number; detail: string } {
   const clean = expr.replace(/\s+/g, '').toLowerCase()
@@ -200,6 +201,37 @@ export function CombatPopup({
     return groups
   }, [attackerSpellsQueries])
 
+  // ── Weapon API data for PC damage dice ───────────────────────────────────
+
+  const activeWeaponName = useMemo(() => {
+    if (attackerToken?.kind === 'npc' || selectedMode === 'spell' || !attackerChar) return null
+    if (selectedMode === 'melee') {
+      const id = attackerChar.sheet_json.equipped_slots?.main_hand
+      return id ? (attackerInventory.find((i: any) => i.id === id)?.name ?? null) : null
+    }
+    if (selectedMode === 'ranged') {
+      const id = attackerChar.sheet_json.equipped_slots?.ranged
+      return id ? (attackerInventory.find((i: any) => i.id === id)?.name ?? null) : null
+    }
+    if (selectedMode === 'thrown') {
+      return attackerInventory.find((i: any) => i.id === selectedWeaponId)?.name ?? null
+    }
+    return null
+  }, [selectedMode, attackerChar, attackerInventory, attackerToken, selectedWeaponId])
+
+  const activeWeaponSlug = useMemo(
+    () => activeWeaponName ? guessWeaponSlug(activeWeaponName) : null,
+    [activeWeaponName]
+  )
+
+  const { data: weaponDetail } = useQuery({
+    queryKey: dndKeys.equipmentDetail(activeWeaponSlug ?? ''),
+    queryFn: () => dndApi.equipmentDetail(activeWeaponSlug!),
+    enabled: !!activeWeaponSlug,
+    staleTime: Infinity,
+    retry: false,
+  })
+
   // ── Damage roll resolution ───────────────────────────────────────────────
 
   const activeDamageExpression = useMemo(() => {
@@ -230,23 +262,24 @@ export function CombatPopup({
       return attackerToken.damage ?? ''
     }
 
-    if (selectedMode === 'melee') {
-      const mainHandItemId = attackerChar?.sheet_json.equipped_slots?.main_hand
-      const weapon = attackerInventory.find(i => i.id === mainHandItemId)
-      return weapon?.damage ?? ''
-    }
-    if (selectedMode === 'ranged') {
-      const rangedItemId = attackerChar?.sheet_json.equipped_slots?.ranged
-      const weapon = attackerInventory.find(i => i.id === rangedItemId)
-      return weapon?.damage ?? ''
-    }
-    if (selectedMode === 'thrown') {
-      const item = attackerInventory.find(i => i.id === selectedWeaponId)
-      return item?.damage ?? ''
+    if (selectedMode === 'melee' || selectedMode === 'ranged' || selectedMode === 'thrown') {
+      const damageDice = weaponDetail?.damage?.damage_dice
+      if (!damageDice) return ''
+
+      const stats = (attackerChar?.stats as Record<string, number>) ?? {}
+      const strMod = Math.floor(((stats.str ?? 10) - 10) / 2)
+      const dexMod = Math.floor(((stats.dex ?? 10) - 10) / 2)
+      const isFinesse = weaponDetail.properties?.some(p => p.index === 'finesse') ?? false
+      const isRanged = weaponDetail.weapon_range === 'Ranged'
+      const abilityMod = isRanged ? dexMod : isFinesse ? Math.max(strMod, dexMod) : strMod
+
+      if (abilityMod === 0) return damageDice
+      if (abilityMod > 0) return `${damageDice}+${abilityMod}`
+      return `${damageDice}${abilityMod}`
     }
 
     return ''
-  }, [selectedMode, attackerChar, attackerToken, selectedWeaponId, spellDetail, attackerInventory])
+  }, [selectedMode, attackerChar, attackerToken, selectedWeaponId, spellDetail, attackerInventory, weaponDetail])
 
   const handleRollDamage = () => {
     if (!activeDamageExpression) return
