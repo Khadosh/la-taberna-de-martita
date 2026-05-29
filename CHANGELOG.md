@@ -6,6 +6,9 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 
 ## [Unreleased]
 
+### fix
+- **Tokens del tablero no se reposicionan al colapsar paneles**: el `ResizeObserver` ahora rescala todas las posiciones de tokens proporcionalmente en cada cambio de tamaño del board. Los tokens siguen el resize suavemente durante la transición CSS sin necesidad de moverlos manualmente.
+
 ### feat
 - **Panel NPC siempre visible**: el panel derecho de NPCs en el tablero del DM ya no requiere combate activo. Fuera de combate muestra los NPCs del tablero con controles de HP, toggle de visibilidad y botón de eliminar. Durante combate mantiene la vista completa con rol, CA, ataque y estado "Caído".
 - **Ocultar NPCs a jugadores**: el DM puede togglear visibilidad por NPC con un ícono de ojo/ojo-tachado en la barra lateral. NPCs ocultos muestran rayado diagonal en el token (solo DM), son invisibles para jugadores. Estado persistido en `board_tokens.hidden` (migration). El ojo abierto indica visible; el ojo tachado en ámbar indica oculto.

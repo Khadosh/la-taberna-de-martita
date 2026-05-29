@@ -25,6 +25,7 @@ export function useBoardInteraction({
   onTokenTapRef.current = onTokenTap
 
   const [boardSize, setBoardSize] = useState({ width: 800, height: 600 })
+  const prevBoardSizeRef = useRef({ width: 800, height: 600 })
   const [pan, setPan] = useState({ x: 0, y: 0 })
   const [zoom, setZoom] = useState(1)
   const [isPanning, setIsPanning] = useState(false)
@@ -41,7 +42,22 @@ export function useBoardInteraction({
     if (!board) return
     const observer = new ResizeObserver(entries => {
       for (const entry of entries) {
-        setBoardSize({ width: entry.contentRect.width, height: entry.contentRect.height })
+        const { width, height } = entry.contentRect
+        setBoardSize(prev => {
+          if (prev.width > 0 && width > 0) {
+            const scaleX = width / prev.width
+            const scaleY = height / prev.height
+            setPositions(p => {
+              const next: Record<string, Pos> = {}
+              for (const [id, pos] of Object.entries(p)) {
+                next[id] = { x: pos.x * scaleX, y: pos.y * scaleY }
+              }
+              return next
+            })
+          }
+          prevBoardSizeRef.current = { width, height }
+          return { width, height }
+        })
       }
     })
     observer.observe(board)
