@@ -49,3 +49,18 @@ export function getSpellSlots(className: string, level: number): number[] {
 }
 
 export const isWarlock = (className: string) => className.toLowerCase() === 'warlock'
+
+// Classes that prepare a daily subset of spells (limit: ability mod + level)
+export const PREPARED_CASTERS = new Set(['wizard', 'cleric', 'druid', 'paladin'])
+
+// Max daily prepared spells for prepared casters; null = known caster (all spells always available)
+export function getMaxPreparedSpells(
+  className: string, level: number, stats: Record<string, number>
+): number | null {
+  const cls = className.toLowerCase()
+  const mod = (v: number) => Math.floor((v - 10) / 2)
+  if (cls === 'wizard') return Math.max(1, level + mod(stats.int ?? 10))
+  if (cls === 'cleric' || cls === 'druid') return Math.max(1, level + mod(stats.wis ?? 10))
+  if (cls === 'paladin') return Math.max(1, Math.floor(level / 2) + mod(stats.cha ?? 10))
+  return null
+}

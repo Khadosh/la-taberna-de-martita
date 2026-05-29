@@ -35,7 +35,8 @@ function CharacterSheet() {
     levelUpHpInput, setLevelUpHpInput, levelUpSubclass, setLevelUpSubclass, levelUpAsi, setAsi, levelUpFightingStyle, setFightingStyle, levelUpFavoredEnemy, setFavoredEnemy, levelUpNewSpells, setNewSpells, levelUpExpertise, setLevelUpExpertise,
     editingHp, setEditingHp, hpInput, setHpInput, editingMaxHp, setEditingMaxHp, maxHpInput, setMaxHpInput, editingAc, setEditingAc, acInput, setAcInput, editingXp, setEditingXp, xpInput, setXpInput, showConditionPicker, setShowConditionPicker,
     showRestPanel, setShowRestPanel, shortRestHd, setShortRestHd, shortRestHpInput, setShortRestHpInput, showLongRestConfirm, setShowLongRestConfirm, fileInputRef,
-    patchSheet, patchCharacter, adjustHp, saveHp, saveMaxHp, saveAc, saveXp, levelUp, toggleCondition, toggleSlot, toggleDeathSave, shortRest, longRest, generatePortrait, handlePortraitUpload, toggleEquip, equipToSlot, moveEquipSlot, maxHp
+    patchSheet, patchCharacter, adjustHp, saveHp, saveMaxHp, saveAc, saveXp, levelUp, toggleCondition, toggleSlot, toggleDeathSave, shortRest, longRest, generatePortrait, handlePortraitUpload, toggleEquip, equipToSlot, moveEquipSlot, maxHp,
+    togglePreparedSpell, addKnownSpell, removeKnownSpell,
   } = sheetState
 
   if (isLoading) return <div className="min-h-screen flex items-center justify-center" style={parchmentStyle}><p className="text-stone-600 font-serif italic">Consultando los pergaminos...</p></div>
@@ -301,9 +302,17 @@ function CharacterSheet() {
                 )}
                 {activeTab === 'hechizos' && (
                   <TabHechizos
-                    spells={sheet.spells ?? []} maxSlots={maxSlots} slotsUsed={sheet.spell_slots_used ?? {}}
-                    characterClass={character.class} isOwner={isOwner} isSpellcaster={isSpellcaster}
+                    spells={sheet.spells ?? []}
+                    preparedSpells={sheet.prepared_spells ?? []}
+                    maxSlots={maxSlots} slotsUsed={sheet.spell_slots_used ?? {}}
+                    characterClass={character.class}
+                    characterLevel={character.level}
+                    characterStats={(character.stats as Record<string, number>) ?? {}}
+                    isOwner={isOwner} isSpellcaster={isSpellcaster}
                     setModal={setModal} toggleSlot={toggleSlot}
+                    onTogglePrepared={togglePreparedSpell}
+                    onAddKnownSpell={addKnownSpell}
+                    onRemoveKnownSpell={removeKnownSpell}
                   />
                 )}
                 {activeTab === 'historia' && (

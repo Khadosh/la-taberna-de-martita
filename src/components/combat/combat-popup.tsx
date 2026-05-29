@@ -171,10 +171,15 @@ export function CombatPopup({
     staleTime: 60 * 1000 * 10,
   })
 
-  const attackerSpells = useMemo(
-    () => attackerChar?.sheet_json.spells ?? attackerNpcSpells ?? [],
-    [attackerChar, attackerNpcSpells],
-  )
+  const attackerSpells = useMemo(() => {
+    if (attackerChar) {
+      const prepared = attackerChar.sheet_json.prepared_spells
+      // Prepared casters use their prepared list; known casters have prepared_spells empty → use all
+      if (prepared && prepared.length > 0) return prepared as string[]
+      return (attackerChar.sheet_json.spells ?? []) as string[]
+    }
+    return attackerNpcSpells ?? []
+  }, [attackerChar, attackerNpcSpells])
   const attackerSpellsQueries = useQueries({
     queries: attackerSpells.map((index: string) => ({
       queryKey: dndKeys.spell(index),

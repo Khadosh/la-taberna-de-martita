@@ -432,6 +432,28 @@ export function useCharacterSheet(characterId: string) {
     await patchSheet({ equipped_slots: newSlots })
   }
 
+  const togglePreparedSpell = async (index: string) => {
+    if (!character) return
+    const sheet = character.sheet_json as SheetJson
+    const current = sheet.prepared_spells ?? []
+    const next = current.includes(index) ? current.filter(s => s !== index) : [...current, index]
+    await patchSheet({ prepared_spells: next })
+  }
+
+  const addKnownSpell = async (index: string) => {
+    if (!character) return
+    const sheet = character.sheet_json as SheetJson
+    const current = sheet.spells ?? []
+    if (current.includes(index)) return
+    await patchSheet({ spells: [...current, index] })
+  }
+
+  const removeKnownSpell = async (index: string) => {
+    if (!character) return
+    const sheet = character.sheet_json as SheetJson
+    await patchSheet({ spells: (sheet.spells ?? []).filter(s => s !== index) })
+  }
+
   // Helpers
   const maxHp = () => {
     if (!character) return 10
@@ -449,6 +471,7 @@ export function useCharacterSheet(characterId: string) {
     levelUpHpInput, setLevelUpHpInput, levelUpSubclass, setLevelUpSubclass, levelUpAsi, setAsi: setLevelUpAsi, levelUpFightingStyle, setFightingStyle: setLevelUpFightingStyle, levelUpFavoredEnemy, setFavoredEnemy: setLevelUpFavoredEnemy, levelUpNewSpells, setNewSpells: setLevelUpNewSpells, levelUpExpertise, setLevelUpExpertise,
     editingHp, setEditingHp, hpInput, setHpInput, editingMaxHp, setEditingMaxHp, maxHpInput, setMaxHpInput, editingAc, setEditingAc, acInput, setAcInput, editingXp, setEditingXp, xpInput, setXpInput, showConditionPicker, setShowConditionPicker,
     showRestPanel, setShowRestPanel, shortRestHd, setShortRestHd, shortRestHpInput, setShortRestHpInput, showLongRestConfirm, setShowLongRestConfirm, fileInputRef,
-    patchCharacter, patchSheet, adjustHp, saveHp, saveMaxHp, saveAc, saveXp, levelUp, toggleCondition, toggleSlot, toggleDeathSave, shortRest, longRest, generatePortrait, handlePortraitUpload, toggleEquip, equipToSlot, moveEquipSlot, maxHp
+    patchCharacter, patchSheet, adjustHp, saveHp, saveMaxHp, saveAc, saveXp, levelUp, toggleCondition, toggleSlot, toggleDeathSave, shortRest, longRest, generatePortrait, handlePortraitUpload, toggleEquip, equipToSlot, moveEquipSlot, maxHp,
+    togglePreparedSpell, addKnownSpell, removeKnownSpell,
   }
 }

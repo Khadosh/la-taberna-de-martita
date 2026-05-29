@@ -1,27 +1,63 @@
+import { useState } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { dndApi, dndKeys } from '../../lib/dnd-api'
 import { SheetLabel, SheetRow } from './sheet-primitives'
 import { SpellBadge } from './sheet-badges'
 import type { SpellDetail } from '../../lib/dnd-api'
-import { isWarlock } from '../../lib/dnd-constants'
+import { isWarlock, PREPARED_CASTERS, getMaxPreparedSpells } from '../../lib/dnd-constants'
 import type { InfoModalData } from './types'
+import { SpellPickerPanel } from './spell-picker-panel'
 
 interface TabHechizosProps {
   spells: string[]
+  preparedSpells: string[]
   maxSlots: number[]
   slotsUsed: Record<string, number>
   characterClass: string
+  characterLevel: number
+  characterStats: Record<string, number>
   isOwner: boolean
   isSpellcaster: boolean
   setModal: (m: InfoModalData) => void
   toggleSlot: (level: number, slotIndex: number) => void
+  onTogglePrepared: (index: string) => void
+  onAddKnownSpell: (index: string) => void
+  onRemoveKnownSpell: (index: string) => void
+}
+
+// Prepared toggle icon
+function PrepToggle({ prepared, onClick }: { prepared: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={e => { e.stopPropagation(); onClick() }}
+      title={prepared ? 'Quitar de preparados' : 'Preparar para hoy'}
+      className={`shrink-0 w-5 h-5 flex items-center justify-center rounded-sm border transition-colors ${
+        prepared
+          ? 'border-amber-600/70 text-amber-700 bg-amber-100/60 hover:bg-amber-200/60'
+          : 'border-stone-400/50 text-stone-400 hover:border-amber-500/60 hover:text-amber-600'
+      }`}
+    >
+      <svg width="10" height="10" viewBox="0 0 10 10" fill={prepared ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="1.4">
+        <polygon points="5,1 6.5,3.5 9.5,4 7.2,6.2 7.8,9.2 5,7.8 2.2,9.2 2.8,6.2 0.5,4 3.5,3.5" />
+      </svg>
+    </button>
+  )
 }
 
 export function TabHechizos({
-  spells, maxSlots, slotsUsed, characterClass,
+  spells, preparedSpells, maxSlots, slotsUsed,
+  characterClass, characterLevel, characterStats,
   isOwner, isSpellcaster, setModal, toggleSlot,
+  onTogglePrepared, onAddKnownSpell, onRemoveKnownSpell,
 }: TabHechizosProps) {
-  // Fetch details for all spells to group them by level
+  const [showPicker, setShowPicker] = useState(false)
+  const classLower = characterClass.toLowerCase()
+  const isPreparedCaster = PREPARED_CASTERS.has(classLower)
+  const maxPrepared = isPreparedCaster
+    ? getMaxPreparedSpells(classLower, characterLevel, characterStats)
+    : null
+
+  // Fetch details for all known spells
   const spellResults = useQueries({
     queries: spells.map(index => ({
       queryKey: dndKeys.spell(index),
@@ -41,7 +77,6 @@ export function TabHechizos({
     )
   }
 
-  // Group spells by level
   const spellsByLevel: Record<number, SpellDetail[]> = {}
   spellResults.forEach(res => {
     if (res.data) {
@@ -50,8 +85,17 @@ export function TabHechizos({
       spellsByLevel[lvl].push(res.data)
     }
   })
-
   const sortedLevels = Object.keys(spellsByLevel).map(Number).sort((a, b) => a - b)
+
+  // For prepared casters: non-cantrip prepared count
+  const nonCantrips = spells.filter(s => {
+    const detail = spellResults.find(r => r.data?.index === s)?.data
+    return detail ? detail.level > 0 : true
+  })
+  const preparedNonCantrips = preparedSpells.filter(s => {
+    const detail = spellResults.find(r => r.data?.index === s)?.data
+    return detail ? detail.level > 0 : true
+  })
 
   return (
     <div>
@@ -101,40 +145,112 @@ export function TabHechizos({
         </SheetRow>
       )}
 
-      {/* Prepared spells grouped by level */}
-      {sortedLevels.length > 0 && (
-        <SheetRow className="border-t border-stone-500/30">
-          <div className="flex-1 p-4">
-            <SheetLabel>Conjuros preparados</SheetLabel>
-            <div className="mt-3 space-y-6">
+      {/* Known spells list */}
+      <SheetRow className="border-t border-stone-500/30">
+        <div className="flex-1 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <SheetLabel>
+                {isPreparedCaster ? 'Hechizos conocidos' : 'Conjuros conocidos'}
+              </SheetLabel>
+              {isPreparedCaster && nonCantrips.length > 0 && maxPrepared != null && (
+                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded font-bold ${
+                  preparedNonCantrips.length > maxPrepared
+                    ? 'bg-red-100 text-red-700 border border-red-300'
+                    : preparedNonCantrips.length === maxPrepared
+                      ? 'bg-amber-100 text-amber-800 border border-amber-400'
+                      : 'bg-stone-100 text-stone-500 border border-stone-300'
+                }`}>
+                  {preparedNonCantrips.length}/{maxPrepared} preparados
+                </span>
+              )}
+              {!isPreparedCaster && spells.length > 0 && (
+                <span className="text-[10px] text-stone-500 font-serif italic">todos disponibles</span>
+              )}
+            </div>
+            {isOwner && (
+              <button
+                onClick={() => setShowPicker(true)}
+                className="text-[10px] px-2 py-1 border border-amber-700/50 text-amber-700 hover:bg-amber-100/50 font-serif transition-colors"
+              >
+                ＋ Conjuro
+              </button>
+            )}
+          </div>
+
+          {spells.length === 0 ? (
+            <div className="text-center py-6 space-y-2">
+              <p className="text-stone-600 font-serif italic text-sm">No hay conjuros aprendidos.</p>
+              {isOwner && (
+                <button
+                  onClick={() => setShowPicker(true)}
+                  className="text-xs px-4 py-2 border border-amber-700/60 text-amber-700 hover:bg-amber-100/50 font-serif transition-colors"
+                >
+                  ＋ Elegir conjuros conocidos
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-6">
               {sortedLevels.map(lvl => (
                 <div key={lvl}>
-                  <p className="text-[10px] font-serif tracking-widest uppercase pb-0.5 mb-2" style={{ color: '#6b4c24', borderBottom: '1px solid rgba(109,85,48,0.35)' }}>
+                  <p className="text-[10px] font-serif tracking-widest uppercase pb-0.5 mb-2"
+                    style={{ color: '#6b4c24', borderBottom: '1px solid rgba(109,85,48,0.35)' }}>
                     {lvl === 0 ? 'Trucos (Cantrips)' : `Nivel ${lvl}`}
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {spellsByLevel[lvl].map(spell => (
-                      <SpellBadge
-                        key={spell.index}
-                        index={spell.index}
-                        onInfo={(data: SpellDetail) => setModal({ kind: 'spell', data })}
-                      />
-                    ))}
+                    {spellsByLevel[lvl].map(spell => {
+                      const isCantrip = spell.level === 0
+                      // Known casters: all spells always prepared; prepared casters: toggle
+                      const isPrepared = !isPreparedCaster || isCantrip || preparedSpells.includes(spell.index)
+                      return (
+                        <div key={spell.index} className={`flex items-center gap-1 transition-opacity ${
+                          isPreparedCaster && !isCantrip && !isPrepared ? 'opacity-45' : ''
+                        }`}>
+                          {isPreparedCaster && !isCantrip && isOwner && (
+                            <PrepToggle
+                              prepared={isPrepared}
+                              onClick={() => onTogglePrepared(spell.index)}
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <SpellBadge
+                              index={spell.index}
+                              onInfo={(data: SpellDetail) => setModal({ kind: 'spell', data })}
+                            />
+                          </div>
+                          {isOwner && (
+                            <button
+                              onClick={() => onRemoveKnownSpell(spell.index)}
+                              className="shrink-0 text-stone-300 hover:text-red-500 transition-colors text-xs leading-none"
+                              title="Olvidar conjuro"
+                            >✕</button>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        </SheetRow>
-      )}
+          )}
 
-      {isSpellcaster && spells.length === 0 && (
-        <SheetRow className="border-t border-stone-500/30">
-          <div className="flex-1 p-4 text-center">
-            <p className="text-stone-800 font-serif italic text-sm">No hay conjuros preparados.</p>
-            <p className="text-stone-800 font-serif text-xs mt-1">Agregá conjuros desde la pantalla de creación o pedíselos al DM.</p>
-          </div>
-        </SheetRow>
+          {isPreparedCaster && maxPrepared != null && nonCantrips.length > 0 && (
+            <p className="text-[10px] text-stone-500 font-serif italic mt-3">
+              ★ = preparado para hoy · los no preparados no se pueden lanzar
+            </p>
+          )}
+        </div>
+      </SheetRow>
+
+      {showPicker && (
+        <SpellPickerPanel
+          classIndex={characterClass.toLowerCase()}
+          knownSpells={spells}
+          onAdd={onAddKnownSpell}
+          onRemove={onRemoveKnownSpell}
+          onClose={() => setShowPicker(false)}
+        />
       )}
     </div>
   )
