@@ -295,14 +295,26 @@ export function useDmTablero(campaignId: string) {
   }
 
   const toggleNpcHidden = (id: string) => {
-    const current = combatants.find(c => c.kind === 'npc' && (c as any).npc.id === id) as { kind: 'npc'; npc: Npc } | undefined
-    const nextHidden = !(current?.npc.isHidden ?? false)
+    const npcCombatant = combatants.find(c => c.kind === 'npc' && (c as any).npc.id === id) as { kind: 'npc'; npc: Npc } | undefined
+    const boardToken = boardTokens.find(bt => bt.entity_id === id)
+    const nextHidden = !(npcCombatant?.npc.isHidden ?? boardToken?.hidden ?? false)
     setCombatants(prev =>
       prev.map(c => c.kind === 'npc' && c.npc.id === id ? { ...c, npc: { ...c.npc, isHidden: nextHidden } } : c)
     )
+    setBoardTokens(prev => prev.map(bt => bt.entity_id === id ? { ...bt, hidden: nextHidden } : bt))
     db.from('board_tokens')
       .update({ hidden: nextHidden, updated_at: new Date().toISOString() })
       .eq('campaign_id', campaignId).eq('entity_id', id)
+      .then(() => {})
+  }
+
+  const adjustBoardNpcHp = (entityId: string, newHp: number) => {
+    setBoardTokens(prev => prev.map(bt =>
+      bt.entity_id === entityId ? { ...bt, current_hp: newHp } : bt
+    ))
+    db.from('board_tokens')
+      .update({ current_hp: newHp, updated_at: new Date().toISOString() })
+      .eq('campaign_id', campaignId).eq('entity_id', entityId)
       .then(() => {})
   }
 
@@ -607,7 +619,7 @@ export function useDmTablero(campaignId: string) {
     adjustCharacterHp,
     onTokenMoved,
     startCombat, endCombat, nextTurn,
-    addNpc, updateNpc, removeNpc, toggleNpcHidden,
+    addNpc, updateNpc, removeNpc, toggleNpcHidden, adjustBoardNpcHp,
     addNpcFromMonster, addNpcFromCampaign, createCustomNpc,
     partyLongRest,
     handleAttackConfirm,

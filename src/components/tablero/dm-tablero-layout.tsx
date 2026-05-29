@@ -2,9 +2,10 @@ import { useState } from 'react'
 import { CombatBoard } from '../combat-board'
 import { DmNpcForm } from './dm-npc-form'
 import { DmMapSelector } from './dm-map-selector'
+import { DmNpcSidebar } from './dm-npc-sidebar'
 import { CLASS_ICONS } from '../../lib/class-meta'
 import { CONDITIONS, getSpellSlots } from '../../lib/dnd-constants'
-import { maxHpFor, currentHpFor, acFor, type Npc, getDeterministicColor } from './tablero-types'
+import { maxHpFor, currentHpFor, acFor, getDeterministicColor } from './tablero-types'
 import { useEncounterGenerator } from './use-encounter-generator'
 
 interface DmTableroLayoutProps {
@@ -87,6 +88,8 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
     updateNpc,
     removeNpc,
     toggleNpcHidden,
+    adjustBoardNpcHp,
+    boardTokens,
     addNpcFromMonster,
     addNpcFromCampaign,
     createCustomNpc,
@@ -264,15 +267,13 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
             {leftPanelCollapsed ? '▶' : '◀'}
           </button>
 
-          {combatActive && (
-            <button
-              onClick={() => setRightPanelCollapsed(c => !c)}
-              className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-5 h-12 bg-stone-900/90 border border-r-0 border-stone-700 hover:border-amber-600 text-stone-400 hover:text-amber-300 flex items-center justify-center rounded-l shadow-lg transition-all cursor-pointer select-none"
-              title={rightPanelCollapsed ? "Mostrar enemigos" : "Colapsar enemigos"}
-            >
-              {rightPanelCollapsed ? '◀' : '▶'}
-            </button>
-          )}
+          <button
+            onClick={() => setRightPanelCollapsed(c => !c)}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-20 w-5 h-12 bg-stone-900/90 border border-r-0 border-stone-700 hover:border-amber-600 text-stone-400 hover:text-amber-300 flex items-center justify-center rounded-l shadow-lg transition-all cursor-pointer select-none"
+            title={rightPanelCollapsed ? "Mostrar NPCs" : "Colapsar NPCs"}
+          >
+            {rightPanelCollapsed ? '◀' : '▶'}
+          </button>
           
           {/* Top Control Bar */}
           <div className="border-b border-stone-800 bg-stone-900/90 px-4 py-2 flex items-center gap-3 shrink-0">
@@ -435,103 +436,20 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
           )}
         </main>
 
-        {/* RIGHT: NPCs en combate */}
-        {combatActive && (
-          <aside className={`transition-all duration-300 ${rightPanelCollapsed ? 'w-0 overflow-hidden opacity-0 border-l-0' : 'w-64 border-l border-stone-800'} flex flex-col overflow-y-auto bg-stone-900/50 shrink-0`}>
-            <div className="px-4 pt-4 pb-2">
-              <p className="text-xs tracking-widest text-stone-500 uppercase font-serif">
-                NPCs · {combatants.filter(c => c.kind === 'npc').length}
-              </p>
-            </div>
-            {combatants.filter(c => c.kind === 'npc').length === 0 ? (
-              <p className="text-stone-700 text-xs font-serif italic px-4 pt-1">Sin enemigos en combate.</p>
-            ) : (
-              <div className="px-3 pb-4 space-y-2">
-                {combatants.filter(c => c.kind === 'npc').map(c => {
-                  const npc = (c as { kind: 'npc'; npc: Npc }).npc
-                  const isDead = npc.maxHp > 0 && npc.currentHp === 0
-                  const hpPct = Math.max(0, Math.min((npc.currentHp / npc.maxHp) * 100, 100))
-                  const hpColor = hpPct > 50 ? 'bg-green-700' : hpPct > 25 ? 'bg-amber-600' : 'bg-red-700'
-                  const isHovered = hoveredTokenId === npc.id
-                  const tokenColor = getDeterministicColor(npc.id)
-                  return (
-                    <div key={npc.id}
-                      onMouseEnter={() => setHoveredTokenId(npc.id)}
-                      onMouseLeave={() => setHoveredTokenId(null)}
-                      style={!isDead && isHovered ? { borderColor: tokenColor, boxShadow: `0 0 10px ${tokenColor}40` } : {}}
-                      className={`bg-stone-900 border rounded-lg p-2.5 space-y-2 transition-all duration-200 ${isDead ? 'opacity-50 border-stone-800' : isHovered ? 'border-amber-500' : 'border-stone-700'}`}>
-                      <div className="flex items-center gap-1.5">
-                        {npc.portraitUrl && (
-                          <div className="relative shrink-0">
-                            <img src={npc.portraitUrl} alt="" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-                              className={`w-7 h-7 rounded-full object-cover object-top border border-stone-700 ${isDead ? 'grayscale' : ''}`} />
-                            {isDead && (
-                              <div className="absolute inset-0 rounded-full flex items-center justify-center bg-black/50 text-[10px]">☠</div>
-                            )}
-                          </div>
-                        )}
-                        <p className={`text-xs font-semibold flex-1 truncate ${isDead ? 'text-stone-500 line-through' : 'text-stone-200'}`}>{npc.name}</p>
-                        {isDead && <span className="text-[9px] px-1 py-0.5 rounded font-bold uppercase shrink-0 bg-stone-800 text-stone-500">Caído</span>}
-                        {!isDead && npc.role && (
-                          <span className={`text-[9px] px-1 py-0.5 rounded font-bold uppercase shrink-0 ${
-                            npc.role === 'melee' ? 'bg-red-900/50 text-red-400' :
-                            npc.role === 'ranged' ? 'bg-green-900/50 text-green-400' :
-                            npc.role === 'magic' ? 'bg-purple-900/50 text-purple-400' :
-                            'bg-yellow-900/50 text-yellow-400'
-                          }`}>
-                            {npc.role === 'melee' ? 'Mel' : npc.role === 'ranged' ? 'Dist' : npc.role === 'magic' ? 'Mag' : 'Sop'}
-                          </span>
-                        )}
-                        {npc.level != null && <span className="text-[9px] font-mono text-blue-400/70 shrink-0">Nv{npc.level}</span>}
-                        {npc.ac != null && <span className="text-[10px] font-mono text-stone-500 shrink-0">CA {npc.ac}</span>}
-                        <button
-                          onClick={() => toggleNpcHidden(npc.id)}
-                          className={`shrink-0 transition-colors ${npc.isHidden ? 'text-amber-500 hover:text-amber-300' : 'text-stone-500 hover:text-stone-200'}`}
-                          title={npc.isHidden ? 'Mostrar a jugadores' : 'Ocultar a jugadores'}
-                        >
-                          {npc.isHidden ? (
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-                              <line x1="1" y1="1" x2="23" y2="23"/>
-                            </svg>
-                          ) : (
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                              <circle cx="12" cy="12" r="3"/>
-                            </svg>
-                          )}
-                        </button>
-                        <button onClick={() => removeNpc(npc.id)} className="text-stone-700 hover:text-red-500 transition-colors text-xs shrink-0" title="Quitar del combate">✕</button>
-                      </div>
-                      {!isDead && npc.attackBonus != null && (
-                        <p className="text-[10px] font-mono text-stone-600">Atq +{npc.attackBonus}{npc.damage ? ` · ${npc.damage}` : ''}</p>
-                      )}
-                      <div className="h-1 bg-stone-700 rounded-full overflow-hidden">
-                        <div className={`h-full rounded-full transition-all ${isDead ? 'bg-stone-700' : hpColor}`} style={{ width: `${hpPct}%` }} />
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <button onClick={() => updateNpc(npc.id, { currentHp: Math.max(0, npc.currentHp - 5) })}
-                          className="w-6 h-5 text-[10px] border border-stone-700 text-stone-500 hover:bg-stone-800 rounded leading-none font-mono">-5</button>
-                        <button onClick={() => updateNpc(npc.id, { currentHp: Math.max(0, npc.currentHp - 1) })}
-                          className="w-5 h-5 text-[10px] border border-stone-700 text-stone-500 hover:bg-stone-800 rounded leading-none">−</button>
-                        <span className="text-xs font-mono flex-1 text-center">
-                          {isDead
-                            ? <span className="text-stone-600 text-[10px] font-serif italic">0/{npc.maxHp}</span>
-                            : <><span className="text-amber-300">{npc.currentHp}</span><span className="text-stone-600">/{npc.maxHp}</span></>
-                          }
-                        </span>
-                        <button onClick={() => updateNpc(npc.id, { currentHp: Math.min(npc.maxHp, npc.currentHp + 1) })}
-                          className="w-5 h-5 text-[10px] border border-stone-700 text-stone-500 hover:bg-stone-800 rounded leading-none">+</button>
-                        <button onClick={() => updateNpc(npc.id, { currentHp: Math.min(npc.maxHp, npc.currentHp + 5) })}
-                          className="w-6 h-5 text-[10px] border border-stone-700 text-stone-500 hover:bg-stone-800 rounded leading-none font-mono">+5</button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </aside>
-        )}
+        {/* RIGHT: NPCs */}
+        <aside className={`transition-all duration-300 ${rightPanelCollapsed ? 'w-0 overflow-hidden opacity-0 border-l-0' : 'w-64 border-l border-stone-800'} flex flex-col overflow-y-auto bg-stone-900/50 shrink-0`}>
+          <DmNpcSidebar
+            combatActive={combatActive}
+            combatants={combatants}
+            boardTokens={boardTokens}
+            hoveredTokenId={hoveredTokenId}
+            setHoveredTokenId={setHoveredTokenId}
+            toggleNpcHidden={toggleNpcHidden}
+            updateNpc={updateNpc}
+            removeNpc={removeNpc}
+            adjustBoardNpcHp={adjustBoardNpcHp}
+          />
+        </aside>
       </div>
 
       {/* Map selector Library Modal */}

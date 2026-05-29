@@ -7,6 +7,7 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 ## [Unreleased]
 
 ### feat
+- **Panel NPC siempre visible**: el panel derecho de NPCs en el tablero del DM ya no requiere combate activo. Fuera de combate muestra los NPCs del tablero con controles de HP, toggle de visibilidad y botón de eliminar. Durante combate mantiene la vista completa con rol, CA, ataque y estado "Caído".
 - **Ocultar NPCs a jugadores**: el DM puede togglear visibilidad por NPC con un ícono de ojo/ojo-tachado en la barra lateral. NPCs ocultos muestran rayado diagonal en el token (solo DM), son invisibles para jugadores. Estado persistido en `board_tokens.hidden` (migration). El ojo abierto indica visible; el ojo tachado en ámbar indica oculto.
 - **NPCs caídos en combate**: los NPCs a 0 HP ya no desaparecen sino que se marcan visualmente como "Caídos" — tarjeta griseada con tachado, badge "Caído", overlay de calavera en portrait; token en tablero con opacidad reducida, grayscale y calavera. Los controles de HP siguen activos para permitir revivir. Hover sync token↔fila ya existía y se mantiene.
 - **Icono de clase en tarjeta de personaje**: tamaño aumentado de `w-7 h-7` a `w-10 h-10`.
