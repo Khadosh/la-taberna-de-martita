@@ -23,14 +23,18 @@ export function CombatToken({
   const half = TOKEN_SIZE / 2
   const tokenColor = getDeterministicColor(data.id)
   const isHovered = hoveredTokenId === data.id
+  const isDead = data.kind === 'npc' && data.maxHp > 0 && data.currentHp === 0
 
   return (
     <div
       style={{
         position: 'absolute', left: pos.x, top: pos.y,
-        width: TOKEN_SIZE, touchAction: 'none', cursor: 'grab',
-        zIndex: isHovered ? 35 : (isFrom || isTo ? 20 : 10),
+        width: TOKEN_SIZE, touchAction: 'none', cursor: isDead ? 'default' : 'grab',
+        zIndex: isDead ? 5 : isHovered ? 35 : (isFrom || isTo ? 20 : 10),
         pointerEvents: 'auto',
+        opacity: isDead ? 0.4 : 1,
+        filter: isDead ? 'grayscale(0.8)' : 'none',
+        transition: 'opacity 0.4s, filter 0.4s',
       }}
       onPointerDown={onPointerDown}
       onContextMenu={onContextMenu}
@@ -95,7 +99,7 @@ export function CombatToken({
         <div style={{
           position: 'absolute', inset: 9, borderRadius: '50%', overflow: 'hidden',
           background: data.kind === 'player' ? '#1a2e1e' : '#2e1a1a',
-          border: `2px solid ${tokenColor}`,
+          border: `2px solid ${isDead ? '#44403c' : tokenColor}`,
           boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.4)',
         }}>
           {data.portraitUrl ? (
@@ -112,6 +116,14 @@ export function CombatToken({
             }}>
               {data.name.charAt(0).toUpperCase()}
             </div>
+          )}
+          {isDead && (
+            <div style={{
+              position: 'absolute', inset: 0, borderRadius: '50%',
+              background: 'rgba(0,0,0,0.55)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: 18,
+            }}>☠</div>
           )}
         </div>
       </div>

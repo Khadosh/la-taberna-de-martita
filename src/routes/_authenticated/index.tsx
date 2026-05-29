@@ -177,7 +177,7 @@ function CharacterCard({ character }: { character: Tables<'characters'> }) {
           {icon.startsWith('/') ? (
             <img
               src={icon}
-              className="w-7 h-7 rounded-full border border-tavern-gold/40 bg-stone-950 object-cover object-center shrink-0 mt-0.5"
+              className="w-10 h-10 rounded-full border border-tavern-gold/40 bg-stone-950 object-cover object-center shrink-0 mt-0.5"
               alt=""
             />
           ) : (

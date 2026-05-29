@@ -448,6 +448,7 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
               <div className="px-3 pb-4 space-y-2">
                 {combatants.filter(c => c.kind === 'npc').map(c => {
                   const npc = (c as { kind: 'npc'; npc: Npc }).npc
+                  const isDead = npc.maxHp > 0 && npc.currentHp === 0
                   const hpPct = Math.max(0, Math.min((npc.currentHp / npc.maxHp) * 100, 100))
                   const hpColor = hpPct > 50 ? 'bg-green-700' : hpPct > 25 ? 'bg-amber-600' : 'bg-red-700'
                   const isHovered = hoveredTokenId === npc.id
@@ -456,15 +457,21 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
                     <div key={npc.id}
                       onMouseEnter={() => setHoveredTokenId(npc.id)}
                       onMouseLeave={() => setHoveredTokenId(null)}
-                      style={isHovered ? { borderColor: tokenColor, boxShadow: `0 0 10px ${tokenColor}40` } : {}}
-                      className={`bg-stone-900 border rounded-lg p-2.5 space-y-2 transition-all duration-200 ${isHovered ? 'border-amber-500' : 'border-stone-700'}`}>
+                      style={!isDead && isHovered ? { borderColor: tokenColor, boxShadow: `0 0 10px ${tokenColor}40` } : {}}
+                      className={`bg-stone-900 border rounded-lg p-2.5 space-y-2 transition-all duration-200 ${isDead ? 'opacity-50 border-stone-800' : isHovered ? 'border-amber-500' : 'border-stone-700'}`}>
                       <div className="flex items-center gap-1.5">
                         {npc.portraitUrl && (
-                          <img src={npc.portraitUrl} alt="" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-                            className="w-7 h-7 rounded-full object-cover object-top border border-stone-700 shrink-0" />
+                          <div className="relative shrink-0">
+                            <img src={npc.portraitUrl} alt="" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+                              className={`w-7 h-7 rounded-full object-cover object-top border border-stone-700 ${isDead ? 'grayscale' : ''}`} />
+                            {isDead && (
+                              <div className="absolute inset-0 rounded-full flex items-center justify-center bg-black/50 text-[10px]">☠</div>
+                            )}
+                          </div>
                         )}
-                        <p className="text-xs font-semibold text-stone-200 flex-1 truncate">{npc.name}</p>
-                        {npc.role && (
+                        <p className={`text-xs font-semibold flex-1 truncate ${isDead ? 'text-stone-500 line-through' : 'text-stone-200'}`}>{npc.name}</p>
+                        {isDead && <span className="text-[9px] px-1 py-0.5 rounded font-bold uppercase shrink-0 bg-stone-800 text-stone-500">Caído</span>}
+                        {!isDead && npc.role && (
                           <span className={`text-[9px] px-1 py-0.5 rounded font-bold uppercase shrink-0 ${
                             npc.role === 'melee' ? 'bg-red-900/50 text-red-400' :
                             npc.role === 'ranged' ? 'bg-green-900/50 text-green-400' :
@@ -478,20 +485,22 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
                         {npc.ac != null && <span className="text-[10px] font-mono text-stone-500 shrink-0">CA {npc.ac}</span>}
                         <button onClick={() => removeNpc(npc.id)} className="text-stone-700 hover:text-red-500 transition-colors text-xs shrink-0" title="Quitar del combate">✕</button>
                       </div>
-                      {npc.attackBonus != null && (
+                      {!isDead && npc.attackBonus != null && (
                         <p className="text-[10px] font-mono text-stone-600">Atq +{npc.attackBonus}{npc.damage ? ` · ${npc.damage}` : ''}</p>
                       )}
                       <div className="h-1 bg-stone-700 rounded-full overflow-hidden">
-                        <div className={`h-full rounded-full transition-all ${hpColor}`} style={{ width: `${hpPct}%` }} />
+                        <div className={`h-full rounded-full transition-all ${isDead ? 'bg-stone-700' : hpColor}`} style={{ width: `${hpPct}%` }} />
                       </div>
                       <div className="flex items-center gap-1">
                         <button onClick={() => updateNpc(npc.id, { currentHp: Math.max(0, npc.currentHp - 5) })}
                           className="w-6 h-5 text-[10px] border border-stone-700 text-stone-500 hover:bg-stone-800 rounded leading-none font-mono">-5</button>
                         <button onClick={() => updateNpc(npc.id, { currentHp: Math.max(0, npc.currentHp - 1) })}
                           className="w-5 h-5 text-[10px] border border-stone-700 text-stone-500 hover:bg-stone-800 rounded leading-none">−</button>
-                        <span className="text-xs font-mono text-amber-300 flex-1 text-center">
-                          {npc.currentHp === 0 ? <span className="text-red-500">0</span> : npc.currentHp}
-                          <span className="text-stone-600">/{npc.maxHp}</span>
+                        <span className="text-xs font-mono flex-1 text-center">
+                          {isDead
+                            ? <span className="text-stone-600 text-[10px] font-serif italic">0/{npc.maxHp}</span>
+                            : <><span className="text-amber-300">{npc.currentHp}</span><span className="text-stone-600">/{npc.maxHp}</span></>
+                          }
                         </span>
                         <button onClick={() => updateNpc(npc.id, { currentHp: Math.min(npc.maxHp, npc.currentHp + 1) })}
                           className="w-5 h-5 text-[10px] border border-stone-700 text-stone-500 hover:bg-stone-800 rounded leading-none">+</button>

@@ -6,6 +6,10 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 
 ## [Unreleased]
 
+### feat
+- **NPCs caídos en combate**: los NPCs a 0 HP ya no desaparecen sino que se marcan visualmente como "Caídos" — tarjeta griseada con tachado, badge "Caído", overlay de calavera en portrait; token en tablero con opacidad reducida, grayscale y calavera. Los controles de HP siguen activos para permitir revivir. Hover sync token↔fila ya existía y se mantiene.
+- **Icono de clase en tarjeta de personaje**: tamaño aumentado de `w-7 h-7` a `w-10 h-10`.
+
 ### fix
 - **Oro excesivo en loot**: corregida escala de oro en todos los perfiles (30 arquetipos). `defaultGoldScale` cambiado de `Math.max(1, level)` a `1 + (level-1)*0.1`. Rangos de oro reducidos a valores D&D realistas (ej. `guardia-real` pasó de `[20,80]×5.4 = 108–432 po` a `[6,20]×1.2 = 7–24 po` a nivel 3).
 - **Hechizos para cualquier NPC**: el modal de edición de criaturas del generador ahora muestra un editor de hechizos para cualquier criatura (no solo los predefinidos). Se pueden agregar hechizos escribiendo el índice y presionando Enter; los hechizos personalizados se propagan al spawn y quedan disponibles en el dropdown de combate. `customSpells` propagado a través de `CreatureRow` → `EncounterUnit` → `addNpcFromMonster`.
