@@ -84,6 +84,9 @@ Sincronización de dados en mesa integrada al tablero de combate del DM (documen
 | Creación de PNJ: agregar armas personalizadas y tirar daño de arma específico en popup de combate | ✅ |
 | Diario de Campaña: pestaña interactiva "Notas" con notas públicas y privadas (CRUD + Supabase) | ✅ |
 | Migración de Establos a la Taberna, con compra automática de monturas, cobro de monedas y registro de compra | ✅ |
+| CA calculada automáticamente al equipar/desequipar armadura y escudo | ✅ |
+| Conjuros: backfill de conocidos + sistema de preparados por clase (Mago/Clérigo/Druida/Paladín) | ✅ |
+| Dado de daño de arma equipada en popup de combate (dice+stat via D&D API) | ✅ |
 
 ---
 

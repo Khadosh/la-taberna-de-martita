@@ -162,3 +162,9 @@ No utilizar estilos inline (`style={{ backgroundColor: '...' }}`) para colores d
 *   No escribir código sin comentarios justificando el *POR QUÉ* (evitar comentarios obvios del *QUÉ* hace el código).
 *   No añadir dependencias externas sin consultar al usuario.
 *   No crear frameworks de tests adicionales sin orden explícita.
+
+
+### 6. Commit rules
+*   Hacer `feat / fix / chore / ui` (`sujeto`): `descripcion` one liner
+*   Ejemplo: feat(character-sheet): CA auto-calculado
+*   NO HACER: co-authored by
