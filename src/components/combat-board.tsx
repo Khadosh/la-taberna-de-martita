@@ -263,6 +263,7 @@ export function CombatBoard({
                 inAoE={inAoE}
                 hoveredTokenId={hoveredTokenId}
                 onHoverToken={onHoverToken}
+                isPlayer={isPlayer}
                 onPointerDown={e => {
                   if (e.button === 2) {
                     e.stopPropagation()

@@ -86,6 +86,7 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
     addNpc,
     updateNpc,
     removeNpc,
+    toggleNpcHidden,
     addNpcFromMonster,
     addNpcFromCampaign,
     createCustomNpc,
@@ -483,6 +484,23 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
                         )}
                         {npc.level != null && <span className="text-[9px] font-mono text-blue-400/70 shrink-0">Nv{npc.level}</span>}
                         {npc.ac != null && <span className="text-[10px] font-mono text-stone-500 shrink-0">CA {npc.ac}</span>}
+                        <button
+                          onClick={() => toggleNpcHidden(npc.id)}
+                          className={`shrink-0 transition-colors ${npc.isHidden ? 'text-amber-500 hover:text-amber-300' : 'text-stone-500 hover:text-stone-200'}`}
+                          title={npc.isHidden ? 'Mostrar a jugadores' : 'Ocultar a jugadores'}
+                        >
+                          {npc.isHidden ? (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                              <line x1="1" y1="1" x2="23" y2="23"/>
+                            </svg>
+                          ) : (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                              <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                          )}
+                        </button>
                         <button onClick={() => removeNpc(npc.id)} className="text-stone-700 hover:text-red-500 transition-colors text-xs shrink-0" title="Quitar del combate">✕</button>
                       </div>
                       {!isDead && npc.attackBonus != null && (

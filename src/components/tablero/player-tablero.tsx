@@ -112,7 +112,8 @@ export function PlayerTablero({ campaignId, session }: { campaignId: string; ses
   const myCharId = characters.find(c => c.user_id === session.user.id)?.id
 
   // Build TokenData from board_tokens, merging live HP from characters query
-  const tokens: TokenData[] = useMemo(() => boardTokens.map(bt => {
+  // Hidden NPCs are filtered out so players can't see them
+  const tokens: TokenData[] = useMemo(() => boardTokens.filter(bt => !(bt.kind === 'npc' && bt.hidden)).map(bt => {
     const char = bt.kind === 'player' ? characters.find(c => c.id === bt.entity_id) : null
     const maxHp = char ? maxHpFor(char) : bt.max_hp ?? 1
     const currentHp = char ? currentHpFor(char) : bt.current_hp ?? maxHp

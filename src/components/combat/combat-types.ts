@@ -15,6 +15,7 @@ export type TokenData = {
   weapons?: { name: string; damage: string }[]
   equipmentNotes?: string
   damage?: string
+  isHidden?: boolean
 }
 
 export type AttackEntity = {

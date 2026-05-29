@@ -5,7 +5,7 @@ import { getDeterministicColor } from '../tablero/tablero-types'
 
 export function CombatToken({
   data, pos, isFrom, isTo, inAoE, onPointerDown, onContextMenu,
-  hoveredTokenId, onHoverToken,
+  hoveredTokenId, onHoverToken, isPlayer,
 }: {
   data: TokenData
   pos: Pos
@@ -16,6 +16,7 @@ export function CombatToken({
   onContextMenu?: (e: React.MouseEvent) => void
   hoveredTokenId?: string | null
   onHoverToken?: (id: string | null) => void
+  isPlayer?: boolean
 }) {
   const pct = data.maxHp > 0 ? Math.max(0, Math.min(1, data.currentHp / data.maxHp)) : 0
   const arc = pct * CIRC
@@ -124,6 +125,12 @@ export function CombatToken({
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: 18,
             }}>☠</div>
+          )}
+          {data.isHidden && !isPlayer && (
+            <div style={{
+              position: 'absolute', inset: 0, borderRadius: '50%', zIndex: 7, pointerEvents: 'none',
+              backgroundImage: 'repeating-linear-gradient(-45deg, rgba(180,180,180,0.35) 0px, rgba(180,180,180,0.35) 2px, transparent 2px, transparent 9px)',
+            }} />
           )}
         </div>
       </div>

@@ -294,6 +294,18 @@ export function useDmTablero(campaignId: string) {
     }
   }
 
+  const toggleNpcHidden = (id: string) => {
+    const current = combatants.find(c => c.kind === 'npc' && (c as any).npc.id === id) as { kind: 'npc'; npc: Npc } | undefined
+    const nextHidden = !(current?.npc.isHidden ?? false)
+    setCombatants(prev =>
+      prev.map(c => c.kind === 'npc' && c.npc.id === id ? { ...c, npc: { ...c.npc, isHidden: nextHidden } } : c)
+    )
+    db.from('board_tokens')
+      .update({ hidden: nextHidden, updated_at: new Date().toISOString() })
+      .eq('campaign_id', campaignId).eq('entity_id', id)
+      .then(() => {})
+  }
+
   const removeNpc = async (id: string) => {
     setCombatants(prev => {
       const next = prev.filter(c => !(c.kind === 'npc' && c.npc.id === id))
@@ -433,7 +445,7 @@ export function useDmTablero(campaignId: string) {
           const curHp = localHp[ch.id] ?? currentHpFor(ch)
           return [{ id: ch.id, name: ch.name, kind: 'player', currentHp: curHp, maxHp, portraitUrl: ch.portrait_url, isActive: idx === currentTurn }]
         }
-        return [{ id: c.npc.id, name: c.npc.name, kind: 'npc', currentHp: c.npc.currentHp, maxHp: c.npc.maxHp, portraitUrl: c.npc.portraitUrl ?? null, role: c.npc.role, level: c.npc.level, spells: c.npc.spells, weapons: c.npc.weapons, equipmentNotes: c.npc.equipmentNotes, damage: c.npc.damage, isActive: idx === currentTurn }]
+        return [{ id: c.npc.id, name: c.npc.name, kind: 'npc', currentHp: c.npc.currentHp, maxHp: c.npc.maxHp, portraitUrl: c.npc.portraitUrl ?? null, role: c.npc.role, level: c.npc.level, spells: c.npc.spells, weapons: c.npc.weapons, equipmentNotes: c.npc.equipmentNotes, damage: c.npc.damage, isActive: idx === currentTurn, isHidden: c.npc.isHidden ?? false }]
       })
     } else {
       return boardTokens.map(bt => {
@@ -595,7 +607,7 @@ export function useDmTablero(campaignId: string) {
     adjustCharacterHp,
     onTokenMoved,
     startCombat, endCombat, nextTurn,
-    addNpc, updateNpc, removeNpc,
+    addNpc, updateNpc, removeNpc, toggleNpcHidden,
     addNpcFromMonster, addNpcFromCampaign, createCustomNpc,
     partyLongRest,
     handleAttackConfirm,

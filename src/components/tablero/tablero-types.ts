@@ -32,6 +32,7 @@ export type BoardToken = {
   portrait_url: string | null
   x: number
   y: number
+  hidden?: boolean
 }
 
 export type NpcItem = { id: string; name: string; qty: number }
@@ -54,6 +55,7 @@ export type Npc = {
   spells?: string[]
   weapons?: { name: string; damage: string }[]
   equipmentNotes?: string
+  isHidden?: boolean
 }
 
 export type Combatant =
