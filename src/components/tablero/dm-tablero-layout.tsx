@@ -88,6 +88,7 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
     updateNpc,
     removeNpc,
     toggleNpcHidden,
+    setNpcHidden,
     adjustBoardNpcHp,
     boardTokens,
     addNpcFromMonster,
@@ -449,6 +450,7 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
             hoveredGroupId={hoveredGroupId}
             setHoveredGroupId={setHoveredGroupId}
             toggleNpcHidden={toggleNpcHidden}
+            setNpcHidden={setNpcHidden}
             updateNpc={updateNpc}
             removeNpc={removeNpc}
             adjustBoardNpcHp={adjustBoardNpcHp}

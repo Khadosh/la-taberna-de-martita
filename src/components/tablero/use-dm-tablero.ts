@@ -296,18 +296,22 @@ export function useDmTablero(campaignId: string) {
     }
   }
 
+  const setNpcHidden = (id: string, hidden: boolean) => {
+    setCombatants(prev =>
+      prev.map(c => c.kind === 'npc' && c.npc.id === id ? { ...c, npc: { ...c.npc, isHidden: hidden } } : c)
+    )
+    setBoardTokens(prev => prev.map(bt => bt.entity_id === id ? { ...bt, hidden } : bt))
+    db.from('board_tokens')
+      .update({ hidden, updated_at: new Date().toISOString() })
+      .eq('campaign_id', campaignId).eq('entity_id', id)
+      .then(() => {})
+  }
+
   const toggleNpcHidden = (id: string) => {
     const npcCombatant = combatants.find(c => c.kind === 'npc' && (c as any).npc.id === id) as { kind: 'npc'; npc: Npc } | undefined
     const boardToken = boardTokens.find(bt => bt.entity_id === id)
     const nextHidden = !(npcCombatant?.npc.isHidden ?? boardToken?.hidden ?? false)
-    setCombatants(prev =>
-      prev.map(c => c.kind === 'npc' && c.npc.id === id ? { ...c, npc: { ...c.npc, isHidden: nextHidden } } : c)
-    )
-    setBoardTokens(prev => prev.map(bt => bt.entity_id === id ? { ...bt, hidden: nextHidden } : bt))
-    db.from('board_tokens')
-      .update({ hidden: nextHidden, updated_at: new Date().toISOString() })
-      .eq('campaign_id', campaignId).eq('entity_id', id)
-      .then(() => {})
+    setNpcHidden(id, nextHidden)
   }
 
   const adjustBoardNpcHp = (entityId: string, newHp: number) => {
@@ -466,7 +470,7 @@ export function useDmTablero(campaignId: string) {
         const char = bt.kind === 'player' ? characters.find(c => c.id === bt.entity_id) : null
         const maxHp = char ? maxHpFor(char) : bt.max_hp ?? 10
         const currentHp = char ? (localHp[char.id] ?? currentHpFor(char)) : bt.current_hp ?? maxHp
-        return { id: bt.entity_id, name: bt.label, kind: bt.kind, currentHp, maxHp, portraitUrl: char?.portrait_url ?? bt.portrait_url ?? null, isActive: false, spawnGroup: bt.spawn_group ?? undefined }
+        return { id: bt.entity_id, name: bt.label, kind: bt.kind, currentHp, maxHp, portraitUrl: char?.portrait_url ?? bt.portrait_url ?? null, isActive: false, spawnGroup: bt.spawn_group ?? undefined, isHidden: bt.hidden ?? false }
       })
     }
   }, [combatActive, combatants, boardTokens, characters, currentTurn, localHp])
@@ -621,7 +625,7 @@ export function useDmTablero(campaignId: string) {
     adjustCharacterHp,
     onTokenMoved,
     startCombat, endCombat, nextTurn,
-    addNpc, updateNpc, removeNpc, toggleNpcHidden, adjustBoardNpcHp,
+    addNpc, updateNpc, removeNpc, toggleNpcHidden, setNpcHidden, adjustBoardNpcHp,
     addNpcFromMonster, addNpcFromCampaign, createCustomNpc,
     partyLongRest,
     handleAttackConfirm,

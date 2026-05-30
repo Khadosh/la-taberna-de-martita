@@ -77,6 +77,7 @@ interface DmNpcSidebarProps {
   hoveredGroupId: string | null
   setHoveredGroupId: (id: string | null) => void
   toggleNpcHidden: (id: string) => void
+  setNpcHidden: (id: string, hidden: boolean) => void
   updateNpc: (id: string, patch: Partial<Npc>) => void
   removeNpc: (id: string) => void
   adjustBoardNpcHp: (entityId: string, newHp: number) => void
@@ -86,7 +87,7 @@ export function DmNpcSidebar({
   combatActive, combatants, boardTokens,
   hoveredTokenId, setHoveredTokenId,
   hoveredGroupId, setHoveredGroupId,
-  toggleNpcHidden, updateNpc, removeNpc, adjustBoardNpcHp,
+  toggleNpcHidden, setNpcHidden, updateNpc, removeNpc, adjustBoardNpcHp,
 }: DmNpcSidebarProps) {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
 
@@ -95,7 +96,8 @@ export function DmNpcSidebar({
 
   const toggleGroupVisibility = (tokens: BoardToken[]) => {
     const allHidden = tokens.every(bt => bt.hidden)
-    tokens.forEach(bt => { if (allHidden ? bt.hidden : !bt.hidden) toggleNpcHidden(bt.entity_id) })
+    // Use setNpcHidden with explicit value to avoid stale closure issues in forEach
+    tokens.forEach(bt => setNpcHidden(bt.entity_id, !allHidden))
   }
 
   const npcCombatants = combatants.filter(c => c.kind === 'npc') as { kind: 'npc'; npc: Npc }[]
