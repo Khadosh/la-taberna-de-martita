@@ -45,8 +45,6 @@ export function ClassChoicesPanel({
   const [subclass, setSubclass] = useState('')
   const [selectedExpertises, setSelectedExpertises] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
-  const [changingSubclass, setChangingSubclass] = useState(false)
-  const [newSubclass, setNewSubclass] = useState('')
 
   const classKey = characterClass.toLowerCase()
 
@@ -77,12 +75,10 @@ export function ClassChoicesPanel({
     enabled: isKnownCaster && level >= 2,
   })
 
-  const canChangeSubclass = !!sheet.subclass && level >= subclassReqLevel
-
   const { data: classSubclasses } = useQuery({
     queryKey: dndKeys.classSubclasses(classKey),
     queryFn: () => dndApi.classSubclasses(classKey),
-    enabled: (needsSubclass || changingSubclass) && open,
+    enabled: needsSubclass && open,
     staleTime: Infinity,
   })
 
@@ -121,7 +117,7 @@ export function ClassChoicesPanel({
 
   const hasAny = needsFightingStyle || needsFavoredEnemy || needsSpells || needsSubclass || needsExpertise
 
-  if (!isOwner || (!hasAny && !canChangeSubclass)) return null
+  if (!isOwner || !hasAny) return null
 
   const fightingStyles = FIGHTING_STYLES_BY_CLASS[classKey] ?? FIGHTING_STYLES_BY_CLASS['fighter']
 
@@ -179,36 +175,12 @@ export function ClassChoicesPanel({
     setSelectedExpertises([])
   }
 
-  const handleSaveSubclassChange = async () => {
-    if (!newSubclass) return
-    setSaving(true)
-    await patchSheet({ subclass: newSubclass })
-    setSaving(false)
-    setChangingSubclass(false)
-    setNewSubclass('')
-    setOpen(false)
-  }
-
   const pendingCount = [needsFightingStyle, needsFavoredEnemy, needsSpells, needsSubclass, needsExpertise].filter(Boolean).length
 
   return (
-    <div className="mx-3 mt-3 mb-1 space-y-1.5">
-      {/* Cambiar especialidad — always visible when subclass is set */}
-      {canChangeSubclass && !open && (
-        <div className="flex items-center justify-between px-4 py-2 border font-serif"
-          style={{ background: 'rgba(180,100,20,0.05)', border: '1px solid rgba(180,100,20,0.2)' }}>
-          <span className="text-xs text-stone-600">
-            Especialidad: <strong className="text-stone-800 capitalize">{sheet.subclass?.replace(/-/g, ' ')}</strong>
-          </span>
-          <button onClick={() => { setChangingSubclass(true); setOpen(true) }}
-            className="text-xs text-amber-700 hover:text-amber-600 underline cursor-pointer">
-            Cambiar
-          </button>
-        </div>
-      )}
-
-      {/* Collapsed banner for pending choices */}
-      {!open && hasAny && (
+    <div className="mx-3 mt-3 mb-1">
+      {/* Collapsed banner */}
+      {!open && (
         <button
           onClick={() => setOpen(true)}
           className="w-full text-left border px-4 py-3 flex items-center gap-3 transition-colors cursor-pointer"
@@ -234,21 +206,14 @@ export function ClassChoicesPanel({
           style={{ ...parchmentStyle, border: '1px solid rgba(180,100,20,0.4)', boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}
         >
           <div className="flex items-center justify-between border-b border-stone-400 pb-3">
-            <p className="text-sm font-semibold font-serif text-stone-800 font-serif">
-              {changingSubclass ? 'Cambiar especialidad' : 'Completar elecciones de clase'}
-            </p>
-            <button onClick={() => { setOpen(false); setChangingSubclass(false); setNewSubclass('') }}
-              className="text-stone-400 hover:text-stone-600 text-xs font-serif cursor-pointer">cerrar</button>
+            <p className="text-sm font-semibold font-serif text-stone-800 font-serif">Completar elecciones de clase</p>
+            <button onClick={() => setOpen(false)} className="text-stone-400 hover:text-stone-600 text-xs font-serif cursor-pointer">cerrar</button>
           </div>
 
-          {(needsSubclass || changingSubclass) && classSubclasses && (
+          {needsSubclass && classSubclasses && (
             <div className="space-y-2">
-              <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">
-                {changingSubclass ? `Cambiar especialidad (actual: ${sheet.subclass?.replace(/-/g, ' ')})` : 'Especialidad / Subclase'}
-              </p>
-              <select
-                value={changingSubclass ? newSubclass : subclass}
-                onChange={e => changingSubclass ? setNewSubclass(e.target.value) : setSubclass(e.target.value)}
+              <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">Especialidad / Subclase</p>
+              <select value={subclass} onChange={e => setSubclass(e.target.value)}
                 style={{ background: 'rgba(255,255,255,0.4)', border: '1px solid rgba(120,70,20,0.35)' }}
                 className="w-full px-3 py-2 text-stone-900 font-serif text-sm focus:outline-none">
                 <option value="">Elegir especialidad...</option>
@@ -256,22 +221,10 @@ export function ClassChoicesPanel({
                   <option key={sc.index} value={sc.index}>{sc.name}</option>
                 ))}
               </select>
-              {changingSubclass && (
-                <div className="flex gap-2">
-                  <button onClick={() => { setChangingSubclass(false); setNewSubclass(''); setOpen(false) }}
-                    className="flex-1 px-3 py-2 text-xs border border-stone-400 text-stone-500 hover:bg-stone-200/50 font-serif transition-colors cursor-pointer">
-                    Cancelar
-                  </button>
-                  <button onClick={handleSaveSubclassChange} disabled={!newSubclass || saving}
-                    className="flex-1 px-3 py-2 text-xs bg-amber-800 hover:bg-amber-700 disabled:opacity-40 text-amber-100 font-serif transition-colors font-semibold cursor-pointer">
-                    {saving ? 'Guardando...' : 'Confirmar cambio'}
-                  </button>
-                </div>
-              )}
             </div>
           )}
 
-          {!changingSubclass && needsFightingStyle && (
+          {needsFightingStyle && (
             <div className="space-y-2">
               <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">Estilo de combate</p>
               <div className="grid gap-1.5">
@@ -289,7 +242,7 @@ export function ClassChoicesPanel({
             </div>
           )}
 
-          {!changingSubclass && needsFavoredEnemy && (
+          {needsFavoredEnemy && (
             <div className="space-y-2">
               <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">Enemigo predilecto</p>
               <div className="grid grid-cols-2 gap-1.5">
@@ -306,7 +259,7 @@ export function ClassChoicesPanel({
             </div>
           )}
 
-          {!changingSubclass && needsExpertise && uniqueEligibles.length > 0 && (
+          {needsExpertise && uniqueEligibles.length > 0 && (
             <div className="space-y-2">
               <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">
                 Especialización (Expertise) — Elegí {expertiseToLearn}
@@ -330,7 +283,7 @@ export function ClassChoicesPanel({
             </div>
           )}
 
-          {!changingSubclass && needsSpells && (
+          {needsSpells && (
             <div className="space-y-2">
               <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">
                 Conjuros conocidos ({newSpells.length}/{spellsToLearn} elegidos)
@@ -372,18 +325,16 @@ export function ClassChoicesPanel({
             </div>
           )}
 
-          {!changingSubclass && (
-            <div className="flex gap-2 border-t border-stone-300 pt-3">
-              <button onClick={() => setOpen(false)}
-                className="flex-1 px-3 py-2 text-xs border border-stone-400 text-stone-500 hover:bg-stone-200/50 font-serif transition-colors cursor-pointer">
-                Cancelar
-              </button>
-              <button onClick={handleSave} disabled={!canSave || saving}
-                className="flex-1 px-3 py-2 text-xs bg-amber-800 hover:bg-amber-700 disabled:opacity-40 text-amber-100 font-serif transition-colors font-semibold cursor-pointer">
-                {saving ? 'Guardando...' : 'Guardar elecciones'}
-              </button>
-            </div>
-          )}
+          <div className="flex gap-2 border-t border-stone-300 pt-3">
+            <button onClick={() => setOpen(false)}
+              className="flex-1 px-3 py-2 text-xs border border-stone-400 text-stone-500 hover:bg-stone-200/50 font-serif transition-colors cursor-pointer">
+              Cancelar
+            </button>
+            <button onClick={handleSave} disabled={!canSave || saving}
+              className="flex-1 px-3 py-2 text-xs bg-amber-800 hover:bg-amber-700 disabled:opacity-40 text-amber-100 font-serif transition-colors font-semibold cursor-pointer">
+              {saving ? 'Guardando...' : 'Guardar elecciones'}
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -320,6 +320,8 @@ function CharacterSheet() {
                     backstory={character.backstory}
                     sheet={sheet}
                     isOwner={isOwner}
+                    characterClass={character.class}
+                    characterLevel={character.level}
                     confirmDelete={confirmDelete}
                     setConfirmDelete={setConfirmDelete}
                     onDelete={async () => { await supabase.from('characters').delete().eq('id', characterId); navigate({ to: '/' }) }}
