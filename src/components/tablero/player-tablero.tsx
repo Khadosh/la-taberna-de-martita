@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import { CombatBoard, type TokenData } from '../combat-board'
+import { PlayerBoardPanel } from './player-board-panel'
 import {
   type Character,
   type BoardToken,
@@ -296,6 +297,13 @@ export function PlayerTablero({ campaignId, session }: { campaignId: string; ses
           externalTargeting={externalTargeting}
           onSelectionChange={handleSelectionChange}
           onAttackConfirm={handleAttackConfirm}
+        />
+
+        {/* Floating player panel — overlays the board, board stays full width */}
+        <PlayerBoardPanel
+          characterId={myCharId}
+          campaignId={campaignId}
+          userId={session.user.id}
         />
       </div>
     </div>

@@ -7,6 +7,9 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 ## [Unreleased]
 
 ### feat
+- **Panel flotante de jugador en el tablero**: botón trigger con avatar del personaje pegado al borde derecho del board. Al hacer click se desliza un panel oscuro (340px) sobre el tablero sin reducir su tamaño. 4 tabs: Personaje (HP con controles ±1/±5, CA, stats grid, condiciones toggleables, equipamiento resumido), Inventario (InventoryPanel completo con drag & drop y paper doll), Conjuros (TabHechizos con preparados y spell slots), Notas (lista de campaña + formulario para agregar). El board queda siempre visible e interactivo detrás del panel.
+
+### feat
 - **HP sync en tiempo real para jugadores**: el tablero del jugador ahora suscribe a cambios en `characters` vía Supabase Realtime. Cuando el DM aplica daño o cura desde el tablero o la hoja, el HP del token del jugador se actualiza automáticamente sin recargar.
 - **Agrupación de NPCs por encuentro generado**: los NPCs spawneados desde el generador de encuentros se agrupan visualmente en la barra lateral del DM con un header "EMBOSCADA GOBLIN" (nombre del arquetipo). Pasar el mouse sobre el header ilumina todos los tokens del grupo en el tablero simultáneamente. NPCs agregados individualmente siguen apareciendo sin grupo. Persiste en `board_tokens.spawn_group` y `archetype_label` (nueva migración).
 - **Daño de arma en popup de combate**: el popup de ataque ahora consulta la API de D&D para obtener el dado de daño del arma equipada (`damage_dice`). Para ataques cuerpo a cuerpo usa STR, armas a distancia DEX, armas con fineza el mayor de STR/DEX. El botón de tirar daño ya genera el resultado automáticamente con modificador incluido.
