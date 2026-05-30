@@ -1,0 +1,208 @@
+{
+  "_meta": {
+    "source": "custom (Joaquin / la taberna de martita)",
+    "edition": "2014",
+    "scope": "Las 9 subclases oficiales de Rogue de 2014: PHB (Thief, Assassin, Arcane Trickster), SCAG/XGtE (Mastermind, Swashbuckler), XGtE (Inquisitive, Scout), TCoE (Soulknife, Phantom).",
+    "provenance_legend": "Solo 'thief' es SRD 5.1 verbatim (CC-BY-4.0). El resto son mecanicas reescritas con palabras propias (NO texto de libro, NO CC)."
+  },
+  "subclasses": [
+    {
+      "index": "thief",
+      "name": "Thief",
+      "subclass_flavor": "Roguish Archetype",
+      "class": { "index": "rogue", "name": "Rogue", "url": "/api/2014/classes/rogue" },
+      "desc": ["You hone your skills in the larcenous arts. Burglars, bandits, cutpurses, and other criminals typically follow this archetype, but so do rogues who prefer to think of themselves as professional treasure seekers, explorers, delvers, and investigators."],
+      "levels": [
+        { "level": 3, "features": [
+          { "index": "fast-hands", "name": "Fast Hands", "level": 3, "desc": ["Starting at 3rd level, you can use the bonus action granted by your Cunning Action to make a Dexterity (Sleight of Hand) check, use your thieves' tools to disarm a trap or open a lock, or take the Use an Object action."] },
+          { "index": "second-story-work", "name": "Second-Story Work", "level": 3, "desc": ["When you choose this archetype at 3rd level, you gain the ability to climb faster than normal; climbing no longer costs you extra movement. In addition, when you make a running jump, the distance you cover increases by a number of feet equal to your Dexterity modifier."] }
+        ]},
+        { "level": 9, "features": [
+          { "index": "supreme-sneak", "name": "Supreme Sneak", "level": 9, "desc": ["Starting at 9th level, you have advantage on a Dexterity (Stealth) check if you move no more than half your speed on the same turn."] }
+        ]},
+        { "level": 13, "features": [
+          { "index": "use-magic-device", "name": "Use Magic Device", "level": 13, "desc": ["By 13th level, you have learned enough about the workings of magic that you can improvise the use of items even when they are not intended for you. You ignore all class, race, and level requirements on the use of magic items."] }
+        ]},
+        { "level": 17, "features": [
+          { "index": "thiefs-reflexes", "name": "Thief's Reflexes", "level": 17, "desc": ["When you reach 17th level, you can take two turns during the first round of any combat. You take your first turn at your normal initiative and your second turn at your initiative minus 10. You can't use this feature when you are surprised."] }
+        ]}
+      ]
+    },
+    {
+      "index": "assassin",
+      "name": "Assassin",
+      "subclass_flavor": "Roguish Archetype",
+      "class": { "index": "rogue", "name": "Rogue", "url": "/api/2014/classes/rogue" },
+      "desc": ["You focus your training on the grim art of death. Those who adhere to this archetype are diverse: hired killers, spies, bounty hunters, and even specially anointed priests trained to exterminate the enemies of their deity. Stealth, poison, and disguise help you eliminate your foes with deadly efficiency."],
+      "levels": [
+        { "level": 3, "features": [
+          { "index": "assassin-bonus-proficiencies", "name": "Bonus Proficiencies", "level": 3, "desc": ["At 3rd level you gain proficiency with the disguise kit and the poisoner's kit."] },
+          { "index": "assassinate", "name": "Assassinate", "level": 3, "desc": ["Starting at 3rd level you are deadliest against foes who have not yet acted. You have advantage on attack rolls against any creature that has not taken a turn in the current combat. In addition, any hit you land against a creature that is surprised counts as a critical hit."] }
+        ]},
+        { "level": 9, "features": [
+          { "index": "infiltration-expertise", "name": "Infiltration Expertise", "level": 9, "desc": ["Beginning at 9th level you can construct a believable false identity, investing roughly a week of effort and a modest sum to establish a fabricated history, profession, and set of affiliations. While operating under that identity you cannot be exposed as anything other than the persona you portray unless someone takes deliberate steps to uncover the deception."] }
+        ]},
+        { "level": 13, "features": [
+          { "index": "impostor", "name": "Impostor", "level": 13, "desc": ["At 13th level you can convincingly impersonate another individual after studying their speech, handwriting, and mannerisms for a few hours, fooling casual observers. A suspicious onlooker may contest your performance with an opposed check pitting your Deception against their Insight."] }
+        ]},
+        { "level": 17, "features": [
+          { "index": "death-strike", "name": "Death Strike", "level": 17, "desc": ["Starting at 17th level you become a master of instant kills. When you strike and hit a creature that is surprised, it must succeed on a Constitution saving throw (DC 8 + your Dexterity modifier + your proficiency bonus) or the damage of that attack is doubled."] }
+        ]}
+      ]
+    },
+    {
+      "index": "arcane-trickster",
+      "name": "Arcane Trickster",
+      "subclass_flavor": "Roguish Archetype",
+      "class": { "index": "rogue", "name": "Rogue", "url": "/api/2014/classes/rogue" },
+      "desc": ["Some rogues enhance their fine-honed skills of stealth and agility with magic, learning tricks of enchantment and illusion. These rogues include pickpockets and burglars, but also pranksters, mischief-makers, and a significant number of adventurers."],
+      "levels": [
+        { "level": 3, "features": [
+          { "index": "spellcasting-arcane-trickster", "name": "Spellcasting", "level": 3, "desc": ["At 3rd level you gain the ability to cast wizard spells, drawing mainly from the schools of enchantment and illusion. You learn cantrips including mage hand, plus leveled spells, using Intelligence as your spellcasting ability with a one-third caster progression."] },
+          { "index": "mage-hand-legerdemain", "name": "Mage Hand Legerdemain", "level": 3, "desc": ["Starting at 3rd level, when you cast mage hand you can make the spectral hand invisible and use it for subtle manipulation: stowing or retrieving an object, picking locks or disarming traps with thieves' tools at a distance, all as a bonus action."] }
+        ]},
+        { "level": 9, "features": [
+          { "index": "magical-ambush", "name": "Magical Ambush", "level": 9, "desc": ["At 9th level, if you are hidden from a creature when you cast a spell on it, that creature has disadvantage on any saving throw it makes against the spell that turn."] }
+        ]},
+        { "level": 13, "features": [
+          { "index": "versatile-trickster", "name": "Versatile Trickster", "level": 13, "desc": ["Starting at 13th level you can use your mage hand to divert a foe's attention. As a bonus action you can designate a creature within reach of the spectral hand, gaining advantage on attack rolls against that creature until the end of the turn."] }
+        ]},
+        { "level": 17, "features": [
+          { "index": "spell-thief", "name": "Spell Thief", "level": 17, "desc": ["At 17th level, when a creature casts a spell targeting you, you can use your reaction to attempt to capture it, forcing the caster to make a saving throw against your spell save DC. On a failure the spell has no effect on you and you steal its knowledge for eight hours. Once used, you can't use this again until you finish a long rest."] }
+        ]}
+      ]
+    },
+    {
+      "index": "mastermind",
+      "name": "Mastermind",
+      "subclass_flavor": "Roguish Archetype",
+      "class": { "index": "rogue", "name": "Rogue", "url": "/api/2014/classes/rogue" },
+      "desc": ["Your focus is on people and the influence and secret knowledge that govern them. Many spies, courtiers, and schemers follow this archetype, leading lives of intrigue. Words are your weapons as often as knives or poison, and secrets and favors are your most valuable commodities."],
+      "levels": [
+        { "level": 3, "features": [
+          { "index": "master-of-intrigue", "name": "Master of Intrigue", "level": 3, "desc": ["You gain proficiency with the disguise kit, the forgery kit, and one gaming set of your choice, and you learn two additional languages. You can also unerringly mimic the speech patterns and accent of a creature you have heard speak for at least one minute."] },
+          { "index": "master-of-tactics", "name": "Master of Tactics", "level": 3, "desc": ["You can use the Help action as a bonus action, and you can use it to aid an ally attacking a creature that is within 30 feet of you rather than only one adjacent to you."] }
+        ]},
+        { "level": 9, "features": [
+          { "index": "insightful-manipulator", "name": "Insightful Manipulator", "level": 9, "desc": ["If you spend at least one minute observing or interacting with a creature outside combat, you can glean whether it is your equal, superior, or inferior with regard to its Intelligence, Wisdom, Charisma score, and class levels, if any."] }
+        ]},
+        { "level": 13, "features": [
+          { "index": "misdirection", "name": "Misdirection", "level": 13, "desc": ["When you are targeted by an attack while a creature within 5 feet of you is granting you cover against it, you can use your reaction to redirect the attack to that creature instead."] }
+        ]},
+        { "level": 17, "features": [
+          { "index": "soul-of-deceit", "name": "Soul of Deceit", "level": 17, "desc": ["Your thoughts can't be read by telepathy or other means unless you allow it, and you can present false thoughts to a creature reading your mind. In addition, magic that would determine whether you are telling the truth reads your deliberate lies as the truth."] }
+        ]}
+      ]
+    },
+    {
+      "index": "swashbuckler",
+      "name": "Swashbuckler",
+      "subclass_flavor": "Roguish Archetype",
+      "class": { "index": "rogue", "name": "Rogue", "url": "/api/2014/classes/rogue" },
+      "desc": ["You focus your training on the art of the blade, relying on speed, elegance, and charm in equal measure. While some warriors are brutes clad in heavy armor, your method of fighting looks almost like a performance. Duelists and pirates typically belong to this archetype."],
+      "levels": [
+        { "level": 3, "features": [
+          { "index": "fancy-footwork", "name": "Fancy Footwork", "level": 3, "desc": ["During your turn, if you make a melee attack against a creature, that creature can't make opportunity attacks against you for the rest of your turn."] },
+          { "index": "rakish-audacity", "name": "Rakish Audacity", "level": 3, "desc": ["You add your Charisma modifier to your initiative rolls. You also don't need advantage to land a Sneak Attack if you are within 5 feet of the target, no other creatures are within 5 feet of you, and you don't have disadvantage on the attack roll."] }
+        ]},
+        { "level": 9, "features": [
+          { "index": "panache", "name": "Panache", "level": 9, "desc": ["As an action you make a Charisma (Persuasion) check contested by a creature's Wisdom (Insight). If you win against a hostile creature, for one minute it has disadvantage on attacks against anyone but you and can't make opportunity attacks against anyone but you."] }
+        ]},
+        { "level": 13, "features": [
+          { "index": "elegant-maneuver", "name": "Elegant Maneuver", "level": 13, "desc": ["As a bonus action on your turn, you gain advantage on the next Dexterity (Acrobatics) or Strength (Athletics) check you make during the same turn."] }
+        ]},
+        { "level": 17, "features": [
+          { "index": "master-duelist", "name": "Master Duelist", "level": 17, "desc": ["Once between rests, when you miss with an attack roll, you can roll it again with advantage."] }
+        ]}
+      ]
+    },
+    {
+      "index": "inquisitive",
+      "name": "Inquisitive",
+      "subclass_flavor": "Roguish Archetype",
+      "class": { "index": "rogue", "name": "Rogue", "url": "/api/2014/classes/rogue" },
+      "desc": ["You excel at rooting out secrets and unraveling mysteries. You rely on your sharp eye for detail, but also on your finely honed ability to read the words and deeds of other creatures to determine their true intent."],
+      "levels": [
+        { "level": 3, "features": [
+          { "index": "ear-for-deceit", "name": "Ear for Deceit", "level": 3, "desc": ["When you make a Wisdom (Insight) check to determine whether a creature is lying, treat any roll of 7 or lower on the d20 as an 8."] },
+          { "index": "eye-for-detail", "name": "Eye for Detail", "level": 3, "desc": ["You can use a bonus action to make a Wisdom (Perception) check to spot a hidden creature or object, or an Intelligence (Investigation) check to uncover or decipher a clue."] }
+        ]},
+        { "level": 9, "features": [
+          { "index": "insightful-fighting", "name": "Insightful Fighting", "level": 9, "desc": ["As a bonus action you make a Wisdom (Insight) check contested by the target's Charisma (Deception). On a success you can land Sneak Attack against that creature for the next minute even without advantage, as long as you don't have disadvantage."] }
+        ]},
+        { "level": 13, "features": [
+          { "index": "steady-eye", "name": "Steady Eye", "level": 13, "desc": ["You have advantage on Wisdom (Perception) and Intelligence (Investigation) checks if you move no more than half your speed on the same turn."] }
+        ]},
+        { "level": 17, "features": [
+          { "index": "unerring-eye", "name": "Unerring Eye", "level": 17, "desc": ["As an action you sense the presence of illusions, shapechangers not in their original form, and other magical deception within 30 feet, learning their location. You can use this a number of times equal to your Wisdom modifier per long rest."] }
+        ]}
+      ]
+    },
+    {
+      "index": "scout",
+      "name": "Scout",
+      "subclass_flavor": "Roguish Archetype",
+      "class": { "index": "rogue", "name": "Rogue", "url": "/api/2014/classes/rogue" },
+      "desc": ["You are skilled in stealth and surviving far from the streets of a city, allowing you to scout ahead of your companions during expeditions. Rogues who embrace this archetype are at home in the wilderness and among barbarians and rangers."],
+      "levels": [
+        { "level": 3, "features": [
+          { "index": "skirmisher", "name": "Skirmisher", "level": 3, "desc": ["You can move up to half your speed as a reaction when an enemy ends its turn within 5 feet of you, and this movement doesn't provoke opportunity attacks."] },
+          { "index": "survivalist", "name": "Survivalist", "level": 3, "desc": ["You gain proficiency in the Nature and Survival skills if you don't already have them, and your proficiency bonus is doubled for any ability check you make with either skill."] }
+        ]},
+        { "level": 9, "features": [
+          { "index": "superior-mobility", "name": "Superior Mobility", "level": 9, "desc": ["Your walking speed increases by 10 feet, and if you have a climbing or swimming speed, that speed increases by 10 feet as well."] }
+        ]},
+        { "level": 13, "features": [
+          { "index": "ambush-master", "name": "Ambush Master", "level": 13, "desc": ["You have advantage on initiative rolls. In addition, the first creature you hit during the first round of a combat becomes easier to gang up on: until the start of your next turn, attack rolls against it by anyone other than you have advantage."] }
+        ]},
+        { "level": 17, "features": [
+          { "index": "sudden-strike", "name": "Sudden Strike", "level": 17, "desc": ["If you take the Attack action, you can make one additional attack as a bonus action, and you can apply Sneak Attack damage to that bonus attack even if you already used Sneak Attack this turn, provided it targets a different creature."] }
+        ]}
+      ]
+    },
+    {
+      "index": "soulknife",
+      "name": "Soulknife",
+      "subclass_flavor": "Roguish Archetype",
+      "class": { "index": "rogue", "name": "Rogue", "url": "/api/2014/classes/rogue" },
+      "desc": ["You strike using the power of your mind itself, manifesting psychic blades and other psionic talents. Rogues of this archetype are deadly assassins, mind-bending tricksters, and protectors who wield the power of their psyche."],
+      "levels": [
+        { "level": 3, "features": [
+          { "index": "psionic-power", "name": "Psionic Power", "level": 3, "desc": ["You gain a pool of Psionic Energy dice (d6s equal to twice your proficiency bonus) that fuel several psionic abilities; you regain at least one on a short rest and all of them on a long rest, and the die size grows as you advance."] },
+          { "index": "psychic-blades", "name": "Psychic Blades", "level": 3, "desc": ["You can manifest a blade of psychic energy as part of the Attack action (finesse, 1d6 psychic, thrown range 60 feet), and conjure a second blade as a bonus action that deals 1d4 psychic. The blades vanish after use and cost no Psionic Energy."] }
+        ]},
+        { "level": 9, "features": [
+          { "index": "soul-blades", "name": "Soul Blades", "level": 9, "desc": ["You unlock Homing Strikes (add a Psionic Energy die to a missed Psychic Blade attack roll to potentially turn it into a hit) and Psychic Teleportation (hurl a blade and teleport a distance based on a rolled Psionic Energy die)."] }
+        ]},
+        { "level": 13, "features": [
+          { "index": "psychic-veil", "name": "Psychic Veil", "level": 13, "desc": ["As an action you turn invisible for up to one hour, ending early if you attack, deal damage, or force a saving throw. You can use this once per long rest for free, or by spending a Psionic Energy die."] }
+        ]},
+        { "level": 17, "features": [
+          { "index": "rend-mind", "name": "Rend Mind", "level": 17, "desc": ["When you deal Sneak Attack damage with your Psychic Blades, you can force the target to make a Wisdom saving throw or be stunned for one minute. This expends three Psionic Energy dice, or can be used once per long rest without them."] }
+        ]}
+      ]
+    },
+    {
+      "index": "phantom",
+      "name": "Phantom",
+      "subclass_flavor": "Roguish Archetype",
+      "class": { "index": "rogue", "name": "Rogue", "url": "/api/2014/classes/rogue" },
+      "desc": ["Walking the line between life and death, you gain the powers of the dead. As a phantom, you reach across the boundary to grasp echoes of those who have passed on, harvesting their lingering knowledge and channeling the raw energy of death to strike down your foes."],
+      "levels": [
+        { "level": 3, "features": [
+          { "index": "whispers-of-the-dead", "name": "Whispers of the Dead", "level": 3, "desc": ["Whenever you finish a short or long rest, or deal Sneak Attack damage, you can gain one skill or tool proficiency of your choice, which lasts until you use this feature to replace it."] },
+          { "index": "wails-from-the-grave", "name": "Wails from the Grave", "level": 3, "desc": ["Right after you deal Sneak Attack damage to a creature on your turn, deadly energy can leap to a second creature within 30 feet, dealing necrotic damage equal to half the number of your Sneak Attack dice. Usable a number of times equal to your proficiency bonus per long rest."] }
+        ]},
+        { "level": 9, "features": [
+          { "index": "tokens-of-the-departed", "name": "Tokens of the Departed", "level": 9, "desc": ["When a creature within 30 feet of you dies, you can capture a fragment of its departing soul as a Soul Trinket. While holding at least one you have advantage on Constitution and death saving throws, and you can consume a trinket to fuel Wails from the Grave or magically query the soul."] }
+        ]},
+        { "level": 13, "features": [
+          { "index": "ghost-walk", "name": "Ghost Walk", "level": 13, "desc": ["As a bonus action you assume a spectral form for ten minutes: you gain a flying speed, can move through creatures and objects as difficult terrain, and attack rolls against you have disadvantage. Usable once per long rest for free, or by consuming a Soul Trinket."] }
+        ]},
+        { "level": 17, "features": [
+          { "index": "deaths-friend", "name": "Death's Friend", "level": 17, "desc": ["Wails from the Grave also triggers when there is no second target, striking the original target again instead. In addition, whenever you finish a long rest with no Soul Trinkets, you gain one."] }
+        ]}
+      ]
+    }
+  ]
+}

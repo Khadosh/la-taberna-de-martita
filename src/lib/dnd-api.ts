@@ -1,3 +1,5 @@
+import { localSubclassMap, localFeatureMap, localSubclassFeaturesMap } from './local-subclass-store'
+
 const BASE = 'https://www.dnd5eapi.co/api'
 const BASE_2014 = 'https://www.dnd5eapi.co/api/2014'
 
@@ -185,9 +187,9 @@ export const dndApi = {
   classSubclasses: (i: string) => get<{ results: ApiRef[] }>(`/classes/${i}/subclasses`),
   spell: (i: string) => get<SpellDetail>(`/spells/${i}`),
   trait: (i: string) => get<TraitDetail>(`/traits/${i}`),
-  feature: (i: string) => get<FeatureDetail>(`/features/${i}`),
-  subclass: (i: string) => get<SubclassDetail>(`/subclasses/${i}`),
-  subclassFeatures: (i: string) => get<{ results: ApiRef[] }>(`/subclasses/${i}/features`),
+  feature: (i: string) => localFeatureMap.has(i) ? Promise.resolve(localFeatureMap.get(i)!) : get<FeatureDetail>(`/features/${i}`),
+  subclass: (i: string) => localSubclassMap.has(i) ? Promise.resolve(localSubclassMap.get(i)!) : get<SubclassDetail>(`/subclasses/${i}`),
+  subclassFeatures: (i: string) => localSubclassFeaturesMap.has(i) ? Promise.resolve(localSubclassFeaturesMap.get(i)!) : get<{ results: ApiRef[] }>(`/subclasses/${i}/features`),
   skill: (i: string) => get<SkillDetail>(`/skills/${i}`),
   equipment: () => get<{ count: number; results: ApiRef[] }>('/equipment'),
   equipmentDetail: (i: string) => get2014<EquipmentItem>(`/equipment/${i}`),
