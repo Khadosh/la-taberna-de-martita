@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Combatant, Npc, BoardToken } from './tablero-types'
 import { getDeterministicColor } from './tablero-types'
 
@@ -87,6 +88,16 @@ export function DmNpcSidebar({
   hoveredGroupId, setHoveredGroupId,
   toggleNpcHidden, updateNpc, removeNpc, adjustBoardNpcHp,
 }: DmNpcSidebarProps) {
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
+
+  const toggleCollapse = (groupId: string) =>
+    setCollapsed(prev => { const next = new Set(prev); next.has(groupId) ? next.delete(groupId) : next.add(groupId); return next })
+
+  const toggleGroupVisibility = (tokens: BoardToken[]) => {
+    const allHidden = tokens.every(bt => bt.hidden)
+    tokens.forEach(bt => { if (allHidden ? bt.hidden : !bt.hidden) toggleNpcHidden(bt.entity_id) })
+  }
+
   const npcCombatants = combatants.filter(c => c.kind === 'npc') as { kind: 'npc'; npc: Npc }[]
   const npcTokens = boardTokens.filter(bt => bt.kind === 'npc')
   const count = combatActive ? npcCombatants.length : npcTokens.length
@@ -168,32 +179,58 @@ export function DmNpcSidebar({
           <p className="text-stone-700 text-xs font-serif italic px-4 pt-1">Sin NPCs en el tablero.</p>
         ) : (
           <div className="px-3 pb-4 space-y-3">
-            {groups.map(group => (
-              <div key={group.groupId}>
-                {/* Group header — hover highlights all tokens in group */}
-                <div
-                  className="flex items-center gap-1.5 mb-1.5 px-0.5 cursor-default"
-                  onMouseEnter={() => setHoveredGroupId(group.groupId)}
-                  onMouseLeave={() => setHoveredGroupId(null)}
-                >
-                  <div className={`flex-1 h-px transition-colors ${hoveredGroupId === group.groupId ? 'bg-amber-600/60' : 'bg-stone-700'}`} />
-                  <span className={`text-[9px] tracking-widest uppercase font-serif font-semibold transition-colors ${hoveredGroupId === group.groupId ? 'text-amber-500' : 'text-stone-600'}`}>
-                    {group.label}
-                  </span>
-                  <div className={`flex-1 h-px transition-colors ${hoveredGroupId === group.groupId ? 'bg-amber-600/60' : 'bg-stone-700'}`} />
+            {groups.map(group => {
+              const isCollapsed = collapsed.has(group.groupId)
+              const allHidden = group.tokens.every(bt => bt.hidden)
+              const isGroupHovered = hoveredGroupId === group.groupId
+              return (
+                <div key={group.groupId}>
+                  {/* Group header: chevron collapse + label hover + eye toggle */}
+                  <div className="flex items-center gap-1 mb-1.5 px-0.5">
+                    <button
+                      onClick={() => toggleCollapse(group.groupId)}
+                      className="shrink-0 text-stone-600 hover:text-stone-300 transition-colors"
+                      title={isCollapsed ? 'Expandir grupo' : 'Colapsar grupo'}
+                    >
+                      <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
+                        style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }}>
+                        <polyline points="2,3.5 5,6.5 8,3.5" />
+                      </svg>
+                    </button>
+                    <div
+                      className="flex-1 flex items-center gap-1.5 cursor-default min-w-0"
+                      onMouseEnter={() => setHoveredGroupId(group.groupId)}
+                      onMouseLeave={() => setHoveredGroupId(null)}
+                    >
+                      <div className={`flex-1 h-px transition-colors ${isGroupHovered ? 'bg-amber-600/60' : 'bg-stone-700'}`} />
+                      <span className={`text-[9px] tracking-widest uppercase font-serif font-semibold transition-colors whitespace-nowrap ${isGroupHovered ? 'text-amber-500' : 'text-stone-600'}`}>
+                        {group.label}
+                      </span>
+                      <div className={`flex-1 h-px transition-colors ${isGroupHovered ? 'bg-amber-600/60' : 'bg-stone-700'}`} />
+                    </div>
+                    <button
+                      onClick={() => toggleGroupVisibility(group.tokens)}
+                      className={`shrink-0 transition-colors ${allHidden ? 'text-amber-500 hover:text-amber-300' : 'text-stone-500 hover:text-stone-200'}`}
+                      title={allHidden ? 'Mostrar grupo a jugadores' : 'Ocultar grupo a jugadores'}
+                    >
+                      <EyeIcon hidden={allHidden} />
+                    </button>
+                  </div>
+                  {!isCollapsed && (
+                    <div className="space-y-2">
+                      {group.tokens.map(bt => (
+                        <BoardNpcCard key={bt.entity_id} bt={bt}
+                          isHovered={hoveredTokenId === bt.entity_id || isGroupHovered}
+                          onEnter={() => setHoveredTokenId(bt.entity_id)}
+                          onLeave={() => setHoveredTokenId(null)}
+                          toggleNpcHidden={toggleNpcHidden} removeNpc={removeNpc} adjustBoardNpcHp={adjustBoardNpcHp}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  {group.tokens.map(bt => (
-                    <BoardNpcCard key={bt.entity_id} bt={bt}
-                      isHovered={hoveredTokenId === bt.entity_id || hoveredGroupId === group.groupId}
-                      onEnter={() => setHoveredTokenId(bt.entity_id)}
-                      onLeave={() => setHoveredTokenId(null)}
-                      toggleNpcHidden={toggleNpcHidden} removeNpc={removeNpc} adjustBoardNpcHp={adjustBoardNpcHp}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))}
+              )
+            })}
             {ungrouped.map(bt => (
               <BoardNpcCard key={bt.entity_id} bt={bt}
                 isHovered={hoveredTokenId === bt.entity_id}
