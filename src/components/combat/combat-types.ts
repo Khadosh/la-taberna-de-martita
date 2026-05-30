@@ -16,6 +16,7 @@ export type TokenData = {
   equipmentNotes?: string
   damage?: string
   isHidden?: boolean
+  spawnGroup?: string
 }
 
 export type AttackEntity = {

@@ -87,6 +87,8 @@ Sincronización de dados en mesa integrada al tablero de combate del DM (documen
 | CA calculada automáticamente al equipar/desequipar armadura y escudo | ✅ |
 | Conjuros: backfill de conocidos + sistema de preparados por clase (Mago/Clérigo/Druida/Paladín) | ✅ |
 | Dado de daño de arma equipada en popup de combate (dice+stat via D&D API) | ✅ |
+| HP sync en tiempo real para jugadores (Supabase Realtime en player-tablero) | ✅ |
+| Agrupación de NPCs por encuentro generado + hover group en tablero | ✅ |
 
 ---
 

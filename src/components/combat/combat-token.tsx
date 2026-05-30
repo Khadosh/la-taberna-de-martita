@@ -5,7 +5,7 @@ import { getDeterministicColor } from '../tablero/tablero-types'
 
 export function CombatToken({
   data, pos, isFrom, isTo, inAoE, onPointerDown, onContextMenu,
-  hoveredTokenId, onHoverToken, isPlayer,
+  hoveredTokenId, hoveredGroupId, onHoverToken, isPlayer,
 }: {
   data: TokenData
   pos: Pos
@@ -15,6 +15,7 @@ export function CombatToken({
   onPointerDown: (e: React.PointerEvent) => void
   onContextMenu?: (e: React.MouseEvent) => void
   hoveredTokenId?: string | null
+  hoveredGroupId?: string | null
   onHoverToken?: (id: string | null) => void
   isPlayer?: boolean
 }) {
@@ -23,7 +24,7 @@ export function CombatToken({
   const color = arcColor(pct)
   const half = TOKEN_SIZE / 2
   const tokenColor = getDeterministicColor(data.id)
-  const isHovered = hoveredTokenId === data.id
+  const isHovered = hoveredTokenId === data.id || (!!hoveredGroupId && data.spawnGroup === hoveredGroupId)
   const isDead = data.kind === 'npc' && data.maxHp > 0 && data.currentHp === 0
 
   return (

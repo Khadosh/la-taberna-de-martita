@@ -111,6 +111,7 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
   const [leftPanelCollapsed, setLeftPanelCollapsed] = useState(false)
   const [rightPanelCollapsed, setRightPanelCollapsed] = useState(false)
   const [hoveredTokenId, setHoveredTokenId] = useState<string | null>(null)
+  const [hoveredGroupId, setHoveredGroupId] = useState<string | null>(null)
 
   const encounterGen = useEncounterGenerator({ characters, campaignId, addNpcFromMonster })
 
@@ -398,6 +399,7 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
             externalTargeting={externalTargeting}
             onSelectionChange={handleSelectionChange}
             hoveredTokenId={hoveredTokenId}
+            hoveredGroupId={hoveredGroupId}
             onHoverToken={setHoveredTokenId}
           />
 
@@ -444,6 +446,8 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
             boardTokens={boardTokens}
             hoveredTokenId={hoveredTokenId}
             setHoveredTokenId={setHoveredTokenId}
+            hoveredGroupId={hoveredGroupId}
+            setHoveredGroupId={setHoveredGroupId}
             toggleNpcHidden={toggleNpcHidden}
             updateNpc={updateNpc}
             removeNpc={removeNpc}

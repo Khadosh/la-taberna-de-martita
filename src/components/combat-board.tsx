@@ -19,6 +19,7 @@ export function CombatBoard({
   externalTargeting = null,
   onSelectionChange,
   hoveredTokenId = null,
+  hoveredGroupId = null,
   onHoverToken,
 }: {
   tokens: TokenData[]
@@ -61,6 +62,7 @@ export function CombatBoard({
     groundTargetPos: Pos | null
   }) => void
   hoveredTokenId?: string | null
+  hoveredGroupId?: string | null
   onHoverToken?: (id: string | null) => void
 }) {
   const {
@@ -262,6 +264,7 @@ export function CombatBoard({
                 isTo={isTo}
                 inAoE={inAoE}
                 hoveredTokenId={hoveredTokenId}
+                hoveredGroupId={hoveredGroupId}
                 onHoverToken={onHoverToken}
                 isPlayer={isPlayer}
                 onPointerDown={e => {

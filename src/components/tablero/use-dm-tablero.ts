@@ -181,7 +181,7 @@ export function useDmTablero(campaignId: string) {
 
   // ── Board token sync helpers ──────────────────────────────────────────────
 
-  const upsertTokenToBoard = async (token: { id: string; name: string; kind: 'player' | 'npc'; currentHp: number; maxHp: number; portraitUrl: string | null; isActive: boolean; npcLevel?: number }) => {
+  const upsertTokenToBoard = async (token: { id: string; name: string; kind: 'player' | 'npc'; currentHp: number; maxHp: number; portraitUrl: string | null; isActive: boolean; npcLevel?: number; spawnGroup?: string; archetypeLabel?: string }) => {
     await db.from('board_tokens').upsert({
       campaign_id: campaignId,
       entity_id: token.id,
@@ -191,6 +191,8 @@ export function useDmTablero(campaignId: string) {
       max_hp: token.maxHp,
       portrait_url: token.portraitUrl ?? null,
       npc_level: token.npcLevel ?? null,
+      spawn_group: token.spawnGroup ?? null,
+      archetype_label: token.archetypeLabel ?? null,
       x: 5, y: 5,
       updated_at: new Date().toISOString(),
     }, { onConflict: 'campaign_id,entity_id', ignoreDuplicates: true })
@@ -327,7 +329,7 @@ export function useDmTablero(campaignId: string) {
     await removeTokenFromBoard(id)
   }
 
-  const addNpcFromMonster = async (summary: MonsterSummary, count: number, opts?: { role?: string; portraitUrl?: string; level?: number; customSpells?: string[] }) => {
+  const addNpcFromMonster = async (summary: MonsterSummary, count: number, opts?: { role?: string; portraitUrl?: string; level?: number; customSpells?: string[]; spawnGroup?: string; archetypeLabel?: string }) => {
     setAddingMonster(true)
     try {
       const monster = await dndApi.monster(summary.index)
@@ -356,7 +358,7 @@ export function useDmTablero(campaignId: string) {
       }
       for (const c of newCombatants) {
         if (c.kind === 'npc') {
-          await upsertTokenToBoard({ id: c.npc.id, name: c.npc.name, kind: 'npc', currentHp: c.npc.currentHp, maxHp: c.npc.maxHp, portraitUrl: c.npc.portraitUrl ?? null, npcLevel: c.npc.level, isActive: false })
+          await upsertTokenToBoard({ id: c.npc.id, name: c.npc.name, kind: 'npc', currentHp: c.npc.currentHp, maxHp: c.npc.maxHp, portraitUrl: c.npc.portraitUrl ?? null, npcLevel: c.npc.level, isActive: false, spawnGroup: opts?.spawnGroup, archetypeLabel: opts?.archetypeLabel })
         }
       }
       setShowBestiary(false)
@@ -464,7 +466,7 @@ export function useDmTablero(campaignId: string) {
         const char = bt.kind === 'player' ? characters.find(c => c.id === bt.entity_id) : null
         const maxHp = char ? maxHpFor(char) : bt.max_hp ?? 10
         const currentHp = char ? (localHp[char.id] ?? currentHpFor(char)) : bt.current_hp ?? maxHp
-        return { id: bt.entity_id, name: bt.label, kind: bt.kind, currentHp, maxHp, portraitUrl: char?.portrait_url ?? bt.portrait_url ?? null, isActive: false }
+        return { id: bt.entity_id, name: bt.label, kind: bt.kind, currentHp, maxHp, portraitUrl: char?.portrait_url ?? bt.portrait_url ?? null, isActive: false, spawnGroup: bt.spawn_group ?? undefined }
       })
     }
   }, [combatActive, combatants, boardTokens, characters, currentTurn, localHp])

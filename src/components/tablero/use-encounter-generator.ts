@@ -74,7 +74,7 @@ export type { Archetype }
 export function useEncounterGenerator(params: {
   characters: Character[]
   campaignId: string
-  addNpcFromMonster: (summary: MonsterSummary, count: number, opts?: { role?: string; portraitUrl?: string; level?: number; customSpells?: string[] }) => Promise<void>
+  addNpcFromMonster: (summary: MonsterSummary, count: number, opts?: { role?: string; portraitUrl?: string; level?: number; customSpells?: string[]; spawnGroup?: string; archetypeLabel?: string }) => Promise<void>
 }) {
   const { characters, campaignId, addNpcFromMonster } = params
 
@@ -335,12 +335,18 @@ export function useEncounterGenerator(params: {
       const details = await Promise.all(uniqueIndexes.map(idx => dndApi.monster(idx)))
       const detailMap = new Map(details.map(d => [d.index, d]))
 
+      const spawnGroup = crypto.randomUUID()
+      const selectedArchetypes = ARCHETYPES.filter(a => selectedArchetypeIds.includes(a.id))
+      const archetypeLabel = selectedArchetypes.length > 0
+        ? selectedArchetypes.map(a => a.name).join(' + ')
+        : 'Encuentro'
+
       for (const unit of units) {
         const detail = detailMap.get(unit.monsterIndex)
         if (!detail) continue
         const summary: MonsterSummary = { index: detail.index, name: detail.name }
         const portraitUrl = `https://www.dnd5eapi.co/api/2014/images/monsters/${unit.monsterIndex}.png`
-        await addNpcFromMonster(summary, 1, { role: unit.role, portraitUrl, level: unit.level, customSpells: unit.customSpells })
+        await addNpcFromMonster(summary, 1, { role: unit.role, portraitUrl, level: unit.level, customSpells: unit.customSpells, spawnGroup, archetypeLabel })
       }
 
       const { data: { user } } = await supabase.auth.getUser()

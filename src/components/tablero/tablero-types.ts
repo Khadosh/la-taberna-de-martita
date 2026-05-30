@@ -33,6 +33,8 @@ export type BoardToken = {
   x: number
   y: number
   hidden?: boolean
+  spawn_group?: string | null
+  archetype_label?: string | null
 }
 
 export type NpcItem = { id: string; name: string; qty: number }

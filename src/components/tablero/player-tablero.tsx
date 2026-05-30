@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
@@ -14,6 +14,7 @@ import {
 const db = supabase as any
 
 export function PlayerTablero({ campaignId, session }: { campaignId: string; session: Session }) {
+  const queryClient = useQueryClient()
   const [activeMapUrl, setActiveMapUrl] = useState<string | null>(null)
   const [boardTokens, setBoardTokens] = useState<BoardToken[]>([])
   const [externalPositions, setExternalPositions] = useState<Record<string, { x: number; y: number }>>({})
@@ -44,6 +45,17 @@ export function PlayerTablero({ campaignId, session }: { campaignId: string; ses
     db.from('board_tokens').select('*').eq('campaign_id', campaignId)
       .then(({ data }: { data: BoardToken[] | null }) => { if (data) setBoardTokens(data) })
   }, [campaignId])
+
+  // Realtime: character HP/conditions sync for all players in campaign
+  useEffect(() => {
+    const channel = supabase
+      .channel(`player-characters-${campaignId}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'characters', filter: `campaign_id=eq.${campaignId}` }, () => {
+        queryClient.invalidateQueries({ queryKey: ['campaign-characters', campaignId] })
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [campaignId, queryClient])
 
   // Realtime: board_tokens changes
   useEffect(() => {

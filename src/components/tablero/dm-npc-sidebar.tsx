@@ -31,12 +31,50 @@ function HpControls({ curHp, maxHp, onAdjust }: { curHp: number; maxHp: number; 
   )
 }
 
+function BoardNpcCard({ bt, isHovered, onEnter, onLeave, toggleNpcHidden, removeNpc, adjustBoardNpcHp }: {
+  bt: BoardToken; isHovered: boolean
+  onEnter: () => void; onLeave: () => void
+  toggleNpcHidden: (id: string) => void
+  removeNpc: (id: string) => void
+  adjustBoardNpcHp: (id: string, hp: number) => void
+}) {
+  const curHp = bt.current_hp ?? 0
+  const maxHp = bt.max_hp ?? 1
+  const hpPct = Math.max(0, Math.min((curHp / maxHp) * 100, 100))
+  const hpColor = hpPct > 50 ? 'bg-green-700' : hpPct > 25 ? 'bg-amber-600' : 'bg-red-700'
+  const tokenColor = getDeterministicColor(bt.entity_id)
+  return (
+    <div
+      onMouseEnter={onEnter} onMouseLeave={onLeave}
+      style={isHovered ? { borderColor: tokenColor, boxShadow: `0 0 10px ${tokenColor}40` } : {}}
+      className={`bg-stone-900 border rounded-lg p-2.5 space-y-2 transition-all duration-200 ${isHovered ? 'border-amber-500' : 'border-stone-700'}`}>
+      <div className="flex items-center gap-1.5">
+        {bt.portrait_url && <img src={bt.portrait_url} alt="" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
+          className="w-7 h-7 rounded-full object-cover object-top border border-stone-700 shrink-0" />}
+        <p className="text-xs font-semibold text-stone-200 flex-1 truncate">{bt.label}</p>
+        <button onClick={() => toggleNpcHidden(bt.entity_id)}
+          className={`shrink-0 transition-colors ${bt.hidden ? 'text-amber-500 hover:text-amber-300' : 'text-stone-500 hover:text-stone-200'}`}
+          title={bt.hidden ? 'Mostrar a jugadores' : 'Ocultar a jugadores'}>
+          <EyeIcon hidden={bt.hidden ?? false} />
+        </button>
+        <button onClick={() => removeNpc(bt.entity_id)} className="text-stone-700 hover:text-red-500 transition-colors text-xs shrink-0">✕</button>
+      </div>
+      <div className="h-1 bg-stone-700 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full transition-all ${hpColor}`} style={{ width: `${hpPct}%` }} />
+      </div>
+      <HpControls curHp={curHp} maxHp={maxHp} onAdjust={v => adjustBoardNpcHp(bt.entity_id, v)} />
+    </div>
+  )
+}
+
 interface DmNpcSidebarProps {
   combatActive: boolean
   combatants: Combatant[]
   boardTokens: BoardToken[]
   hoveredTokenId: string | null
   setHoveredTokenId: (id: string | null) => void
+  hoveredGroupId: string | null
+  setHoveredGroupId: (id: string | null) => void
   toggleNpcHidden: (id: string) => void
   updateNpc: (id: string, patch: Partial<Npc>) => void
   removeNpc: (id: string) => void
@@ -44,19 +82,29 @@ interface DmNpcSidebarProps {
 }
 
 export function DmNpcSidebar({
-  combatActive, combatants, boardTokens, hoveredTokenId, setHoveredTokenId,
+  combatActive, combatants, boardTokens,
+  hoveredTokenId, setHoveredTokenId,
+  hoveredGroupId, setHoveredGroupId,
   toggleNpcHidden, updateNpc, removeNpc, adjustBoardNpcHp,
 }: DmNpcSidebarProps) {
   const npcCombatants = combatants.filter(c => c.kind === 'npc') as { kind: 'npc'; npc: Npc }[]
   const npcTokens = boardTokens.filter(bt => bt.kind === 'npc')
   const count = combatActive ? npcCombatants.length : npcTokens.length
 
+  // Group non-combat tokens by spawn_group
+  const groups = npcTokens.reduce<{ label: string; groupId: string; tokens: BoardToken[] }[]>((acc, bt) => {
+    if (!bt.spawn_group) return acc
+    const g = acc.find(x => x.groupId === bt.spawn_group)
+    if (g) { g.tokens.push(bt); return acc }
+    acc.push({ label: bt.archetype_label ?? 'Encuentro', groupId: bt.spawn_group, tokens: [bt] })
+    return acc
+  }, [])
+  const ungrouped = npcTokens.filter(bt => !bt.spawn_group)
+
   return (
     <>
       <div className="px-4 pt-4 pb-2 flex items-center gap-2">
-        <p className="text-xs tracking-widest text-stone-500 uppercase font-serif flex-1">
-          NPCs · {count}
-        </p>
+        <p className="text-xs tracking-widest text-stone-500 uppercase font-serif flex-1">NPCs · {count}</p>
         {!combatActive && <span className="text-[9px] text-stone-600 font-serif italic">fuera de combate</span>}
       </div>
 
@@ -82,9 +130,7 @@ export function DmNpcSidebar({
                       <div className="relative shrink-0">
                         <img src={npc.portraitUrl} alt="" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
                           className={`w-7 h-7 rounded-full object-cover object-top border border-stone-700 ${isDead ? 'grayscale' : ''}`} />
-                        {isDead && (
-                          <div className="absolute inset-0 rounded-full flex items-center justify-center bg-black/50 text-[10px]">☠</div>
-                        )}
+                        {isDead && <div className="absolute inset-0 rounded-full flex items-center justify-center bg-black/50 text-[10px]">☠</div>}
                       </div>
                     )}
                     <p className={`text-xs font-semibold flex-1 truncate ${isDead ? 'text-stone-500 line-through' : 'text-stone-200'}`}>{npc.name}</p>
@@ -95,18 +141,15 @@ export function DmNpcSidebar({
                         npc.role === 'ranged' ? 'bg-green-900/50 text-green-400' :
                         npc.role === 'magic' ? 'bg-purple-900/50 text-purple-400' :
                         'bg-yellow-900/50 text-yellow-400'
-                      }`}>
-                        {npc.role === 'melee' ? 'Mel' : npc.role === 'ranged' ? 'Dist' : npc.role === 'magic' ? 'Mag' : 'Sop'}
-                      </span>
+                      }`}>{npc.role === 'melee' ? 'Mel' : npc.role === 'ranged' ? 'Dist' : npc.role === 'magic' ? 'Mag' : 'Sop'}</span>
                     )}
                     {npc.level != null && <span className="text-[9px] font-mono text-blue-400/70 shrink-0">Nv{npc.level}</span>}
                     {npc.ac != null && <span className="text-[10px] font-mono text-stone-500 shrink-0">CA {npc.ac}</span>}
                     <button onClick={() => toggleNpcHidden(npc.id)}
-                      className={`shrink-0 transition-colors ${npc.isHidden ? 'text-amber-500 hover:text-amber-300' : 'text-stone-500 hover:text-stone-200'}`}
-                      title={npc.isHidden ? 'Mostrar a jugadores' : 'Ocultar a jugadores'}>
+                      className={`shrink-0 transition-colors ${npc.isHidden ? 'text-amber-500 hover:text-amber-300' : 'text-stone-500 hover:text-stone-200'}`}>
                       <EyeIcon hidden={npc.isHidden ?? false} />
                     </button>
-                    <button onClick={() => removeNpc(npc.id)} className="text-stone-700 hover:text-red-500 transition-colors text-xs shrink-0" title="Quitar del combate">✕</button>
+                    <button onClick={() => removeNpc(npc.id)} className="text-stone-700 hover:text-red-500 transition-colors text-xs shrink-0">✕</button>
                   </div>
                   {!isDead && npc.attackBonus != null && (
                     <p className="text-[10px] font-mono text-stone-600">Atq +{npc.attackBonus}{npc.damage ? ` · ${npc.damage}` : ''}</p>
@@ -114,11 +157,7 @@ export function DmNpcSidebar({
                   <div className="h-1 bg-stone-700 rounded-full overflow-hidden">
                     <div className={`h-full rounded-full transition-all ${isDead ? 'bg-stone-700' : hpColor}`} style={{ width: `${hpPct}%` }} />
                   </div>
-                  {isDead ? (
-                    <HpControls curHp={0} maxHp={npc.maxHp} onAdjust={v => updateNpc(npc.id, { currentHp: v })} />
-                  ) : (
-                    <HpControls curHp={npc.currentHp} maxHp={npc.maxHp} onAdjust={v => updateNpc(npc.id, { currentHp: v })} />
-                  )}
+                  <HpControls curHp={isDead ? 0 : npc.currentHp} maxHp={npc.maxHp} onAdjust={v => updateNpc(npc.id, { currentHp: v })} />
                 </div>
               )
             })}
@@ -128,40 +167,41 @@ export function DmNpcSidebar({
         npcTokens.length === 0 ? (
           <p className="text-stone-700 text-xs font-serif italic px-4 pt-1">Sin NPCs en el tablero.</p>
         ) : (
-          <div className="px-3 pb-4 space-y-2">
-            {npcTokens.map(bt => {
-              const curHp = bt.current_hp ?? 0
-              const maxHp = bt.max_hp ?? 1
-              const hpPct = Math.max(0, Math.min((curHp / maxHp) * 100, 100))
-              const hpColor = hpPct > 50 ? 'bg-green-700' : hpPct > 25 ? 'bg-amber-600' : 'bg-red-700'
-              const isHovered = hoveredTokenId === bt.entity_id
-              const tokenColor = getDeterministicColor(bt.entity_id)
-              return (
-                <div key={bt.entity_id}
-                  onMouseEnter={() => setHoveredTokenId(bt.entity_id)}
-                  onMouseLeave={() => setHoveredTokenId(null)}
-                  style={isHovered ? { borderColor: tokenColor, boxShadow: `0 0 10px ${tokenColor}40` } : {}}
-                  className={`bg-stone-900 border rounded-lg p-2.5 space-y-2 transition-all duration-200 ${isHovered ? 'border-amber-500' : 'border-stone-700'}`}>
-                  <div className="flex items-center gap-1.5">
-                    {bt.portrait_url && (
-                      <img src={bt.portrait_url} alt="" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-                        className="w-7 h-7 rounded-full object-cover object-top border border-stone-700 shrink-0" />
-                    )}
-                    <p className="text-xs font-semibold text-stone-200 flex-1 truncate">{bt.label}</p>
-                    <button onClick={() => toggleNpcHidden(bt.entity_id)}
-                      className={`shrink-0 transition-colors ${bt.hidden ? 'text-amber-500 hover:text-amber-300' : 'text-stone-500 hover:text-stone-200'}`}
-                      title={bt.hidden ? 'Mostrar a jugadores' : 'Ocultar a jugadores'}>
-                      <EyeIcon hidden={bt.hidden ?? false} />
-                    </button>
-                    <button onClick={() => removeNpc(bt.entity_id)} className="text-stone-700 hover:text-red-500 transition-colors text-xs shrink-0" title="Quitar del tablero">✕</button>
-                  </div>
-                  <div className="h-1 bg-stone-700 rounded-full overflow-hidden">
-                    <div className={`h-full rounded-full transition-all ${hpColor}`} style={{ width: `${hpPct}%` }} />
-                  </div>
-                  <HpControls curHp={curHp} maxHp={maxHp} onAdjust={v => adjustBoardNpcHp(bt.entity_id, v)} />
+          <div className="px-3 pb-4 space-y-3">
+            {groups.map(group => (
+              <div key={group.groupId}>
+                {/* Group header — hover highlights all tokens in group */}
+                <div
+                  className="flex items-center gap-1.5 mb-1.5 px-0.5 cursor-default"
+                  onMouseEnter={() => setHoveredGroupId(group.groupId)}
+                  onMouseLeave={() => setHoveredGroupId(null)}
+                >
+                  <div className={`flex-1 h-px transition-colors ${hoveredGroupId === group.groupId ? 'bg-amber-600/60' : 'bg-stone-700'}`} />
+                  <span className={`text-[9px] tracking-widest uppercase font-serif font-semibold transition-colors ${hoveredGroupId === group.groupId ? 'text-amber-500' : 'text-stone-600'}`}>
+                    {group.label}
+                  </span>
+                  <div className={`flex-1 h-px transition-colors ${hoveredGroupId === group.groupId ? 'bg-amber-600/60' : 'bg-stone-700'}`} />
                 </div>
-              )
-            })}
+                <div className="space-y-2">
+                  {group.tokens.map(bt => (
+                    <BoardNpcCard key={bt.entity_id} bt={bt}
+                      isHovered={hoveredTokenId === bt.entity_id || hoveredGroupId === group.groupId}
+                      onEnter={() => setHoveredTokenId(bt.entity_id)}
+                      onLeave={() => setHoveredTokenId(null)}
+                      toggleNpcHidden={toggleNpcHidden} removeNpc={removeNpc} adjustBoardNpcHp={adjustBoardNpcHp}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+            {ungrouped.map(bt => (
+              <BoardNpcCard key={bt.entity_id} bt={bt}
+                isHovered={hoveredTokenId === bt.entity_id}
+                onEnter={() => setHoveredTokenId(bt.entity_id)}
+                onLeave={() => setHoveredTokenId(null)}
+                toggleNpcHidden={toggleNpcHidden} removeNpc={removeNpc} adjustBoardNpcHp={adjustBoardNpcHp}
+              />
+            ))}
           </div>
         )
       )}
