@@ -6,6 +6,7 @@ import type { SubclassDetail, FeatureDetail, ApiRef } from './dnd-api'
 export const localSubclassMap = new Map<string, SubclassDetail>()
 export const localFeatureMap = new Map<string, FeatureDetail>()
 export const localSubclassFeaturesMap = new Map<string, { results: ApiRef[] }>()
+export const localClassSubclassesMap = new Map<string, { results: ApiRef[] }>()
 
 for (const sc of rogueData.subclasses) {
   localSubclassMap.set(sc.index, {
@@ -32,4 +33,9 @@ for (const sc of rogueData.subclasses) {
   }
 
   localSubclassFeaturesMap.set(sc.index, { results: featureRefs })
+
+  // Build per-class subclass list (auto-extends when adding more classes)
+  const classIdx = sc.class.index
+  if (!localClassSubclassesMap.has(classIdx)) localClassSubclassesMap.set(classIdx, { results: [] })
+  localClassSubclassesMap.get(classIdx)!.results.push({ index: sc.index, name: sc.name, url: '' })
 }

@@ -1,4 +1,4 @@
-import { localSubclassMap, localFeatureMap, localSubclassFeaturesMap } from './local-subclass-store'
+import { localSubclassMap, localFeatureMap, localSubclassFeaturesMap, localClassSubclassesMap } from './local-subclass-store'
 
 const BASE = 'https://www.dnd5eapi.co/api'
 const BASE_2014 = 'https://www.dnd5eapi.co/api/2014'
@@ -184,7 +184,7 @@ export const dndApi = {
   klass: (i: string) => get<ClassDetail>(`/classes/${i}`),
   classSpells: (i: string) => get<{ results: ApiRef[] }>(`/classes/${i}/spells`),
   classLevels: (i: string) => get<ClassLevel[]>(`/classes/${i}/levels`),
-  classSubclasses: (i: string) => get<{ results: ApiRef[] }>(`/classes/${i}/subclasses`),
+  classSubclasses: (i: string) => localClassSubclassesMap.has(i) ? Promise.resolve(localClassSubclassesMap.get(i)!) : get<{ results: ApiRef[] }>(`/classes/${i}/subclasses`),
   spell: (i: string) => get<SpellDetail>(`/spells/${i}`),
   trait: (i: string) => get<TraitDetail>(`/traits/${i}`),
   feature: (i: string) => localFeatureMap.has(i) ? Promise.resolve(localFeatureMap.get(i)!) : get<FeatureDetail>(`/features/${i}`),
