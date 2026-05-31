@@ -10,6 +10,7 @@ export function useCombatBoard({
   tokens,
   allEntities,
   externalPositions,
+  onTokenDragging,
   onTokenMoved,
   canDrag,
   characters = [],
@@ -21,6 +22,7 @@ export function useCombatBoard({
   mapUrl?: string | null
   externalPositions?: Record<string, Pos>
   onTokenMoved?: (entityId: string, x: number, y: number) => void
+  onTokenDragging?: (entityId: string, x: number, y: number) => void
   canDrag?: (tokenId: string) => boolean
   characters?: BoardCharacter[]
   isPlayer?: boolean
@@ -88,7 +90,7 @@ export function useCombatBoard({
   }
 
   const interaction = useBoardInteraction({
-    tokens, externalPositions, onTokenMoved, canDrag, onTokenTap,
+    tokens, externalPositions, onTokenMoved, onTokenDragging, canDrag, onTokenTap,
   })
 
   const { positions, boardRef, pan, zoom, gridSize } = interaction

@@ -6,6 +6,9 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 
 ## [Unreleased]
 
+### feat
+- **Drag en tiempo real para jugadores**: el movimiento de fichas del DM ahora se transmite a jugadores durante el drag (no solo al soltar). Usa Supabase broadcast con throttle de 40ms (~25fps), cero escrituras a DB durante el arrastre. `use-board-interaction` emite `onTokenDragging` → `use-combat-broadcast` lo envía como evento `token-dragging` → `player-tablero` lo aplica a `externalPositions` inmediatamente.
+
 ### refactor
 - **Split `use-dm-tablero.ts`** de 638 a 396 líneas extrayendo tres módulos: `use-tablero-data.ts` (queries, realtime y helpers de HP), `use-combat-broadcast.ts` (canal Supabase Realtime para sincronización con jugadores) y `tablero-board-utils.ts` (funciones puras async para DB de board_tokens). `LogEntry` movido a `tablero-types.ts`.
 

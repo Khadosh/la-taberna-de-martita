@@ -108,6 +108,10 @@ export function PlayerTablero({ campaignId, session }: { campaignId: string; ses
         setCombatants(p.combatants)
         setCurrentTurn(p.currentTurn)
       })
+      .on('broadcast', { event: 'token-dragging' }, (payload) => {
+        const { entityId, x, y } = payload.payload
+        setExternalPositions(prev => ({ ...prev, [entityId]: { x, y } }))
+      })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           // Request current combat state from DM

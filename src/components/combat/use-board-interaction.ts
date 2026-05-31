@@ -6,12 +6,14 @@ export function useBoardInteraction({
   tokens,
   externalPositions,
   onTokenMoved,
+  onTokenDragging,
   canDrag,
   onTokenTap,
 }: {
   tokens: TokenData[]
   externalPositions?: Record<string, Pos>
   onTokenMoved?: (entityId: string, x: number, y: number) => void
+  onTokenDragging?: (entityId: string, x: number, y: number) => void
   canDrag?: (tokenId: string) => boolean
   onTokenTap: (id: string, isOwnToken: boolean) => void
 }) {
@@ -23,6 +25,9 @@ export function useBoardInteraction({
   const dragRef = useRef<{ id: string; mx: number; my: number; tx: number; ty: number; moved: boolean; draggable: boolean } | null>(null)
   const onTokenTapRef = useRef(onTokenTap)
   onTokenTapRef.current = onTokenTap
+  const onTokenDraggingRef = useRef(onTokenDragging)
+  onTokenDraggingRef.current = onTokenDragging
+  const lastDragBroadcastRef = useRef<number>(0)
 
   const [boardSize, setBoardSize] = useState({ width: 800, height: 600 })
   const prevBoardSizeRef = useRef({ width: 800, height: 600 })
@@ -119,13 +124,15 @@ export function useBoardInteraction({
         const board = boardRef.current
         if (!board) return
         const rect = board.getBoundingClientRect()
-        setPositions(prev => ({
-          ...prev,
-          [activeDragId]: {
-            x: Math.max(0, Math.min(rect.width - TOKEN_SIZE, d.tx + dx)),
-            y: Math.max(0, Math.min(rect.height - TOKEN_SIZE - 34, d.ty + dy)),
-          },
-        }))
+        const nx = Math.max(0, Math.min(rect.width - TOKEN_SIZE, d.tx + dx))
+        const ny = Math.max(0, Math.min(rect.height - TOKEN_SIZE - 34, d.ty + dy))
+        setPositions(prev => ({ ...prev, [activeDragId]: { x: nx, y: ny } }))
+        // Broadcast intermediate position at ~25fps — no DB write, pure WebSocket
+        const now = performance.now()
+        if (onTokenDraggingRef.current && now - lastDragBroadcastRef.current > 40) {
+          lastDragBroadcastRef.current = now
+          onTokenDraggingRef.current(activeDragId, nx / rect.width, ny / rect.height)
+        }
       }
     }
     const handleUp = (e: PointerEvent) => {

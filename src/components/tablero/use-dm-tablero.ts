@@ -361,10 +361,13 @@ export function useDmTablero(campaignId: string) {
 
   // ── Broadcast channel ─────────────────────────────────────────────────────
 
-  const { handleSelectionChange } = useCombatBroadcast(
+  const { handleSelectionChange, broadcastTokenDrag } = useCombatBroadcast(
     campaignId, tokens, combatActive, combatants, currentTurn,
     handleAttackConfirm, setExternalTargeting,
   )
+
+  const onTokenDragging = (entityId: string, x: number, y: number) =>
+    broadcastTokenDrag(entityId, x, y)
 
   return {
     queryClient, npcInputRef, localHp,
@@ -384,7 +387,7 @@ export function useDmTablero(campaignId: string) {
     combatLog, showLog, setShowLog,
     externalTargeting,
     characters, filteredMonsters, filteredCampaignNpcs,
-    patchCharacter, adjustCharacterHp, onTokenMoved,
+    patchCharacter, adjustCharacterHp, onTokenMoved, onTokenDragging,
     startCombat, endCombat, nextTurn,
     addNpc, updateNpc, removeNpc, toggleNpcHidden, setNpcHidden, adjustBoardNpcHp,
     addNpcFromMonster, addNpcFromCampaign, createCustomNpc,

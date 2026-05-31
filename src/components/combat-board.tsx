@@ -12,6 +12,7 @@ export function CombatBoard({
   mapUrl,
   externalPositions,
   onTokenMoved,
+  onTokenDragging,
   canDrag,
   onAttackConfirm,
   characters = [],
@@ -27,6 +28,7 @@ export function CombatBoard({
   mapUrl?: string | null
   externalPositions?: Record<string, Pos>
   onTokenMoved?: (entityId: string, x: number, y: number) => void
+  onTokenDragging?: (entityId: string, x: number, y: number) => void
   canDrag?: (tokenId: string) => boolean
   onAttackConfirm?: (
     attackerId: string,
@@ -128,6 +130,7 @@ export function CombatBoard({
     mapUrl,
     externalPositions,
     onTokenMoved,
+    onTokenDragging,
     canDrag,
     characters,
     isPlayer,

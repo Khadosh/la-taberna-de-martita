@@ -81,5 +81,13 @@ export function useCombatBroadcast(
     }
   }
 
-  return { handleSelectionChange }
+  const broadcastTokenDrag = (entityId: string, x: number, y: number) => {
+    channelRef.current?.send({
+      type: 'broadcast',
+      event: 'token-dragging',
+      payload: { entityId, x, y },
+    })
+  }
+
+  return { handleSelectionChange, broadcastTokenDrag }
 }

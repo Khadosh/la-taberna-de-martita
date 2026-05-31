@@ -80,6 +80,7 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
     patchCharacter,
     adjustCharacterHp,
     onTokenMoved,
+    onTokenDragging,
     uploadMap,
     startCombat,
     endCombat,
@@ -394,6 +395,7 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
             mapUrl={activeMapUrl}
             externalPositions={externalPositions}
             onTokenMoved={onTokenMoved}
+            onTokenDragging={onTokenDragging}
             onAttackConfirm={handleAttackConfirm}
             characters={characters as any}
             isPlayer={false}
