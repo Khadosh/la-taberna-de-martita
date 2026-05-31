@@ -82,6 +82,15 @@ export const currentHpFor = (c: Character) => c.current_hp ?? maxHpFor(c)
 export const acFor = (c: Character) =>
   c.armor_class ?? (10 + Math.floor(((c.stats.dex ?? 10) - 10) / 2))
 
+export type LogEntry = {
+  id: string
+  attackerName: string
+  targetName: string
+  hit: boolean
+  damage?: number
+  isHealing?: boolean
+}
+
 export interface CampaignMap {
   name: string
   url: string

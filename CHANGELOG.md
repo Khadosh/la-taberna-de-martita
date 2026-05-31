@@ -7,6 +7,9 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 ## [Unreleased]
 
 ### refactor
+- **Split `use-dm-tablero.ts`** de 638 a 396 líneas extrayendo tres módulos: `use-tablero-data.ts` (queries, realtime y helpers de HP), `use-combat-broadcast.ts` (canal Supabase Realtime para sincronización con jugadores) y `tablero-board-utils.ts` (funciones puras async para DB de board_tokens). `LogEntry` movido a `tablero-types.ts`.
+
+### refactor
 - **Auditoría y limpieza de CLAUDE.md**: documentadas features faltantes (Hub de Campaña, PNJ Generator, BG3 icon system, loot profiles, reset-password), corregida descripción del wizard de creación de personaje (Vitral es la columna de preview, no el layout completo), regla 500 líneas con excepción para auto-generados, reglas de commits unificadas, link a design-system corregido a ruta relativa.
 - **Split de `step1-basic-info.tsx`**: extraídas constantes de flavor a `step1-constants.ts` y componentes `DetailModal`/`TraitItem` a `detail-modal.tsx`. Archivo reducido de 708 a 481 líneas.
 - **Eliminados exports vacíos**: `parchmentStyle: {}` y `dmStyle: {}` removidos de `$campaignId.tsx`; import limpiado en `$campaignId.habilidades.tsx`.
