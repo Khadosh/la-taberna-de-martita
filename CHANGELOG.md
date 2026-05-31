@@ -6,6 +6,12 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 
 ## [Unreleased]
 
+### refactor
+- **Auditoría y limpieza de CLAUDE.md**: documentadas features faltantes (Hub de Campaña, PNJ Generator, BG3 icon system, loot profiles, reset-password), corregida descripción del wizard de creación de personaje (Vitral es la columna de preview, no el layout completo), regla 500 líneas con excepción para auto-generados, reglas de commits unificadas, link a design-system corregido a ruta relativa.
+- **Split de `step1-basic-info.tsx`**: extraídas constantes de flavor a `step1-constants.ts` y componentes `DetailModal`/`TraitItem` a `detail-modal.tsx`. Archivo reducido de 708 a 481 líneas.
+- **Eliminados exports vacíos**: `parchmentStyle: {}` y `dmStyle: {}` removidos de `$campaignId.tsx`; import limpiado en `$campaignId.habilidades.tsx`.
+- **Eliminado código muerto**: `step3-background.tsx` (background integrado en step1 desde hace varias sesiones).
+
 ### feat
 - **Panel flotante de jugador en el tablero**: botón trigger con avatar del personaje pegado al borde derecho del board. Al hacer click se desliza un panel oscuro (340px) sobre el tablero sin reducir su tamaño. 4 tabs: Personaje (HP con controles ±1/±5, CA, stats grid, condiciones toggleables, equipamiento resumido), Inventario (InventoryPanel completo con drag & drop y paper doll), Conjuros (TabHechizos con preparados y spell slots), Notas (lista de campaña + formulario para agregar). El board queda siempre visible e interactivo detrás del panel.
 

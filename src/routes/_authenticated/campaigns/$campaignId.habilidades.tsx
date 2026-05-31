@@ -1,6 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { ComingSoon } from './-coming-soon'
-import { parchmentStyle } from './$campaignId'
 
 export const Route = createFileRoute('/_authenticated/campaigns/$campaignId/habilidades')({
   component: HabilidadesTab,
@@ -8,7 +7,7 @@ export const Route = createFileRoute('/_authenticated/campaigns/$campaignId/habi
 
 function HabilidadesTab() {
   return (
-    <div className="w-full min-h-full flex-1 overflow-y-auto text-stone-900 bg-stone-950" style={parchmentStyle}>
+    <div className="w-full min-h-full flex-1 overflow-y-auto text-stone-900 bg-stone-950">
       <ComingSoon
         icon="🧠"
         title="Habilidades"

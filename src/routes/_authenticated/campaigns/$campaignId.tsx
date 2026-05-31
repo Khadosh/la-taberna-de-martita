@@ -174,5 +174,3 @@ function CampaignLayout() {
   )
 }
 
-export const parchmentStyle: React.CSSProperties = {}
-export const dmStyle: React.CSSProperties = {}

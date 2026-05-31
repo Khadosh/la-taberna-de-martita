@@ -50,10 +50,13 @@ El sistema está dividido en varios módulos dinámicos diseñados bajo una dire
     *   **Accesos rápidos:** Barra superior para acceder al Bestiario, Conjuros o cerrar sesión.
 
 ### 2. Creación de Personaje Avanzada
-*   **Capacidad:** Wizard guiado (`src/routes/_authenticated/characters/new.tsx`) que consume la API de D&D 5e.
-*   **Interacción:**
-    *   **Vitral Tripartito:** Interfaz inmersiva (75% clase/raza, 25% trasfondo) con glassmorphism.
-    *   **Selección:** Elección de Raza, Clase (con listado de dados de golpe y competencias) y Trasfondo (Background) con ilustraciones premium y límite de atributos base a 15 con modificadores.
+*   **Capacidad:** Wizard lineal de 4–5 pasos (`src/routes/_authenticated/characters/new.tsx`) que consume la API de D&D 5e. El número de pasos varía según si la clase elegida es lanzadora de conjuros.
+*   **Pasos del wizard:**
+    1.  **Básicos** (`step1-basic-info.tsx`): Nombre, Nivel, Raza, Clase, Trasfondo y Subclase (si el nivel lo habilita). La columna derecha muestra el **Vitral de Vista Previa**: un arco gótico donde la mitad izquierda muestra la imagen de la raza, la mitad derecha la de la clase y el tercio inferior el trasfondo — se actualiza en tiempo real al hacer selecciones.
+    2.  **Atributos** (`step2-stats.tsx`): Asignación de stats por tirada de dados o modo manual. Límite de base 15 + bonos de trasfondo.
+    3.  **Pericias** (`step4-proficiencies.tsx`): Selección de habilidades y experticias según la clase. *(El archivo se llama step4 por razones históricas — es el paso 3 del wizard.)*
+    4.  **Hechizos** (`step5-spells.tsx`, solo casters): Selección de cantrips y hechizos de nivel 1 disponibles para la clase.
+    5.  **Resumen** (`step6-summary.tsx`): Vista final, asignación de campaña opcional y guardado.
 
 ### 3. Hoja de Personaje Interactiva (Character Sheet)
 *   **Capacidad:** La hoja interactiva (`src/routes/_authenticated/characters/$characterId.tsx`) está dividida en dos secciones principales en escritorio (pergamino claro y marco de madera oscuro).
@@ -74,24 +77,42 @@ El sistema está dividido en varios módulos dinámicos diseñados bajo una dire
         *   *Drag & Drop:* Utiliza `@dnd-kit/core` para arrastrar ítems de inventario al maniquí. **Gotcha:** `PointerSensor` debe configurarse con `activationConstraint: { distance: 6 }` para evitar que los clicks actúen como arrastres.
         *   *Control de Carga:* Cálculo dinámico del peso total cargado frente al límite del personaje (Fuerza × 15 lbs).
 
-### 4. La Taberna de Martita (Tavern Services)
+### 4. Hub de Campaña (Campaign Layout)
+*   **Capacidad:** Layout contenedor de todas las rutas de una campaña (`src/routes/_authenticated/campaigns/$campaignId.tsx`). Gestiona el header, la barra de tabs y el `<Outlet>` de sub-rutas. **Las features 5–10 son sub-rutas de este hub.**
+*   **Interacción:**
+    *   **Role-aware tabs:** El DM ve tabs adicionales (PNJs, herramientas de dirección). El jugador ve solo las tabs de referencia en mesa.
+    *   **GM:** Overview · PNJs · Tablero · Taberna · Notas · Hechizos · Comercio · Habilidades
+    *   **Jugador:** Mi Party · Tablero · Taberna · Notas · Hechizos · Comercio · Habilidades
+    *   **Overview** (`$campaignId.index.tsx`): Vista de party — muestra las fichas de los personajes vinculados a la campaña y los NPCs creados por el DM.
+    *   **Rutas placeholder:** `habilidades` y `hechizos` (in-campaign) muestran un `<ComingSoon>` mientras se implementan compendios embebidos. La tab de hechizos incluye un link al `spellbook` global.
+    *   **Rutas legacy (redirects):** `lucha` y `mapas` redirigen a `tablero`. Son aliases de URLs antiguas que se mantienen para no romper enlaces guardados.
+
+### 5. La Taberna de Martita (Tavern Services)
 *   **Capacidad:** Zona social y de descanso de campaña (`src/routes/_authenticated/campaigns/$campaignId.taberna.tsx`).
 *   **Interacción:**
     *   **Bebidas, Comidas y Alojamiento:** Menú de servicios con costo en monedas (oro, plata, cobre). Consumir resta automáticamente el dinero de la ficha del personaje seleccionado, aplica efectos (ganancia de HP, restauración de ranuras por descanso) y escribe un registro automático en el Diario de Aventura.
     *   **Los Establos:** Compra de monturas (caballos, mulas), carruajes y pertrechos de viaje directo de la API de D&D. Al comprar, descuenta el dinero y añade el ítem al inventario del personaje seleccionado.
 
-### 5. Comercio de Campaña (General Trade)
+### 6. Generador de PNJs / NPCs
+*   **Capacidad:** CRUD completo de personajes no jugadores (`src/routes/_authenticated/campaigns/$campaignId.pnj.tsx` + `src/components/campaigns/pnj/`).
+*   **Interacción:**
+    *   El DM puede crear NPCs con stats D&D completos (AC, HP, atributos, modificadores), raza, clase, nivel y descripción narrativa.
+    *   El HP se auto-sugiere al elegir clase y nivel (`calculateSuggestedHp`), pero puede sobreescribirse manualmente.
+    *   Los NPCs se persisten en la tabla `npcs` de Supabase y se pueden editar o eliminar con confirmación.
+    *   Las tarjetas de NPC (`npc-card.tsx`) muestran el bloque de stats completo en estilo pergamino medieval.
+
+### 7. Comercio de Campaña (General Trade)
 *   **Capacidad:** Sistema comercial unificado (`src/routes/_authenticated/campaigns/$campaignId.comercio.tsx`) con 3 pestañas principales:
 *   **Interacción:**
     *   **Adquirir Equipo (Comprar):** Tiendas temáticas (Armería, Alquimia, Sastrería, etc.) que importan ítems directamente de la base de datos de D&D. Permite buscar y adquirir equipamiento para un personaje específico si cuenta con fondos suficientes (calculado vía `toCp` en `src/lib/currency.ts`).
     *   **Vender Botín (Vender):** Los jugadores pueden revender ítems de su inventario a las tiendas a cambio de monedas por el **50% de su valor comercial**.
     *   **Creaciones (GM Only):** Permite al Game Master diseñar ítems customizados, añadirles nombres, descripciones y generar ilustraciones con IA.
 
-### 6. Diario de Campaña (Session Notes)
+### 8. Diario de Campaña (Session Notes)
 *   **Capacidad:** Registro colaborativo de bitácoras de juego (`src/routes/_authenticated/campaigns/$campaignId.notas.tsx`).
 *   **Interacción:** Creación y edición (CRUD) de notas públicas (visibles para toda la mesa) o privadas (visibles solo para el autor y el DM). Registra la fecha de la sesión y el autor.
 
-### 7. Tablero de Batalla y Pantalla de Combate (Combat Board)
+### 9. Tablero de Batalla y Pantalla de Combate (Combat Board)
 *   **Capacidad:** Sistema de cuadrícula en tiempo real (`src/routes/_authenticated/campaigns/$campaignId.tablero.tsx`) para representar encuentros tácticos.
 *   **Interacción:**
     *   **Vista del DM (`DmTableroLayout`):** Controla el mapa de fondo (`dm-map-selector.tsx`), colapsa paneles laterales, añade NPCs a la iniciativa, mueve fichas y despliega plantillas AoE.
@@ -100,13 +121,13 @@ El sistema está dividido en varios módulos dinámicos diseñados bajo una dire
     *   **Sistema de Botín (Loot System):** Integra el motor de recompensas `rollLoot` (`src/loot/roll.ts`). Escala linealmente el oro según el nivel de la party, tira chances de drops mundanos/mágicos del pool temático del arquetipo e inyecta ítems "firma" (Signature Items) con identidad de criatura (ej: Colmillo de Araña, Contrato Infernal).
     *   **Herramientas de Combate:** Resolución de daño, proyección de plantillas de Área de Efecto (Esferas, Cubos, Líneas) con detección automática de tokens, y deducción automática de slots de hechizos al atacar.
 
-### 8. Buscadores y Compendios (Bestiary & Spellbook)
+### 10. Buscadores y Compendios (Bestiary & Spellbook)
 *   **Capacidad:** Bases de datos SRD consultables sin salir de la app (`bestiary.tsx` y `spellbook.tsx`).
 *   **Interacción:**
     *   **Bestiario:** Filtro y selección de criaturas de D&D 5e para ver sus estadísticas completas, bloques de atributos, resistencias, sentidos, acciones y habilidades legendarias.
     *   **Conjuros (Spellbook):** Buscador de conjuros con filtros multicriterio por Clase de Lanzador (Bardo, Mago, Clérigo, etc.) y Nivel de Conjuro (Trucos a Nivel 9).
 
-### 9. Dados Flotantes (Dice Module)
+### 11. Dados Flotantes (Dice Module)
 *   **Capacidad:** Lanzador tridimensional interactivo (`src/lib/dice/` y `DiceModule`) accesible para todos los jugadores y DMs desde el header de campaña y de personaje.
 *   **Interacción:** Permite tirar sets de d4, d6, d8, d10, d12, d20 y d100 de forma rápida con modificadores matemáticos D&D integrados.
 
@@ -114,7 +135,7 @@ El sistema está dividido en varios módulos dinámicos diseñados bajo una dire
 
 ## 🎨 Sistema de Diseño y Coherencia Visual
 
-Toda la interfaz del proyecto debe ceñirse estrictamente a las especificaciones de diseño detalladas en [design-system.md](file:///Users/joaquinnader/coding/personal/la-taberna-de-martita/docs/design-system.md).
+Toda la interfaz del proyecto debe ceñirse estrictamente a las especificaciones de diseño detalladas en [docs/design-system.md](docs/design-system.md).
 
 ### Metáforas Visuales
 1.  **La Mesa de Juego (Estética Oscura/Taberna):**
@@ -131,6 +152,25 @@ Toda la interfaz del proyecto debe ceñirse estrictamente a las especificaciones
 
 ---
 
+## 📚 Librerías y Sistemas Internos
+
+### Sistema de Iconos BG3
+Los iconos de inventario, equipo y conjuros provienen de assets de Baldur's Gate 3, mapeados localmente:
+*   `src/lib/bg3-icon-map.ts`: 2,600+ entradas de nombre de ítem → ruta de imagen local. **Auto-generado** vía `node scripts/scrape-bg3-icons.mjs`. No editar a mano.
+*   `src/lib/bg3-spell-map.ts`: Mapeo equivalente para iconos de conjuros.
+*   Los assets físicos viven en `public/assets/icons/bg3/`.
+
+### Sistema de Botín por Bioma (Loot Profiles)
+El motor de botín (`src/loot/roll.ts`) usa perfiles por bioma para determinar drops:
+*   `src/loot/profiles/`: 8 perfiles temáticos — `averno`, `bosque`, `castillo`, `costa`, `cripta`, `montana`, `planicie`, `subterraneo`.
+*   Cada perfil define pools de ítems mundanos, mágicos y "signature items" (ítems con identidad de criatura).
+
+### Auth y Recuperación de Contraseña
+*   El flujo estándar de Supabase Auth maneja login, logout y sesiones.
+*   `src/routes/reset-password.tsx`: Pantalla de recuperación de contraseña post-magic-link.
+
+---
+
 ## 🔒 Reglas Críticas de Desarrollo
 
 ### 1. Límite Estricto de 500 Líneas por Archivo
@@ -140,31 +180,28 @@ Toda la interfaz del proyecto debe ceñirse estrictamente a las especificaciones
     *   Mover constantes pesadas o estáticas a `*-constants.ts`.
     *   Mover los SVGs inline masivos a un archivo dedicado `*-icons.tsx` o `components/icons/`.
     *   Extraer la lógica compleja de estado a hooks personalizados `use-*`.
+*   **Excepción:** Archivos auto-generados por herramientas externas están exentos: `*.gen.ts` (TanStack Router), `database.types.ts` (Supabase CLI), `bg3-icon-map.ts` y `bg3-spell-map.ts` (scripts de scraping). No refactorizar estos archivos a mano.
 
 ### 2. Gotcha de Bordes en Tailwind v4
 En Tailwind v4, aplicar la clase `border` sin color específico hace que este herede `currentColor` del elemento padre. Esto causa inconsistencias visuales sobre fondos claros u oscuros.
 *   **Mal:** `<div className="border">`
 *   **Bien:** `<div className="border border-parchment-sienna/40">` o `<div className="border border-stone-800">`
 
-### 3. Evitar Estilos en Línea y Mezcla CSS/React
-No utilizar estilos inline (`style={{ backgroundColor: '...' }}`) para colores del tema. Emplear únicamente las clases de Tailwind v4 configuradas en el manual de diseño.
+### 3. Estilos en Línea — Uso Acotado
+No utilizar estilos inline para colores del tema ni layout básico que puede expresarse con Tailwind. Usar únicamente las clases de Tailwind v4 configuradas en el manual de diseño.
+*   **Permitido:** Gradientes multi-stop complejos, `backgroundImage` dinámico (ej: URL de imagen calculada en runtime), posicionamiento absoluto de canvas o SVG en el tablero de combate.
+*   **No permitido:** `style={{ display: 'flex' }}`, `style={{ fontSize: 9 }}`, colores de tema hardcodeados que tienen token equivalente en Tailwind.
 
 ### 4. Flujo de Commits
-*   Seguir la especificación de **Conventional Commits** (`feat`, `fix`, `refactor`, `chore`, `docs`, `style`).
-*   **Actualización obligatoria pre-commit:** Antes de hacer commit, se debe actualizar:
-    1.  `CHANGELOG.md`: Añadir entrada bajo la sección `## [Unreleased]`.
-    2.  `ROADMAP.md`: Actualizar el progreso o marcar tareas completadas.
-*   **No hacer push** sin la aprobación explícita o confirmación del usuario.
+*   Formato: `tipo(sujeto): descripcion` en una línea — ej: `feat(character-sheet): CA auto-calculado`
+*   Tipos válidos: `feat`, `fix`, `refactor`, `chore`, `docs`, `style`, `ui`
+*   **Antes de cada commit:** actualizar `CHANGELOG.md` (sección `## [Unreleased]`) y `ROADMAP.md`.
+*   **No hacer push** sin aprobación explícita del usuario.
+*   **No incluir** `Co-authored-by` en los mensajes de commit.
 
 ### 5. Qué NO hacer
 *   No usar `psql` para cambios de base de datos — siempre Supabase CLI.
 *   No introducir `!important` para sobreescribir colores de borde.
-*   No escribir código sin comentarios justificando el *POR QUÉ* (evitar comentarios obvios del *QUÉ* hace el código).
+*   Solo añadir comentarios cuando el *POR QUÉ* no es obvio: una restricción oculta, un invariante sutil, un workaround para un bug específico. No comentar lo que el código ya dice por su nombre.
 *   No añadir dependencias externas sin consultar al usuario.
 *   No crear frameworks de tests adicionales sin orden explícita.
-
-
-### 6. Commit rules
-*   Hacer `feat / fix / chore / ui` (`sujeto`): `descripcion` one liner
-*   Ejemplo: feat(character-sheet): CA auto-calculado
-*   NO HACER: co-authored by
