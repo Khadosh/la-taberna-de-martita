@@ -44,7 +44,13 @@ export function PlayerTablero({ campaignId, session }: { campaignId: string; ses
       .then(({ data }: { data: { active_map_url?: string | null } | null }) => { if (data?.active_map_url) setActiveMapUrl(data.active_map_url) })
 
     db.from('board_tokens').select('*').eq('campaign_id', campaignId)
-      .then(({ data }: { data: BoardToken[] | null }) => { if (data) setBoardTokens(data) })
+      .then(({ data }: { data: BoardToken[] | null }) => {
+        if (!data) return
+        setBoardTokens(data)
+        const saved: Record<string, { x: number; y: number }> = {}
+        for (const bt of data) saved[bt.entity_id] = { x: bt.x, y: bt.y }
+        setExternalPositions(saved)
+      })
   }, [campaignId])
 
   // Realtime: character HP/conditions sync for all players in campaign

@@ -59,7 +59,13 @@ export function useTableroData(campaignId: string) {
 
   useEffect(() => {
     db.from('board_tokens').select('*').eq('campaign_id', campaignId)
-      .then(({ data }: { data: BoardToken[] | null }) => { if (data) setBoardTokens(data) })
+      .then(({ data }: { data: BoardToken[] | null }) => {
+        if (!data) return
+        setBoardTokens(data)
+        const saved: Record<string, { x: number; y: number }> = {}
+        for (const bt of data) saved[bt.entity_id] = { x: bt.x, y: bt.y }
+        setExternalPositions(saved)
+      })
   }, [campaignId])
 
   useEffect(() => {

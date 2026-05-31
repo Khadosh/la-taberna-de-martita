@@ -71,18 +71,21 @@ export function useBoardInteraction({
 
   useEffect(() => {
     if (!externalPositions || Object.keys(externalPositions).length === 0) return
-    const board = boardRef.current
-    if (!board) return
-    const { width, height } = board.getBoundingClientRect()
-    if (width === 0) return
-    setPositions(prev => {
-      const next = { ...prev }
-      for (const [id, pos] of Object.entries(externalPositions)) {
-        if (draggingRef.current === id) continue
-        next[id] = { x: pos.x * width, y: pos.y * height }
-      }
-      return next
-    })
+    const apply = () => {
+      const board = boardRef.current
+      if (!board) return
+      const { width, height } = board.getBoundingClientRect()
+      if (width === 0) { requestAnimationFrame(apply); return }
+      setPositions(prev => {
+        const next = { ...prev }
+        for (const [id, pos] of Object.entries(externalPositions)) {
+          if (draggingRef.current === id) continue
+          next[id] = { x: pos.x * width, y: pos.y * height }
+        }
+        return next
+      })
+    }
+    apply()
   }, [externalPositions])
 
   useEffect(() => {

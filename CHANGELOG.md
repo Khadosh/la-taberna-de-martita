@@ -6,6 +6,9 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 
 ## [Unreleased]
 
+### fix
+- **Posiciones de fichas al reconectar**: al conectarse al tablero, las fichas ahora aparecen donde quedaron en la sesión anterior. El load inicial de `board_tokens` ahora también puebla `externalPositions` con los `x`,`y` guardados en DB (antes solo se actualizaba por eventos Realtime UPDATE). Además, el effect que aplica posiciones externas usa `requestAnimationFrame` para reintentar si el board aún no tiene ancho medido.
+
 ### feat
 - **Drag en tiempo real bidireccional**: el movimiento de fichas se transmite en ambas direcciones. Jugadores ven el drag del DM (feature anterior) y el DM + otros jugadores ven el drag de cada jugador sobre su propia ficha. El canal `campaign-board` recibe `token-dragging` de todos; el DM mergea `livePositions` (broadcast) sobre `externalPositions` (DB) antes de pasarlas al board.
 
