@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import type { Combatant } from './tablero-types'
 
@@ -21,6 +21,7 @@ export function useCombatBroadcast(
   onTargetingUpdate: (state: any) => void,
 ) {
   const channelRef = useRef<any>(null)
+  const [livePositions, setLivePositions] = useState<Record<string, { x: number; y: number }>>({})
   const combatActiveRef = useRef(combatActive)
   const combatantsRef = useRef(combatants)
   const currentTurnRef = useRef(currentTurn)
@@ -47,6 +48,10 @@ export function useCombatBroadcast(
 
   useEffect(() => {
     const channel = supabase.channel(`campaign-board-${campaignId}`)
+      .on('broadcast', { event: 'token-dragging' }, (payload) => {
+        const { entityId, x, y } = payload.payload
+        setLivePositions(prev => ({ ...prev, [entityId]: { x, y } }))
+      })
       .on('broadcast', { event: 'player-targeting-updated' }, (payload) => {
         onTargetingUpdate(payload.payload)
       })
@@ -89,5 +94,5 @@ export function useCombatBroadcast(
     })
   }
 
-  return { handleSelectionChange, broadcastTokenDrag }
+  return { handleSelectionChange, broadcastTokenDrag, livePositions }
 }

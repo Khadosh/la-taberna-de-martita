@@ -295,6 +295,13 @@ export function PlayerTablero({ campaignId, session }: { campaignId: string; ses
           mapUrl={activeMapUrl}
           externalPositions={externalPositions}
           onTokenMoved={onTokenMoved}
+          onTokenDragging={(entityId, x, y) => {
+            channelRef.current?.send({
+              type: 'broadcast',
+              event: 'token-dragging',
+              payload: { entityId, x, y },
+            })
+          }}
           canDrag={tokenId => tokenId === myCharId}
           characters={characters as any}
           isPlayer={true}

@@ -361,7 +361,7 @@ export function useDmTablero(campaignId: string) {
 
   // ── Broadcast channel ─────────────────────────────────────────────────────
 
-  const { handleSelectionChange, broadcastTokenDrag } = useCombatBroadcast(
+  const { handleSelectionChange, broadcastTokenDrag, livePositions } = useCombatBroadcast(
     campaignId, tokens, combatActive, combatants, currentTurn,
     handleAttackConfirm, setExternalTargeting,
   )
@@ -369,11 +369,17 @@ export function useDmTablero(campaignId: string) {
   const onTokenDragging = (entityId: string, x: number, y: number) =>
     broadcastTokenDrag(entityId, x, y)
 
+  // Merge live drag positions (from players broadcasting) over committed DB positions
+  const mergedExternalPositions = useMemo(
+    () => ({ ...externalPositions, ...livePositions }),
+    [externalPositions, livePositions],
+  )
+
   return {
     queryClient, npcInputRef, localHp,
     combatActive, combatants, currentTurn,
     npcInput, setNpcInput,
-    boardTokens, externalPositions,
+    boardTokens, externalPositions: mergedExternalPositions,
     showBestiary, setShowBestiary,
     bestiarySearch, setBestiarySearch,
     bestiaryQty, setBestiaryQty,

@@ -7,6 +7,9 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 ## [Unreleased]
 
 ### feat
+- **Drag en tiempo real bidireccional**: el movimiento de fichas se transmite en ambas direcciones. Jugadores ven el drag del DM (feature anterior) y el DM + otros jugadores ven el drag de cada jugador sobre su propia ficha. El canal `campaign-board` recibe `token-dragging` de todos; el DM mergea `livePositions` (broadcast) sobre `externalPositions` (DB) antes de pasarlas al board.
+
+### feat
 - **Drag en tiempo real para jugadores**: el movimiento de fichas del DM ahora se transmite a jugadores durante el drag (no solo al soltar). Usa Supabase broadcast con throttle de 40ms (~25fps), cero escrituras a DB durante el arrastre. `use-board-interaction` emite `onTokenDragging` → `use-combat-broadcast` lo envía como evento `token-dragging` → `player-tablero` lo aplica a `externalPositions` inmediatamente.
 
 ### refactor
