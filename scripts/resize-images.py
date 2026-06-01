@@ -61,3 +61,22 @@ if __name__ == "__main__":
     resize_images_in_dir('public/assets/images/classes', max_size=512, exclude_suffixes=['_avatar.png'])
     # Resize race background images (exclude avatars and the spritesheet)
     resize_images_in_dir('public/assets/images/races', max_size=512, exclude_suffixes=['_avatar.png', 'miniaturas.png'])
+    
+    # Resize new main backgrounds to 800px to optimize performance on load
+    for bg_file in ['public/assets/images/login_bg.png', 'public/assets/images/landing_bg.png']:
+        if os.path.exists(bg_file):
+            print(f"\nResizing specific background: {bg_file}...")
+            try:
+                with Image.open(bg_file) as img:
+                    orig_width, orig_height = img.size
+                    new_width, new_height = 800, 800
+                    try:
+                        resample_filter = Image.Resampling.LANCZOS
+                    except AttributeError:
+                        resample_filter = Image.LANCZOS
+                    resized_img = img.resize((new_width, new_height), resample_filter)
+                    resized_img.save(bg_file, optimize=True)
+                    print(f"  -> Resized {bg_file} to {new_width}x{new_height} and optimized.")
+            except Exception as e:
+                print(f"  Error processing {bg_file}: {e}")
+

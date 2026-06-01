@@ -32,6 +32,9 @@ function ResetPasswordPage() {
   if (done) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-tavern-fire px-4">
+        {/* React 19 SEO Metadata Hoisting */}
+        <title>Contraseña Actualizada | La Taberna de Martita</title>
+        <meta name="description" content="Tu contraseña ha sido restablecida exitosamente." />
         <div style={cardStyle} className="w-full max-w-sm">
           <div className="border border-amber-900/60 p-px">
             <div className="border border-amber-900/30">
@@ -66,6 +69,9 @@ function ResetPasswordPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-tavern-fire px-4">
+      {/* React 19 SEO Metadata Hoisting */}
+      <title>Restablecer Contraseña | La Taberna de Martita</title>
+      <meta name="description" content="Elegí una nueva contraseña para acceder a La Taberna de Martita." />
       <div style={cardStyle} className="w-full max-w-sm">
         <div className="border border-amber-900/60 p-px">
           <div className="border border-amber-900/30">

@@ -28,6 +28,7 @@
 | Visual overhaul: papiro, cuero, latón, wax seals | ✅ |
 | Realtime sync (HP, condiciones) | ✅ |
 | Deploy producción + dominio custom + email | ✅ |
+| Landing Page pública & Optimización SEO | ✅ |
 
 ---
 

@@ -44,7 +44,16 @@ function LoginPage() {
   const modeLabel = mode === 'login' ? 'Entrar' : mode === 'register' ? 'Crear cuenta' : 'Enviar email'
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-tavern-fire px-4">
+    <div className="min-h-screen flex items-center justify-center bg-tavern-fire px-4" style={loginPageStyle}>
+      {/* React 19 SEO Metadata Hoisting */}
+      <title>
+        {mode === 'login'
+          ? 'Entrar a la Taberna | La Taberna de Martita'
+          : mode === 'register'
+          ? 'Registrarse | La Taberna de Martita'
+          : 'Recuperar Cuenta | La Taberna de Martita'}
+      </title>
+      <meta name="description" content="Accedé a tus personajes, campañas y herramientas de combate en tiempo real para D&D 5e." />
 
       {/* Card */}
       <div className="w-full max-w-sm" style={cardStyle}>
@@ -177,6 +186,12 @@ function LoginPage() {
 }
 
 // ── Styles ────────────────────────────────────────────────────────────────────
+
+const loginPageStyle: React.CSSProperties = {
+  backgroundImage: 'linear-gradient(rgba(10, 5, 2, 0.78), rgba(10, 5, 2, 0.88)), url("/assets/images/login_bg.png")',
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+}
 
 const cardStyle: React.CSSProperties = {
   background: 'linear-gradient(170deg, #180e06 0%, #0f0804 100%)',

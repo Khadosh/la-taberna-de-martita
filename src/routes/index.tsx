@@ -2,17 +2,27 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
 import { useState } from 'react'
-import { supabase } from '../../lib/supabase'
-import type { Tables } from '../../lib/database.types'
-import { abilityModifier, modifierColor, ABILITY_LABELS } from '../../lib/dnd-api'
-import { CLASS_ICONS, CLASS_COLORS } from '../../lib/class-meta'
+import { supabase } from '../lib/supabase'
+import type { Tables } from '../lib/database.types'
+import { abilityModifier, modifierColor, ABILITY_LABELS } from '../lib/dnd-api'
+import { CLASS_ICONS, CLASS_COLORS } from '../lib/class-meta'
+import { LandingPage } from '../components/landing-page'
 
-export const Route = createFileRoute('/_authenticated/')({
-  component: Dashboard,
+export const Route = createFileRoute('/')({
+  component: IndexPage,
 })
 
-function Dashboard() {
-  const { session } = Route.useRouteContext() as { session: Session }
+function IndexPage() {
+  const { session } = Route.useRouteContext() as { session: Session | null }
+
+  if (!session) {
+    return <LandingPage />
+  }
+
+  return <Dashboard session={session} />
+}
+
+function Dashboard({ session }: { session: Session }) {
   const userId = session.user.id
 
   const { data: gmCampaigns = [], isLoading: loadingGm } = useQuery({
@@ -44,6 +54,8 @@ function Dashboard() {
 
   return (
     <div className="min-h-screen bg-stone-tavern text-stone-100">
+      {/* Dynamic Title for Authenticated User */}
+      <title>La Taberna — Tu Tablero de D&D</title>
 
       {/* Header */}
       <header className="border-b border-stone-800/80 px-4 sm:px-8 py-3 sm:py-4 flex items-center justify-between gap-2" style={headerStyle}>
