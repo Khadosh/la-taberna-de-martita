@@ -8,4 +8,4 @@ Disallow: /spellbook
 Disallow: /characters
 Disallow: /join/
 
-Sitemap: https://lataberna.com/sitemap.xml
+Sitemap: https://la-taberna-de-martita.quest/sitemap.xml
