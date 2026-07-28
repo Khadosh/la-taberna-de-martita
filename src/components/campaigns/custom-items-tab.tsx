@@ -2,7 +2,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { supabase } from '../../lib/supabase'
 import type { CustomItem } from '../../lib/custom-items'
-import { CustomItemForm, EMPTY_FORM, formToProperties, itemToForm, type ItemFormState } from './custom-item-form'
+import { CustomItemForm } from './custom-item-form'
+import { EMPTY_FORM, formToProperties, itemToForm, type ItemFormState } from './custom-item-form-state'
 import { CustomItemCard } from './custom-item-card'
 
 type Character = { id: string; name: string }
