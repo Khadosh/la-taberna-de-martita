@@ -79,7 +79,7 @@ export function LandingPage() {
         <div className="w-full md:w-5/12 max-w-sm sm:max-w-md md:max-w-none mx-auto shrink-0 relative">
           <div style={artFrameStyle} className="group overflow-hidden rounded-[2px] shadow-2xl transition-all duration-500 hover:scale-[1.02] aspect-square relative">
             <img 
-              src="/assets/images/landing_bg.png" 
+              src="/assets/images/landing_bg.jpg" 
               alt="La Taberna de Martita" 
               className="w-full h-full object-cover filter brightness-90 group-hover:brightness-100 transition-all duration-500" 
             />

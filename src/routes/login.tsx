@@ -188,7 +188,7 @@ function LoginPage() {
 // ── Styles ────────────────────────────────────────────────────────────────────
 
 const loginPageStyle: React.CSSProperties = {
-  backgroundImage: 'linear-gradient(rgba(10, 5, 2, 0.78), rgba(10, 5, 2, 0.88)), url("/assets/images/login_bg.png")',
+  backgroundImage: 'linear-gradient(rgba(10, 5, 2, 0.78), rgba(10, 5, 2, 0.88)), url("/assets/images/login_bg.jpg")',
   backgroundSize: 'cover',
   backgroundPosition: 'center',
 }

@@ -136,7 +136,7 @@ export function WaxSeal({ condition, canRemove, onRemove }: WaxSealProps) {
     <div className="relative group flex-shrink-0" style={{ width: 80, height: 80 }}>
       {/* PNG de cera real — transparencia en los bordes */}
       <img
-        src="/assets/images/wax seal (1).png"
+        src="/assets/images/wax-seal.png"
         alt=""
         aria-hidden
         draggable={false}

@@ -9,7 +9,7 @@ export const parchmentStyle: React.CSSProperties = {
 
 // Fondo mesa de juego — tabla de madera oscura
 export const mapBgStyle: React.CSSProperties = {
-  backgroundImage: `url('/assets/images/board_bg.png')`,
+  backgroundImage: `url('/assets/images/board_bg.jpg')`,
   backgroundSize: 'cover',
   backgroundPosition: 'center',
   backgroundAttachment: 'fixed',

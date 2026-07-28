@@ -7,7 +7,7 @@ export const Route = createFileRoute('/_authenticated/campaigns/$campaignId/hech
 
 function HechizosTab() {
   const hechizosBgStyle: React.CSSProperties = {
-    backgroundImage: `url('/assets/images/hechizos_bg.png')`,
+    backgroundImage: `url('/assets/images/hechizos_bg.jpg')`,
     backgroundSize: 'cover',
     backgroundPosition: 'center',
     backgroundAttachment: 'fixed',

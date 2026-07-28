@@ -30,7 +30,7 @@
 
 /* Fondo de mesa de madera oscura */
 @utility bg-table-wood {
-  background-image: url('/assets/images/board_bg.png');
+  background-image: url('/assets/images/board_bg.jpg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
