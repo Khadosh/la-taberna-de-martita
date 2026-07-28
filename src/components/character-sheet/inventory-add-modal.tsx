@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { dndApi, dndKeys, type ApiRef } from '../../lib/dnd-api'
 import { getItemIconUrl, getItemFallbackEmoji } from '../../lib/item-icons'
+import { GameIcon } from '../icons/game-icon'
 
 const QUICK_FILTERS = [
   { label: 'Armas',        index: 'weapon',             emoji: '⚔' },
@@ -150,9 +151,11 @@ export function AddItemModal({ onAdd, onClose }: {
                   className={`w-full flex items-center gap-3 px-3 py-2 border-b border-[#111] text-left transition-colors ${
                     isSelected ? 'bg-amber-900/25 border-b-amber-900/20' : 'hover:bg-[#1a1a1a]'
                   }`}>
-                  <div className="w-9 h-9 shrink-0 bg-[#0d0d0d] flex items-center justify-center rounded-sm border border-[#2a2a2a] overflow-hidden">
+                  <div className={`w-9 h-9 shrink-0 bg-[#0d0d0d] flex items-center justify-center rounded-sm border border-[#2a2a2a] overflow-hidden ${
+                    isSelected ? 'text-amber-400' : 'text-stone-400'
+                  }`}>
                     {iconUrl
-                      ? <img src={iconUrl} className="w-full h-full object-contain opacity-80" alt={item.name} />
+                      ? <GameIcon url={iconUrl} title={item.name} className="w-6 h-6 opacity-80" />
                       : <span className="text-base opacity-25">{getItemFallbackEmoji(item.name)}</span>
                     }
                   </div>
@@ -168,9 +171,9 @@ export function AddItemModal({ onAdd, onClose }: {
           {selected && (
             <div className="shrink-0 bg-[#0f0f0f] border-t border-[#3a3a3a] p-4 space-y-3 shadow-[0_-8px_24px_rgba(0,0,0,0.6)]">
               <div className="flex items-start gap-3">
-                <div className="w-12 h-12 shrink-0 bg-[#0a0a0a] border border-amber-900/40 flex items-center justify-center rounded-sm overflow-hidden shadow-[inset_0_0_12px_rgba(217,119,6,0.12)]">
+                <div className="w-12 h-12 shrink-0 bg-[#0a0a0a] border border-amber-900/40 flex items-center justify-center rounded-sm overflow-hidden shadow-[inset_0_0_12px_rgba(217,119,6,0.12)] text-amber-400">
                   {selectedIconUrl
-                    ? <img src={selectedIconUrl} className="w-full h-full object-contain opacity-90" alt={selected.name} />
+                    ? <GameIcon url={selectedIconUrl} title={selected.name} className="w-8 h-8 opacity-90" />
                     : <span className="text-2xl">{getItemFallbackEmoji(selected.name)}</span>
                   }
                 </div>

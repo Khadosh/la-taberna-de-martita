@@ -1,22 +1,3 @@
-export const BACKGROUND_ICONS: Record<string, string> = {
-  acolyte: 'Acolyte',
-  artisan: 'Guild_Artisan',
-  charlatan: 'Charlatan',
-  criminal: 'Criminal',
-  entertainer: 'Entertainer',
-  farmer: 'Folk_Hero',
-  guard: 'Soldier',
-  guide: 'Outlander',
-  hermit: 'Sage',
-  merchant: 'Guild_Artisan',
-  noble: 'Noble',
-  sage: 'Sage',
-  sailor: 'Outlander',
-  scribe: 'Sage',
-  soldier: 'Soldier',
-  wayfarer: 'Urchin',
-}
-
 export const CLASS_FLAVOR: Record<string, { desc: string; tags: string[] }> = {
   barbarian: { desc: 'Un guerrero feroz de trasfondo salvaje que entra en furia.', tags: ['Fuerza'] },
   bard: { desc: 'Un maestro del canto, la oratoria y la magia de apoyo.', tags: ['Carisma'] },

@@ -1,225 +1,179 @@
-import { BG3_ICON_MAP } from './bg3-icon-map'
-import { BG3_SPELL_MAP } from './bg3-spell-map'
+import { GAME_ICONS, SCHOOL_ICONS } from './game-icons-map'
 
-// Normalize: lowercase, no accents, collapse whitespace
+// Normaliza: minúsculas, sin acentos, espacios colapsados
 const n = (s: string) =>
   s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim()
 
-// Custom icon overrides generated for D&D 5e items using public/assets/icons/custom/
-const CUSTOM_ICON_MAP: Record<string, string> = {
-  'thieves tools': '/assets/icons/custom/thieves_tools.png',
-  'alchemists supplies': '/assets/icons/custom/alchemists_supplies.png',
-  'poisoners kit': '/assets/icons/custom/poisoners_kit.png',
-  'herbalism kit': '/assets/icons/custom/herbalism_kit.png',
-  'caltrops': '/assets/icons/custom/caltrops.png',
-  'tinderbox': '/assets/icons/custom/tinderbox.png',
-  'rope hempen 50 feet': '/assets/icons/custom/hempen_rope.png',
-  'rope hempen': '/assets/icons/custom/hempen_rope.png',
-  'hempen rope': '/assets/icons/custom/hempen_rope.png'
-}
-
-// Build all candidate lookup strings for a raw name.
-function candidates(raw: string): string[] {
-  const base = n(raw)
-  const uk   = base.replace(/\barmo(u?)r/g, 'armour')
-  const us   = base.replace(/\barmo(u?)r/g, 'armor')
-  const set  = new Set<string>([base, uk, us])
-
-  if (base.includes(',')) {
-    const parts    = base.split(',').map(p => p.trim()).filter(Boolean)
-    const reversed = [...parts].reverse().join(' ')
-    const noComma  = parts.join(' ')
-    for (const v of [reversed, noComma]) {
-      set.add(v)
-      set.add(v.replace(/\barmo(u?)r/g, 'armour'))
-      set.add(v.replace(/\barmo(u?)r/g, 'armor'))
-    }
-  }
-
-  return [...set]
-}
-
-function wordSetMatch(needle: string, haystack: string): boolean {
-  const hw = new Set(haystack.split(' '))
-  return needle.split(' ').every(w => hw.has(w))
-}
-
-function getMapIcon(key: string): string | null {
-  return BG3_ICON_MAP[key] ?? null
+function icon(concept: string): string | null {
+  return GAME_ICONS[concept] ?? null
 }
 
 function hasWords(s: string, ...terms: string[]): boolean {
-  return terms.some(term => {
-    const norm = n(term)
-    return ` ${s} `.includes(` ${norm} `)
-  })
+  return terms.some(term => ` ${s} `.includes(` ${n(term)} `))
 }
 
+/**
+ * Resuelve el ícono de un ítem por categoría semántica.
+ *
+ * No hay tabla de nombre-exacto → ícono: los nombres llegan libres (del SRD en
+ * inglés, o escritos a mano por el DM en español) y mantener miles de entradas
+ * era inviable. La cascada va de lo más específico a lo más general; el orden
+ * importa — `half plate` tiene que evaluarse antes que `plate`.
+ */
 export function getItemIconUrl(name: string): string | null {
-  const s  = n(name)
+  const s = n(name)
 
-  // 0. Custom high-fidelity overrides
-  if (CUSTOM_ICON_MAP[s]) return CUSTOM_ICON_MAP[s]
+  // ── ARMAS CUERPO A CUERPO ────────────────────────────────────────────────
+  if (hasWords(s, 'longsword', 'longswords', 'espada larga')) return icon('longsword')
+  if (hasWords(s, 'greatsword', 'greatswords', 'espadon', 'mandoble')) return icon('greatsword')
+  if (hasWords(s, 'shortsword', 'shortswords', 'espada corta')) return icon('shortsword')
+  if (hasWords(s, 'rapier', 'rapiers', 'estoque')) return icon('rapier')
+  if (hasWords(s, 'scimitar', 'scimitars', 'cimitarra')) return icon('scimitar')
+  if (hasWords(s, 'dagger', 'daggers', 'daga', 'cuchillo', 'knife')) return icon('dagger')
+  if (hasWords(s, 'greataxe', 'greataxes', 'hacha grande')) return icon('greataxe')
+  if (hasWords(s, 'battleaxe', 'battleaxes', 'hacha de batalla')) return icon('battleaxe')
+  if (hasWords(s, 'handaxe', 'handaxes', 'hacha de mano')) return icon('handaxe')
+  if (hasWords(s, 'warhammer', 'warhammers', 'martillo de guerra')) return icon('warhammer')
+  if (hasWords(s, 'maul', 'mauls', 'mallo')) return icon('maul')
+  if (hasWords(s, 'morningstar', 'morningstars', 'lucero del alba')) return icon('morningstar')
+  if (hasWords(s, 'flail', 'flails', 'mangual')) return icon('flail')
+  if (hasWords(s, 'mace', 'maces', 'maza')) return icon('mace')
+  if (hasWords(s, 'halberd', 'halberds', 'alabarda')) return icon('halberd')
+  if (hasWords(s, 'glaive', 'glaives')) return icon('glaive')
+  if (hasWords(s, 'pike', 'pikes', 'pica', 'lance', 'lances')) return icon('pike')
+  if (hasWords(s, 'spear', 'spears', 'lanza', 'javelin', 'javelins', 'jabalina', 'pole')) return icon('spear')
+  if (hasWords(s, 'trident', 'tridents', 'tridente')) return icon('trident')
+  if (hasWords(s, 'war pick', 'pico de guerra')) return icon('war-pick')
+  if (hasWords(s, 'whip', 'whips', 'latigo')) return icon('whip')
+  if (hasWords(s, 'sickle', 'sickles', 'hoz')) return icon('sickle')
+  if (hasWords(s, 'club', 'clubs', 'garrote')) return icon('club')
 
-  const cs = candidates(name)
+  // ── ARMAS A DISTANCIA ────────────────────────────────────────────────────
+  if (hasWords(s, 'dart', 'darts', 'dardo', 'blowgun', 'blowguns', 'cerbatana')) return icon('dart')
+  if (hasWords(s, 'crossbow', 'crossbows', 'ballesta')) return icon('crossbow')
+  if (hasWords(s, 'longbow', 'longbows', 'arco largo')) return icon('longbow')
+  if (hasWords(s, 'shortbow', 'shortbows', 'arco corto')) return icon('shortbow')
+  if (hasWords(s, 'bow', 'bows', 'arco')) return icon('longbow')
+  if (hasWords(s, 'arrow', 'arrows', 'flecha', 'bolt', 'bolts', 'virote', 'needle', 'needles', 'bullet', 'bullets', 'proyectil', 'quiver', 'carcaj')) return icon('ammunition')
+  if (hasWords(s, 'net', 'nets', 'red de pesca')) return icon('net')
 
-  // 1. Exact match on any candidate
-  for (const c of cs) {
-    if (BG3_ICON_MAP[c]) return BG3_ICON_MAP[c]
-  }
+  // ── ARMADURAS ────────────────────────────────────────────────────────────
+  if (hasWords(s, 'half plate', 'media placa')) return icon('half-plate')
+  if (hasWords(s, 'plate armor', 'plate armour', 'full plate', 'placas completas', 'plate')) return icon('plate-armor')
+  if (hasWords(s, 'splint', 'laminar')) return icon('splint-mail')
+  if (hasWords(s, 'chain mail', 'cota de malla')) return icon('chain-mail')
+  if (hasWords(s, 'ring mail', 'cota de anillas')) return icon('ring-mail')
+  if (hasWords(s, 'breastplate', 'pectoral')) return icon('breastplate')
+  if (hasWords(s, 'scale mail', 'escamas')) return icon('scale-mail')
+  if (hasWords(s, 'chain shirt', 'camisote')) return icon('chain-shirt')
+  if (hasWords(s, 'studded leather', 'cuero tachonado')) return icon('studded-leather')
+  if (hasWords(s, 'leather', 'cuero')) return icon('leather-armor')
+  if (hasWords(s, 'padded', 'acolchada')) return icon('padded-armor')
+  if (hasWords(s, 'hide', 'pieles')) return icon('leather-armor')
+  if (hasWords(s, 'shield', 'shields', 'escudo')) return icon('shield')
+  if (hasWords(s, 'helmet', 'helmets', 'casco', 'celada')) return icon('helmet')
+  if (hasWords(s, 'gauntlet', 'gauntlets', 'guantelete', 'glove', 'gloves', 'guantes')) return icon('gloves')
+  if (hasWords(s, 'greave', 'greaves', 'grebas', 'boot', 'boots', 'botas')) return icon('boots')
 
-  // 2. Key starts with candidate + space OR candidate contains key OR word-set match
-  let wordSetResult: string | null = null
-  for (const [key, url] of Object.entries(BG3_ICON_MAP)) {
-    for (const c of cs) {
-      if (key.startsWith(c + ' ')) return url
-      if (c.includes(key))          return url
-      if (!wordSetResult && wordSetMatch(c, key)) wordSetResult = url
-    }
-  }
-  if (wordSetResult) return wordSetResult
+  // ── POCIONES Y LÍQUIDOS ──────────────────────────────────────────────────
+  if (hasWords(s, 'healing', 'curacion')) return icon('potion-healing')
+  if (hasWords(s, 'antitoxin', 'antidoto', 'poison', 'poisons', 'veneno', 'toxico')) return icon('poison')
+  if (hasWords(s, 'acid', 'acido')) return icon('acid')
+  if (hasWords(s, 'alchemist', 'alquimista', 'alchemy', 'alquimia')) return icon('alchemy')
+  if (hasWords(s, 'elixir', 'elixirs', 'potion', 'potions', 'pocion', 'oil', 'oils', 'aceite')) return icon('elixir')
+  if (hasWords(s, 'vial', 'vials', 'flask', 'flasks', 'frasco', 'bottle', 'bottles', 'jug', 'jugs', 'jarra', 'mug', 'mugs', 'cup', 'cups', 'taza', 'waterskin', 'odre', 'bucket', 'buckets', 'balde')) return icon('bottle')
 
-  // ── WEAPONS ──────────────────────────────────────────────────────────────
-  if (hasWords(s, 'longsword', 'longswords', 'espada larga')) return getMapIcon('longsword')
-  if (hasWords(s, 'greatsword', 'greatswords', 'espadon', 'espadón')) return getMapIcon('greatsword b')
-  if (hasWords(s, 'shortsword', 'shortswords', 'espada corta')) return getMapIcon('shortsword')
-  if (hasWords(s, 'rapier', 'rapiers')) return getMapIcon('rapier')
-  if (hasWords(s, 'scimitar', 'scimitars', 'cimitarra')) return getMapIcon('scimitar')
-  if (hasWords(s, 'dagger', 'daggers', 'daga', 'cuchillo', 'knife')) return getMapIcon('dagger')
-  if (hasWords(s, 'greataxe', 'greataxes', 'hacha grande')) return getMapIcon('greataxe')
-  if (hasWords(s, 'battleaxe', 'battleaxes', 'hacha de batalla')) return getMapIcon('battleaxe')
-  if (hasWords(s, 'handaxe', 'handaxes', 'hacha de mano')) return getMapIcon('handaxe')
-  if (hasWords(s, 'warhammer', 'warhammers', 'martillo de guerra')) return getMapIcon('warhammer')
-  if (hasWords(s, 'maul', 'mauls', 'mallo')) return getMapIcon('maul')
-  if (hasWords(s, 'morningstar', 'morningstars', 'lucero del alba')) return getMapIcon('morningstar')
-  if (hasWords(s, 'flail', 'flails', 'mangual')) return getMapIcon('flail')
-  if (hasWords(s, 'mace', 'maces', 'maza')) return getMapIcon('mace')
-  if (hasWords(s, 'halberd', 'halberds', 'alabarda')) return getMapIcon('halberd')
-  if (hasWords(s, 'glaive', 'glaives')) return getMapIcon('glaive')
-  if (hasWords(s, 'pike', 'pikes', 'pica')) return getMapIcon('pike')
-  if (hasWords(s, 'spear', 'spears', 'lanza', 'javelin', 'javelins', 'jabalina', 'pole')) return getMapIcon('spear')
-  if (hasWords(s, 'lance', 'lances')) return getMapIcon('pike')
-  if (hasWords(s, 'trident', 'tridents', 'tridente')) return getMapIcon('trident')
-  if (hasWords(s, 'war pick', 'pico de guerra')) return getMapIcon('war pick')
-  if (hasWords(s, 'quarterstaff', 'quarterstaffs', 'baston', 'bastón', 'staff', 'staves', 'staffs')) return getMapIcon('quarterstaff')
-  if (hasWords(s, 'whip', 'whips', 'latigo', 'látigo')) return getMapIcon('duergar whipping cane')
-  if (hasWords(s, 'sickle', 'sickles', 'hoz')) return getMapIcon('sickle')
-  if (hasWords(s, 'club', 'clubs', 'garrote')) return getMapIcon('club')
-  if (hasWords(s, 'dart', 'darts', 'dardo', 'blowgun', 'blowguns', 'cerbatana')) return getMapIcon('dart')
-  if (hasWords(s, 'hand crossbow')) return getMapIcon('hand crossbow')
-  if (hasWords(s, 'heavy crossbow')) return getMapIcon('heavy crossbow')
-  if (hasWords(s, 'light crossbow')) return getMapIcon('light crossbow')
-  if (hasWords(s, 'crossbow', 'crossbows', 'ballesta')) return getMapIcon('light crossbow')
-  if (hasWords(s, 'longbow', 'longbows', 'arco largo')) return getMapIcon('longbow')
-  if (hasWords(s, 'shortbow', 'shortbows', 'arco corto')) return getMapIcon('shortbow')
-  if (hasWords(s, 'bow', 'bows', 'arco')) return getMapIcon('longbow')
-  if (hasWords(s, 'arrow', 'arrows', 'flecha', 'bolt', 'bolts', 'virote', 'needle', 'needles', 'bullet', 'bullets', 'proyectil')) return getMapIcon('misc arrow')
-  if (hasWords(s, 'net', 'nets', 'red de pesca')) return getMapIcon('supply pack')
+  // ── PAPEL Y ARCANO ───────────────────────────────────────────────────────
+  if (hasWords(s, 'spellbook', 'grimoire', 'grimorio', 'book', 'books', 'libro', 'tome', 'tomo')) return icon('book')
+  if (hasWords(s, 'scroll', 'scrolls', 'pergamino', 'paper', 'papers', 'papel', 'parchment', 'parchments', 'map', 'maps', 'mapa')) return icon('scroll')
+  if (hasWords(s, 'pen', 'pens', 'pluma', 'quill', 'ink', 'inks', 'tinta', 'forgery', 'falsificacion')) return icon('quill')
+  if (hasWords(s, 'staff', 'staves', 'staffs', 'quarterstaff', 'quarterstaffs', 'baston', 'baculo')) return icon('quarterstaff')
+  if (hasWords(s, 'wand', 'wands', 'varita', 'rod', 'rods', 'vara')) return icon('wand')
+  if (hasWords(s, 'ring', 'rings', 'anillo')) return icon('ring')
+  if (hasWords(s, 'cloak', 'cloaks', 'capa', 'mantle', 'mantles', 'manto')) return icon('cloak')
+  if (hasWords(s, 'symbol', 'symbols', 'simbolo', 'reliquary', 'relicario', 'emblem', 'emblema', 'amulet', 'amulets', 'amuleto', 'pendant', 'pendants', 'necklace', 'necklaces', 'collar', 'brooch', 'brooches', 'broche', 'talisman', 'censer', 'incensario')) return icon('amulet')
+  if (hasWords(s, 'mistletoe', 'muerdago', 'totem')) return icon('totem')
 
-  // ── ARMOR ─────────────────────────────────────────────────────────────────
-  if (hasWords(s, 'plate armor', 'full plate', 'placas completas', 'plate')) return getMapIcon('plate armour')
-  if (hasWords(s, 'half plate', 'media placa')) return getMapIcon('half plate')
-  if (hasWords(s, 'splint', 'laminar')) return getMapIcon('splint mail')
-  if (hasWords(s, 'chain mail', 'cota de malla')) return getMapIcon('chain mail')
-  if (hasWords(s, 'ring mail', 'cota de anillas')) return getMapIcon('ring mail')
-  if (hasWords(s, 'breastplate', 'pectoral')) return getMapIcon('breastplate')
-  if (hasWords(s, 'scale mail', 'escamas')) return getMapIcon('scale mail')
-  if (hasWords(s, 'chain shirt', 'camisote')) return getMapIcon('chain shirt')
-  if (hasWords(s, 'studded leather', 'cuero tachonado')) return getMapIcon('studded leather')
-  if (hasWords(s, 'leather', 'cuero')) return getMapIcon('leather armour')
-  if (hasWords(s, 'padded', 'acolchada')) return getMapIcon('padded armour')
-  if (hasWords(s, 'hide', 'pieles')) return getMapIcon('hide armour')
-  if (hasWords(s, 'shield', 'shields', 'escudo')) return getMapIcon('wooden shield')
-  if (hasWords(s, 'helmet', 'helmets', 'casco', 'celada')) return getMapIcon('helmet')
-  if (hasWords(s, 'gauntlet', 'gauntlets', 'guantelete', 'glove', 'gloves', 'guantes')) return getMapIcon('leather gloves')
-  if (hasWords(s, 'greave', 'greaves', 'grebas', 'boot', 'boots', 'botas')) return getMapIcon('boots leather')
+  // ── CONTENEDORES ─────────────────────────────────────────────────────────
+  if (hasWords(s, 'chest', 'chests', 'cofre', 'barrel', 'barrels', 'barril', 'box', 'boxes', 'caja', 'case', 'cases')) return icon('chest')
+  if (hasWords(s, 'pouch', 'pouches', 'bolsillo', 'sack', 'sacks', 'saco', 'bag', 'bags', 'bolsa')) return icon('pouch')
+  if (hasWords(s, 'backpack', 'backpacks', 'mochila', 'pack', 'packs', 'paquete', 'basket', 'baskets', 'canasta', 'saddlebag', 'saddlebags')) return icon('pack')
 
-  // ── POTIONS / LIQUIDS ─────────────────────────────────────────────────────
-  if (hasWords(s, 'healing', 'curacion', 'curación')) return getMapIcon('potion of healing cloud')
-  if (hasWords(s, 'antitoxin', 'antidoto', 'antídoto')) return getMapIcon('generic poison')
-  if (hasWords(s, 'poison', 'poisons', 'veneno', 'toxico')) return getMapIcon('generic poison')
-  if (hasWords(s, 'acid', 'acido', 'ácido')) return getMapIcon('generic acid')
-  if (hasWords(s, 'elixir', 'elixirs', 'potion', 'potions', 'pocion', 'poción', 'oil', 'oils', 'aceite')) return getMapIcon('elixir')
-  if (hasWords(s, 'vial', 'vials', 'flask', 'flasks', 'frasco', 'bottle', 'bottles', 'jug', 'jugs', 'jarra', 'mug', 'mugs', 'cup', 'cups', 'taza', 'waterskin', 'odre', 'bucket', 'buckets', 'balde')) return getMapIcon('bottle a')
+  // ── LUZ Y FUEGO ──────────────────────────────────────────────────────────
+  if (hasWords(s, 'lantern', 'lanterns', 'linterna')) return icon('lantern')
+  if (hasWords(s, 'torch', 'torches', 'antorcha')) return icon('torch')
+  if (hasWords(s, 'candle', 'candles', 'vela')) return icon('candle')
+  if (hasWords(s, 'tinderbox', 'yesca', 'flint', 'pedernal')) return icon('fire')
+  if (hasWords(s, 'incense', 'incienso')) return icon('incense')
 
-  // ── SCROLLS / PAPER ───────────────────────────────────────────────────────
-  if (hasWords(s, 'scroll', 'scrolls', 'pergamino', 'paper', 'papers', 'papel', 'parchment', 'parchments', 'map', 'maps', 'mapa', 'pen', 'pens', 'pluma', 'ink', 'inks', 'tinta')) return getMapIcon('letter paper a')
+  // ── EQUIPO DE AVENTURA ───────────────────────────────────────────────────
+  if (hasWords(s, 'rations', 'ration', 'raciones', 'provision', 'food', 'comida', 'feed')) return icon('food')
+  if (hasWords(s, 'herbalism', 'herbalist', 'herboristeria', 'herb', 'herbs', 'hierbas')) return icon('herbs')
+  if (hasWords(s, 'spyglass', 'spyglasses', 'catalejo', 'magnifying glass', 'lupa', 'lens', 'lenses', 'lente')) return icon('spyglass')
+  if (hasWords(s, 'mirror', 'mirrors', 'espejo')) return icon('mirror')
+  if (hasWords(s, 'caltrop', 'caltrops', 'abrojos')) return icon('caltrops')
+  if (hasWords(s, 'trap', 'traps', 'trampa')) return icon('trap')
+  if (hasWords(s, 'thieves', 'ladron', 'lockpick', 'lockpicks', 'ganzua')) return icon('lockpicks')
+  if (hasWords(s, 'lock', 'locks', 'cerradura', 'candado')) return icon('lock')
+  if (hasWords(s, 'key', 'keys', 'llave')) return icon('key')
+  if (hasWords(s, 'rope', 'ropes', 'cuerda', 'soga', 'string', 'strings', 'hilo')) return icon('rope')
+  if (hasWords(s, 'chain', 'chains', 'cadena', 'manacles', 'manacle', 'esposas', 'grilletes')) return icon('chain')
+  if (hasWords(s, 'hourglass', 'hourglasses', 'reloj', 'clock', 'clocks')) return icon('hourglass')
+  if (hasWords(s, 'abacus', 'abacuses', 'abaco')) return icon('abacus')
+  if (hasWords(s, 'whistle', 'whistles', 'silbato', 'bell', 'bells', 'campana')) return icon('bell')
+  if (hasWords(s, 'scale', 'scales', 'balanza')) return icon('scales')
+  if (hasWords(s, 'pot', 'pots', 'olla', 'cauldron', 'caldero', 'kettle')) return icon('pot')
+  if (hasWords(s, 'whetstone', 'whetstones', 'stone', 'stones', 'piedra', 'chalk', 'tiza')) return icon('stone')
+  if (hasWords(s, 'bedroll', 'bedrolls', 'blanket', 'blankets', 'manta', 'sleeping bag')) return icon('bedroll')
+  if (hasWords(s, 'tent', 'tents', 'tienda', 'carpa')) return icon('tent')
+  if (hasWords(s, 'soap', 'jabon')) return icon('soap')
+  if (hasWords(s, 'ladder', 'ladders', 'escalera')) return icon('ladder')
+  if (hasWords(s, 'crowbar', 'crowbars', 'palanca')) return icon('crowbar')
+  if (hasWords(s, 'shovel', 'shovels', 'pala', 'hammer', 'hammers', 'martillo', 'piton', 'pitons', 'spike', 'spikes', 'pick', 'pico', 'axe', 'axes', 'hacha', 'pickaxe')) return icon('pickaxe')
+  if (hasWords(s, 'disguise', 'disfraz')) return icon('disguise')
 
-  // ── STAVES / WANDS / RODS ─────────────────────────────────────────────────
-  if (hasWords(s, 'staff', 'staves', 'baculo', 'báculo')) return getMapIcon('quarterstaff')
-  if (hasWords(s, 'wand', 'wands', 'varita', 'rod', 'rods', 'vara')) return getMapIcon('item wpn hum wand a 0')
+  // ── MONTURAS Y VEHÍCULOS ─────────────────────────────────────────────────
+  if (hasWords(s, 'saddle', 'saddles', 'montura', 'bit and bridle', 'bocado', 'stabling', 'establo')) return icon('saddle')
+  if (hasWords(s, 'horse', 'horses', 'warhorse', 'warhorses', 'caballo', 'camel', 'camels', 'camello', 'donkey', 'donkeys', 'mule', 'mules', 'mula', 'pony', 'ponies', 'mastiff', 'mastiffs', 'dog', 'dogs', 'perro', 'animal', 'beast', 'elephant', 'elephants', 'elefante')) return icon('mount')
+  if (hasWords(s, 'ship', 'ships', 'boat', 'boats', 'barco', 'rowboat', 'galley', 'keelboat', 'longship', 'warship', 'sailing')) return icon('boat')
+  if (hasWords(s, 'carriage', 'carriages', 'cart', 'carts', 'chariot', 'chariots', 'wagon', 'wagons', 'sled', 'sleds', 'carro')) return icon('cart')
 
-  // ── RINGS ─────────────────────────────────────────────────────────────────
-  if (hasWords(s, 'ring', 'rings', 'anillo')) return getMapIcon('common ring')
+  // ── ROPA ─────────────────────────────────────────────────────────────────
+  if (hasWords(s, 'clothes', 'clothing', 'ropa', 'vestment', 'vestments', 'vestidura', 'robe', 'robes', 'tunica')) return icon('clothes')
 
-  // ── CLOAKS ────────────────────────────────────────────────────────────────
-  if (hasWords(s, 'cloak', 'cloaks', 'capa', 'mantle', 'mantles', 'manto')) return getMapIcon('cloak')
+  // ── INSTRUMENTOS ─────────────────────────────────────────────────────────
+  if (hasWords(s, 'lute', 'lutes', 'laud')) return icon('lute')
+  if (hasWords(s, 'pan flute', 'panflute')) return icon('panflute')
+  if (hasWords(s, 'flute', 'flutes', 'flauta', 'shawm')) return icon('flute')
+  if (hasWords(s, 'drum', 'drums', 'tambor')) return icon('drum')
+  if (hasWords(s, 'horn', 'horns', 'cuerno')) return icon('horn')
+  if (hasWords(s, 'viol', 'viols', 'violin', 'violins')) return icon('violin')
+  if (hasWords(s, 'bagpipe', 'bagpipes', 'gaita')) return icon('bagpipes')
+  if (hasWords(s, 'lyre', 'lyres', 'lira')) return icon('lyre')
+  if (hasWords(s, 'dulcimer')) return icon('dulcimer')
 
-  // ── BAGS / CONTAINERS ─────────────────────────────────────────────────────
-  if (hasWords(s, 'bag', 'bags', 'bolsa', 'sack', 'sacks', 'saco', 'pouch', 'pouches', 'bolsillo', 'backpack', 'backpacks', 'mochila', 'quiver', 'quivers', 'carcaj', 'chest', 'chests', 'cofre', 'barrel', 'barrels', 'barril', 'basket', 'baskets', 'canasta', 'box', 'boxes', 'caja', 'case', 'cases', 'pack', 'packs', 'paquete', 'tackle', 'fishing', 'pesca', 'wax', 'cera', 'saddlebag', 'saddlebags')) return getMapIcon('supply pack')
+  // ── SETS DE JUEGO ────────────────────────────────────────────────────────
+  if (hasWords(s, 'dice', 'dados')) return icon('dice')
+  if (hasWords(s, 'chess', 'ajedrez')) return icon('chess')
+  if (hasWords(s, 'playing card', 'playing cards', 'naipes', 'cartas', 'gaming set')) return icon('gaming')
 
-  // ── LIGHT SOURCES ────────────────────────────────────────────────────────
-  if (hasWords(s, 'lantern', 'lanterns', 'linterna')) return getMapIcon('lantern weapon')
-  if (hasWords(s, 'torch', 'torches', 'antorcha')) return getMapIcon('torch')
-  if (hasWords(s, 'candle', 'candles', 'vela')) return getMapIcon('candle')
+  // ── VALORES ──────────────────────────────────────────────────────────────
+  if (hasWords(s, 'gem', 'gems', 'gema', 'jewel', 'jewels', 'joya', 'pearl', 'perla')) return icon('gem')
+  if (hasWords(s, 'coin', 'coins', 'moneda', 'monedas', 'gold', 'oro')) return icon('coins')
 
-  // ── ADVENTURING GEAR ─────────────────────────────────────────────────────
-  if (hasWords(s, 'rations', 'ration', 'raciones', 'provision', 'food', 'comida', 'feed')) return getMapIcon('food dried beef sausage')
-  if (hasWords(s, 'bedroll', 'bedrolls', 'blanket', 'blankets', 'tent', 'tents', 'tienda', 'sleeping bag', 'soap', 'jabon', 'jabón')) return getMapIcon('supply pack')
-  if (hasWords(s, 'spyglass', 'spyglasses', 'magnifying glass', 'lupa', 'lens', 'lenses', 'lente', 'mirror', 'mirrors', 'espejo')) return getMapIcon('crystalline lens item')
-  if (hasWords(s, 'caltrop', 'caltrops')) return getMapIcon('spike growth surface')
-  if (hasWords(s, 'trap', 'traps', 'trampa')) return getMapIcon('supply pack')
-  if (hasWords(s, 'rope', 'ropes', 'cuerda', 'soga', 'chain', 'chains', 'cadena', 'string', 'strings', 'hilo', 'manacles', 'manacle', 'esposas', 'grilletes')) return getMapIcon('champions chain')
-  if (hasWords(s, 'hourglass', 'hourglasses', 'reloj', 'clock', 'clocks', 'abacus', 'abacuses', 'abaco', 'ábaco')) return getMapIcon('rich clock')
-  if (hasWords(s, 'whistle', 'whistles', 'silbato', 'bell', 'bells', 'campana')) return getMapIcon('summon golem bell')
-  if (hasWords(s, 'lock', 'locks', 'cerradura', 'candado')) return getMapIcon('forgery kit')
-  if (hasWords(s, 'scale', 'scales', 'balanza')) return getMapIcon('item dec gen kitcheninstrument scale a copper a')
-  if (hasWords(s, 'pot', 'pots', 'olla')) return getMapIcon('item dec gen kitcheninstrument scale a copper a')
-  if (hasWords(s, 'whetstone', 'whetstones', 'stone', 'stones', 'piedra', 'flint', 'yesca', 'chalk', 'tiza')) return getMapIcon('heavy stone')
-  if (hasWords(s, 'tinderbox')) return getMapIcon('generic fire')
-  if (hasWords(s, 'incense')) return getMapIcon('incense a')
-  if (hasWords(s, 'crowbar', 'crowbars', 'shovel', 'shovels', 'pala', 'ladder', 'ladders', 'escalera', 'hammer', 'hammers', 'martillo', 'piton', 'pitons', 'pitón', 'spike', 'spikes', 'pick', 'pico', 'axe', 'axes', 'hacha')) return getMapIcon('pickaxe')
-  if (hasWords(s, 'symbol', 'symbols', 'simbolo', 'reliquary', 'relicario', 'emblem', 'emblema', 'amulet', 'amulets', 'amuleto', 'pendant', 'pendants', 'necklace', 'necklaces', 'collar', 'brooch', 'brooches', 'broche', 'talisman', 'talismán', 'censer', 'incensario')) return getMapIcon('envoys amulet')
-  if (hasWords(s, 'mistletoe', 'muérdago', 'totem', 'tótem')) return getMapIcon('wood bark item')
-
-  // ── VEHICLES / MOUNTS ────────────────────────────────────────────────────
-  if (hasWords(s, 'horse', 'horses', 'warhorse', 'warhorses', 'caballo', 'camel', 'camells', 'camello', 'donkey', 'donkeys', 'mule', 'mules', 'mula', 'pony', 'ponies', 'mastiff', 'mastiffs', 'dog', 'dogs', 'perro', 'animal', 'beast', 'elephant', 'elephants', 'elefante', 'saddle', 'saddles', 'montura', 'bit and bridle', 'bocado', 'stabling', 'establo')) return getMapIcon('animal handling')
-  if (hasWords(s, 'carriage', 'carriages', 'cart', 'carts', 'chariot', 'chariots', 'wagon', 'wagons', 'sled', 'sleds', 'carro', 'ship', 'ships', 'boat', 'boats', 'barco', 'rowboat', 'galley', 'keelboat', 'longship', 'warship', 'sailing')) return getMapIcon('supply pack')
-
-  // ── CLOTHES ──────────────────────────────────────────────────────────────
-  if (hasWords(s, 'clothes', 'clothing', 'ropa', 'vestment', 'vestments', 'vestidura', 'robe', 'robes', 'tunica', 'túnica')) return getMapIcon('clothes')
-
-  // ── TOOLS / SUPPLIES ─────────────────────────────────────────────────────
-  if (hasWords(s, 'supplies', 'suministros', 'tools', 'herramientas', 'kit', 'kits', 'utensils', 'utensil')) {
-    if (hasWords(s, 'disguise')) return getMapIcon('disguise kit')
-    if (hasWords(s, 'forgery')) return getMapIcon('forgery kit')
-    return getMapIcon('forgery kit')
-  }
-
-  // ── MUSICAL INSTRUMENTS ───────────────────────────────────────────────────
-  if (hasWords(s, 'lute', 'lutes', 'laud', 'laúd')) return getMapIcon('instrument lute')
-  if (hasWords(s, 'flute', 'flutes', 'flauta')) return getMapIcon('instrument flute')
-  if (hasWords(s, 'drum', 'drums', 'tambor')) return getMapIcon('instrument drum big')
-  if (hasWords(s, 'horn', 'horns', 'cuerno')) return getMapIcon('instrument horn')
-  if (hasWords(s, 'viol', 'viols', 'violin', 'violins')) return getMapIcon('instrument violin')
-  if (hasWords(s, 'bagpipe', 'bagpipes', 'gaita')) return getMapIcon('instrument bagpipes')
-  if (hasWords(s, 'lyre', 'lyres', 'lira')) return getMapIcon('instrument lyre')
-  if (hasWords(s, 'dulcimer')) return getMapIcon('instrument dulcimer')
-  if (hasWords(s, 'shawm')) return getMapIcon('instrument shawm')
-  if (hasWords(s, 'pan flute')) return getMapIcon('instrument panflute')
-
-  // ── GAMING SETS ───────────────────────────────────────────────────────────
-  if (hasWords(s, 'dice', 'dados', 'playing card', 'playing cards', 'naipes', 'cartas', 'chess', 'ajedrez', 'gaming set')) return getMapIcon('misc weathered chisel set')
+  // ── HERRAMIENTAS GENÉRICAS (última red: 'kit', 'tools', 'supplies') ──────
+  if (hasWords(s, 'supplies', 'suministros', 'tools', 'herramientas', 'kit', 'kits', 'utensils', 'utensil')) return icon('misc')
 
   return null
 }
 
-export function getSpellIconUrl(name: string): string | null {
-  const s = n(name)
-  return BG3_SPELL_MAP[s] ?? null
+/** Ícono por escuela de magia: el SRD tiene 300+ conjuros pero solo 8 escuelas. */
+export function getSpellIconUrl(school: string | null | undefined): string | null {
+  if (!school) return null
+  return SCHOOL_ICONS[n(school)] ?? null
 }
 
-// Category emoji fallback when no URL matches
+// Emoji de respaldo cuando ninguna categoría matchea
 export function getItemFallbackEmoji(name: string): string {
   const s = n(name)
   if (hasWords(s, 'sword', 'axe', 'bow', 'dagger', 'espada', 'hacha', 'arco', 'daga', 'spear', 'lance', 'mace', 'staff', 'lanza', 'maza', 'weapon', 'arma'))

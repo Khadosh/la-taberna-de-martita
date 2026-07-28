@@ -3,6 +3,7 @@ import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { CSS } from '@dnd-kit/utilities'
 import { type SlotKey, SLOT_LABELS, inferSlot } from '../../lib/equip-slots'
 import { getItemIconUrl } from '../../lib/item-icons'
+import { GameIcon } from '../icons/game-icon'
 
 type InventoryItem = {
   id: string
@@ -252,7 +253,9 @@ function Slot({
             {SLOT_SVG[slotKey]}
           </div>
         ) : iconUrl ? (
-          <img src={iconUrl} alt={item.name} className="w-full h-full object-contain p-0.5 opacity-90" />
+          <div className="w-full h-full flex items-center justify-center text-amber-300/90">
+            <GameIcon url={iconUrl} title={item.name} className="w-[70%] h-[70%]" />
+          </div>
         ) : (
           // Equipado pero sin icono: mostrar nombre abreviado sobre el SVG del slot
           <div className="relative w-full h-full flex items-center justify-center">

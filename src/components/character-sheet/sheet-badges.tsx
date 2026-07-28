@@ -5,6 +5,7 @@ import type { SpellDetail, TraitDetail, SkillDetail, FeatureDetail } from '../..
 import type { InfoModalData } from './types'
 import { parchmentStyle } from './sheet-primitives'
 import { getSpellIconUrl } from '../../lib/item-icons'
+import { GameIcon } from '../icons/game-icon'
 
 // ── Info Modal ────────────────────────────────────────────────────────────────
 
@@ -63,14 +64,14 @@ export function SpellBadge({ index, onInfo }: { index: string; onInfo: (s: Spell
     staleTime: Infinity
   })
 
-  const iconUrl = spell ? getSpellIconUrl(spell.name) : null
+  const iconUrl = getSpellIconUrl(spell?.school?.name)
 
   return (
     <div className="flex items-center gap-2 border border-stone-500 px-2 py-1.5" style={{ background: 'rgba(200,170,110,0.15)' }}>
       {/* Spell icon */}
-      <div className="w-8 h-8 shrink-0 flex items-center justify-center overflow-hidden rounded-sm bg-stone-900/10">
+      <div className="w-8 h-8 shrink-0 flex items-center justify-center overflow-hidden rounded-sm bg-stone-900/10 text-amber-800">
         {iconUrl ? (
-          <img src={iconUrl} alt={spell?.name} className="w-full h-full object-cover" />
+          <GameIcon url={iconUrl} title={spell?.school?.name} className="w-5 h-5 opacity-80" />
         ) : (
           <svg width="18" height="18" viewBox="0 0 12 12" fill="currentColor" style={{ opacity: 0.35, color: '#b45309' }}>
             <path d="M6 1L7.2 4.8H11L7.9 7L9.1 10.8L6 8.6L2.9 10.8L4.1 7L1 4.8H4.8Z" />

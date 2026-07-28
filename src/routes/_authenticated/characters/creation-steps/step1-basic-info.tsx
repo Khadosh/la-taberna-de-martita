@@ -3,7 +3,9 @@ import { Info } from 'lucide-react'
 import { SUBCLASS_SELECTION_LEVELS } from '../../../../lib/class-choices'
 import { BACKGROUNDS, ABILITY_LABELS_ES, type Background } from '../../../../lib/dnd-backgrounds'
 import { cardStyle } from './primitives'
-import { BACKGROUND_ICONS, CLASS_FLAVOR, RACE_FLAVOR } from './step1-constants'
+import { CLASS_FLAVOR, RACE_FLAVOR } from './step1-constants'
+import { BACKGROUND_ICONS } from '../../../../lib/game-icons-map'
+import { GameIcon } from '../../../../components/icons/game-icon'
 import { DetailModal } from './detail-modal'
 import type { Draft } from '../character-creation-steps'
 
@@ -85,8 +87,8 @@ export function Step1BasicInfo({
                     className="relative text-left p-3 border transition-all overflow-hidden flex items-center justify-between rounded-sm h-[84px] w-full cursor-pointer"
                     style={{
                       backgroundImage: isSelected
-                        ? `linear-gradient(100deg, rgba(24, 14, 6, 0.96) 25%, rgba(120, 60, 10, 0.5) 35%, rgba(120, 60, 10, 0.15) 100%), url('/assets/images/races/${r.index}.png')`
-                        : `linear-gradient(100deg, rgba(15, 8, 4, 0.98) 25%, rgba(24, 14, 6, 0.8) 55%, rgba(24, 14, 6, 0.45) 100%), url('/assets/images/races/${r.index}.png')`,
+                        ? `linear-gradient(100deg, rgba(24, 14, 6, 0.96) 25%, rgba(120, 60, 10, 0.5) 35%, rgba(120, 60, 10, 0.15) 100%), url('/assets/images/races/${r.index}.jpg')`
+                        : `linear-gradient(100deg, rgba(15, 8, 4, 0.98) 25%, rgba(24, 14, 6, 0.8) 55%, rgba(24, 14, 6, 0.45) 100%), url('/assets/images/races/${r.index}.jpg')`,
                       backgroundSize: 'cover',
                       backgroundPosition: 'right center',
                       borderColor: isSelected ? 'rgba(180, 100, 20, 0.85)' : 'rgba(120, 70, 20, 0.22)',
@@ -139,8 +141,8 @@ export function Step1BasicInfo({
                     className="relative text-left p-3 border transition-all overflow-hidden flex items-center justify-between rounded-sm h-[84px] w-full cursor-pointer"
                     style={{
                       backgroundImage: isSelected
-                        ? `linear-gradient(100deg, rgba(24, 14, 6, 0.96) 25%, rgba(120, 60, 10, 0.3) 55%, rgba(120, 60, 10, 0.15) 100%), url('/assets/images/classes/${c.index}.png')`
-                        : `linear-gradient(100deg, rgba(15, 8, 4, 0.98) 25%, rgba(24, 14, 6, 0.8) 55%, rgba(24, 14, 6, 0.45) 100%), url('/assets/images/classes/${c.index}.png')`,
+                        ? `linear-gradient(100deg, rgba(24, 14, 6, 0.96) 25%, rgba(120, 60, 10, 0.3) 55%, rgba(120, 60, 10, 0.15) 100%), url('/assets/images/classes/${c.index}.jpg')`
+                        : `linear-gradient(100deg, rgba(15, 8, 4, 0.98) 25%, rgba(24, 14, 6, 0.8) 55%, rgba(24, 14, 6, 0.45) 100%), url('/assets/images/classes/${c.index}.jpg')`,
                       backgroundSize: 'cover',
                       backgroundPosition: 'right center',
                       borderColor: isSelected ? 'rgba(180, 100, 20, 0.85)' : 'rgba(120, 70, 20, 0.22)',
@@ -241,19 +243,17 @@ export function Step1BasicInfo({
                   className="relative text-left p-3 border transition-all overflow-hidden flex items-start gap-2.5 pr-10 rounded-sm h-[84px] w-full cursor-pointer"
                   style={{
                     backgroundImage: isSelected
-                      ? `linear-gradient(100deg, rgba(24, 14, 6, 0.96) 25%, rgba(120, 60, 10, 0.3) 55%, rgba(120, 60, 10, 0.15) 100%), url('/assets/images/backgrounds/${key}.png')`
-                      : `linear-gradient(100deg, rgba(15, 8, 4, 0.98) 25%, rgba(24, 14, 6, 0.8) 55%, rgba(24, 14, 6, 0.45) 100%), url('/assets/images/backgrounds/${key}.png')`,
+                      ? `linear-gradient(100deg, rgba(24, 14, 6, 0.96) 25%, rgba(120, 60, 10, 0.3) 55%, rgba(120, 60, 10, 0.15) 100%), url('/assets/images/backgrounds/${key}.jpg')`
+                      : `linear-gradient(100deg, rgba(15, 8, 4, 0.98) 25%, rgba(24, 14, 6, 0.8) 55%, rgba(24, 14, 6, 0.45) 100%), url('/assets/images/backgrounds/${key}.jpg')`,
                     backgroundSize: 'cover',
                     backgroundPosition: 'right center',
                     borderColor: isSelected ? 'rgba(180, 100, 20, 0.85)' : 'rgba(120, 70, 20, 0.22)',
                     boxShadow: isSelected ? 'inset 0 0 10px rgba(180, 100, 20, 0.25), 0 2px 6px rgba(0, 0, 0, 0.4)' : 'none',
                   }}
                 >
-                  <img
-                    src={`/assets/icons/bg3/30px-Background_${BACKGROUND_ICONS[key] || 'Noble'}_Icon.png.webp`}
-                    className="z-10 w-8 h-8 rounded-sm border border-tavern-gold/40 bg-stone-950 shrink-0 object-cover mt-0.5"
-                    alt=""
-                  />
+                  <span className="z-10 w-8 h-8 rounded-sm border border-tavern-gold/40 bg-stone-950 shrink-0 mt-0.5 flex items-center justify-center text-tavern-gold">
+                    <GameIcon url={BACKGROUND_ICONS[key] ?? BACKGROUND_ICONS.noble} className="w-5 h-5" />
+                  </span>
                   <div className="z-10 flex-1 min-w-0 pr-2">
                     <div className="flex justify-between items-baseline gap-1">
                       <p className="text-xs font-display tracking-wide font-bold uppercase truncate">{bg.name}</p>
@@ -369,14 +369,14 @@ export function Step1BasicInfo({
                 <div
                   className="w-1/2 h-full bg-cover bg-center transition-all duration-300"
                   style={{
-                    backgroundImage: draft.raceIndex ? `url('/assets/images/races/${draft.raceIndex}.png')` : 'none',
+                    backgroundImage: draft.raceIndex ? `url('/assets/images/races/${draft.raceIndex}.jpg')` : 'none',
                     backgroundColor: '#0c0a09',
                   }}
                 />
                 <div
                   className="w-1/2 h-full bg-cover bg-center transition-all duration-300 border-l border-stone-900/50"
                   style={{
-                    backgroundImage: draft.classIndex ? `url('/assets/images/classes/${draft.classIndex}.png')` : 'none',
+                    backgroundImage: draft.classIndex ? `url('/assets/images/classes/${draft.classIndex}.jpg')` : 'none',
                     backgroundColor: '#0c0a09',
                   }}
                 />
@@ -385,7 +385,7 @@ export function Step1BasicInfo({
               <div
                 className="w-full h-[25%] bg-cover bg-center border-t border-stone-900/40 transition-all duration-300"
                 style={{
-                  backgroundImage: draft.backgroundKey ? `url('/assets/images/backgrounds/${draft.backgroundKey}.png')` : 'none',
+                  backgroundImage: draft.backgroundKey ? `url('/assets/images/backgrounds/${draft.backgroundKey}.jpg')` : 'none',
                   backgroundColor: '#0c0a09',
                 }}
               />
