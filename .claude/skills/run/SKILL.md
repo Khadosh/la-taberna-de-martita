@@ -11,7 +11,7 @@ The system shell uses Node 18 (system default). Vite 8 requires Node ≥ 20.19. 
 ## Launch
 
 ```bash
-PATH="/Users/joaquinnader/.nvm/versions/node/v20.18.3/bin:$PATH" pnpm dev > /tmp/vite-taberna.log 2>&1 &
+PATH="$HOME/.nvm/versions/node/v20.18.3/bin:$PATH" pnpm dev > /tmp/vite-taberna.log 2>&1 &
 sleep 7
 grep -E "Local:|error" /tmp/vite-taberna.log
 ```

@@ -10,8 +10,7 @@ App companion para sesiones de Dungeons & Dragons 5e. Pensada para jugar en mesa
 
 ### Para los jugadores
 - Hoja de personaje completa con pergamino interactivo (stats, HP, CA, XP, condiciones, hechizos, pericias)
-- Inventario visual estilo BG3 con paper doll drag & drop y 11 slots de equipo
-- Iconos de equipo del catálogo oficial de D&D 5e
+- Inventario visual con paper doll drag & drop y 11 slots de equipo
 - Condiciones representadas con sellos de cera SVG
 - Level up, death saves, spell slots, descansos
 
@@ -89,3 +88,22 @@ src/
 - [`CLAUDE.md`](./CLAUDE.md) — instrucciones para Claude Code (stack, gotchas, convenciones)
 - [`CHANGELOG.md`](./CHANGELOG.md) — historial de cambios por versión
 - [`roadmap.md`](./roadmap.md) — estado actual y próximos pasos
+
+---
+
+## Licencia y atribuciones
+
+El código fuente está bajo [licencia MIT](./LICENSE).
+
+Las reglas de juego provienen del System Reference Document 5.1, publicado por
+Wizards of the Coast bajo Creative Commons Attribution 4.0:
+
+> This work includes material taken from the System Reference Document 5.1
+> ("SRD 5.1") by Wizards of the Coast LLC and available at
+> https://dnd.wizards.com/resources/systems-reference-document. The SRD 5.1 is
+> licensed under the Creative Commons Attribution 4.0 International License
+> available at https://creativecommons.org/licenses/by/4.0/legalcode.
+
+Proyecto no oficial, sin afiliación ni respaldo de Wizards of the Coast ni de
+Hasbro. El detalle completo de fuentes, assets y tipografías de terceros está en
+[`ATTRIBUTIONS.md`](./ATTRIBUTIONS.md).
