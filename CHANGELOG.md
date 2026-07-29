@@ -6,7 +6,32 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 
 ## [Unreleased]
 
+### refactor
+- **Sistema de íconos migrado de BG3 a game-icons.net**: se eliminaron los 3.328 assets scrapeados de Baldur's Gate 3 (45 MB, licencia dudosa) y los mapas `bg3-icon-map.ts` / `bg3-spell-map.ts` (3.045 entradas). En su lugar, 129 SVGs de [game-icons.net](https://game-icons.net) bajo CC-BY-3.0 (536 KB), generados por `scripts/build-game-icons.mjs`.
+  - La resolución pasa a ser **puramente semántica**: 111 conceptos de equipo, 16 trasfondos y 8 escuelas de magia. Los conjuros se resuelven por escuela en vez de por nombre — el SRD tiene 300+ hechizos pero solo 8 escuelas.
+  - Nuevo componente `GameIcon`: renderiza el SVG como máscara CSS sobre `bg-current` en vez de `<img>`, así el ícono hereda el color del tema y el mismo asset lee bien sobre pergamino claro y madera oscura. Antes eran PNGs de color fijo.
+  - El chunk `item-icons` (233 KB) desaparece del bundle.
+
+### chore
+- **Optimización de `public/`: 94 MB → 14 MB.**
+  - Eliminados 15 MB de assets huérfanos sin ninguna referencia en el código: 10 sprite sheets de íconos (`armor.png`, `jewelry.png`, `weapons.png` y 7 más), `races/miniaturas.png`, `pnj_bg.png`, `tavern_bg.png`, `comercio_bg.png` y `Fondo DM.png`.
+  - Las 29 ilustraciones sin canal alfa se recomprimieron a JPEG (26 MB → 12 MB) vía `scripts/optimize-images.mjs`. Eran arte generado guardado como PNG, que para imagen fotográfica pesa ~1 byte por píxel. Las 26 que tienen transparencia se conservan como PNG.
+  - `wax seal (1).png` renombrado a `wax-seal.png`: los espacios y paréntesis obligaban a escapar la URL en cada uso.
+
+### docs
+- **Comparación con D&D Beyond** (`docs/dnd-beyond-comparison.md`): borrador de trabajo con los hallazgos de haber usado D&D Beyond en mesa real para contrastarlo contra esta app. Registra la tesis (ficha como documento vs. ficha como escena; entre sesiones vs. mesa en vivo), los 7 hallazgos ordenados por qué tan bien aguantan una repregunta, y las secciones obligatorias de dónde gana D&D Beyond y de asimetría de escala.
+- **Roadmap de ingeniería**: agregada una sección con las fases 0 a 4 (higiene defensiva, motor de reglas como paquete puro, verificabilidad con tests + CI, sistemas distribuidos y accesibilidad, internacionalización), cada una con criterio de "terminado cuando". Documenta el trabajo que no agrega features pero hace el proyecto verificable.
+- **Licencia y atribuciones**: agregado `LICENSE` (MIT) para el código propio y `ATTRIBUTIONS.md` con la atribución literal que exige CC-BY-4.0 para el SRD 5.1, más las fuentes de la API de reglas, tipografías y assets 3D. El README incorpora la nota de atribución y el disclaimer de no afiliación con Wizards of the Coast. Antes de esto el proyecto incumplía la licencia del SRD.
+- **Paths locales filtrados**: `roadmap.md` linkeaba a `shared-dice-proposal.md` con una URL `file:///Users/...` absoluta y `.claude/skills/run/SKILL.md` hardcodeaba el home del autor. Ambos ahora son relativos / `$HOME`.
+
+### refactor
+- **Split `custom-item-form.tsx`** de 602 a 313 líneas: `custom-item-form-state.ts` (tipos, `EMPTY_FORM`, `formToProperties`, `itemToForm` y las constantes de clases), `custom-item-image-panel.tsx` (subida y generación de imagen) y `custom-item-spells-editor.tsx` (tabla de hechizos con autocomplete).
+- **Split `$campaignId.comercio.tsx`** de 599 a 79 líneas: `comercio/use-comercio.ts` (estado, queries y las transacciones de compra/venta), `comercio/comercio-buy-tab.tsx` y `comercio/comercio-sell-tab.tsx`.
+- **Split `$campaignId.taberna.tsx`** de 553 a 87 líneas: `taberna/use-taberna.ts` (estado, queries, consumo de servicios y compra en establos), `taberna/taberna-menu-list.tsx` y `taberna/taberna-checkout-panel.tsx`.
+- Con esto ningún archivo del proyecto viola la regla de 500 líneas de `CLAUDE.md`.
+
 ### fix
+- **Asteriscos literales en Comercio**: el texto del 50% de reventa usaba sintaxis Markdown dentro de JSX, así que se renderizaba como `**50% de su valor...**`. Ahora usa `<strong>`.
 - **Posiciones de fichas al reconectar**: al conectarse al tablero, las fichas ahora aparecen donde quedaron en la sesión anterior. El load inicial de `board_tokens` ahora también puebla `externalPositions` con los `x`,`y` guardados en DB (antes solo se actualizaba por eventos Realtime UPDATE). Además, el effect que aplica posiciones externas usa `requestAnimationFrame` para reintentar si el board aún no tiene ancho medido.
 
 ### feat

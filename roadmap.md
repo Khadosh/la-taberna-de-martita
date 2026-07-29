@@ -32,10 +32,125 @@
 
 ---
 
+## 🏗️ Roadmap de ingeniería
+
+Trabajo que no agrega features pero hace el proyecto verificable y sostenible.
+Las fases van en orden: cada una se apoya en la anterior.
+
+### Fase 0 — Higiene defensiva
+
+| Tarea | Estado |
+|---|---|
+| `LICENSE` (MIT) + atribución CC-BY del SRD 5.1 en README y `ATTRIBUTIONS.md` | ✅ |
+| Sacar paths locales del autor de archivos versionados | ✅ |
+| Modularizar los 3 archivos que violaban la regla de 500 líneas | ✅ |
+| Reemplazar los 3.328 assets de BG3 (45 MB) por 129 SVGs de game-icons.net (536 KB) | ✅ |
+| Optimizar `public/`: 94 MB → 14 MB (assets huérfanos + recompresión a JPEG) | ✅ |
+| Documentar la posición sobre generación de arte por IA (`@fal-ai/client`) | ⏳ |
+| Pasar a WebP las 26 imágenes con transparencia (12 MB) — requiere `sharp` | ⏳ |
+
+**Terminado cuando:** el repo declara su licencia y atribuye el SRD, no tiene assets de
+terceros con licencia dudosa, ningún archivo viola sus propias reglas, y el bundle de
+íconos pesa menos de 5 MB.
+
+Estado: **536 KB de íconos** (objetivo: < 5 MB) y `public/` en 14 MB. Lo que queda son
+los 12 MB de PNGs con canal alfa; `sips` (la única herramienta disponible sin sumar
+dependencias) no escribe WebP.
+
+### Fase 1 — El motor de reglas como paquete
+
+Consolidar en `src/engine/` lo que hoy está disperso (modificadores y CA, umbrales de XP,
+slots por clase y nivel, límites de carga, descansos, conversión de moneda, escalado de
+encuentros, motor de loot). Tres reglas: **cero React, cero Supabase, funciones puras**.
+Las reglas que hoy son condicionales en TypeScript pasan a ser datos declarativos que el
+motor interpreta.
+
+Candidatos ya identificados para migrar: `maxHpFor()` en `taberna/use-taberna.ts` y la
+estimación de reventa en `comercio/comercio-sell-tab.tsx`.
+
+**Terminado cuando:** se puede importar el motor en un script de Node sin JSDOM y calcular
+una ficha completa.
+
+### Fase 2 — Verificabilidad
+
+Tests del motor escritos como spec ejecutable del SRD (no como verificación de la
+implementación), tests de los flujos críticos de UI (aplicar daño, equipar y recalcular
+peso, subir de nivel) y CI en GitHub Actions con typecheck + tests + build.
+
+**Terminado cuando:** hay un badge verde en el README y romper una regla de D&D hace
+fallar el pipeline.
+
+### Fase 3 — Sistemas distribuidos y accesibilidad
+
+- **Unificar la capa de realtime**, hoy dispersa en seis hooks (`use-character-sheet`,
+  `use-tablero-data`, `use-combat-broadcast`, `use-dm-tablero`, `use-board-maps`,
+  `player-tablero`), con política explícita de suscripción, reconexión y reconciliación.
+- **Medir y publicar números**: latencia de propagación entre dispositivos, tiempo hasta
+  que la UI refleja un cambio optimista, comportamiento con red degradada.
+- **Accesibilidad**: hoy hay 1 solo atributo `aria-*` sobre 283 `<button>` y 9
+  `<div onClick>` sin soporte de teclado.
+- **Bundle**: `DiceModule` (Three.js + cannon-es, 1,68 MB) se importa estáticamente en
+  `$campaignId.tsx` y `$characterId.tsx`, así que baja al entrar a cualquier campaña o
+  ficha aunque nunca se abra el tirador. Pasarlo a `lazy()`.
+
+**Terminado cuando:** hay números publicados, no adjetivos.
+
+### Fase 4 — Internacionalización
+
+Hoy la app es monolingüe: `<html lang="es">` fijo, sin librería de i18n, y 42 de los 90
+archivos `.tsx` tienen texto en español embebido (~395 líneas con acentos, que subestima
+el total porque no cuenta strings como "Buscar" o "Vender").
+
+**Por qué no es cosmético.** El problema ya apareció solo y se resolvió ad-hoc en dos
+lugares: `dnd-backgrounds.ts` exporta `ABILITY_LABELS_ES` — el sufijo `_ES` es la señal de
+que la dimensión de idioma ya existía sin infraestructura que la sostenga — y
+`item-icons.ts` matchea términos en los dos idiomas a la vez (`'espada larga'` y
+`'longsword'`, 12 términos así). Son parches correctos sobre un problema que nunca se
+modeló.
+
+**El eje que hay que separar: locale de UI ≠ locale de contenido de juego.** No se mueven
+juntos. La API del SRD solo sirve inglés, y en la mesa hispanohablante se juega
+naturalmente mezclado ("tiro el save", "es un longsword"). Un jugador puede querer la
+interfaz en español y los términos de reglas en inglés — o cualquier combinación.
+Colapsar los dos ejes en un solo `locale` es la decisión fácil y equivocada; es
+exactamente el tipo de trade-off que merece quedar documentado como decisión de
+arquitectura.
+
+**Trabajo concreto:**
+
+- Extraer los strings de UI a catálogos por idioma. Los 7 mapas `*_LABELS` que ya existen
+  (`RARITY_LABELS`, `ITEM_TYPE_LABELS`, `DAMAGE_TYPE_LABELS`, `STAT_LABELS`,
+  `RECHARGE_LABELS`, `SLOT_LABELS`, `ABILITY_LABELS`) son el molde: ya centralizan
+  etiquetas, solo les falta el eje de idioma.
+- Elegir librería (o no: con ~400 strings un módulo propio tipado puede alcanzar y evita
+  una dependencia). Requisito: tipado fuerte de claves, para que borrar una traducción
+  rompa el typecheck en vez de renderizar la clave cruda.
+- Resolver plurales y género — el español los necesita y es donde una solución casera se
+  cae ("1 poción" / "2 pociones", "el hacha" / "la espada").
+- `lang` dinámico en el `<html>`, hoy hardcodeado. Además de i18n, es requisito de
+  accesibilidad: los lectores de pantalla eligen la voz según ese atributo, así que se
+  hace junto con la Fase 3.
+- Detección de idioma + preferencia persistida por usuario.
+
+**Se puede adelantar.** El trabajo se parte en dos mitades independientes: el *chrome* de
+UI (botones, navegación, mensajes) no depende de nada y se puede hacer cuando sea; el
+contenido de reglas conviene hacerlo después de la Fase 1, porque el motor data-driven
+convierte las reglas en datos y las etiquetas viajan con ellos — hacerlo antes obliga a
+extraer strings dos veces.
+
+Si el objetivo inmediato es que alguien que no habla español pueda evaluar la app, la
+versión mínima es solo el catálogo `en` del chrome de UI, y es bastante más barata que la
+i18n completa.
+
+**Terminado cuando:** se puede usar la app entera en inglés, y el idioma de la interfaz se
+elige por separado del idioma de los términos de reglas.
+
+---
+
 ## 🎯 Próximas prioridades (Propuestas Futuras)
 
 ### 🎲 1. Dado compartido e interactivo (1-Way Player-to-DM)
-Sincronización de dados en mesa integrada al tablero de combate del DM (documentado detalladamente en [shared-dice-proposal.md](file:///Users/joaquinnader/Documents/web/personales/dungeonsanddragons/tavern-app/docs/shared-dice-proposal.md)):
+Sincronización de dados en mesa integrada al tablero de combate del DM (documentado detalladamente en [shared-dice-proposal.md](./docs/shared-dice-proposal.md)):
 - **Tiradas interactivas en la hoja (Click-to-Roll)**: Hacer clickeables modificadores de características, salvaciones y pericias.
 - **Broadcast de tiradas de jugador**: Transmitir el resultado vía Supabase Realtime al DM.
 - **Tiradas del DM secretas**: Las tiradas del DM permanecen locales y secretas.
