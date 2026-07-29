@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Info } from 'lucide-react'
 import { SUBCLASS_SELECTION_LEVELS } from '../../../../lib/class-choices'
 import { BACKGROUNDS, ABILITY_LABELS_ES, type Background } from '../../../../lib/dnd-backgrounds'
 import { cardStyle } from './primitives'
@@ -7,6 +6,7 @@ import { CLASS_FLAVOR, RACE_FLAVOR } from './step1-constants'
 import { BACKGROUND_ICONS } from '../../../../lib/game-icons-map'
 import { GameIcon } from '../../../../components/icons/game-icon'
 import { DetailModal } from './detail-modal'
+import { SelectionCard } from './selection-card'
 import type { Draft } from '../character-creation-steps'
 
 interface Step1Props {
@@ -81,19 +81,18 @@ export function Step1BasicInfo({
                 const isSelected = draft.raceIndex === r.index
                 const flavor = RACE_FLAVOR[r.index] ?? { desc: 'Especie del multiverso.', traits: 'Rasgos comunes' }
                 return (
-                  <div
+                  <SelectionCard
                     key={r.index}
-                    onClick={() => patch({ raceIndex: r.index })}
-                    className="relative text-left p-3 border transition-all overflow-hidden flex items-center justify-between rounded-sm h-[84px] w-full cursor-pointer"
-                    style={{
-                      backgroundImage: isSelected
-                        ? `linear-gradient(100deg, rgba(24, 14, 6, 0.96) 25%, rgba(120, 60, 10, 0.5) 35%, rgba(120, 60, 10, 0.15) 100%), url('/assets/images/races/${r.index}.jpg')`
-                        : `linear-gradient(100deg, rgba(15, 8, 4, 0.98) 25%, rgba(24, 14, 6, 0.8) 55%, rgba(24, 14, 6, 0.45) 100%), url('/assets/images/races/${r.index}.jpg')`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'right center',
-                      borderColor: isSelected ? 'rgba(180, 100, 20, 0.85)' : 'rgba(120, 70, 20, 0.22)',
-                      boxShadow: isSelected ? 'inset 0 0 10px rgba(180, 100, 20, 0.25), 0 2px 6px rgba(0, 0, 0, 0.4)' : 'none',
-                    }}
+                    group="race"
+                    value={r.index}
+                    selected={isSelected}
+                    onSelect={() => patch({ raceIndex: r.index })}
+                    onInfo={() => setInfoModalData({ type: 'race', indexOrKey: r.index, name: r.name })}
+                    label={r.name}
+                    infoLabel={`Ver detalles de ${r.name}`}
+                    image={`/assets/images/races/${r.index}.jpg`}
+                    tint={{ alpha: 0.5, stop: '35%' }}
+                    className="h-[84px] flex items-center justify-between"
                   >
                     <div className="z-10 flex-1 pr-14">
                       <div className="flex items-center gap-2">
@@ -109,19 +108,7 @@ export function Step1BasicInfo({
                       </div>
                       <p className="text-[12px] text-stone-300 text-shadow-2 font-serif mt-1 ">{flavor.desc}</p>
                     </div>
-                    {/* Info Button */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setInfoModalData({ type: 'race', indexOrKey: r.index, name: r.name });
-                      }}
-                      className="absolute right-2.5 bottom-2.5 z-20 p-1 flex items-center justify-center rounded-full bg-stone-900/60 border border-stone-850 hover:border-amber-500/60 text-stone-400 hover:text-amber-300 transition-all shadow-sm"
-                      title="Ver detalles"
-                    >
-                      <Info className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  </SelectionCard>
                 )
               })}
             </div>
@@ -135,19 +122,17 @@ export function Step1BasicInfo({
                 const isSelected = draft.classIndex === c.index
                 const flavor = CLASS_FLAVOR[c.index] ?? { desc: 'Una clase de héroe.', tags: [] }
                 return (
-                  <div
+                  <SelectionCard
                     key={c.index}
-                    onClick={() => patch({ classIndex: c.index, subclassIndex: '', spells: [], skillProficiencies: [], expertise: [] })}
-                    className="relative text-left p-3 border transition-all overflow-hidden flex items-center justify-between rounded-sm h-[84px] w-full cursor-pointer"
-                    style={{
-                      backgroundImage: isSelected
-                        ? `linear-gradient(100deg, rgba(24, 14, 6, 0.96) 25%, rgba(120, 60, 10, 0.3) 55%, rgba(120, 60, 10, 0.15) 100%), url('/assets/images/classes/${c.index}.jpg')`
-                        : `linear-gradient(100deg, rgba(15, 8, 4, 0.98) 25%, rgba(24, 14, 6, 0.8) 55%, rgba(24, 14, 6, 0.45) 100%), url('/assets/images/classes/${c.index}.jpg')`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'right center',
-                      borderColor: isSelected ? 'rgba(180, 100, 20, 0.85)' : 'rgba(120, 70, 20, 0.22)',
-                      boxShadow: isSelected ? 'inset 0 0 10px rgba(180, 100, 20, 0.25), 0 2px 6px rgba(0, 0, 0, 0.4)' : 'none',
-                    }}
+                    group="class"
+                    value={c.index}
+                    selected={isSelected}
+                    onSelect={() => patch({ classIndex: c.index, subclassIndex: '', spells: [], skillProficiencies: [], expertise: [] })}
+                    onInfo={() => setInfoModalData({ type: 'class', indexOrKey: c.index, name: c.name })}
+                    label={c.name}
+                    infoLabel={`Ver detalles de ${c.name}`}
+                    image={`/assets/images/classes/${c.index}.jpg`}
+                    className="h-[84px] flex items-center justify-between"
                   >
                     <div className="z-10 flex-1 pr-14">
                       <div className="flex items-center gap-2">
@@ -169,19 +154,7 @@ export function Step1BasicInfo({
                         </span>
                       ))}
                     </div>
-                    {/* Info Button */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setInfoModalData({ type: 'class', indexOrKey: c.index, name: c.name });
-                      }}
-                      className="absolute right-2.5 bottom-2.5 z-20 p-1 flex items-center justify-center rounded-full bg-stone-900/60 border border-stone-850 hover:border-amber-500/60 text-stone-400 hover:text-amber-300 transition-all shadow-sm"
-                      title="Ver detalles"
-                    >
-                      <Info className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  </SelectionCard>
                 )
               })}
             </div>
@@ -196,10 +169,16 @@ export function Step1BasicInfo({
               {classSubclasses.results.map((s: any) => {
                 const isSelected = draft.subclassIndex === s.index
                 return (
-                  <div
+                  <SelectionCard
                     key={s.index}
-                    onClick={() => patch({ subclassIndex: s.index })}
-                    className={`relative text-left p-3 border transition-all pr-10 cursor-pointer ${isSelected
+                    group="subclass"
+                    value={s.index}
+                    selected={isSelected}
+                    onSelect={() => patch({ subclassIndex: s.index })}
+                    onInfo={() => setInfoModalData({ type: 'subclass', indexOrKey: s.index, name: s.name })}
+                    label={s.name}
+                    infoLabel={`Ver detalles de ${s.name}`}
+                    className={`pr-10 ${isSelected
                       ? 'border-amber-600/90 text-amber-100 bg-amber-950/20 shadow-sm'
                       : 'border-stone-800 text-stone-400 hover:border-amber-800/40 hover:text-stone-200'
                       }`}
@@ -211,19 +190,7 @@ export function Step1BasicInfo({
                         Se desbloquea al Nivel {subclassReqLevel}
                       </p>
                     </div>
-                    {/* Info Button */}
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setInfoModalData({ type: 'subclass', indexOrKey: s.index, name: s.name });
-                      }}
-                      className="absolute right-2.5 bottom-2.5 z-20 p-1 flex items-center justify-center rounded-full bg-stone-900/60 border border-stone-850 hover:border-amber-500/60 text-stone-400 hover:text-amber-300 transition-all shadow-sm"
-                      title="Ver detalles"
-                    >
-                      <Info className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
+                  </SelectionCard>
                 )
               })}
             </div>
@@ -237,19 +204,17 @@ export function Step1BasicInfo({
             {Object.entries(BACKGROUNDS).map(([key, bg]) => {
               const isSelected = draft.backgroundKey === key
               return (
-                <div
+                <SelectionCard
                   key={key}
-                  onClick={() => patch({ backgroundKey: key, bgBonus2: '', bgBonus1: '' })}
-                  className="relative text-left p-3 border transition-all overflow-hidden flex items-start gap-2.5 pr-10 rounded-sm h-[84px] w-full cursor-pointer"
-                  style={{
-                    backgroundImage: isSelected
-                      ? `linear-gradient(100deg, rgba(24, 14, 6, 0.96) 25%, rgba(120, 60, 10, 0.3) 55%, rgba(120, 60, 10, 0.15) 100%), url('/assets/images/backgrounds/${key}.jpg')`
-                      : `linear-gradient(100deg, rgba(15, 8, 4, 0.98) 25%, rgba(24, 14, 6, 0.8) 55%, rgba(24, 14, 6, 0.45) 100%), url('/assets/images/backgrounds/${key}.jpg')`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'right center',
-                    borderColor: isSelected ? 'rgba(180, 100, 20, 0.85)' : 'rgba(120, 70, 20, 0.22)',
-                    boxShadow: isSelected ? 'inset 0 0 10px rgba(180, 100, 20, 0.25), 0 2px 6px rgba(0, 0, 0, 0.4)' : 'none',
-                  }}
+                  group="background"
+                  value={key}
+                  selected={isSelected}
+                  onSelect={() => patch({ backgroundKey: key, bgBonus2: '', bgBonus1: '' })}
+                  onInfo={() => setInfoModalData({ type: 'background', indexOrKey: key, name: bg.name })}
+                  label={bg.name}
+                  infoLabel={`Ver detalles de ${bg.name}`}
+                  image={`/assets/images/backgrounds/${key}.jpg`}
+                  className="h-[84px] flex items-start gap-2.5 pr-10"
                 >
                   <span className="z-10 w-8 h-8 rounded-sm border border-tavern-gold/40 bg-stone-950 shrink-0 mt-0.5 flex items-center justify-center text-tavern-gold">
                     <GameIcon url={BACKGROUND_ICONS[key] ?? BACKGROUND_ICONS.noble} className="w-5 h-5" />
@@ -265,19 +230,7 @@ export function Step1BasicInfo({
                     </div>
                     <p className="text-[12px] text-stone-300 font-serif mt-1 leading-snug line-clamp-2">{bg.desc}</p>
                   </div>
-                  {/* Info Button */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setInfoModalData({ type: 'background', indexOrKey: key, name: bg.name });
-                    }}
-                    className="absolute right-2.5 bottom-2.5 z-20 p-1 flex items-center justify-center rounded-full bg-stone-900/60 border border-stone-850 hover:border-amber-500/60 text-stone-400 hover:text-amber-300 transition-all shadow-sm"
-                    title="Ver detalles"
-                  >
-                    <Info className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                </SelectionCard>
               )
             })}
           </div>
