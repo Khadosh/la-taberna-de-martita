@@ -2,6 +2,8 @@ import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useForm } from '@tanstack/react-form'
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useT } from '../i18n'
+import { LanguageSwitcher } from '../components/language-switcher'
 
 export const Route = createFileRoute('/login')({
   beforeLoad: ({ context }) => {
@@ -14,6 +16,7 @@ export const Route = createFileRoute('/login')({
 
 function LoginPage() {
   const navigate = useNavigate()
+  const t = useT()
   const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login')
   const [error, setError] = useState<string | null>(null)
   const [emailSent, setEmailSent] = useState(false)
@@ -41,7 +44,9 @@ function LoginPage() {
 
   const switchMode = (next: typeof mode) => { setMode(next); setError(null); setEmailSent(false) }
 
-  const modeLabel = mode === 'login' ? 'Entrar' : mode === 'register' ? 'Crear cuenta' : 'Enviar email'
+  const modeLabel = mode === 'login'
+    ? t('auth.signIn')
+    : mode === 'register' ? t('auth.createAccount') : t('auth.sendEmail')
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-tavern-fire px-4" style={loginPageStyle}>
@@ -64,6 +69,10 @@ function LoginPage() {
 
             <div className="px-8 py-10 space-y-7">
 
+              <div className="flex justify-end -mt-4 -mr-2">
+                <LanguageSwitcher />
+              </div>
+
               {/* Brand */}
               <div className="text-center space-y-1">
                 <img src="/favicon.svg" alt="" className="w-12 h-12 mx-auto mb-1" />
@@ -75,10 +84,10 @@ function LoginPage() {
                 </p>
                 <p className="text-stone-600 text-xs font-serif italic pt-1">
                   {emailSent
-                    ? 'Revisá tu email, viajero'
+                    ? t('auth.checkEmail')
                     : mode === 'forgot'
-                    ? 'Recuperá tu acceso'
-                    : 'Bienvenido, viajero'}
+                    ? t('auth.recoverAccess')
+                    : t('auth.welcome')}
                 </p>
               </div>
 
@@ -94,11 +103,11 @@ function LoginPage() {
                 <div className="text-center space-y-4">
                   <p className="text-stone-400 text-sm font-serif">
                     {mode === 'forgot'
-                      ? 'Te mandamos un link para recuperar tu contraseña.'
-                      : 'Confirmá tu cuenta desde el email.'}
+                      ? t('auth.resetLinkSent')
+                      : t('auth.confirmFromEmail')}
                   </p>
                   <button onClick={() => switchMode('login')} className={linkClass}>
-                    ← Volver al inicio de sesión
+                    {t('auth.backToSignIn')}
                   </button>
                 </div>
               ) : (
@@ -109,7 +118,7 @@ function LoginPage() {
                       {(field) => (
                         <input
                           type="email"
-                          placeholder="Email"
+                          placeholder={t('auth.email')}
                           autoComplete="email"
                           value={field.state.value}
                           onChange={(e) => field.handleChange(e.target.value)}
@@ -124,7 +133,7 @@ function LoginPage() {
                         {(field) => (
                           <input
                             type="password"
-                            placeholder="Contraseña"
+                            placeholder={t('auth.password')}
                             autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                             value={field.state.value}
                             onChange={(e) => field.handleChange(e.target.value)}
@@ -160,16 +169,16 @@ function LoginPage() {
                     {mode === 'login' && (
                       <>
                         <button onClick={() => switchMode('register')} className={linkClass}>
-                          ¿Sin cuenta? Registrate
+                          {t('auth.noAccount')} {t('auth.signUp')}
                         </button>
                         <button onClick={() => switchMode('forgot')} className={`${linkClass} text-stone-600`}>
-                          Olvidé mi contraseña
+                          {t('auth.forgotPassword')}
                         </button>
                       </>
                     )}
                     {mode !== 'login' && (
                       <button onClick={() => switchMode('login')} className={linkClass}>
-                        ← Volver al inicio de sesión
+                        {t('auth.backToSignIn')}
                       </button>
                     )}
                   </div>
