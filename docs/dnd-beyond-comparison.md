@@ -16,7 +16,12 @@ resolvió mejor cada uno y por qué.
 
 El maniquí es el estado del equipo en el espacio, no una lista. Las plantillas de
 área son el efecto del hechizo sobre el mapa, no "20 pies de radio" en una
-descripción. El historial de combate es el estado en el tiempo, visible.
+descripción. El historial de combate es el estado en el tiempo, visible. La
+resolución de ataque responde "necesitás 8 o más" en vez de darte los dos números
+para que hagas la resta.
+
+El patrón: **donde D&D Beyond te da los datos, esta app te da la respuesta.** En
+una mesa en vivo, esa diferencia es el ritmo de la partida.
 
 Corolario: **D&D Beyond está optimizado para entre sesiones; esta app para la mesa
 en vivo.** Construir personaje y consultar reglas es su terreno. Saber qué pasó
@@ -62,6 +67,25 @@ Demostrables en el video sin explicación. Técnicamente no triviales.
 | Dónde frenó D&D Beyond | _(pendiente — **verificar**)_ |
 | Cómo lo resuelve esta app | Paper doll humanoide: el equipo se lee de un vistazo en vez de recorrer una lista |
 | Dónde vive | `src/components/character-sheet/paper-doll.tsx` |
+
+#### Resolución de ataque atacante → objetivo
+
+Probablemente el más fuerte de todos: es el que mejor encarna la tesis. D&D Beyond
+te da el bloque de estadísticas y vos hacés la cuenta — "su CA es 15, tengo +7,
+necesito sacar 8". Esta app hace la cuenta por vos **para ese par concreto** y te
+da la respuesta directa. Convierte una consulta más una operación mental en un
+número.
+
+| | |
+|---|---|
+| Qué se intentó en la mesa | _(pendiente)_ |
+| Dónde frenó D&D Beyond | _(pendiente — **es la afirmación más fuerte de la lista; verificar con especial cuidado en su tracker de combate y en Maps antes de escribirla**)_ |
+| Cómo lo resuelve esta app | Seleccionás atacante y objetivo, y muestra el d20 mínimo necesario, la probabilidad de acierto en porcentaje y el daño. Contempla tiradas de salvación con su CD y los bordes de la regla: 1 natural siempre falla, `nat20Always` cuando el 20 acierta sí o sí |
+| Dónde vive | `src/components/combat/use-combat-board.ts:318` · `combat-popup.tsx` |
+
+> Nota para la Fase 1: este cálculo hoy vive dentro de un hook, mezclado con estado
+> de React. Es un candidato claro a mudarse al motor de reglas — y de los que mejor
+> quedan como test contra el SRD.
 
 #### Historial en la pantalla de combate
 
