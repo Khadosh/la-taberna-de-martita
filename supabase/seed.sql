@@ -198,15 +198,19 @@ INSERT INTO public.npcs (
    NULL);
 
 -- ─── Tablero de combate ──────────────────────────────────────────────────────
--- Un encuentro armado: los tres PJ enfrente de Grishnak y dos goblins.
+-- Un encuentro armado: los tres PJ enfrentando a Grishnak y dos goblins.
+--
+-- `x`/`y` son PÍXELES sobre el lienzo del tablero, no celdas de grilla (ver
+-- `TOKEN_SIZE = 76` en combat-helpers). Con valores de una cifra las fichas
+-- quedan apiladas en la esquina superior izquierda y parecen no renderizarse.
 
 INSERT INTO public.board_tokens (campaign_id, entity_id, kind, label, current_hp, max_hp, x, y) VALUES
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000001', 'player', 'Thorin', 28, 28, 3, 6),
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000002', 'player', 'Lyra',   17, 17, 2, 8),
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000003', 'player', 'Pip',    21, 21, 4, 8),
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'cccccccc-0000-0000-0000-000000000001', 'npc', 'Grishnak',  45, 45, 9, 6),
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'cccccccc-0000-0000-0000-000000000003', 'npc', 'Goblin A',   7,  7, 10, 4),
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'goblin-b',                             'npc', 'Goblin B',   7,  7, 10, 8);
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000001', 'player', 'Thorin', 28, 28, 300, 360),
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000002', 'player', 'Lyra',   17, 17, 180, 470),
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000003', 'player', 'Pip',    21, 21, 330, 520),
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'cccccccc-0000-0000-0000-000000000001', 'npc', 'Grishnak',  45, 45, 720, 380),
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'cccccccc-0000-0000-0000-000000000003', 'npc', 'Goblin A',   7,  7, 830, 250),
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'goblin-b',                             'npc', 'Goblin B',   7,  7, 850, 490);
 
 -- ─── Objeto de campaña ───────────────────────────────────────────────────────
 

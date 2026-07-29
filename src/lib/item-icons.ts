@@ -46,9 +46,10 @@ export function getItemIconUrl(name: string): string | null {
   if (hasWords(s, 'war pick', 'pico de guerra')) return icon('war-pick')
   if (hasWords(s, 'whip', 'whips', 'latigo')) return icon('whip')
   if (hasWords(s, 'sickle', 'sickles', 'hoz')) return icon('sickle')
-  if (hasWords(s, 'club', 'clubs', 'garrote')) return icon('club')
+  if (hasWords(s, 'club', 'clubs', 'greatclub', 'garrote')) return icon('club')
 
   // ── ARMAS A DISTANCIA ────────────────────────────────────────────────────
+  if (hasWords(s, 'sling', 'slings', 'honda')) return icon('sling')
   if (hasWords(s, 'dart', 'darts', 'dardo', 'blowgun', 'blowguns', 'cerbatana')) return icon('dart')
   if (hasWords(s, 'crossbow', 'crossbows', 'ballesta')) return icon('crossbow')
   if (hasWords(s, 'longbow', 'longbows', 'arco largo')) return icon('longbow')
@@ -161,8 +162,23 @@ export function getItemIconUrl(name: string): string | null {
   if (hasWords(s, 'gem', 'gems', 'gema', 'jewel', 'jewels', 'joya', 'pearl', 'perla')) return icon('gem')
   if (hasWords(s, 'coin', 'coins', 'moneda', 'monedas', 'gold', 'oro')) return icon('coins')
 
-  // ── HERRAMIENTAS GENÉRICAS (última red: 'kit', 'tools', 'supplies') ──────
+  // ── REDES DE ÚLTIMO RECURSO ──────────────────────────────────────────────
+  // Van al final para que toda regla específica gane. Cubren dos familias del
+  // SRD que de otro modo caen al emoji: los objetos mágicos nombrados por su
+  // nombre propio (`Flame Tongue`, `Armor of Resistance`, `Oathbow`) y los
+  // genéricos con bonificador (`Weapon, +1`, `Armor, +2`).
+  if (hasWords(s, 'orb', 'orbe')) return icon('orb')
+  if (hasWords(s, 'crystal', 'cristal')) return icon('crystal')
+  if (hasWords(s, 'hook', 'gancho', 'tackle', 'aparejo')) return icon('hook')
+  if (hasWords(s, 'lamp', 'lampara')) return icon('lantern')
+  if (hasWords(s, 'wax', 'cera')) return icon('wax')
+  if (hasWords(s, 'ram', 'ariete')) return icon('pickaxe')
   if (hasWords(s, 'supplies', 'suministros', 'tools', 'herramientas', 'kit', 'kits', 'utensils', 'utensil')) return icon('misc')
+
+  if (hasWords(s, 'sword', 'blade', 'espada', 'hoja', 'brand', 'tongue', 'avenger', 'slayer', 'thrower')) return icon('longsword')
+  if (hasWords(s, 'bow', 'arco')) return icon('longbow')
+  if (hasWords(s, 'armor', 'armour', 'armadura', 'mail')) return icon('plate-armor')
+  if (hasWords(s, 'weapon', 'arma')) return icon('longsword')
 
   return null
 }

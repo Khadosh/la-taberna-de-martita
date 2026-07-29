@@ -1,7 +1,7 @@
 // Auto-generado por scripts/build-game-icons.mjs — no editar a mano.
 // Íconos de game-icons.net, CC-BY-3.0. Ver ATTRIBUTIONS.md.
 
-// 111 conceptos de equipo
+// 116 conceptos de equipo
 export const GAME_ICONS: Record<string, string> = {
   "longsword": "/assets/icons/game-icons/broadsword.svg",
   "greatsword": "/assets/icons/game-icons/two-handed-sword.svg",
@@ -27,6 +27,7 @@ export const GAME_ICONS: Record<string, string> = {
   "whip": "/assets/icons/game-icons/whip.svg",
   "sickle": "/assets/icons/game-icons/sickle.svg",
   "club": "/assets/icons/game-icons/wood-club.svg",
+  "sling": "/assets/icons/game-icons/sling.svg",
   "dart": "/assets/icons/game-icons/dart.svg",
   "crossbow": "/assets/icons/game-icons/crossbow.svg",
   "longbow": "/assets/icons/game-icons/bow-arrow.svg",
@@ -111,6 +112,10 @@ export const GAME_ICONS: Record<string, string> = {
   "gaming": "/assets/icons/game-icons/poker-hand.svg",
   "dice": "/assets/icons/game-icons/dice-six-faces-one.svg",
   "chess": "/assets/icons/game-icons/chess-knight.svg",
+  "orb": "/assets/icons/game-icons/orb-wand.svg",
+  "crystal": "/assets/icons/game-icons/crystal-shine.svg",
+  "hook": "/assets/icons/game-icons/hook.svg",
+  "wax": "/assets/icons/game-icons/wax-seal.svg",
   "coins": "/assets/icons/game-icons/coins.svg",
   "gem": "/assets/icons/game-icons/gems.svg",
   "misc": "/assets/icons/game-icons/swap-bag.svg",

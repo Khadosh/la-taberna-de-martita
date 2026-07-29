@@ -62,6 +62,7 @@ const CONCEPTS = {
   club: 'wood-club',
 
   // ── Armas a distancia ──
+  sling: 'sling',
   dart: 'dart',
   crossbow: 'crossbow',
   longbow: 'bow-arrow',
@@ -166,6 +167,13 @@ const CONCEPTS = {
   chess: 'chess-knight',
 
   // ── Genéricos ──
+  // Redes de último recurso de la cascada: cubren los ítems mágicos del SRD que
+  // se nombran por su nombre propio ("Flame Tongue", "Armor of Resistance") o de
+  // forma abstracta ("Weapon, +1").
+  orb: 'orb-wand',
+  crystal: 'crystal-shine',
+  hook: 'hook',
+  wax: 'wax-seal',
   coins: 'coins',
   gem: 'gems',
   misc: 'swap-bag',
