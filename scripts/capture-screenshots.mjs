@@ -6,9 +6,13 @@
  * Las capturas van a docs/screenshots/ en JPEG: son ilustraciones de documento,
  * no assets de la app, y en PNG pesarían cinco veces más.
  *
+ * El idioma se fija explícitamente: sin eso, el navegador headless lo detecta de
+ * `navigator.language` y las capturas dejan de ser reproducibles.
+ *
  * Uso:
- *   node scripts/capture-screenshots.mjs
- *   node scripts/capture-screenshots.mjs --headed    # para depurar
+ *   node scripts/capture-screenshots.mjs              # español (docs/screenshots/es)
+ *   node scripts/capture-screenshots.mjs --locale en  # inglés  (docs/screenshots/en)
+ *   node scripts/capture-screenshots.mjs --headed     # para depurar
  */
 
 import { chromium } from 'playwright'
@@ -17,9 +21,18 @@ import { dirname, join } from 'path'
 import { fileURLToPath } from 'url'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
-const OUT = join(ROOT, 'docs/screenshots')
 const BASE = process.env.BASE_URL ?? 'http://localhost:5173'
 const HEADED = process.argv.includes('--headed')
+
+const localeFlag = process.argv.indexOf('--locale')
+const LOCALE = localeFlag !== -1 ? process.argv[localeFlag + 1] : 'es'
+const OUT = join(ROOT, 'docs/screenshots', LOCALE)
+
+/** Etiquetas de los controles que el script necesita accionar, por idioma. */
+const UI = {
+  es: { email: 'Email', password: 'Contraseña', signIn: /entrar/i, skills: /pericias/i, story: /historia/i, spells: /hechizos/i, startCombat: /iniciar combate/i },
+  en: { email: 'Email', password: 'Password', signIn: /enter/i, skills: /skills/i, story: /story/i, spells: /spells/i, startCombat: /start combat/i },
+}[LOCALE]
 
 const CAMPAIGN = 'aaaaaaaa-0000-0000-0000-000000000001'
 const THORIN = 'bbbbbbbb-0000-0000-0000-000000000001'
@@ -44,9 +57,9 @@ async function login(page, email) {
     Object.keys(localStorage).filter(k => k.startsWith('sb-')).forEach(k => localStorage.removeItem(k))
   })
   await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded' })
-  await page.getByPlaceholder('Email').fill(email)
-  await page.getByPlaceholder('Contraseña').fill(PASSWORD)
-  await page.getByRole('button', { name: /entrar/i }).click()
+  await page.getByPlaceholder(UI.email).fill(email)
+  await page.getByPlaceholder(UI.password).fill(PASSWORD)
+  await page.getByRole('button', { name: UI.signIn }).click()
   await page.waitForURL(url => !url.pathname.includes('login'), { timeout: 15000 })
   await settle(page)
 }
@@ -90,6 +103,9 @@ const run = async () => {
     viewport: { width: 1600, height: 900 },
     deviceScaleFactor: 1,
   })
+  // Fija el idioma antes de que arranque React, para no depender de la
+  // detección por `navigator.language` del navegador headless.
+  await context.addInitScript(l => localStorage.setItem('taberna-locale', l), LOCALE)
   const page = await context.newPage()
 
   // ── Público ────────────────────────────────────────────────────────────────
@@ -105,17 +121,17 @@ const run = async () => {
   await page.goto(`${BASE}/characters/${THORIN}`, { waitUntil: 'domcontentloaded' })
   await shot(page, '03-ficha-resumen')
 
-  await page.getByRole('button', { name: /pericias/i }).click().catch(() => {})
+  await page.getByRole('button', { name: UI.skills }).click().catch(() => {})
   await shot(page, '04-ficha-pericias')
 
-  await page.getByRole('button', { name: /historia/i }).click().catch(() => {})
+  await page.getByRole('button', { name: UI.story }).click().catch(() => {})
   await shot(page, '05-ficha-historia')
 
   // ── Maga: conjuros ─────────────────────────────────────────────────────────
   console.log('\nJugadora · Lyra')
   await login(page, ACCOUNTS.maga)
   await page.goto(`${BASE}/characters/${LYRA}`, { waitUntil: 'domcontentloaded' })
-  await page.getByRole('button', { name: /hechizos/i }).click().catch(() => {})
+  await page.getByRole('button', { name: UI.spells }).click().catch(() => {})
   await shot(page, '06-ficha-hechizos')
 
   // ── DM ─────────────────────────────────────────────────────────────────────
@@ -129,7 +145,7 @@ const run = async () => {
   await shot(page, '08-tablero-dm')
 
   // Con el combate iniciado aparecen la iniciativa y las fichas sobre la grilla.
-  await click(page, page.getByRole('button', { name: /iniciar combate/i }))
+  await click(page, page.getByRole('button', { name: UI.startCombat }))
   await shot(page, '08b-tablero-combate')
 
   // El formulario de PNJ ocupa el alto completo; las fichas sembradas van debajo.
@@ -164,7 +180,7 @@ const run = async () => {
   await shot(page, '15-wizard-creacion')
 
   await browser.close()
-  console.log(`\n✅ capturas en ${OUT}\n`)
+  console.log(`\n✅ capturas (${LOCALE}) en ${OUT}\n`)
 }
 
 run().catch(err => { console.error(err); process.exit(1) })

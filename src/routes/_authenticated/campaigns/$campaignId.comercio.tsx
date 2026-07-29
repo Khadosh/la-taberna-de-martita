@@ -36,7 +36,17 @@ function Comercio() {
         <span className="absolute -bottom-[3px] -right-[3px] w-4 h-4 border-b-2 border-r-2 border-stone-900" />
 
         <div className="relative h-44 sm:h-52 w-full mb-8 overflow-hidden rounded-lg border border-stone-800 shadow-2xl bg-stone-950">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-950/30 via-stone-950 to-stone-950" />
+          {/* La ilustración va de fondo con un degradado encima: sin él, el texto
+              claro queda ilegible sobre las zonas iluminadas de la forja. */}
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage:
+                "linear-gradient(100deg, rgba(12,10,9,0.94) 22%, rgba(12,10,9,0.72) 48%, rgba(12,10,9,0.35) 100%), url('/assets/images/comercio_bg.jpg')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center 42%',
+            }}
+          />
           <div className="absolute inset-0 bg-[linear-gradient(rgba(120,90,40,0.04)_1px,_transparent_1px)_0_0_/_16px_16px]" />
           <div className="absolute bottom-6 left-6 z-10 space-y-1">
             <span className="text-[10px] tracking-widest text-amber-500 font-serif uppercase font-bold">Mercado de la Campaña</span>
@@ -45,7 +55,6 @@ function Comercio() {
               Adquiere pertrechos de aventura o vende botín a los gremios locales.
             </p>
           </div>
-          <span className="absolute right-8 bottom-4 text-7xl opacity-10 pointer-events-none">⚖️</span>
         </div>
 
         {c.successMsg && (
