@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { useT } from '../../i18n'
 import { useQuery } from '@tanstack/react-query'
 import { useState, useMemo } from 'react'
 import { dndApi, dndKeys, type MonsterDetail, type MonsterSummary } from '../../lib/dnd-api'
@@ -35,6 +36,7 @@ function modColor(score: number) {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 function BestiaryPage() {
+  const t = useT()
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
 
@@ -58,8 +60,8 @@ function BestiaryPage() {
         <Link to="/" className="text-amber-400 hover:text-amber-200 transition-colors text-sm font-serif shrink-0">← La Taberna</Link>
         <div className="w-px h-4 bg-stone-700 shrink-0" />
         <div>
-          <p className="text-amber-200 font-serif font-semibold text-sm leading-tight">Bestiario</p>
-          <p className="text-stone-500 font-serif text-xs leading-tight">D&amp;D 5ª Edición · SRD</p>
+          <p className="text-amber-200 font-serif font-semibold text-sm leading-tight">{t('compendium.bestiary')}</p>
+          <p className="text-stone-500 font-serif text-xs leading-tight">{t('compendium.srdSubtitle')}</p>
         </div>
         <div className="flex-1" />
         <Link to="/spellbook" className="text-stone-400 hover:text-amber-300 transition-colors text-xs font-serif">

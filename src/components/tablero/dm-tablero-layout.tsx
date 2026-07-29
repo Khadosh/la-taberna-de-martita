@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useT } from '../../i18n'
 import { CombatBoard } from '../combat-board'
 import { DmNpcForm } from './dm-npc-form'
 import { DmMapSelector } from './dm-map-selector'
@@ -14,6 +15,7 @@ interface DmTableroLayoutProps {
 }
 
 export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
+  const t = useT()
   const {
     npcInputRef,
     localHp,
@@ -128,7 +130,7 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
           </div>
           <div className="flex-1 px-3 pb-4 space-y-2">
             {characters.length === 0 && (
-              <p className="text-stone-600 text-xs font-serif italic px-1 pt-2">Ningún personaje asignado.</p>
+              <p className="text-stone-600 text-xs font-serif italic px-1 pt-2">{t('board.noCharacter')}</p>
             )}
             {characters.map(c => {
               const maxHp = maxHpFor(c)
@@ -213,7 +215,7 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
                     const ds = c.sheet_json.death_saves ?? { successes: 0, failures: 0 }
                     return (
                       <div className="flex items-center gap-3 pt-1 border-t border-stone-800">
-                        <span className="text-xs text-stone-600 font-serif">Muerte:</span>
+                        <span className="text-xs text-stone-600 font-serif">{t('board.death')}</span>
                         <div className="flex gap-1">
                           {[0, 1, 2].map(i => (
                             <div key={i} className={`w-3 h-3 rounded-full border ${i < ds.successes ? 'bg-green-600 border-green-500' : 'border-stone-700'}`} />
@@ -324,7 +326,7 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
             {showLongRestConfirm ? (
               <div className="flex items-center gap-2">
                 <span className="text-xs text-stone-400 font-serif">¿Descanso largo?</span>
-                <button onClick={partyLongRest} className="text-xs px-2 py-1 bg-amber-800 hover:bg-amber-700 text-amber-100 font-serif">Confirmar</button>
+                <button onClick={partyLongRest} className="text-xs px-2 py-1 bg-amber-800 hover:bg-amber-700 text-amber-100 font-serif">{t('common.confirm')}</button>
                 <button onClick={() => setShowLongRestConfirm(false)} className="text-xs text-stone-500 hover:text-stone-300">✕</button>
               </div>
             ) : (
@@ -413,7 +415,7 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
                 className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-serif text-stone-500 hover:text-stone-300 transition-colors"
                 onClick={() => setShowLog(v => !v)}
               >
-                <span className="tracking-widest uppercase">Historial</span>
+                <span className="tracking-widest uppercase">{t('board.history')}</span>
                 <span>{showLog ? '▾' : '▴'}</span>
               </button>
               {showLog && (
@@ -431,7 +433,7 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
                         ? (entry.isHealing
                           ? <span className="text-green-400 font-bold shrink-0 font-mono">+{entry.damage} pg</span>
                           : <span className="text-red-400 font-bold shrink-0 font-mono font-bold">-{entry.damage} pg</span>)
-                        : !entry.hit && <span className="text-stone-600 shrink-0 text-[9px]">fallo</span>
+                        : !entry.hit && <span className="text-stone-600 shrink-0 text-[9px]">{t('board.miss')}</span>
                       }
                     </div>
                   ))}

@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, type ReactNode } from 'react'
+import { useT } from '../../i18n'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   DndContext, DragOverlay,
@@ -60,6 +61,7 @@ export function InventoryPanel({
   toggleEquip, equipToSlot, moveEquipSlot,
   patchCurrency, currency, strScore,
 }: InventoryPanelProps) {
+  const t = useT()
   const queryClient = useQueryClient()
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null)
   const [addingItem, setAddingItem] = useState(false)
@@ -222,7 +224,7 @@ export function InventoryPanel({
               <svg viewBox="0 0 14 14" fill="none" style={{ width: 11, height: 11, flexShrink: 0, color: 'rgba(180,130,70,0.55)' }}>
                 <path d="M1 2h12l-4.5 5.5V12L5.5 13V7.5L1 2z" fill="currentColor" stroke="currentColor" strokeWidth="0.5" strokeLinejoin="round" />
               </svg>
-              <input placeholder="Filtrar morral..." className="bg-transparent border-none outline-none text-[10px] w-full text-stone-400 font-serif" />
+              <input placeholder={t('inventory.filter')} className="bg-transparent border-none outline-none text-[10px] w-full text-stone-400 font-serif" />
             </div>
             {isOwner && (
               <button

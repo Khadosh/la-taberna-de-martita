@@ -8,6 +8,7 @@ import { parchmentStyle, mapBgStyle, sheetStyle, darkFrameStyle, SheetTabBar } f
 import { InfoModal } from '../../../components/character-sheet/sheet-badges'
 import { LevelUpModal } from '../../../components/character-sheet/level-up-modal'
 import { ClassChoicesPanel } from '../../../components/character-sheet/class-choices-panel'
+import { useT } from '../../../i18n'
 import { TabResumen } from '../../../components/character-sheet/tab-resumen'
 import { TabPericias } from '../../../components/character-sheet/tab-pericias'
 import { TabHechizos } from '../../../components/character-sheet/tab-hechizos'
@@ -23,6 +24,7 @@ export const Route = createFileRoute('/_authenticated/characters/$characterId')(
 })
 
 function CharacterSheet() {
+  const t = useT()
   const { characterId } = Route.useParams()
   const { session } = Route.useRouteContext() as { session: Session }
   const navigate = useNavigate()
@@ -39,8 +41,8 @@ function CharacterSheet() {
     togglePreparedSpell, addKnownSpell, removeKnownSpell,
   } = sheetState
 
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center" style={parchmentStyle}><p className="text-stone-600 font-serif italic">Consultando los pergaminos...</p></div>
-  if (!character) return <div className="min-h-screen flex items-center justify-center" style={parchmentStyle}><p className="text-stone-600 font-serif">Personaje no encontrado.</p></div>
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center" style={parchmentStyle}><p className="text-stone-600 font-serif italic">{t('dashboard.loadingScrolls')}</p></div>
+  if (!character) return <div className="min-h-screen flex items-center justify-center" style={parchmentStyle}><p className="text-stone-600 font-serif">{t('sheet.notFound')}</p></div>
 
   const isOwner = character.user_id === session.user.id
   const isGm = campaign?.dm_id === session.user.id
@@ -133,12 +135,12 @@ function CharacterSheet() {
           }}
           className="text-amber-400 hover:text-amber-200 text-sm font-serif"
         >
-          ← Volver
+          ← {t('common.back')}
         </button>
         <div className="w-px h-4 bg-stone-700 mx-2" />
         <div className="flex-1 truncate">
           <p className="text-amber-200 font-serif font-semibold text-sm truncate">{character.name}</p>
-          <p className="text-stone-500 font-serif text-xs truncate capitalize">{character.race} · {character.class} · Nv. {level}</p>
+          <p className="text-stone-500 font-serif text-xs truncate capitalize">{character.race} · {character.class} · {t('common.levelShort')} {level}</p>
         </div>
         <button onClick={() => setShowDice(true)} className="px-3 py-1 border border-amber-800 text-amber-500 text-xs font-serif bg-amber-900/20 flex items-center gap-1.5">
           <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
@@ -148,7 +150,7 @@ function CharacterSheet() {
             <circle cx="4" cy="8" r="0.9" fill="currentColor" />
             <circle cx="8" cy="8" r="0.9" fill="currentColor" />
           </svg>
-          Dados
+          {t('nav.dice')}
         </button>
       </header>
 
@@ -228,7 +230,7 @@ function CharacterSheet() {
                     <div className="absolute inset-0 flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100"
                       style={{ background: 'rgba(0,0,0,0.55)' }}>
                       <button onClick={() => fileInputRef.current?.click()}
-                        className="text-[10px] font-serif underline" style={{ color: '#f0dfc0' }}>Subir</button>
+                        className="text-[10px] font-serif underline" style={{ color: '#f0dfc0' }}>{t('sheet.upload')}</button>
                     </div>
                   </div>
 
@@ -240,13 +242,13 @@ function CharacterSheet() {
                       <span className="mx-1.5 font-bold" style={{ color: '#b06820' }}>•</span>
                       {character.class}{subclassDetail ? ` (${subclassDetail.name})` : ''}
                     </p>
-                    <p className="text-[11px] font-serif tracking-widest uppercase mt-1" style={{ color: '#b06820' }}>Nivel {level}</p>
+                    <p className="text-[11px] font-serif tracking-widest uppercase mt-1" style={{ color: '#b06820' }}>{t('common.level')} {level}</p>
                     <button
                       onClick={generatePortrait}
                       disabled={generatingPortrait}
                       className="mt-3 self-start text-[10px] px-2.5 py-1 bg-amber-900/10 border border-amber-900/25 text-amber-900 hover:bg-amber-900/20 transition-colors font-serif disabled:opacity-50"
                     >
-                      {generatingPortrait ? 'Hechizando...' : 'Retrato IA'}
+                      {generatingPortrait ? t('sheet.casting') : t('sheet.aiPortrait')}
                     </button>
                     <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handlePortraitUpload} />
                   </div>

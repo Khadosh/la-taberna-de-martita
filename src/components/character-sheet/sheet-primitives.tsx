@@ -1,4 +1,5 @@
 import React from 'react'
+import { useT, type TranslationKey } from '../../i18n'
 
 // ── Shared parchment styles (Unificados con Tailwind CSS v4) ───────────────────
 
@@ -119,11 +120,12 @@ function TabSvgFeather() {
   )
 }
 
-const TAB_DEFS: { id: SheetTab; label: string; icon: React.ReactNode }[] = [
-  { id: 'resumen', label: 'Resumen', icon: <TabSvgList /> },
-  { id: 'pericias', label: 'Pericias', icon: <TabSvgShield /> },
-  { id: 'hechizos', label: 'Hechizos', icon: <TabSvgStar /> },
-  { id: 'historia', label: 'Historia', icon: <TabSvgFeather /> },
+/** El label es la clave del catálogo: las tabs se declaran fuera del componente. */
+const TAB_DEFS: { id: SheetTab; label: TranslationKey; icon: React.ReactNode }[] = [
+  { id: 'resumen', label: 'sheet.tab.summary', icon: <TabSvgList /> },
+  { id: 'pericias', label: 'sheet.tab.skills', icon: <TabSvgShield /> },
+  { id: 'hechizos', label: 'sheet.tab.spells', icon: <TabSvgStar /> },
+  { id: 'historia', label: 'sheet.tab.story', icon: <TabSvgFeather /> },
 ]
 
 function TabStitch({ side }: { side: 'left' | 'right' }) {
@@ -158,6 +160,7 @@ export function SheetTabBar({
   active: SheetTab
   onChange: (t: SheetTab) => void
 }) {
+  const t = useT()
   return (
     <div
       className="flex w-full"
@@ -185,7 +188,7 @@ export function SheetTabBar({
             <TabStitch side="left" />
             <TabStitch side="right" />
             <span className="text-sm leading-none" style={{ opacity: isActive ? 1 : 0.65 }}>{tab.icon}</span>
-            <span className="hidden md:inline">{tab.label}</span>
+            <span className="hidden md:inline">{t(tab.label)}</span>
           </button>
         )
       })}

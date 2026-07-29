@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useT } from '../../i18n'
 import type { RaceDetail, FeatureDetail } from '../../lib/dnd-api'
 import { CONDITIONS } from '../../lib/dnd-constants'
 import type { SheetJson, InfoModalData } from './types'
@@ -94,6 +95,7 @@ interface TabResumenProps {
 }
 
 export function TabResumen(props: TabResumenProps) {
+  const t = useT()
   const {
     stats, character, raceDetail, isOwner, isGm,
     currentHp, maxHp, hpPct, hpColor,
@@ -120,7 +122,7 @@ export function TabResumen(props: TabResumenProps) {
       {/* Stats grid */}
       <SheetRow>
         <div className="flex-1 p-4">
-          <SheetLabel>Características</SheetLabel>
+          <SheetLabel>{t('sheet.abilities')}</SheetLabel>
           <StatGrid stats={stats} profBonus={profBonus} savingThrows={classDetail?.saving_throws} />
         </div>
       </SheetRow>
@@ -128,8 +130,8 @@ export function TabResumen(props: TabResumenProps) {
       {/* Quick stats */}
       <SheetRow className="border-t border-stone-500/30">
         <div className="flex-1 px-4 py-2.5 flex flex-wrap gap-x-4 gap-y-1.5" style={{ background: 'rgba(160,125,60,0.08)' }}>
-          <QuickPill label="Ini." value={fmtMod(dexMod)} title="Iniciativa" />
-          <QuickPill label="Vel." value={`${raceDetailSpeed ?? 30} ft`} title="Velocidad por turno" />
+          <QuickPill label="Ini." value={fmtMod(dexMod)} title={t('sheet.initiativeTitle')} />
+          <QuickPill label="Vel." value={`${raceDetailSpeed ?? 30} ft`} title={t('sheet.speedTitle')} />
           <QuickPill
             label="GACO"
             value={gacoResult ? fmtMod(gacoResult.bonus) : fmtMod(profBonus + Math.max(strMod, dexMod))}
@@ -140,8 +142,8 @@ export function TabResumen(props: TabResumenProps) {
                 : 'Bono de ataque estimado (sin arma equipada)'
             }
           />
-          <QuickPill label="Perc. pas." value={String(passivePerception)} title="Percepción Pasiva" />
-          <QuickPill label="Prof." value={`+${profBonus}`} title="Bono de competencia" />
+          <QuickPill label="Perc. pas." value={String(passivePerception)} title={t('sheet.passivePerceptionTitle')} />
+          <QuickPill label="Prof." value={`+${profBonus}`} title={t('sheet.proficiencyTitle')} />
         </div>
       </SheetRow>
 
@@ -165,7 +167,7 @@ export function TabResumen(props: TabResumenProps) {
       {currentHp === 0 && (
         <SheetRow className="border-t border-stone-600 bg-red-950/20">
           <div className="flex-1 p-4">
-            <SheetLabel>Tiradas de Muerte</SheetLabel>
+            <SheetLabel>{t('sheet.deathSaves')}</SheetLabel>
             <div className="mt-3 flex items-start gap-8">
               {(['successes', 'failures'] as const).map(kind => (
                 <div key={kind}>
@@ -197,7 +199,7 @@ export function TabResumen(props: TabResumenProps) {
                     Muerto
                   </p>
                 )}
-                {!isStable && !isDead && <p className="text-xs text-stone-500 font-serif italic">Inconsciente</p>}
+                {!isStable && !isDead && <p className="text-xs text-stone-500 font-serif italic">{t('sheet.unconscious')}</p>}
               </div>
             </div>
           </div>
@@ -244,7 +246,7 @@ export function TabResumen(props: TabResumenProps) {
 
           <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
             {classFeaturesByLevel.length === 0 && (
-              <p className="text-stone-400 text-xs font-serif italic col-span-2">Cargando habilidades...</p>
+              <p className="text-stone-400 text-xs font-serif italic col-span-2">{t('sheet.loadingFeatures')}</p>
             )}
             {activeFeatLevel === 'subclass'
               ? subclassFeatureList?.results.map(f => (
@@ -283,7 +285,7 @@ export function TabResumen(props: TabResumenProps) {
         <div className="flex-1 p-4">
           {(conditions.length > 0 || isOwner) && (
             <>
-              <SheetLabel>Condiciones activas</SheetLabel>
+              <SheetLabel>{t('sheet.activeConditions')}</SheetLabel>
               <div className="flex flex-wrap gap-3 mt-4 items-center">
                 {isOwner && (
                   <div className="relative">

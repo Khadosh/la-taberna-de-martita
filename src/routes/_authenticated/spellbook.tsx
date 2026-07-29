@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { useT } from '../../i18n'
 import { useQuery } from '@tanstack/react-query'
 import { useState, useMemo } from 'react'
 import { dndApi, dndKeys } from '../../lib/dnd-api'
@@ -23,6 +24,7 @@ const CLASS_FILTER = ['bard', 'cleric', 'druid', 'paladin', 'ranger', 'sorcerer'
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 function SpellbookPage() {
+  const t = useT()
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
   const [classFilter, setClassFilter] = useState('')
@@ -67,8 +69,8 @@ function SpellbookPage() {
         <Link to="/" className="text-amber-400 hover:text-amber-200 transition-colors text-sm font-serif shrink-0">← La Taberna</Link>
         <div className="w-px h-4 bg-stone-700 shrink-0" />
         <div>
-          <p className="text-amber-200 font-serif font-semibold text-sm leading-tight">Compendio de Conjuros</p>
-          <p className="text-stone-500 font-serif text-xs leading-tight">D&amp;D 5ª Edición · SRD</p>
+          <p className="text-amber-200 font-serif font-semibold text-sm leading-tight">{t('compendium.spellsTitle')}</p>
+          <p className="text-stone-500 font-serif text-xs leading-tight">{t('compendium.srdSubtitle')}</p>
         </div>
         <div className="flex-1" />
         <Link to="/bestiary" className="text-stone-400 hover:text-amber-300 transition-colors text-xs font-serif">
@@ -82,7 +84,7 @@ function SpellbookPage() {
         <div className="w-full sm:w-80 shrink-0 flex flex-col overflow-hidden space-y-3">
           <input
             type="search"
-            placeholder="Buscar conjuro..."
+            placeholder={t('compendium.searchSpell')}
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={inputStyle}
@@ -98,7 +100,7 @@ function SpellbookPage() {
               style={inputStyle}
               className="flex-1 px-2 py-1.5 text-xs text-stone-700 font-serif focus:outline-none"
             >
-              <option value="">Todas las clases</option>
+              <option value="">{t('compendium.allClasses')}</option>
               {CLASS_FILTER.map(c => (
                 <option key={c} value={c}>{c[0].toUpperCase() + c.slice(1)}</option>
               ))}
@@ -110,8 +112,8 @@ function SpellbookPage() {
               style={inputStyle}
               className="w-24 px-2 py-1.5 text-xs text-stone-700 font-serif focus:outline-none"
             >
-              <option value="">Nivel</option>
-              <option value={0}>Trucos (0)</option>
+              <option value="">{t('common.level')}</option>
+              <option value={0}>{t('compendium.cantripsOption')}</option>
               {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(l => (
                 <option key={l} value={l}>Nv. {l}</option>
               ))}
@@ -123,11 +125,11 @@ function SpellbookPage() {
           </p>
 
           {loadingAll ? (
-            <p className="text-stone-500 text-sm font-serif italic px-1 shrink-0">Consultando los grimoires...</p>
+            <p className="text-stone-500 text-sm font-serif italic px-1 shrink-0">{t('compendium.loadingGrimoires')}</p>
           ) : (
             <ul className="flex-1 overflow-y-auto pr-1 space-y-0.5">
               {filtered.length === 0 && (
-                <li className="text-stone-500 text-sm font-serif italic px-1">Sin resultados.</li>
+                <li className="text-stone-500 text-sm font-serif italic px-1">{t('compendium.noResults')}</li>
               )}
               {filtered.map(s => (
                 <li key={s.index}>
@@ -155,7 +157,7 @@ function SpellbookPage() {
             <SpellCard index={selected} />
           ) : (
             <div className="flex items-center justify-center h-full border border-stone-400/40" style={cardStyle}>
-              <p className="text-stone-500 font-serif italic text-sm">Seleccioná un conjuro para ver los detalles.</p>
+              <p className="text-stone-500 font-serif italic text-sm">{t('compendium.selectSpellDetails')}</p>
             </div>
           )}
         </div>
@@ -168,6 +170,7 @@ function SpellbookPage() {
 // ── Spell card ────────────────────────────────────────────────────────────────
 
 function SpellCard({ index }: { index: string }) {
+  const t = useT()
   const { data: spell, isLoading } = useQuery({
     queryKey: dndKeys.spell(index),
     queryFn: () => dndApi.spell(index),
@@ -176,7 +179,7 @@ function SpellCard({ index }: { index: string }) {
 
   if (isLoading || !spell) return (
     <div className="flex items-center justify-center h-64 border border-stone-400/40" style={cardStyle}>
-      <p className="text-stone-500 font-serif italic text-sm">Cargando...</p>
+      <p className="text-stone-500 font-serif italic text-sm">{t('common.loading')}</p>
     </div>
   )
 
