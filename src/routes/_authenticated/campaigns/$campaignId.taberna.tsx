@@ -2,17 +2,19 @@ import { createFileRoute } from '@tanstack/react-router'
 import type { Session } from '@supabase/supabase-js'
 import { TabernaMenuList } from '../../../components/campaigns/taberna/taberna-menu-list'
 import { TabernaCheckoutPanel } from '../../../components/campaigns/taberna/taberna-checkout-panel'
+import { useT, type TranslationKey } from '../../../i18n'
 import { useTaberna, type TabernaCategory } from '../../../components/campaigns/taberna/use-taberna'
 
 export const Route = createFileRoute('/_authenticated/campaigns/$campaignId/taberna')({
   component: Taberna,
 })
 
-const CATEGORY_LABELS: Record<TabernaCategory, string> = {
-  drinks: '🍺 Bebidas',
-  foods: '🍲 Comidas',
-  lodging: '🛏️ Alojamiento',
-  stables: '🐴 Establo',
+/** Emoji + clave del catálogo: las categorías se declaran fuera del componente. */
+const CATEGORY_LABELS: Record<TabernaCategory, { emoji: string; key: TranslationKey }> = {
+  drinks: { emoji: '🍺', key: 'tavern.tab.drinks' },
+  foods: { emoji: '🍲', key: 'tavern.tab.food' },
+  lodging: { emoji: '🛏️', key: 'tavern.tab.lodging' },
+  stables: { emoji: '🐴', key: 'tavern.tab.stables' },
 }
 
 const TAB_BASE = 'px-4 py-2.5 text-xs sm:text-sm font-display tracking-wide uppercase transition-all border-b-2 -mb-[1px]'
@@ -22,9 +24,10 @@ const TAB_IDLE = 'border-transparent text-stone-500 hover:text-stone-800'
 function Taberna() {
   const { campaignId } = Route.useParams()
   const { session } = Route.useRouteContext() as { session: Session }
-  const t = useTaberna(campaignId, session)
+  const t = useT()
+  const tv = useTaberna(campaignId, session)
 
-  const hasSelection = t.selectedService || (t.activeCategory === 'stables' && t.selectedStablesItem)
+  const hasSelection = tv.selectedService || (tv.activeCategory === 'stables' && tv.selectedStablesItem)
 
   return (
     <div className="w-full min-h-full flex-1 overflow-y-auto p-4 sm:p-8">
@@ -40,22 +43,22 @@ function Taberna() {
           <div className="absolute right-0 bottom-0 top-0 w-1/2 bg-[radial-gradient(circle_at_bottom_right,_var(--tw-gradient-stops))] from-orange-950/40 via-transparent to-transparent opacity-60 pointer-events-none" />
 
           <div className="absolute bottom-6 left-6 z-10 space-y-1">
-            <span className="text-[10px] tracking-widest text-amber-500 font-serif uppercase font-bold">Servicios del Establecimiento</span>
+            <span className="text-[10px] tracking-widest text-amber-500 font-serif uppercase font-bold">{t('tavern.eyebrow')}</span>
             <h2 className="text-3xl font-display tracking-widest text-stone-100 uppercase">La Taberna de Martita</h2>
             <p className="text-xs font-serif italic text-stone-400">
-              Un fuego crepitante, cerveza bien fría y catres limpios para reposar el cansancio del viaje.
+              {t('tavern.subtitle')}
             </p>
           </div>
           <span className="absolute right-8 bottom-6 text-7xl opacity-10 pointer-events-none">🍺</span>
         </div>
 
-        {t.successMsg && (
+        {tv.successMsg && (
           <div className="mb-6 px-4 py-3 border border-amber-800 bg-amber-900/10 text-amber-900 text-sm font-serif rounded flex items-center justify-between gap-3 shadow-md">
             <div className="flex items-center gap-2">
               <span>🎉</span>
-              <span>{t.successMsg}</span>
+              <span>{tv.successMsg}</span>
             </div>
-            <button onClick={() => t.setSuccessMsg(null)} className="text-lg leading-none text-amber-800 hover:text-amber-600 transition-colors">&times;</button>
+            <button onClick={() => tv.setSuccessMsg(null)} className="text-lg leading-none text-amber-800 hover:text-amber-600 transition-colors">&times;</button>
           </div>
         )}
 
@@ -63,19 +66,19 @@ function Taberna() {
           {(Object.keys(CATEGORY_LABELS) as TabernaCategory[]).map(cat => (
             <button
               key={cat}
-              onClick={() => t.switchCategory(cat)}
-              className={`${TAB_BASE} ${t.activeCategory === cat ? TAB_ACTIVE : TAB_IDLE}`}
+              onClick={() => tv.switchCategory(cat)}
+              className={`${TAB_BASE} ${tv.activeCategory === cat ? TAB_ACTIVE : TAB_IDLE}`}
             >
-              {CATEGORY_LABELS[cat]}
+              {CATEGORY_LABELS[cat].emoji} {t(CATEGORY_LABELS[cat].key)}
             </button>
           ))}
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6">
           <div className="flex-1 min-w-0">
-            <TabernaMenuList t={t} />
+            <TabernaMenuList t={tv} />
           </div>
-          {hasSelection && <TabernaCheckoutPanel t={t} />}
+          {hasSelection && <TabernaCheckoutPanel t={tv} />}
         </div>
       </div>
     </div>

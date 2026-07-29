@@ -1,5 +1,6 @@
 import { formatCost } from '../../../lib/currency'
 import type { useTaberna } from './use-taberna'
+import { useT } from '../../../i18n'
 
 type Props = { t: ReturnType<typeof useTaberna> }
 
@@ -11,19 +12,20 @@ const GLYPH_BASE = 'text-3xl p-2 border rounded shrink-0 transition-colors'
 const GLYPH_ON = 'bg-amber-950 border-amber-700 text-amber-100'
 const GLYPH_OFF = 'bg-amber-100/60 border-stone-300 text-stone-900'
 
-export function TabernaMenuList({ t }: Props) {
-  if (t.activeCategory === 'stables') {
-    if (t.loadingStables) {
-      return <p className="text-stone-600 italic font-serif">Cargando establos...</p>
+export function TabernaMenuList({ t: tv }: Props) {
+  const t = useT()
+  if (tv.activeCategory === 'stables') {
+    if (tv.loadingStables) {
+      return <p className="text-stone-600 italic font-serif">{t('tavern.loadingStables')}</p>
     }
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {t.stablesItems.map(item => {
-          const on = t.selectedStablesItem?.index === item.index
+        {tv.stablesItems.map(item => {
+          const on = tv.selectedStablesItem?.index === item.index
           return (
             <button
               key={item.index}
-              onClick={() => t.selectStablesItem(item)}
+              onClick={() => tv.selectStablesItem(item)}
               className={`${CARD_BASE} ${on ? CARD_ON : CARD_OFF}`}
             >
               <span className={`${GLYPH_BASE} ${on ? GLYPH_ON : GLYPH_OFF}`}>🐴</span>
@@ -32,7 +34,7 @@ export function TabernaMenuList({ t }: Props) {
                   {item.name}
                 </span>
                 <p className={`text-xs font-serif leading-relaxed line-clamp-2 ${on ? 'text-amber-200/90' : 'text-stone-600'}`}>
-                  Caballos, monturas, mulas y vehículos de viaje.
+                  {t('tavern.mountsBlurb')}
                 </p>
               </div>
             </button>
@@ -44,12 +46,12 @@ export function TabernaMenuList({ t }: Props) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-      {t.currentServices.map(serv => {
-        const on = t.selectedService?.id === serv.id
+      {tv.currentServices.map(serv => {
+        const on = tv.selectedService?.id === serv.id
         return (
           <button
             key={serv.id}
-            onClick={() => t.selectService(serv)}
+            onClick={() => tv.selectService(serv)}
             className={`${CARD_BASE} ${on ? CARD_ON : CARD_OFF}`}
           >
             <span className={`${GLYPH_BASE} ${on ? GLYPH_ON : GLYPH_OFF}`}>{serv.icon}</span>

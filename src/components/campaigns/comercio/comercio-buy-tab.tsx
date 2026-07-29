@@ -1,5 +1,6 @@
 import { getItemIconUrl } from '../../../lib/item-icons'
 import { GameIcon } from '../../icons/game-icon'
+import { useT } from '../../../i18n'
 import { SHOPS } from '../../../lib/shops-data'
 import { type CostUnit, toCp, formatCost } from '../../../lib/currency'
 import { currencyOf, totalCp, type useComercio } from './use-comercio'
@@ -7,6 +8,7 @@ import { currencyOf, totalCp, type useComercio } from './use-comercio'
 type Props = { c: ReturnType<typeof useComercio> }
 
 export function ComercioBuyTab({ c }: Props) {
+  const t = useT()
   return (
     <div className="space-y-6">
       {/* tiendas temáticas */}
@@ -38,7 +40,7 @@ export function ComercioBuyTab({ c }: Props) {
         <input
           value={c.search}
           onChange={e => { c.setSearch(e.target.value); c.setSelected(null) }}
-          placeholder={`Buscar en ${c.activeShop.label}...`}
+          placeholder={t('trade.searchIn', { shop: c.activeShop.label })}
           className="w-full px-3 py-2 text-xs font-serif bg-amber-50/40 border border-stone-300 text-stone-900 placeholder:text-stone-500 rounded focus:outline-none focus:border-parchment-sienna/60 focus:bg-white"
         />
 
@@ -52,7 +54,7 @@ export function ComercioBuyTab({ c }: Props) {
               </div>
             ) : c.items.length === 0 ? (
               <p className="text-sm font-serif italic text-stone-500 py-10 text-center border border-dashed border-stone-300 rounded">
-                Ningún objeto disponible en esta categoría.
+                {t('trade.noItems')}
               </p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-[50vh] overflow-y-auto pr-1">
@@ -94,6 +96,7 @@ export function ComercioBuyTab({ c }: Props) {
 }
 
 function BuyDetailSidebar({ c }: Props) {
+  const t = useT()
   const { itemDetail } = c
 
   return (
@@ -125,7 +128,7 @@ function BuyDetailSidebar({ c }: Props) {
               {itemDetail.cost?.quantity > 0 ? (
                 <span className="text-parchment-sienna font-bold">{formatCost(itemDetail.cost.quantity, itemDetail.cost.unit)}</span>
               ) : (
-                <span className="text-stone-500 italic">Sin valor</span>
+                <span className="text-stone-500 italic">{t('trade.noValue')}</span>
               )}
               {itemDetail.weight > 0 && <span>{itemDetail.weight} lb</span>}
               {itemDetail.armor_class && (
@@ -141,7 +144,7 @@ function BuyDetailSidebar({ c }: Props) {
 
             {c.buyableChars.length > 0 && itemDetail.cost?.quantity > 0 && (
               <div className="pt-3 border-t border-stone-300/40 space-y-3">
-                <span className="text-[10px] font-display font-semibold tracking-wider uppercase text-stone-500 block">Comprar para:</span>
+                <span className="text-[10px] font-display font-semibold tracking-wider uppercase text-stone-500 block">{t('trade.buyFor')}</span>
                 <div className="space-y-1.5">
                   {c.buyableChars.map(char => {
                     const cur = currencyOf(char)
@@ -173,7 +176,7 @@ function BuyDetailSidebar({ c }: Props) {
                   disabled={c.loading || !c.buyCharId}
                   className="w-full py-2 font-serif text-xs border border-[#6B2C06] bg-gradient-to-b from-[#9B4A10] to-[#7B3408] text-[#f5d9a8] rounded-sm transition-colors uppercase tracking-wider font-semibold hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  {c.loading ? 'Comprando…' : `Adquirir — ${formatCost(itemDetail.cost.quantity, itemDetail.cost.unit)}`}
+                  {c.loading ? t('trade.buying') : t('trade.acquire', { cost: formatCost(itemDetail.cost.quantity, itemDetail.cost.unit) })}
                 </button>
               </div>
             )}

@@ -23,6 +23,11 @@ para que hagas la resta.
 El patrón: **donde D&D Beyond te da los datos, esta app te da la respuesta.** En
 una mesa en vivo, esa diferencia es el ritmo de la partida.
 
+Y un segundo patrón, que aparece en las herramientas del DM: **la app asume que el
+DM está dirigiendo ahora, no preparando después.** El generador de encuentros y el
+mostrar/ocultar por grupo existen porque en la mesa no hay tiempo para abrir otra
+pestaña. Es la misma tesis vista desde la silla del DM.
+
 Corolario: **D&D Beyond está optimizado para entre sesiones; esta app para la mesa
 en vivo.** Construir personaje y consultar reglas es su terreno. Saber qué pasó
 hace dos turnos, qué tengo equipado ahora y a quién agarra la bola de fuego es el
@@ -86,6 +91,36 @@ número.
 > Nota para la Fase 1: este cálculo hoy vive dentro de un hook, mezclado con estado
 > de React. Es un candidato claro a mudarse al motor de reglas — y de los que mejor
 > quedan como test contra el SRD.
+
+#### Generador procedural de encuentros
+
+Se elige un arquetipo temático y el generador arma el encuentro entero: escala los
+monstruos al nivel de la party, les asigna roles tácticos y los coloca sobre la
+grilla. Lo que en la mesa es "pará, dejame armar esto" pasa a ser un click.
+
+| | |
+|---|---|
+| Qué se intentó en la mesa | _(pendiente)_ |
+| Dónde frenó D&D Beyond | _(pendiente — **verificar**)_ |
+| Cómo lo resuelve esta app | 30 arquetipos (`src/data/encounter-archetypes.ts`), escalado por nivel de party, cuatro roles tácticos —cuerpo a cuerpo, distancia, magia y apoyo—, y botín tirado por bioma con 8 perfiles |
+| Dónde vive | `src/components/tablero/use-encounter-generator.ts` · `src/loot/` |
+
+#### Revelar y ocultar un grupo entero
+
+El complemento del anterior y, en la mesa, quizá lo más útil de los dos: cada
+encuentro generado recibe un identificador de grupo, y el DM lo muestra u oculta
+completo. Es la emboscada: los goblins existen en el tablero, con sus posiciones y
+sus puntos de golpe, pero los jugadores no los ven hasta que el DM decide.
+
+Sin esto, un DM tiene dos malas opciones: colocar los enemigos a la vista y perder
+la sorpresa, o colocarlos en el momento y frenar la escena.
+
+| | |
+|---|---|
+| Qué se intentó en la mesa | _(pendiente)_ |
+| Dónde frenó D&D Beyond | _(pendiente — **verificar**)_ |
+| Cómo lo resuelve esta app | `spawn_group` (un UUID por encuentro generado) más un flag `hidden` por ficha, sincronizados en tiempo real: el DM las ve atenuadas, los jugadores no las ven |
+| Dónde vive | `use-encounter-generator.ts:338` · `use-dm-tablero.ts:76` · migración `board_tokens_hidden` |
 
 #### Historial en la pantalla de combate
 

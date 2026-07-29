@@ -67,6 +67,10 @@ export const en: Record<TranslationKey, string> = {
   'dashboard.createOne': 'Create one',
   'dashboard.noCharacters': "You haven't created any characters yet.",
   'dashboard.joinedOn': 'Joined {date}',
+  'dashboard.loadingScrolls': 'Consulting the scrolls...',
+  'dashboard.noCampaignsPlayer': "You're not in any campaign as a player.",
+  'dashboard.createOneM': 'Create one',
+  'dashboard.gameMaster': 'Game Master',
 
   // ── Campaign tabs ─────────────────────────────────────────────────────────
   'campaign.tab.overview': 'Overview',
@@ -78,6 +82,8 @@ export const en: Record<TranslationKey, string> = {
   'campaign.tab.spells': 'Spells',
   'campaign.tab.trade': 'Trade',
   'campaign.tab.abilities': 'Abilities',
+  'campaign.notFound': 'Campaign not found.',
+  'campaign.copied': 'Copied!',
 
   // ── Character sheet ───────────────────────────────────────────────────────
   'sheet.tab.summary': 'Summary',
@@ -189,6 +195,10 @@ export const en: Record<TranslationKey, string> = {
   'tavern.technicalDetails': 'Technical details',
   'tavern.noCharacters': 'You have no characters in this campaign.',
   'tavern.loadingStables': 'Loading stables...',
+  'tavern.free': 'Free',
+  'tavern.itemStats': 'Weight: {weight} lbs | Category: {category}',
+  'tavern.stablesBlurb': 'Mounts, mules, carriages and stable gear for long journeys.',
+  'tavern.mountsBlurb': 'Horses, mounts, mules and travel vehicles.',
 
   // ── Compendiums ───────────────────────────────────────────────────────────
   'compendium.bestiary': 'Bestiary',

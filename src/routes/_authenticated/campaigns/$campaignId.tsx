@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
 import { useState } from 'react'
 import { supabase } from '../../../lib/supabase'
+import { useT, type TranslationKey } from '../../../i18n'
 import { DiceModule } from '../../../lib/dice'
 import { ScrollIcon, HoodIcon, CrossedSwordsIcon, BeerIcon, SpellbookIcon, ScalesIcon, D20Icon, BookOpenIcon } from '../../../components/icons/campaign-icons'
 
@@ -20,35 +21,37 @@ type TabDef = {
   | '/campaigns/$campaignId/taberna'
   | '/campaigns/$campaignId/tablero'
   | '/campaigns/$campaignId/notas'
-  label: string
+  /** Clave del catálogo, no el texto: las tabs se declaran fuera del componente. */
+  label: TranslationKey
   icon: React.ReactNode
   exact?: boolean
 }
 
 // Tabs que ve el GM (acceso completo a herramientas de dirección)
 const GM_TABS: TabDef[] = [
-  { to: '/campaigns/$campaignId', label: 'Overview', icon: <ScrollIcon />, exact: true },
-  { to: '/campaigns/$campaignId/pnj', label: 'PNJs', icon: <HoodIcon /> },
-  { to: '/campaigns/$campaignId/tablero', label: 'Tablero', icon: <CrossedSwordsIcon /> },
-  { to: '/campaigns/$campaignId/taberna', label: 'Taberna', icon: <BeerIcon /> },
-  { to: '/campaigns/$campaignId/notas', label: 'Notas', icon: <BookOpenIcon /> },
-  { to: '/campaigns/$campaignId/hechizos', label: 'Hechizos', icon: <SpellbookIcon /> },
-  { to: '/campaigns/$campaignId/comercio', label: 'Comercio', icon: <ScalesIcon /> },
-  { to: '/campaigns/$campaignId/habilidades', label: 'Habilidades', icon: <D20Icon /> },
+  { to: '/campaigns/$campaignId', label: 'campaign.tab.overview', icon: <ScrollIcon />, exact: true },
+  { to: '/campaigns/$campaignId/pnj', label: 'campaign.tab.npcs', icon: <HoodIcon /> },
+  { to: '/campaigns/$campaignId/tablero', label: 'campaign.tab.board', icon: <CrossedSwordsIcon /> },
+  { to: '/campaigns/$campaignId/taberna', label: 'campaign.tab.tavern', icon: <BeerIcon /> },
+  { to: '/campaigns/$campaignId/notas', label: 'campaign.tab.notes', icon: <BookOpenIcon /> },
+  { to: '/campaigns/$campaignId/hechizos', label: 'campaign.tab.spells', icon: <SpellbookIcon /> },
+  { to: '/campaigns/$campaignId/comercio', label: 'campaign.tab.trade', icon: <ScalesIcon /> },
+  { to: '/campaigns/$campaignId/habilidades', label: 'campaign.tab.abilities', icon: <D20Icon /> },
 ]
 
 // Tabs que ve el jugador (herramientas de referencia en mesa)
 const PLAYER_TABS: TabDef[] = [
-  { to: '/campaigns/$campaignId', label: 'Mi Party', icon: <ScrollIcon />, exact: true },
-  { to: '/campaigns/$campaignId/tablero', label: 'Tablero', icon: <CrossedSwordsIcon /> },
-  { to: '/campaigns/$campaignId/taberna', label: 'Taberna', icon: <BeerIcon /> },
-  { to: '/campaigns/$campaignId/notas', label: 'Notas', icon: <BookOpenIcon /> },
-  { to: '/campaigns/$campaignId/hechizos', label: 'Hechizos', icon: <SpellbookIcon /> },
-  { to: '/campaigns/$campaignId/comercio', label: 'Comercio', icon: <ScalesIcon /> },
-  { to: '/campaigns/$campaignId/habilidades', label: 'Habilidades', icon: <D20Icon /> },
+  { to: '/campaigns/$campaignId', label: 'campaign.tab.myParty', icon: <ScrollIcon />, exact: true },
+  { to: '/campaigns/$campaignId/tablero', label: 'campaign.tab.board', icon: <CrossedSwordsIcon /> },
+  { to: '/campaigns/$campaignId/taberna', label: 'campaign.tab.tavern', icon: <BeerIcon /> },
+  { to: '/campaigns/$campaignId/notas', label: 'campaign.tab.notes', icon: <BookOpenIcon /> },
+  { to: '/campaigns/$campaignId/hechizos', label: 'campaign.tab.spells', icon: <SpellbookIcon /> },
+  { to: '/campaigns/$campaignId/comercio', label: 'campaign.tab.trade', icon: <ScalesIcon /> },
+  { to: '/campaigns/$campaignId/habilidades', label: 'campaign.tab.abilities', icon: <D20Icon /> },
 ]
 
 function CampaignLayout() {
+  const t = useT()
   const { campaignId } = Route.useParams()
   const { session } = Route.useRouteContext() as { session: Session }
   const matchRoute = useMatchRoute()
@@ -72,13 +75,13 @@ function CampaignLayout() {
 
   if (isLoading) return (
     <div className="min-h-screen bg-stone-950 flex items-center justify-center">
-      <p className="text-stone-500">Cargando...</p>
+      <p className="text-stone-500">{t('common.loading')}</p>
     </div>
   )
 
   if (!campaign) return (
     <div className="min-h-screen bg-stone-950 flex items-center justify-center">
-      <p className="text-stone-400">Campaña no encontrada.</p>
+      <p className="text-stone-400">{t('campaign.notFound')}</p>
     </div>
   )
 
@@ -95,7 +98,7 @@ function CampaignLayout() {
       {/* Header */}
       <header className="border-b-2 border-stone-900 bg-stone-950 px-4 sm:px-8 py-3 flex items-center gap-4 shrink-0">
         <Link to="/" className="text-amber-400 hover:text-amber-200 transition-colors text-sm font-serif shrink-0">
-          ← Dashboard
+          ← {t('nav.dashboard')}
         </Link>
         <div className="w-px h-5 bg-stone-700 shrink-0" />
 
@@ -120,7 +123,7 @@ function CampaignLayout() {
             onClick={() => setShowDice(true)}
             className="px-3 py-1.5 text-xs sm:text-sm rounded bg-amber-900/40 hover:bg-amber-800/60 text-amber-200 transition-colors font-serif flex items-center gap-1.5 border border-amber-700/40"
           >
-            <span>🎲</span> Dados
+            <span>🎲</span> {t('nav.dice')}
           </button>
 
           {/* GM-only: copy invite */}
@@ -129,7 +132,7 @@ function CampaignLayout() {
               onClick={copyInvite}
               className="hidden sm:block px-3 py-1.5 text-xs rounded bg-stone-800/80 hover:bg-stone-700 text-stone-300 transition-colors min-w-[110px] text-center font-serif"
             >
-              {copied ? '¡Copiado!' : 'Copiar invite'}
+              {copied ? t('campaign.copied') : t('nav.copyInvite')}
             </button>
           )}
         </div>
@@ -155,7 +158,7 @@ function CampaignLayout() {
                     }`}
                 >
                   <span className="text-sm leading-none">{tab.icon}</span>
-                  <span>{tab.label}</span>
+                  <span>{t(tab.label)}</span>
                 </Link>
               </li>
             )

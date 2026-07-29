@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
 import { useState } from 'react'
 import { supabase } from '../lib/supabase'
+import { useT } from '../i18n'
+import { LanguageSwitcher } from '../components/language-switcher'
 import type { Tables } from '../lib/database.types'
 import { abilityModifier, modifierColor, ABILITY_LABELS } from '../lib/dnd-api'
 import { CLASS_ICONS, CLASS_COLORS } from '../lib/class-meta'
@@ -23,6 +25,7 @@ function IndexPage() {
 }
 
 function Dashboard({ session }: { session: Session }) {
+  const t = useT()
   const userId = session.user.id
 
   const { data: gmCampaigns = [], isLoading: loadingGm } = useQuery({
@@ -69,24 +72,25 @@ function Dashboard({ session }: { session: Session }) {
         <div className="flex items-center gap-2 sm:gap-3">
           <Link to="/characters/new"
             className="px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-serif border border-stone-700 hover:border-stone-500 text-stone-300 hover:text-stone-100 transition-colors whitespace-nowrap">
-            + Personaje
+            {t('nav.newCharacter')}
           </Link>
           <Link to="/campaigns/new"
             className="px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-serif border border-amber-800/60 hover:border-amber-600 text-amber-400/80 hover:text-amber-300 transition-colors whitespace-nowrap">
-            + Campaña
+            {t('nav.newCampaign')}
           </Link>
           <div className="hidden sm:block w-px h-5 bg-stone-800" />
           <Link to="/bestiary"
             className="hidden sm:block text-xs text-stone-600 hover:text-stone-400 transition-colors font-serif whitespace-nowrap">
-            Bestiario
+            {t('nav.bestiary')}
           </Link>
           <Link to="/spellbook"
             className="hidden sm:block text-xs text-stone-600 hover:text-stone-400 transition-colors font-serif whitespace-nowrap">
-            Conjuros
+            {t('nav.spells')}
           </Link>
+          <LanguageSwitcher className="hidden sm:flex" />
           <button onClick={() => supabase.auth.signOut()}
             className="hidden sm:block text-xs text-stone-600 hover:text-stone-400 transition-colors font-serif italic whitespace-nowrap">
-            Cerrar sesión
+            {t('nav.signOut')}
           </button>
         </div>
       </header>
@@ -95,13 +99,13 @@ function Dashboard({ session }: { session: Session }) {
 
         {/* Characters */}
         <section className="space-y-5">
-          <SectionHeader label="Tus personajes" />
+          <SectionHeader label={t('dashboard.yourCharacters')} />
           {loadingChars ? (
-            <p className="text-stone-600 text-sm font-serif italic">Consultando los pergaminos...</p>
+            <p className="text-stone-600 text-sm font-serif italic">{t('dashboard.loadingScrolls')}</p>
           ) : characters.length === 0 ? (
             <EmptyState>
-              Todavía no tenés personajes.{' '}
-              <Link to="/characters/new" className="text-amber-500/80 hover:text-amber-400 underline underline-offset-2">Crear uno</Link>
+              {t('dashboard.noCharacters')}{' '}
+              <Link to="/characters/new" className="text-amber-500/80 hover:text-amber-400 underline underline-offset-2">{t('dashboard.createOneM')}</Link>
             </EmptyState>
           ) : (
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -112,12 +116,12 @@ function Dashboard({ session }: { session: Session }) {
 
         {/* GM campaigns */}
         <section className="space-y-5">
-          <SectionHeader label="Campañas · Game Master" />
+          <SectionHeader label={t('dashboard.campaignsGm')} />
           {loadingGm ? (
-            <p className="text-stone-600 text-sm font-serif italic">Cargando...</p>
+            <p className="text-stone-600 text-sm font-serif italic">{t('common.loading')}</p>
           ) : gmCampaigns.length === 0 ? (
-            <EmptyState>No dirigís ninguna campaña.{' '}
-              <Link to="/campaigns/new" className="text-amber-500/80 hover:text-amber-400 underline underline-offset-2">Crear una</Link>
+            <EmptyState>{t('dashboard.noCampaignsGm')}{' '}
+              <Link to="/campaigns/new" className="text-amber-500/80 hover:text-amber-400 underline underline-offset-2">{t('dashboard.createOne')}</Link>
             </EmptyState>
           ) : (
             <ul className="space-y-2">
@@ -128,11 +132,11 @@ function Dashboard({ session }: { session: Session }) {
 
         {/* Player campaigns */}
         <section className="space-y-5">
-          <SectionHeader label="Campañas · Jugador" />
+          <SectionHeader label={t('dashboard.campaignsPlayer')} />
           {loadingPlayer ? (
             <p className="text-stone-600 text-sm font-serif italic">Cargando...</p>
           ) : playerCampaigns.length === 0 ? (
-            <EmptyState>No estás en ninguna campaña como jugador.</EmptyState>
+            <EmptyState>{t('dashboard.noCampaignsPlayer')}</EmptyState>
           ) : (
             <ul className="space-y-2">
               {playerCampaigns.map(({ campaigns: c, joined_at }) =>
@@ -220,6 +224,7 @@ function CharacterCard({ character }: { character: Tables<'characters'> }) {
 }
 
 function CampaignCard({ campaign, role, joinedAt }: { campaign: Tables<'campaigns'>; role: 'gm' | 'player'; joinedAt?: string }) {
+  const t = useT()
   const [copied, setCopied] = useState(false)
 
   const copyInviteLink = (e: React.MouseEvent) => {
@@ -236,8 +241,8 @@ function CampaignCard({ campaign, role, joinedAt }: { campaign: Tables<'campaign
         <div>
           <p className="text-sm font-medium text-stone-200">{campaign.name}</p>
           <div className="flex items-center gap-2 mt-0.5">
-            {role === 'gm' && <span className="text-[10px] text-amber-500 font-display tracking-wider uppercase">Game Master</span>}
-            {joinedAt && <span className="text-[10px] text-stone-600 font-serif">Unido el {new Date(joinedAt).toLocaleDateString()}</span>}
+            {role === 'gm' && <span className="text-[10px] text-amber-500 font-display tracking-wider uppercase">{t('dashboard.gameMaster')}</span>}
+            {joinedAt && <span className="text-[10px] text-stone-600 font-serif">{t('dashboard.joinedOn', { date: new Date(joinedAt).toLocaleDateString() })}</span>}
           </div>
         </div>
         {role === 'gm' && (

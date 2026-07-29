@@ -68,6 +68,10 @@ export const es = {
   'dashboard.createOne': 'Crear una',
   'dashboard.noCharacters': 'Todavía no creaste ningún personaje.',
   'dashboard.joinedOn': 'Unido el {date}',
+  'dashboard.loadingScrolls': 'Consultando los pergaminos...',
+  'dashboard.noCampaignsPlayer': 'No estás en ninguna campaña como jugador.',
+  'dashboard.createOneM': 'Crear uno',
+  'dashboard.gameMaster': 'Game Master',
 
   // ── Pestañas de campaña ───────────────────────────────────────────────────
   'campaign.tab.overview': 'Overview',
@@ -79,6 +83,8 @@ export const es = {
   'campaign.tab.spells': 'Hechizos',
   'campaign.tab.trade': 'Comercio',
   'campaign.tab.abilities': 'Habilidades',
+  'campaign.notFound': 'Campaña no encontrada.',
+  'campaign.copied': '¡Copiado!',
 
   // ── Hoja de personaje ─────────────────────────────────────────────────────
   'sheet.tab.summary': 'Resumen',
@@ -190,6 +196,10 @@ export const es = {
   'tavern.technicalDetails': 'Detalles técnicos',
   'tavern.noCharacters': 'No posees personajes en esta campaña.',
   'tavern.loadingStables': 'Cargando establos...',
+  'tavern.free': 'Gratis',
+  'tavern.itemStats': 'Peso: {weight} lbs | Categoría: {category}',
+  'tavern.stablesBlurb': 'Monturas, mulas, carruajes y pertrechos de establo para viajes de larga distancia.',
+  'tavern.mountsBlurb': 'Caballos, monturas, mulas y vehículos de viaje.',
 
   // ── Compendios ────────────────────────────────────────────────────────────
   'compendium.bestiary': 'Bestiario',
