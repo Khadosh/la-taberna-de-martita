@@ -58,7 +58,14 @@ const AUDIT = () => {
     ''
   ).trim()
 
-  const buttons = [...root.querySelectorAll('button')]
+  /**
+   * Un elemento con `display:none` no está en el árbol de accesibilidad, así que
+   * exigirle nombre da falsos positivos: el caso típico es el `<input type=file>`
+   * oculto que dispara un botón visible.
+   */
+  const exposed = el => !!(el.offsetParent || el.getClientRects().length)
+
+  const buttons = [...root.querySelectorAll('button')].filter(exposed)
   const unnamed = buttons.filter(b => !accessibleName(b))
 
   // React no expone onClick como atributo, así que se aproxima por el cursor:
@@ -69,7 +76,7 @@ const AUDIT = () => {
     !el.getAttribute('role')
   )
 
-  const fields = [...root.querySelectorAll('input, select, textarea')]
+  const fields = [...root.querySelectorAll('input, select, textarea')].filter(exposed)
   const unlabelled = fields.filter(f =>
     !f.getAttribute('aria-label') &&
     !f.getAttribute('placeholder') &&

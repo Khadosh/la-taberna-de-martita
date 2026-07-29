@@ -114,12 +114,14 @@ function TrayArea({ diceTypes, addToPool, theme, setTheme }) {
             <div className="relative">
                 <button
                     className="flex items-center justify-center p-2 rounded-lg hover:bg-white/10 transition-colors"
+                    aria-label="Cambiar apariencia de los dados"
+                    aria-expanded={showThemeMenu}
                     onClick={(e) => {
                         e.stopPropagation();
                         setShowThemeMenu(!showThemeMenu);
                     }}
                 >
-                    <Palette size={18} className="text-amber-200" />
+                    <Palette size={18} className="text-amber-200" aria-hidden />
                 </button>
 
                 <AnimatePresence>

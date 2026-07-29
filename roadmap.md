@@ -87,8 +87,24 @@ fallar el pipeline.
   `player-tablero`), con política explícita de suscripción, reconexión y reconciliación.
 - **Medir y publicar números**: latencia de propagación entre dispositivos, tiempo hasta
   que la UI refleja un cambio optimista, comportamiento con red degradada.
-- **Accesibilidad**: hoy hay 1 solo atributo `aria-*` sobre 283 `<button>` y 9
-  `<div onClick>` sin soporte de teclado.
+- **Accesibilidad** — ✅ base resuelta. Medido con `scripts/audit-a11y.mjs` sobre
+  11 rutas:
+
+  | | Antes | Ahora |
+  |---|---|---|
+  | Botones con nombre accesible | 99% | **100%** (924) |
+  | Elementos clickeables que no son controles | 128 | **0** |
+  | Campos sin etiqueta | 11 | **0** |
+
+  El grueso del problema no era `aria-label` —un botón con texto visible ya es
+  accesible— sino las 128 tarjetas del wizard de creación, que eran `<div onClick>`
+  con el botón de info anidado adentro. Se reescribieron como radios nativos dentro
+  de `<label>` (`selection-card.tsx`): navegación con flechas, agrupación y anuncio
+  de estado sin JavaScript.
+
+  Queda pendiente lo que el script no mide: contraste de color, orden de foco,
+  `aria-live` para los cambios de HP en tiempo real, y una pasada con lector de
+  pantalla real.
 - **Bundle**: `DiceModule` (Three.js + cannon-es, 1,68 MB) se importa estáticamente en
   `$campaignId.tsx` y `$characterId.tsx`, así que baja al entrar a cualquier campaña o
   ficha aunque nunca se abra el tirador. Pasarlo a `lazy()`.

@@ -6,6 +6,16 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 
 ## [Unreleased]
 
+### feat
+- **Internacionalización**: módulo propio tipado en `src/i18n/`. El catálogo español es la fuente de verdad y el inglés se tipa contra él (`Record<TranslationKey, string>`), así que una traducción faltante rompe el typecheck en vez de renderizar la clave cruda en producción. Incluye interpolación `{nombre}`, plurales por sufijo `_other`, persistencia, selector ES/EN y sincronización del atributo `lang` del documento — que además es requisito de accesibilidad, porque los lectores de pantalla eligen la voz a partir de él. Login migrado y verificado en ambos idiomas; quedan 57 archivos.
+- **Seed de desarrollo** (`supabase/seed.sql`): campaña jugable con DM, dos jugadores, tres personajes de clases distintas con inventario y equipo puesto, PNJs, encuentro sobre el tablero y notas. Se aplica con `supabase db reset`.
+
+### fix
+- **Accesibilidad: 100% de controles accesibles** (medido con `scripts/audit-a11y.mjs` sobre 11 rutas).
+  - Las 128 tarjetas de selección del wizard eran `<div onClick>` con el botón de info anidado adentro: no recibían foco, no respondían a Enter ni Espacio, y anidaban un control dentro de otro. Reescritas como radios nativos dentro de `<label>` en `selection-card.tsx` — navegación con flechas, agrupación y anuncio de estado sin JavaScript. De paso desaparecieron los `e.stopPropagation()` que hacían falta por el anidamiento.
+  - `aria-label` en los 6 campos de estadísticas del formulario de PNJ, los 2 filtros del grimorio, el tamaño de celda del tablero, el nivel del wizard y el botón de apariencia de los dados.
+- **Cobertura de íconos del SRD: 86% → 99%** (291 de 294 ítems). La cascada semántica exigía palabra completa, así que `Greatclub`, `Dancing Sword`, `Armor, +1` y 38 más caían al emoji. Se agregaron redes de último recurso al final de la cascada, donde no interfieren con las reglas específicas.
+
 ### refactor
 - **Sistema de íconos migrado de BG3 a game-icons.net**: se eliminaron los 3.328 assets scrapeados de Baldur's Gate 3 (45 MB, licencia dudosa) y los mapas `bg3-icon-map.ts` / `bg3-spell-map.ts` (3.045 entradas). En su lugar, 129 SVGs de [game-icons.net](https://game-icons.net) bajo CC-BY-3.0 (536 KB), generados por `scripts/build-game-icons.mjs`.
   - La resolución pasa a ser **puramente semántica**: 111 conceptos de equipo, 16 trasfondos y 8 escuelas de magia. Los conjuros se resuelven por escuela en vez de por nombre — el SRD tiene 300+ hechizos pero solo 8 escuelas.

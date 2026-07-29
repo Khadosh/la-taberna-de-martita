@@ -328,6 +328,7 @@ export function CombatBoard({
             <span style={{ fontSize: 9, opacity: 0.7 }}>Celda:</span>
             <input
               type="number" value={gridSize}
+              aria-label="Tamaño de celda de la grilla en píxeles"
               onChange={e => setGridSize(Math.max(20, Math.min(200, parseInt(e.target.value) || 60)))}
               style={{ width: 38, background: 'rgba(0,0,0,0.6)', border: '1px solid #3c2414', color: '#d5b88a', fontSize: 10, textAlign: 'center', fontFamily: 'monospace', outline: 'none', padding: '2px 0' }}
             />

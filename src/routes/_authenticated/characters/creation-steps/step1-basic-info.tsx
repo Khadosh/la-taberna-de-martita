@@ -61,6 +61,7 @@ export function Step1BasicInfo({
               <div className="absolute bottom-0 right-0 w-1 h-1 border-b border-r border-tavern-gold/40"></div>
               <input
                 type="number"
+                aria-label="Nivel del personaje"
                 min={1}
                 max={20}
                 value={draft.level}

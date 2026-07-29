@@ -219,9 +219,10 @@ export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm,
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
             {STAT_KEYS.map(k => (
               <div key={k} className="flex flex-col items-center bg-amber-100/60 border border-stone-400/40 py-2 px-1">
-                <p className="text-[9px] font-display tracking-wider text-stone-700 uppercase">{k}</p>
+                <p className="text-[9px] font-display tracking-wider text-stone-700 uppercase" aria-hidden>{k}</p>
                 <input
                   type="number" min={1} max={30}
+                  aria-label={STAT_LABELS[k]}
                   value={form.stats[k]}
                   onChange={e => patchStat(k, Math.max(1, parseInt(e.target.value) || 10))}
                   className="w-12 text-center bg-transparent text-lg font-bold text-stone-900 focus:outline-none focus:bg-amber-200/60"

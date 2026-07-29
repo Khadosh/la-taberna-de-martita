@@ -92,6 +92,7 @@ function SpellbookPage() {
           {/* Filters */}
           <div className="flex gap-2 shrink-0">
             <select
+              aria-label="Filtrar por clase"
               value={classFilter}
               onChange={e => setClassFilter(e.target.value)}
               style={inputStyle}
@@ -103,6 +104,7 @@ function SpellbookPage() {
               ))}
             </select>
             <select
+              aria-label="Filtrar por nivel de conjuro"
               value={levelFilter}
               onChange={e => setLevelFilter(e.target.value === '' ? '' : parseInt(e.target.value))}
               style={inputStyle}
