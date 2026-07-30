@@ -3,24 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { dndApi, dndKeys } from '../../../lib/dnd-api'
 import { Frame, Block, Field, inputClass } from './pnj-primitives'
 import { type NpcForm, type Stats, STAT_KEYS, STAT_LABELS, ROLES, abilityMod, formatMod, rollAllStats } from './pnj-types'
-import { useLoc } from '../../../i18n'
-
-const TRANSLATED_RACES: Record<string, string> = {
-  'human': 'Humano',
-  'elf': 'Elfo',
-  'dwarf': 'Enano',
-  'halfling': 'Mediano',
-  'dragonborn': 'Dracónido',
-  'gnome': 'Gnomo',
-  'half-elf': 'Semielfo',
-  'half-orc': 'Semiorco',
-  'tiefling': 'Tiflin'
-}
-
-const translateRace = (name: string) => {
-  const key = name.toLowerCase()
-  return TRANSLATED_RACES[key] || name
-}
+import { useI18n } from '../../../i18n'
+import { RACE_NAMES } from '../../../lib/dnd-terms'
 
 interface NpcFormPanelProps {
   form: NpcForm
@@ -35,7 +19,11 @@ interface NpcFormPanelProps {
 }
 
 export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm, submit, saving, races, classes }: NpcFormPanelProps) {
-  const loc = useLoc()
+  const { t, loc } = useI18n()
+  const raceName = (name: string) => {
+    const known = RACE_NAMES[name.toLowerCase()]
+    return known ? loc(known) : name
+  }
   const { data: allSpellsData } = useQuery({
     queryKey: dndKeys.allSpells,
     queryFn: dndApi.allSpells,
@@ -73,7 +61,7 @@ export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm,
   const query = form.race.trim().toLowerCase()
   const filteredRaces = query
     ? activeList.filter(r => {
-        const displayName = raceTab === 'classic' ? translateRace(r) : r
+        const displayName = raceTab === 'classic' ? raceName(r) : r
         return r.toLowerCase().includes(query) || displayName.toLowerCase().includes(query)
       })
     : activeList
@@ -85,17 +73,17 @@ export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm,
       <div className="p-5 space-y-5">
 
         {/* Identidad */}
-        <Block label="Identidad">
+        <Block label={t('npc.identity')}>
           <div className="grid grid-cols-1 sm:grid-cols-[2fr_1fr_1fr] gap-3">
-            <Field label="Nombre *" required>
+            <Field label={t('npc.name')} required>
               <input
                 value={form.name}
                 onChange={e => patchForm('name', e.target.value)}
-                placeholder="Lord Vekrath"
+                placeholder={t('npc.namePlaceholder')}
                 className={inputClass}
               />
             </Field>
-            <Field label="Raza">
+            <Field label={t('npc.race')}>
               <div ref={raceRef} className="relative">
                 <div className="relative">
                   <input
@@ -105,7 +93,7 @@ export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm,
                       setRaceDropdownOpen(true)
                     }}
                     onFocus={() => setRaceDropdownOpen(true)}
-                    placeholder="Humano, Ogro..."
+                    placeholder={t('npc.racePlaceholder')}
                     className={inputClass}
                   />
                   <button
@@ -126,7 +114,7 @@ export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm,
                           raceTab === 'classic' ? 'bg-amber-100/80 text-amber-900 font-extrabold' : 'text-stone-500 hover:bg-stone-200'
                         }`}
                       >
-                        Razas Clásicas
+                        {t('npc.raceClassic')}
                       </button>
                       <button
                         type="button"
@@ -135,15 +123,15 @@ export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm,
                           raceTab === 'monster' ? 'bg-amber-100/80 text-amber-900 font-extrabold' : 'text-stone-500 hover:bg-stone-200'
                         }`}
                       >
-                        Monstruos
+                        {t('npc.raceMonster')}
                       </button>
                     </div>
                     <div className="max-h-48 overflow-y-auto divide-y divide-stone-200/60 custom-scrollbar text-xs">
                       {filteredRaces.length === 0 ? (
-                        <div className="px-3 py-2 text-stone-500 italic text-center">No se encontraron resultados</div>
+                        <div className="px-3 py-2 text-stone-500 italic text-center">{t('npc.noResults')}</div>
                       ) : (
                         filteredRaces.map(r => {
-                          const displayName = raceTab === 'classic' ? translateRace(r) : r
+                          const displayName = raceTab === 'classic' ? raceName(r) : r
                           return (
                             <button
                               key={r}
@@ -165,7 +153,7 @@ export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm,
                 )}
               </div>
             </Field>
-            <Field label="Nivel">
+            <Field label={t('npc.level')}>
               <input
                 type="number" min={1} max={20}
                 value={form.level}
@@ -176,9 +164,9 @@ export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm,
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-[1fr_2fr] gap-3 mt-3">
-            <Field label="Clase">
+            <Field label={t('npc.class')}>
               <select value={form.class} onChange={e => patchForm('class', e.target.value)} className={inputClass}>
-                <option value="">— ninguna —</option>
+                <option value="">{t('npc.noClass')}</option>
                 {classes?.results.map(c => (
                   <option key={c.index} value={c.index}>
                     {c.name}
@@ -186,7 +174,7 @@ export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm,
                 ))}
               </select>
             </Field>
-            <Field label="Rol">
+            <Field label={t('npc.role')}>
               <div className="flex gap-2">
                 {ROLES.map(r => (
                   <button
@@ -197,7 +185,7 @@ export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm,
                       form.role === r.value ? r.color : 'bg-amber-50 border-stone-300/50 text-stone-500 hover:border-stone-500'
                     }`}
                   >
-                    {r.label}
+                    {t(r.labelKey)}
                   </button>
                 ))}
               </div>
@@ -207,14 +195,14 @@ export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm,
 
         {/* Stats */}
         <Block
-          label="Características"
+          label={t('npc.abilities')}
           right={
             <button
               type="button"
               onClick={() => patchForm('stats', rollAllStats())}
               className="text-xs px-3 py-1 bg-stone-900 text-amber-100 hover:bg-stone-800 transition-colors font-serif"
             >
-              🎲 Tirar (4d6dl)
+              🎲 {t('npc.rollStats')}
             </button>
           }
         >
@@ -237,42 +225,42 @@ export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm,
         </Block>
 
         {/* Combate */}
-        <Block label="Combate">
+        <Block label={t('npc.combat')}>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <Field label="HP máx.">
+            <Field label={t('npc.maxHp')}>
               <input value={form.max_hp} onChange={e => patchForm('max_hp', e.target.value)}
                 placeholder="—" inputMode="numeric" className={inputClass} />
             </Field>
-            <Field label="CA">
+            <Field label={t('npc.armorClass')}>
               <input value={form.armor_class} onChange={e => patchForm('armor_class', e.target.value)}
                 placeholder="—" inputMode="numeric" className={inputClass} />
             </Field>
-            <Field label="Bono ataque">
+            <Field label={t('npc.attackBonus')}>
               <input value={form.attack_bonus} onChange={e => patchForm('attack_bonus', e.target.value)}
                 placeholder="—" inputMode="numeric" className={inputClass} />
             </Field>
-            <Field label="Daño general / Fallback">
+            <Field label={t('npc.damage')}>
               <input value={form.damage} onChange={e => patchForm('damage', e.target.value)}
-                placeholder="ej: 1d8+2" className={inputClass} />
+                placeholder={t('npc.damagePlaceholder')} className={inputClass} />
             </Field>
           </div>
         </Block>
 
         {/* Armas */}
         <Block
-          label="Armas y Ataques"
+          label={t('npc.weapons')}
           right={
             <button
               type="button"
               onClick={() => patchForm('weapons', [...form.weapons, { id: crypto.randomUUID(), name: '', damage: '' }])}
               className="text-xs px-2.5 py-1 bg-stone-900 text-amber-100 hover:bg-stone-800 transition-colors font-serif cursor-pointer"
             >
-              + Agregar Arma
+              + {t('npc.addWeapon')}
             </button>
           }
         >
           {form.weapons.length === 0 ? (
-            <p className="text-xs text-stone-500 font-serif italic">Ninguna arma agregada. Utilizará el daño general.</p>
+            <p className="text-xs text-stone-500 font-serif italic">{t('npc.noWeapons')}</p>
           ) : (
             <div className="space-y-2">
               {form.weapons.map((w, idx) => (
@@ -284,7 +272,7 @@ export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm,
                       next[idx] = { ...w, name: e.target.value }
                       patchForm('weapons', next)
                     }}
-                    placeholder="Nombre del Arma (ej: Espada Larga)"
+                    placeholder={t('npc.weaponNamePlaceholder')}
                     className={`${baseInputClass} flex-1 min-w-0`}
                   />
                   <input
@@ -294,7 +282,7 @@ export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm,
                       next[idx] = { ...w, damage: e.target.value }
                       patchForm('weapons', next)
                     }}
-                    placeholder="Daño (ej: 1d8+2)"
+                    placeholder={t('npc.weaponDamagePlaceholder')}
                     className={`${baseInputClass} w-32 font-mono text-center`}
                   />
                   <button
@@ -311,13 +299,13 @@ export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm,
         </Block>
 
         {/* Hechizos */}
-        <Block label="Libro de Hechizos">
+        <Block label={t('npc.spellbook')}>
           <div className="space-y-3">
             <div className="relative">
               <input
                 value={spellSearch}
                 onChange={e => setSpellSearch(e.target.value)}
-                placeholder="Buscar y agregar conjuro..."
+                placeholder={t('npc.spellSearchPlaceholder')}
                 className={inputClass}
               />
               {spellSearch.trim().length > 1 && (
@@ -345,7 +333,7 @@ export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm,
             </div>
 
             {form.spells.length === 0 ? (
-              <p className="text-xs text-stone-500 font-serif italic">Ningún conjuro seleccionado.</p>
+              <p className="text-xs text-stone-500 font-serif italic">{t('npc.noSpells')}</p>
             ) : (
               <div className="flex flex-wrap gap-1.5">
                 {form.spells.map(sIndex => {
@@ -372,21 +360,21 @@ export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm,
         </Block>
 
         {/* Notas */}
-        <Block label="Notas e Inventario">
+        <Block label={t('npc.notesAndInventory')}>
           <div className="space-y-3">
-            <Field label="Equipamiento y Pertrechos (ej: Cota de malla, Poción de curación)">
+            <Field label={t('npc.equipment')}>
               <textarea value={form.equipment_notes} onChange={e => patchForm('equipment_notes', e.target.value)}
-                rows={2} placeholder="Cota de malla, escudo, 15 flechas..."
+                rows={2} placeholder={t('npc.equipmentPlaceholder')}
                 className={`${inputClass} resize-none`} />
             </Field>
-            <Field label="Trasfondo (visible al party si no está oculto)">
+            <Field label={t('npc.backstory')}>
               <textarea value={form.backstory} onChange={e => patchForm('backstory', e.target.value)}
-                rows={2} placeholder="Capitán de la guardia del duque..."
+                rows={2} placeholder={t('npc.backstoryPlaceholder')}
                 className={`${inputClass} resize-none`} />
             </Field>
-            <Field label="Notas privadas del DM">
+            <Field label={t('npc.dmNotes')}>
               <textarea value={form.notes} onChange={e => patchForm('notes', e.target.value)}
-                rows={2} placeholder="Recordar que tiene una hermana en la ciudad..."
+                rows={2} placeholder={t('npc.dmNotesPlaceholder')}
                 className={`${inputClass} resize-none`} />
             </Field>
             <label className="flex items-center gap-2 cursor-pointer">
@@ -396,7 +384,7 @@ export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm,
                 onChange={e => patchForm('is_hidden', e.target.checked)}
                 className="w-4 h-4"
               />
-              <span className="text-sm font-serif text-stone-700">Oculto al party (villano sorpresa)</span>
+              <span className="text-sm font-serif text-stone-700">{t('npc.hidden')}</span>
             </label>
           </div>
         </Block>
@@ -415,7 +403,7 @@ export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm,
             disabled={!form.name.trim() || saving}
             className="px-5 py-2 text-sm font-serif bg-stone-900 text-amber-100 hover:bg-stone-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
           >
-            {saving ? 'Guardando…' : editingId ? 'Actualizar PNJ' : 'Crear PNJ'}
+            {saving ? t('npc.saving') : editingId ? t('npc.update') : t('npc.create')}
           </button>
         </div>
 

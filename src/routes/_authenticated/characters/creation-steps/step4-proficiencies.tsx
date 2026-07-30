@@ -1,7 +1,7 @@
 import { StepTitle, cardStyle } from './primitives'
 import type { Draft } from '../character-creation-steps'
 import { getExpertiseCount } from '../../../../lib/class-choices'
-import { useLoc } from '../../../../i18n'
+import { useLoc, useT } from '../../../../i18n'
 import { SKILL_NAMES } from '../../../../lib/dnd-terms'
 
 interface Step4Props {
@@ -13,6 +13,7 @@ interface Step4Props {
 
 export function Step4Proficiencies({ draft, patch, classDetail, selectedBg }: Step4Props) {
   const loc = useLoc()
+  const t = useT()
   // Normalize background skills to lowercase
   const bgSkills = selectedBg?.skills?.map((s: string) => s.toLowerCase().replace(/\s+/g, '-')) ?? []
   
@@ -40,11 +41,11 @@ export function Step4Proficiencies({ draft, patch, classDetail, selectedBg }: St
 
   return (
     <div className="space-y-6">
-      <StepTitle>Competencias & Pericias</StepTitle>
+      <StepTitle>{t('creation.proficiencies')}</StepTitle>
       
       {classDetail.proficiencies.length > 0 && (
         <div style={cardStyle} className="p-4 space-y-2">
-          <p className="text-xs text-stone-500 font-display tracking-widest uppercase font-serif">Competencias automáticas de clase</p>
+          <p className="text-xs text-stone-500 font-display tracking-widest uppercase font-serif">{t('creation.classProficiencies')}</p>
           <div className="flex flex-wrap gap-1.5">
             {classDetail.proficiencies.map((p: any) => (
               <span key={p.index} className="px-2 py-0.5 text-xs font-serif text-stone-400 border border-stone-700/60">{p.name}</span>
@@ -55,7 +56,7 @@ export function Step4Proficiencies({ draft, patch, classDetail, selectedBg }: St
 
       {selectedBg && (selectedBg.skills.length > 0 || selectedBg.tool) && (
         <div style={cardStyle} className="p-4 space-y-2">
-          <p className="text-xs text-stone-500 font-display tracking-widest uppercase font-serif">Competencias de trasfondo ({selectedBg.name})</p>
+          <p className="text-xs text-stone-500 font-display tracking-widest uppercase font-serif">{t('creation.backgroundProficiencies', { background: selectedBg.name })}</p>
           <div className="flex flex-wrap gap-1.5">
             {selectedBg.skills.map((s: string) => (
               <span key={s} className="px-2 py-0.5 text-xs font-serif text-amber-400/70 border border-amber-900/30">{s}</span>
@@ -72,7 +73,7 @@ export function Step4Proficiencies({ draft, patch, classDetail, selectedBg }: St
       {classDetail.proficiency_choices.map((choice: any, ci: number) => (
         <div key={ci} className="space-y-3">
           <p className="text-sm text-stone-300 font-serif">
-            Elegí {choice.choose} pericias adicionales de tu clase:{' '}
+            {t('creation.pickSkills', { count: choice.choose })}{' '}
             <span className={`font-mono ${draft.skillProficiencies.length >= choice.choose ? 'text-amber-400' : 'text-stone-500'}`}>
               {draft.skillProficiencies.length}/{choice.choose}
             </span>
@@ -110,7 +111,7 @@ export function Step4Proficiencies({ draft, patch, classDetail, selectedBg }: St
                     <span>{SKILL_NAMES[idx] ? loc(SKILL_NAMES[idx]) : name}</span>
                     {isBgSkill && (
                       <span className="text-[8px] uppercase tracking-widest text-amber-500/60 font-mono font-bold bg-amber-950/30 px-1 border border-amber-900/20">
-                        Trasfondo
+                        {t('creation.fromBackground')}
                       </span>
                     )}
                   </span>
@@ -125,10 +126,10 @@ export function Step4Proficiencies({ draft, patch, classDetail, selectedBg }: St
       {expertiseCount > 0 && uniqueEligibles.length > 0 && (
         <div className="space-y-3 border-t border-stone-850 pt-5 mt-5">
           <p className="text-sm text-amber-200/90 font-serif font-semibold">
-            Especialización (Expertise)
+            {t('creation.expertise')}
           </p>
           <p className="text-xs text-stone-500 font-serif italic">
-            Elegí {expertiseCount} competencias para duplicar tu bono de competencia en ellas:{' '}
+            {t('creation.pickExpertise', { count: expertiseCount })}{' '}
             <span className={`font-mono ${(draft.expertise ?? []).length >= expertiseCount ? 'text-amber-400' : 'text-stone-500'}`}>
               {(draft.expertise ?? []).length}/{expertiseCount}
             </span>

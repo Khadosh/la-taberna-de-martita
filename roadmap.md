@@ -161,19 +161,20 @@ i18n completa.
 **Terminado cuando:** se puede usar la app entera en inglés, y el idioma de la interfaz se
 elige por separado del idioma de los términos de reglas.
 
-**Estado.** El módulo propio tipado está (`src/i18n/`) y se eligió no sumar dependencia.
-Traducidos: login, dashboard, campaña, taberna, comercio, notas, tablero, compendios,
-ficha de personaje completa —incluidos el modal de subida de nivel y la fila de PV/CA/PX—
-y los términos del SRD que la UI muestra tal cual (`src/lib/dnd-terms.ts`). Las capturas
-de `docs/screenshots/` se generan en los dos idiomas, que es la prueba de que no quedó
-texto pegado.
+**Estado: el chrome de UI está terminado.** El módulo propio tipado está (`src/i18n/`) y
+se eligió no sumar dependencia. Traducidos login, dashboard, campaña, taberna, comercio,
+notas, tablero, compendios, la ficha de personaje entera, el wizard de creación completo
+y el módulo de PNJs. Los términos del SRD que la interfaz muestra tal cual —pericias,
+características, razas, clases— viven en `src/lib/dnd-terms.ts` como contenido `Localized`,
+no en el catálogo. Las capturas de `docs/screenshots/` se generan en los dos idiomas, que
+es la prueba de que no quedó texto pegado.
 
-Pendiente: el formulario de PNJ y los pasos 2 a 6 del wizard de creación. El segundo eje
-—locale de UI separado del locale de términos de reglas— sigue sin implementarse: hoy hay
-un solo `locale`, y el contenido del SRD que viene por API (descripciones de rasgos,
-nombres de conjuros y monstruos) llega siempre en inglés porque la API solo sirve inglés.
-Se ve en la captura de la subida de nivel: la interfaz está en español y el texto de
-*Ability Score Improvement* no.
+**Lo que falta es el segundo eje**, el que este documento identificó como el trade-off
+interesante: hoy hay un solo `locale`. El contenido que viene por API —descripciones de
+rasgos, nombres de conjuros y monstruos— llega siempre en inglés porque la API solo sirve
+inglés. Se ve en la captura de la subida de nivel: la interfaz está en español y el bloque
+de *Ability Score Improvement* no. Separar los dos ejes sigue dependiendo de la Fase 1: el
+motor data-driven es lo que convierte las reglas en datos con etiquetas propias.
 
 ---
 

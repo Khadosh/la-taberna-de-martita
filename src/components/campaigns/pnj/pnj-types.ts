@@ -25,9 +25,9 @@ export const STAT_KEYS = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const
 export { ABILITY_NAMES as STAT_LABELS } from '../../../lib/dnd-terms'
 
 export const ROLES = [
-  { value: 'antagonist' as const, label: 'Antagonista', color: 'bg-red-900/30 border-red-800/40 text-red-900' },
-  { value: 'ally' as const,       label: 'Aliado',       color: 'bg-green-900/20 border-green-800/40 text-green-900' },
-  { value: 'neutral' as const,    label: 'Neutral',      color: 'bg-stone-200 border-stone-400 text-stone-700' },
+  { value: 'antagonist' as const, labelKey: 'npc.roleAntagonist' as const, color: 'bg-red-900/30 border-red-800/40 text-red-900' },
+  { value: 'ally' as const,       labelKey: 'npc.roleAlly' as const,       color: 'bg-green-900/20 border-green-800/40 text-green-900' },
+  { value: 'neutral' as const,    labelKey: 'npc.roleNeutral' as const,    color: 'bg-stone-200 border-stone-400 text-stone-700' },
 ]
 
 export const DEFAULT_STATS: Stats = { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 }

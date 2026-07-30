@@ -9,8 +9,15 @@
  * El idioma se fija explícitamente: sin eso, el navegador headless lo detecta de
  * `navigator.language` y las capturas dejan de ser reproducibles.
  *
+ * El flujo de subida de nivel escribe en la base: el DM le otorga experiencia a
+ * Thorin. Por eso conviene `supabase db reset` antes de cada corrida — si no, la
+ * ficha arranca con la experiencia que le dejó la corrida anterior. El script
+ * avisa cuando detecta eso, no falla.
+ *
  * Uso:
+ *   supabase db reset
  *   node scripts/capture-screenshots.mjs              # español (docs/screenshots/es)
+ *   supabase db reset
  *   node scripts/capture-screenshots.mjs --locale en  # inglés  (docs/screenshots/en)
  *   node scripts/capture-screenshots.mjs --headed     # para depurar
  */
@@ -53,7 +60,9 @@ const ACCOUNTS = {
 }
 const PASSWORD = 'taberna123'
 
-/** Lo justo para que Thorin (900 PX, nivel 3) cruce el umbral de nivel 4. */
+/** Umbral de nivel 4 en el SRD. Thorin arranca el seed en nivel 3 con 900 PX. */
+const LEVEL_4_XP = 2700
+/** Se usa solo si no se pudo leer la experiencia actual de la ficha. */
 const XP_GRANT = 1800
 
 /** Las rutas cargan datos del SRD por red; conviene esperar a que la red calme. */
@@ -92,6 +101,12 @@ async function click(page, locator) {
   } catch {
     console.log(`    (no se pudo interactuar, se captura el estado por defecto)`)
   }
+}
+
+/** Lee la experiencia que muestra la ficha abierta. Devuelve 0 si no la encuentra. */
+async function readXp(page) {
+  const raw = await page.getByText(/[\d,.]+\s*XP/).first().textContent().catch(() => null)
+  return raw ? parseInt(raw.replace(/[^\d]/g, ''), 10) || 0 : 0
 }
 
 /** Scrollea el contenedor interno de la ruta: el scroll no vive en `window`. */
@@ -161,8 +176,9 @@ const run = async () => {
 
   // El formulario de PNJ ocupa el alto completo; las fichas sembradas van debajo.
   await page.goto(`${BASE}/campaigns/${CAMPAIGN}/pnj`, { waitUntil: 'domcontentloaded' })
+  await shot(page, '09-pnj-formulario')
   await scrollRoute(page, 1400)
-  await shot(page, '09-pnjs')
+  await shot(page, '09b-pnjs')
 
   await page.goto(`${BASE}/campaigns/${CAMPAIGN}/comercio`, { waitUntil: 'domcontentloaded' })
   await scrollRoute(page, 520)
@@ -200,10 +216,21 @@ const run = async () => {
   // darse experiencia a sí mismo.
   await page.goto(`${BASE}/characters/${THORIN}`, { waitUntil: 'domcontentloaded' })
   await settle(page)
+
+  // Solo se otorga la diferencia hasta el umbral, no una cantidad fija: el DM
+  // únicamente puede sumar, así que un delta fijo haría crecer la experiencia en
+  // cada corrida y la captura terminaría mostrando un número absurdo.
+  const currentXp = await readXp(page)
+  const grant = Math.max(0, LEVEL_4_XP - currentXp)
+  if (grant === 0) {
+    console.log(`    ⚠ Thorin ya tiene ${currentXp} PX; corré 'supabase db reset' para volver al seed`)
+  }
+
   await click(page, page.getByRole('button', { name: '+ XP' }))
-  await page.locator('input[placeholder="0"]').fill(String(XP_GRANT)).catch(() => {})
+  await page.locator('input[placeholder="0"]').fill(String(grant || XP_GRANT)).catch(() => {})
   await shot(page, '16-dm-otorga-xp')
-  await click(page, page.getByRole('button', { name: 'OK' }))
+  if (grant > 0) await click(page, page.getByRole('button', { name: 'OK' }))
+  else await page.keyboard.press('Escape')
 
   // El umbral de nivel 4 son 2.700 PX; con el otorgamiento anterior Thorin
   // queda encima y le aparece el botón a él, no al DM.

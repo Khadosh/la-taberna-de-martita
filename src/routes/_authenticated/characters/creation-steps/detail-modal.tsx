@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { useLoc } from '../../../../i18n'
+import { useI18n, useT } from '../../../../i18n'
 import { dndApi, dndKeys } from '../../../../lib/dnd-api'
-import { BACKGROUNDS, ABILITY_LABELS_ES } from '../../../../lib/dnd-backgrounds'
+import { BACKGROUNDS, ABILITY_ABBR } from '../../../../lib/dnd-backgrounds'
 
 interface DetailModalProps {
   type: 'class' | 'race' | 'subclass' | 'background'
@@ -11,7 +11,7 @@ interface DetailModalProps {
 }
 
 export function DetailModal({ type, indexOrKey, name, onClose }: DetailModalProps) {
-  const loc = useLoc()
+  const { t, loc, locale } = useI18n()
   const { data: raceInfo, isLoading: loadingRace } = useQuery({
     queryKey: dndKeys.race(indexOrKey),
     queryFn: () => dndApi.race(indexOrKey),
@@ -73,15 +73,15 @@ export function DetailModal({ type, indexOrKey, name, onClose }: DetailModalProp
               {type === 'race' && raceInfo && (
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-2 text-xs font-sans text-stone-400 bg-stone-950/40 p-2.5 border border-[#6b4c24]/10 rounded-sm">
-                    <p><span className="text-amber-500/80 font-semibold">Velocidad:</span> {raceInfo.speed} pies</p>
+                    <p><span className="text-amber-500/80 font-semibold">{t('creation.speed')}</span> {raceInfo.speed} pies</p>
                     <p className="col-span-2">
-                      <span className="text-amber-500/80 font-semibold">Competencias:</span>{' '}
+                      <span className="text-amber-500/80 font-semibold">{t('creation.proficienciesLabel')}</span>{' '}
                       {raceInfo.ability_bonuses?.map(ab => `${ab.ability_score.name} +${ab.bonus}`).join(', ') || 'Ninguna'}
                     </p>
                   </div>
                   {raceInfo.traits && raceInfo.traits.length > 0 && (
                     <div className="space-y-2 pt-2">
-                      <h4 className="text-xs uppercase font-sans tracking-wide text-amber-500/80 font-bold border-b border-[#6b4c24]/10 pb-1">Rasgos raciales:</h4>
+                      <h4 className="text-xs uppercase font-sans tracking-wide text-amber-500/80 font-bold border-b border-[#6b4c24]/10 pb-1">{t('creation.racialTraits')}</h4>
                       <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
                         {raceInfo.traits.map(t => (
                           <TraitItem key={t.index} traitIndex={t.index} traitName={t.name} />
@@ -95,16 +95,16 @@ export function DetailModal({ type, indexOrKey, name, onClose }: DetailModalProp
               {type === 'class' && classInfo && (
                 <div className="space-y-3">
                   <div className="grid grid-cols-2 gap-2 text-xs font-sans text-stone-400 bg-stone-950/40 p-2.5 border border-[#6b4c24]/10 rounded-sm">
-                    <p><span className="text-amber-500/80 font-semibold">Dado de Golpe:</span> d{classInfo.hit_die}</p>
-                    <p><span className="text-amber-500/80 font-semibold">Salvaciones:</span> {classInfo.saving_throws.map(s => s.name).join(', ')}</p>
+                    <p><span className="text-amber-500/80 font-semibold">{t('creation.hitDie')}</span> d{classInfo.hit_die}</p>
+                    <p><span className="text-amber-500/80 font-semibold">{t('creation.savingThrows')}</span> {classInfo.saving_throws.map(s => s.name).join(', ')}</p>
                     <p className="col-span-2">
-                      <span className="text-amber-500/80 font-semibold">Competencias en armas/armaduras:</span>{' '}
+                      <span className="text-amber-500/80 font-semibold">{t('creation.weaponArmorProficiencies')}</span>{' '}
                       {classInfo.proficiencies.map(p => p.name).join(', ') || 'Ninguna'}
                     </p>
                   </div>
                   {classInfo.proficiency_choices && classInfo.proficiency_choices.length > 0 && (
                     <div className="pt-1 text-xs">
-                      <span className="text-amber-500/80 font-sans font-bold uppercase tracking-wider block mb-1">Elegir habilidades:</span>
+                      <span className="text-amber-500/80 font-sans font-bold uppercase tracking-wider block mb-1">{t('creation.pickSkillsLabel')}</span>
                       <p className="text-stone-400 italic">{classInfo.proficiency_choices[0].desc}</p>
                     </div>
                   )}
@@ -126,7 +126,7 @@ export function DetailModal({ type, indexOrKey, name, onClose }: DetailModalProp
                         <p>{subclassInfo.desc}</p>
                       )
                     ) : (
-                      <p className="text-stone-500 italic">Sin descripción disponible.</p>
+                      <p className="text-stone-500 italic">{t('creation.noDescriptionAvailable')}</p>
                     )}
                   </div>
                 </div>
@@ -137,16 +137,16 @@ export function DetailModal({ type, indexOrKey, name, onClose }: DetailModalProp
                   <p>{loc(bgInfo.desc)}</p>
                   <div className="grid grid-cols-2 gap-2 text-xs font-sans text-stone-400 bg-stone-950/40 p-2.5 border border-[#6b4c24]/10 rounded-sm">
                     <p className="col-span-2">
-                      <span className="text-amber-500/80 font-semibold">Características asociadas (elige +2 y +1):</span>{' '}
-                      {bgInfo.abilities.map(a => ABILITY_LABELS_ES[a]).join(', ')}
+                      <span className="text-amber-500/80 font-semibold">{t('creation.associatedAbilities')}</span>{' '}
+                      {bgInfo.abilities.map(a => ABILITY_ABBR[locale][a]).join(', ')}
                     </p>
                     <p className="col-span-2">
-                      <span className="text-amber-500/80 font-semibold">Pericias automáticas:</span>{' '}
+                      <span className="text-amber-500/80 font-semibold">{t('creation.automaticSkills')}</span>{' '}
                       {bgInfo.skills.join(', ')}
                     </p>
                     {bgInfo.tool && (
                       <p className="col-span-2">
-                        <span className="text-amber-500/80 font-semibold">Herramientas:</span> {loc(bgInfo.tool)}
+                        <span className="text-amber-500/80 font-semibold">{t('creation.tools')}</span> {loc(bgInfo.tool)}
                       </p>
                     )}
                   </div>
@@ -161,6 +161,7 @@ export function DetailModal({ type, indexOrKey, name, onClose }: DetailModalProp
 }
 
 function TraitItem({ traitIndex, traitName }: { traitIndex: string; traitName: string }) {
+  const t = useT()
   const { data, isLoading } = useQuery({
     queryKey: dndKeys.trait(traitIndex),
     queryFn: () => dndApi.trait(traitIndex),
@@ -170,11 +171,11 @@ function TraitItem({ traitIndex, traitName }: { traitIndex: string; traitName: s
     <div className="bg-stone-950/25 border border-stone-900 p-2.5 rounded-sm space-y-1">
       <h5 className="text-xs font-sans font-semibold text-amber-200/90">{traitName}</h5>
       {isLoading ? (
-        <p className="text-[10px] text-stone-500 italic animate-pulse">Cargando detalles...</p>
+        <p className="text-[10px] text-stone-500 italic animate-pulse">{t('creation.loadingDetails')}</p>
       ) : data?.desc ? (
         <p className="text-[11px] text-stone-400 leading-snug">{data.desc.join(' ')}</p>
       ) : (
-        <p className="text-[10px] text-stone-500 italic">Sin descripción.</p>
+        <p className="text-[10px] text-stone-500 italic">{t('creation.noDescription')}</p>
       )}
     </div>
   )

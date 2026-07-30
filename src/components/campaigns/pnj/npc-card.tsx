@@ -2,6 +2,8 @@ import { CLASS_ICONS } from '../../../lib/class-meta'
 import type { Tables } from '../../../lib/database.types'
 import { Frame } from './pnj-primitives'
 import { type Stats, STAT_KEYS, ROLES, abilityMod, formatMod } from './pnj-types'
+import { useI18n } from '../../../i18n'
+import { CLASS_NAMES, RACE_NAMES, localizedTerm } from '../../../lib/dnd-terms'
 
 type Npc = Tables<'npcs'>
 
@@ -15,6 +17,7 @@ interface NpcCardProps {
 }
 
 export function NpcCard({ npc, onEdit, onDelete, confirmingDelete, onCancelDelete, onConfirmDelete }: NpcCardProps) {
+  const { t, locale } = useI18n()
   const stats = npc.stats as Stats | null
   const role = ROLES.find(r => r.value === npc.role)
   const icon = npc.class ? CLASS_ICONS[npc.class] : '👤'
@@ -27,18 +30,18 @@ export function NpcCard({ npc, onEdit, onDelete, confirmingDelete, onCancelDelet
           <div className="min-w-0">
             {role && (
               <span className={`inline-block text-[10px] font-serif tracking-wide px-2 py-0.5 border ${role.color} mb-1`}>
-                {role.label}
+                {t(role.labelKey)}
               </span>
             )}
             {npc.is_hidden && (
               <span className="ml-1 inline-block text-[10px] font-serif tracking-wide px-2 py-0.5 border border-stone-700 text-stone-700 bg-stone-200 mb-1">
-                oculto
+                {t('npc.hiddenBadge')}
               </span>
             )}
             <h3 className="text-lg font-display font-bold text-stone-900 leading-tight truncate">{npc.name}</h3>
             {(npc.race || npc.class || npc.level) && (
               <p className="text-xs italic text-stone-600 capitalize">
-                {[npc.race, npc.class, `Nv. ${npc.level}`].filter(Boolean).join(' · ')}
+                {[localizedTerm(RACE_NAMES, npc.race, locale), localizedTerm(CLASS_NAMES, npc.class, locale), `${t('common.levelShort')} ${npc.level}`].filter(Boolean).join(' · ')}
               </p>
             )}
           </div>
@@ -75,7 +78,7 @@ export function NpcCard({ npc, onEdit, onDelete, confirmingDelete, onCancelDelet
 
         {sheet.weapons && sheet.weapons.length > 0 && (
           <div className="text-xs text-stone-850 font-serif border-t border-stone-300/30 pt-1.5 space-y-0.5">
-            <span className="font-semibold text-stone-900 block text-[10px] uppercase tracking-wider">Ataques / Armas:</span>
+            <span className="font-semibold text-stone-900 block text-[10px] uppercase tracking-wider">{t('npc.attacksAndWeapons')}</span>
             <div className="flex flex-wrap gap-x-2 gap-y-1">
               {sheet.weapons.map((w, i) => (
                 <span key={i} className="px-1.5 py-0.5 bg-stone-100 border border-stone-300 text-[10px] text-stone-800 rounded font-mono">
@@ -88,7 +91,7 @@ export function NpcCard({ npc, onEdit, onDelete, confirmingDelete, onCancelDelet
 
         {sheet.spells && sheet.spells.length > 0 && (
           <div className="text-xs text-stone-850 font-serif space-y-0.5">
-            <span className="font-semibold text-stone-900 block text-[10px] uppercase tracking-wider">Conjuros:</span>
+            <span className="font-semibold text-stone-900 block text-[10px] uppercase tracking-wider">{t('npc.spellsLabel')}</span>
             <div className="flex flex-wrap gap-1">
               {sheet.spells.map((s, i) => (
                 <span key={i} className="px-1.5 py-0.5 bg-amber-50 border border-amber-800/30 text-[10px] text-amber-900 rounded capitalize">
@@ -101,21 +104,21 @@ export function NpcCard({ npc, onEdit, onDelete, confirmingDelete, onCancelDelet
 
         {sheet.equipment_notes && (
           <div className="text-xs text-stone-700 font-serif border-t border-stone-300/30 pt-1.5">
-            <span className="font-semibold text-stone-900 text-[10px] uppercase tracking-wider block">Equipamiento:</span>
+            <span className="font-semibold text-stone-900 text-[10px] uppercase tracking-wider block">{t('npc.equipmentLabel')}</span>
             <p className="text-[11px] text-stone-600 whitespace-pre-line leading-relaxed">{sheet.equipment_notes}</p>
           </div>
         )}
 
         {npc.backstory && (
           <div className="text-xs text-stone-700 font-serif border-t border-stone-300/30 pt-1.5">
-            <span className="font-semibold text-stone-900 text-[10px] uppercase tracking-wider block">Trasfondo:</span>
+            <span className="font-semibold text-stone-900 text-[10px] uppercase tracking-wider block">{t('npc.backstoryLabel')}</span>
             <p className="text-[11px] text-stone-600 leading-relaxed">{npc.backstory}</p>
           </div>
         )}
 
         {npc.notes && (
           <div className="text-xs text-stone-700 font-serif border-t border-stone-300/30 pt-1.5 bg-yellow-50/20 p-1.5 border border-yellow-200/40 rounded">
-            <span className="font-semibold text-stone-900 text-[10px] uppercase tracking-wider block">Notas DM (Privado):</span>
+            <span className="font-semibold text-stone-900 text-[10px] uppercase tracking-wider block">{t('npc.dmNotesLabel')}</span>
             <p className="text-[11px] text-stone-600 leading-relaxed">{npc.notes}</p>
           </div>
         )}
@@ -123,17 +126,17 @@ export function NpcCard({ npc, onEdit, onDelete, confirmingDelete, onCancelDelet
         <div className="flex items-center justify-end gap-2 pt-2 border-t border-stone-400/30">
           {confirmingDelete ? (
             <>
-              <span className="text-xs italic text-stone-700 mr-auto">¿Eliminar?</span>
-              <button onClick={onCancelDelete} className="text-xs text-stone-600 hover:text-stone-900 font-serif">Cancelar</button>
+              <span className="text-xs italic text-stone-700 mr-auto">{t('npc.confirmDelete')}</span>
+              <button onClick={onCancelDelete} className="text-xs text-stone-600 hover:text-stone-900 font-serif">{t('common.cancel')}</button>
               <button onClick={onConfirmDelete} className="text-xs px-2.5 py-1 bg-red-900 text-red-100 hover:bg-red-800 font-serif transition-colors">
-                Eliminar
+                {t('common.delete')}
               </button>
             </>
           ) : (
             <>
-              <button onClick={onDelete} className="text-xs text-stone-500 hover:text-red-800 font-serif">eliminar</button>
+              <button onClick={onDelete} className="text-xs text-stone-500 hover:text-red-800 font-serif">{t('common.delete')}</button>
               <button onClick={onEdit} className="text-xs px-3 py-1 bg-stone-900 text-amber-100 hover:bg-stone-800 font-serif transition-colors">
-                Editar
+                {t('common.edit')}
               </button>
             </>
           )}

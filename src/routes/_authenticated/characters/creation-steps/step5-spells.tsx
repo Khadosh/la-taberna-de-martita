@@ -1,6 +1,7 @@
 import { StepTitle, SpellInfoButton } from './primitives'
 import type { SpellDetail } from '../../../../lib/dnd-api'
 import type { Draft } from '../character-creation-steps'
+import { useT } from '../../../../i18n'
 
 interface Step5Props {
   draft: Draft
@@ -11,12 +12,13 @@ interface Step5Props {
 }
 
 export function Step5Spells({ draft, patch, classSpells, classDetail, setSpellModal }: Step5Props) {
+  const t = useT()
   return (
     <div className="space-y-6">
-      <StepTitle>Conjuros iniciales</StepTitle>
+      <StepTitle>{t('creation.startingSpells')}</StepTitle>
       <p className="text-sm text-stone-500 font-serif italic">
-        Seleccioná los hechizos de tu {classDetail?.name}.{' '}
-        <span className="text-amber-500/80 not-italic">{draft.spells.length} seleccionados</span>
+        {t('creation.pickSpells', { class: classDetail?.name })}{' '}
+        <span className="text-amber-500/80 not-italic">{t('creation.spellsSelected', { count: draft.spells.length })}</span>
       </p>
       <div className="grid grid-cols-2 gap-1.5 max-h-[400px] overflow-y-auto pr-1">
         {classSpells.results.map((s: any) => {

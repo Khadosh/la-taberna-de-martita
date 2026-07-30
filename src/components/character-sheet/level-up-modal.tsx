@@ -4,8 +4,8 @@ import { dndApi, dndKeys } from '../../lib/dnd-api'
 import { parchmentStyle } from './sheet-primitives'
 import { FIGHTING_STYLES_BY_CLASS, FAVORED_ENEMIES, SUBCLASS_SELECTION_LEVELS, getExpertiseCount } from '../../lib/class-choices'
 import type { SheetJson } from './types'
-import { useLoc, useT } from '../../i18n'
-import { ABILITY_NAMES, SKILL_NAMES } from '../../lib/dnd-terms'
+import { useI18n } from '../../i18n'
+import { ABILITY_NAMES, CLASS_NAMES, SKILL_NAMES, localizedTerm } from '../../lib/dnd-terms'
 import type { StatKey } from '../../lib/dnd-backgrounds'
 
 function maxCastableLevel(spellcasting?: { [key: string]: number | undefined }): number {
@@ -57,8 +57,7 @@ export function LevelUpModal({
   onConfirm: () => void
   onCancel: () => void
 }) {
-  const t = useT()
-  const loc = useLoc()
+  const { t, loc, locale } = useI18n()
   const nextLevel = level + 1
   const classIndex = character.class.toLowerCase()
   const [spellSearch, setSpellSearch] = useState('')
@@ -198,7 +197,7 @@ export function LevelUpModal({
             </svg>
             {t('levelUp.title', { level: nextLevel })}
           </h3>
-          <p className="text-sm text-stone-500 font-serif italic mt-1">{character.name} · {character.class} · d{hitDie}</p>
+          <p className="text-sm text-stone-500 font-serif italic mt-1">{character.name} · {localizedTerm(CLASS_NAMES, character.class, locale)} · d{hitDie}</p>
         </div>
 
         {features.length > 0 && (

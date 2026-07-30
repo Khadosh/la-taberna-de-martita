@@ -1,9 +1,10 @@
 import { CLASS_ICONS } from '../../../../lib/class-meta'
-import { ABILITY_LABELS_ES } from '../../../../lib/dnd-backgrounds'
+import { ABILITY_ABBR } from '../../../../lib/dnd-backgrounds'
 import { abilityModifier, modifierColor, ABILITY_LABELS } from '../../../../lib/dnd-api'
 import { StepTitle, inputStyle, cardStyle } from './primitives'
 import type { Draft, Stats } from '../character-creation-steps'
 import { STAT_KEYS } from '../character-creation-steps'
+import { useI18n } from '../../../../i18n'
 
 interface Step6Props {
   draft: Draft
@@ -17,26 +18,27 @@ interface Step6Props {
 }
 
 export function Step6Summary({ draft, patch, raceDetail, classDetail, totalStats, selectedBg, userCampaigns, error }: Step6Props) {
+  const { t, locale } = useI18n()
   const classIcon = CLASS_ICONS[draft.classIndex] ?? '🎲'
   return (
     <div className="space-y-6">
-      <StepTitle>Historia & resumen</StepTitle>
+      <StepTitle>{t('creation.storyAndSummary')}</StepTitle>
       <textarea
-        placeholder="Contá la historia de tu personaje... (opcional)"
+        placeholder={t('creation.backstoryPlaceholder')}
         value={draft.backstory} onChange={e => patch({ backstory: e.target.value })}
         rows={6} style={inputStyle}
         className="w-full px-4 py-3 text-stone-200 placeholder-stone-600 font-serif focus:outline-none resize-none text-sm"
       />
       <div className="space-y-1.5">
-        <label className="text-xs text-stone-500 font-display tracking-widest uppercase font-serif">Campaña <span className="text-stone-700 normal-case">(opcional)</span></label>
+        <label className="text-xs text-stone-500 font-display tracking-widest uppercase font-serif">{t('creation.campaign')} <span className="text-stone-700 normal-case">{t('creation.optional')}</span></label>
         <select value={draft.campaignId} onChange={e => patch({ campaignId: e.target.value })}
           style={inputStyle} className="w-full px-4 py-2.5 text-stone-200 font-serif focus:outline-none text-sm font-serif">
-          <option value="">Sin campaña por ahora</option>
+          <option value="">{t('creation.noCampaign')}</option>
           {userCampaigns.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
       </div>
       <div style={cardStyle} className="p-4 space-y-3 text-sm">
-        <p className="text-xs text-stone-500 font-display tracking-widest uppercase mb-3 font-serif">Resumen</p>
+        <p className="text-xs text-stone-500 font-display tracking-widest uppercase mb-3 font-serif">{t('creation.summary')}</p>
         <div className="flex items-center gap-3 mb-2">
           {draft.classIndex ? (
             <img
@@ -49,14 +51,14 @@ export function Step6Summary({ draft, patch, raceDetail, classDetail, totalStats
           )}
           <div>
             <p className="text-stone-200 font-serif font-semibold">{draft.name}</p>
-            <p className="text-stone-500 text-xs font-serif capitalize">{raceDetail?.name} · {classDetail?.name} · Nivel {draft.level}</p>
-            {selectedBg && <p className="text-stone-600 text-xs font-serif">Trasfondo: {selectedBg.name}</p>}
+            <p className="text-stone-500 text-xs font-serif capitalize">{raceDetail?.name} · {classDetail?.name} · {t('creation.level')} {draft.level}</p>
+            {selectedBg && <p className="text-stone-600 text-xs font-serif">{t('creation.backgroundLabel')} {selectedBg.name}</p>}
           </div>
         </div>
         {selectedBg && draft.bgBonus2 && draft.bgBonus1 && (
           <div className="flex gap-2 flex-wrap pb-2">
             <span className="text-xs text-amber-400/80 border border-amber-900/40 px-2 py-0.5 font-serif">
-              {selectedBg.name}: +2 {ABILITY_LABELS_ES[draft.bgBonus2]} · +1 {ABILITY_LABELS_ES[draft.bgBonus1]}
+              {selectedBg.name}: +2 {ABILITY_ABBR[locale][draft.bgBonus2]} · +1 {ABILITY_ABBR[locale][draft.bgBonus1]}
             </span>
           </div>
         )}

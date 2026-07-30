@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { dndApi, dndKeys } from '../../../../lib/dnd-api'
 import type { SpellDetail } from '../../../../lib/dnd-api'
+import { useT } from '../../../../i18n'
 
 export const inputStyle: CSSProperties = {
   background: 'rgba(255,255,255,0.04)',
@@ -33,6 +34,7 @@ export function StepTitle({ children }: { children: React.ReactNode }) {
 }
 
 export function SpellInfoButton({ index, onInfo }: { index: string; onInfo: (s: SpellDetail) => void }) {
+  const t = useT()
   const { data: spell } = useQuery({
     queryKey: dndKeys.spell(index),
     queryFn: () => dndApi.spell(index),
@@ -42,7 +44,8 @@ export function SpellInfoButton({ index, onInfo }: { index: string; onInfo: (s: 
     <button
       onClick={e => { e.stopPropagation(); onInfo(spell) }}
       className="px-2 py-2 text-stone-600 hover:text-amber-500 transition-colors text-xs"
-      title="Ver descripción"
+      title={t('creation.viewDescription')}
+      aria-label={t('creation.viewDetailsOf', { name: spell.name })}
     >
       ℹ
     </button>

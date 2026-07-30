@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { useT } from '../../i18n'
+import { useI18n } from '../../i18n'
+import { RACE_NAMES, localizedTerm } from '../../lib/dnd-terms'
 import type { RaceDetail, FeatureDetail } from '../../lib/dnd-api'
 import { CONDITIONS } from '../../lib/dnd-constants'
 import type { SheetJson, InfoModalData } from './types'
@@ -95,7 +96,7 @@ interface TabResumenProps {
 }
 
 export function TabResumen(props: TabResumenProps) {
-  const t = useT()
+  const { t, locale } = useI18n()
   const {
     stats, character, raceDetail, isOwner, isGm,
     currentHp, maxHp, hpPct, hpColor,
@@ -268,7 +269,7 @@ export function TabResumen(props: TabResumenProps) {
       {raceDetail && raceDetail.traits.length > 0 && (
         <SheetRow className="border-t border-stone-500/30">
           <div className="flex-1 p-4 space-y-3">
-            <SheetLabel>{t('sheet.racialTraitsPrefix')} · <span className="capitalize">{character.race}</span></SheetLabel>
+            <SheetLabel>{t('sheet.racialTraitsPrefix')} · <span className="capitalize">{localizedTerm(RACE_NAMES, character.race, locale)}</span></SheetLabel>
             <div className="flex flex-wrap gap-1.5">
               {raceDetail.traits.map(t => (
                 <TraitBadge key={t.index} index={t.index} name={t.name}

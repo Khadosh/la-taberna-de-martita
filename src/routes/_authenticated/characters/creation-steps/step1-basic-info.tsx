@@ -253,7 +253,7 @@ export function Step1BasicInfo({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1">
-                <label className="text-[10px] text-stone-500 font-display tracking-widest uppercase block">Bono +2 a...</label>
+                <label className="text-[10px] text-stone-500 font-display tracking-widest uppercase block">{t('creation.bonusPlus2')}</label>
                 <div className="flex gap-2">
                   {selectedBg.abilities.map(a => {
                     const isSelected = draft.bgBonus2 === a
@@ -276,7 +276,7 @@ export function Step1BasicInfo({
               </div>
 
               <div className="space-y-1">
-                <label className="text-[10px] text-stone-500 font-display tracking-widest uppercase block">Bono +1 a...</label>
+                <label className="text-[10px] text-stone-500 font-display tracking-widest uppercase block">{t('creation.bonusPlus1')}</label>
                 <div className="flex gap-2">
                   {selectedBg.abilities.map(a => {
                     const isSelected = draft.bgBonus1 === a
@@ -305,7 +305,7 @@ export function Step1BasicInfo({
 
             {draft.bgBonus2 && draft.bgBonus1 && (
               <div className="flex gap-2 flex-wrap pt-2 border-t border-stone-850/60 items-center text-xs font-serif text-stone-400">
-                <span>Pericias: <span className="font-semibold text-stone-300">{selectedBg.skills.join(', ')}</span></span>
+                <span>{t('creation.skillsLabel')} <span className="font-semibold text-stone-300">{selectedBg.skills.join(', ')}</span></span>
                 {selectedBg.tool && <span className="ml-3">{t('creation.tool')} <span className="font-semibold text-stone-300">{loc(selectedBg.tool)}</span></span>}
               </div>
             )}
@@ -405,12 +405,12 @@ export function Step1BasicInfo({
               <div className="pt-2 border-t border-stone-850/30 mt-2 text-[10px] text-stone-400 font-serif leading-relaxed text-left space-y-1 max-w-[240px] mx-auto" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.95)' }}>
                 {classDetail && (
                   <p className="truncate">
-                    <span className="font-sans uppercase text-[8px] tracking-wider text-stone-500 font-bold">Clase:</span> d{classDetail.hit_die} HG · Salvaciones: {classDetail.saving_throws.map((s: any) => s.name).join(', ')}
+                    <span className="font-sans uppercase text-[8px] tracking-wider text-stone-500 font-bold">{t('creation.classLabel')}</span> d{classDetail.hit_die} HG · Salvaciones: {classDetail.saving_throws.map((s: any) => s.name).join(', ')}
                   </p>
                 )}
                 {raceDetail && (
                   <p className="truncate">
-                    <span className="font-sans uppercase text-[8px] tracking-wider text-stone-500 font-bold">Especie:</span> Movimiento {raceDetail.speed} pies.
+                    <span className="font-sans uppercase text-[8px] tracking-wider text-stone-500 font-bold">{t('creation.speciesLabel')}</span> Movimiento {raceDetail.speed} pies.
                   </p>
                 )}
                 {selectedBg && (

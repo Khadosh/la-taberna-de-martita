@@ -8,6 +8,7 @@ import { SectionHeader } from '../../../components/campaigns/pnj/pnj-primitives'
 import { NpcCard } from '../../../components/campaigns/pnj/npc-card'
 import { NpcFormPanel } from '../../../components/campaigns/pnj/npc-form-panel'
 import { type NpcForm, type Stats, DEFAULT_STATS, EMPTY_FORM, toIntOrNull, calculateSuggestedHp } from '../../../components/campaigns/pnj/pnj-types'
+import { useT } from '../../../i18n'
 
 export const Route = createFileRoute('/_authenticated/campaigns/$campaignId/pnj')({
   component: PnjGenerator,
@@ -16,6 +17,7 @@ export const Route = createFileRoute('/_authenticated/campaigns/$campaignId/pnj'
 type Npc = Tables<'npcs'>
 
 function PnjGenerator() {
+  const t = useT()
   const { campaignId } = Route.useParams()
   const queryClient = useQueryClient()
   const [form, setForm] = useState<NpcForm>(EMPTY_FORM())
@@ -168,7 +170,7 @@ function PnjGenerator() {
         <section>
           <SectionHeader
             icon="👤"
-            label={editingId ? 'Editar PNJ' : 'Generar PNJ'}
+            label={editingId ? t('npc.editTitle') : t('npc.generate')}
             extra={editingId && (
               <button onClick={resetForm} className="text-xs italic text-stone-600 hover:text-stone-900 underline font-serif">
                 cancelar edición
@@ -186,9 +188,9 @@ function PnjGenerator() {
         <section>
           <SectionHeader icon="📜" label={`PNJs · ${npcs.length}`} />
           {isLoading ? (
-            <p className="text-stone-600 italic font-serif">Cargando...</p>
+            <p className="text-stone-600 italic font-serif">{t('common.loading')}</p>
           ) : npcs.length === 0 ? (
-            <p className="text-stone-600 italic font-serif">Todavía no creaste ningún PNJ.</p>
+            <p className="text-stone-600 italic font-serif">{t('npc.empty')}</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {npcs.map(npc => (

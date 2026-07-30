@@ -8,7 +8,8 @@ import { parchmentStyle, mapBgStyle, sheetStyle, darkFrameStyle, SheetTabBar } f
 import { InfoModal } from '../../../components/character-sheet/sheet-badges'
 import { LevelUpModal } from '../../../components/character-sheet/level-up-modal'
 import { ClassChoicesPanel } from '../../../components/character-sheet/class-choices-panel'
-import { useT } from '../../../i18n'
+import { useI18n } from '../../../i18n'
+import { CLASS_NAMES, RACE_NAMES, localizedTerm } from '../../../lib/dnd-terms'
 import { TabResumen } from '../../../components/character-sheet/tab-resumen'
 import { TabPericias } from '../../../components/character-sheet/tab-pericias'
 import { TabHechizos } from '../../../components/character-sheet/tab-hechizos'
@@ -24,7 +25,7 @@ export const Route = createFileRoute('/_authenticated/characters/$characterId')(
 })
 
 function CharacterSheet() {
-  const t = useT()
+  const { t, locale } = useI18n()
   const { characterId } = Route.useParams()
   const { session } = Route.useRouteContext() as { session: Session }
   const navigate = useNavigate()
@@ -140,7 +141,7 @@ function CharacterSheet() {
         <div className="w-px h-4 bg-stone-700 mx-2" />
         <div className="flex-1 truncate">
           <p className="text-amber-200 font-serif font-semibold text-sm truncate">{character.name}</p>
-          <p className="text-stone-500 font-serif text-xs truncate capitalize">{character.race} · {character.class} · {t('common.levelShort')} {level}</p>
+          <p className="text-stone-500 font-serif text-xs truncate capitalize">{localizedTerm(RACE_NAMES, character.race, locale)} · {localizedTerm(CLASS_NAMES, character.class, locale)} · {t('common.levelShort')} {level}</p>
         </div>
         <button onClick={() => setShowDice(true)} className="px-3 py-1 border border-amber-800 text-amber-500 text-xs font-serif bg-amber-900/20 flex items-center gap-1.5">
           <svg width="13" height="13" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round">
@@ -238,9 +239,9 @@ function CharacterSheet() {
                   <div className="flex-1 px-5 py-4 flex flex-col justify-center min-w-0">
                     <h1 className="text-[26px] font-bold font-serif leading-none truncate" style={{ color: '#2c1a08' }}>{character.name}</h1>
                     <p className="text-sm font-serif mt-2 capitalize" style={{ color: '#5c3d18' }}>
-                      {character.race}
+                      {localizedTerm(RACE_NAMES, character.race, locale)}
                       <span className="mx-1.5 font-bold" style={{ color: '#b06820' }}>•</span>
-                      {character.class}{subclassDetail ? ` (${subclassDetail.name})` : ''}
+                      {localizedTerm(CLASS_NAMES, character.class, locale)}{subclassDetail ? ` (${subclassDetail.name})` : ''}
                     </p>
                     <p className="text-[11px] font-serif tracking-widest uppercase mt-1" style={{ color: '#b06820' }}>{t('common.level')} {level}</p>
                     <button
