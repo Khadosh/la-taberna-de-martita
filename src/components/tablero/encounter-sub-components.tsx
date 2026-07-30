@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { type Difficulty, crLabel as crLabelFn } from '../../lib/encounter-generator'
 import { MONSTER_INDEX } from './use-encounter-generator'
 import { DIFFICULTY_LABELS } from './encounter-constants'
+import { useT } from '../../i18n'
 
 export function SpecialAbilityTag({ sa }: { sa: { name: string; desc: string } }) {
   const [show, setShow] = useState(false)
@@ -42,6 +43,7 @@ export function CountStepper({ value, onChange, activeColor }: { value: number; 
 }
 
 export function XpGauge({ adjustedXp, thresholds }: { adjustedXp: number; thresholds: Record<Difficulty, number> }) {
+  const t = useT()
   const maxDisplay = Math.max(thresholds.deadly * 1.5, adjustedXp * 1.1, 1)
   const fillPct = Math.min((adjustedXp / maxDisplay) * 100, 100)
   const pct = (v: number) => Math.min((v / maxDisplay) * 100, 98)
@@ -66,7 +68,7 @@ export function XpGauge({ adjustedXp, thresholds }: { adjustedXp: number; thresh
   return (
     <div className="space-y-1.5 mt-2">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-serif" style={{ color: '#8a6b3e' }}>XP Ajustado</span>
+        <span className="text-xs font-serif" style={{ color: '#8a6b3e' }}>{t('encounter.adjustedXp')}</span>
         <span className="text-xs font-mono font-bold" style={{ color: activeColors[currentDiff] }}>
           {adjustedXp} ({DIFFICULTY_LABELS[currentDiff as Difficulty] ?? 'Trivial'})
         </span>
@@ -129,6 +131,7 @@ export function XpGauge({ adjustedXp, thresholds }: { adjustedXp: number; thresh
 }
 
 export function MonsterSearchAdd({ onAdd }: { onAdd: (idx: string) => void }) {
+  const t = useT()
   const [query, setQuery] = useState('')
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -152,7 +155,7 @@ export function MonsterSearchAdd({ onAdd }: { onAdd: (idx: string) => void }) {
         value={query}
         onChange={e => { setQuery(e.target.value); setOpen(true) }}
         onFocus={() => query.trim().length >= 2 && setOpen(true)}
-        placeholder="+ Agregar monstruo…"
+        placeholder={t('encounter.addMonster')}
         className="w-full px-3 py-1.5 bg-black/30 border-t border-[#3c2414] text-[#d5b88a] text-xs font-serif placeholder-stone-600 focus:outline-none focus:text-[#e0d1b8] focus:border-[#bc9434]"
       />
       {open && results.length > 0 && (

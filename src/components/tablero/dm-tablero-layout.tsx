@@ -126,7 +126,7 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
         {/* LEFT: Party */}
         <aside className={`transition-all duration-300 ${leftPanelCollapsed ? 'w-0 overflow-hidden opacity-0 border-r-0' : 'w-72 border-r border-stone-800'} flex flex-col overflow-y-auto bg-stone-900/50`}>
           <div className="px-4 pt-4 pb-2">
-            <p className="text-xs tracking-widest text-stone-500 uppercase font-serif">Partido · {characters.length}</p>
+            <p className="text-xs tracking-widest text-stone-500 uppercase font-serif">{t('board.party')} · {characters.length}</p>
           </div>
           <div className="flex-1 px-3 pb-4 space-y-2">
             {characters.length === 0 && (
@@ -160,9 +160,9 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
                     )}
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-semibold text-stone-100 truncate">{c.name}</p>
-                      <p className="text-xs text-stone-500 capitalize">{c.race} {c.class} · Nv.{c.level}</p>
+                      <p className="text-xs text-stone-500 capitalize">{c.race} {c.class} · {t('common.levelShort')}{c.level}</p>
                     </div>
-                    <span className="text-xs text-stone-500 font-mono bg-stone-800 px-1.5 py-0.5 rounded">CA {ac}</span>
+                    <span className="text-xs text-stone-500 font-mono bg-stone-800 px-1.5 py-0.5 rounded">{t('sheet.armorClass')} {ac}</span>
                   </div>
                   <div>
                     <div className="h-1.5 bg-stone-700 rounded-full overflow-hidden mb-1">
@@ -184,7 +184,7 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
                         className="w-5 h-5 text-xs border border-stone-700 text-stone-400 hover:bg-stone-800 rounded leading-none">+</button>
                       <span className="text-xs text-stone-600 ml-1">/ {maxHp}</span>
                       <button onClick={() => adjustCharacterHp(c.id, serverHp, maxHp, maxHp)}
-                        className="ml-auto text-xs text-stone-600 hover:text-green-500 transition-colors" title="Curar completo">✦</button>
+                        className="ml-auto text-xs text-stone-600 hover:text-green-500 transition-colors" title={t('board.healFull')}>✦</button>
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-1">
@@ -197,7 +197,7 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
                     <div className="relative">
                       <button onClick={() => setConditionPickerFor(conditionPickerFor === c.id ? null : c.id)}
                         className="px-1.5 py-0.5 text-xs border border-stone-700 text-stone-500 hover:border-stone-500 hover:text-stone-300 rounded transition-colors">
-                        + condición
+                        {t('board.addCondition')}
                       </button>
                       {conditionPickerFor === c.id && (
                         <div className="absolute left-0 top-7 z-30 w-44 bg-stone-900 border border-stone-700 rounded shadow-xl max-h-48 overflow-y-auto">
@@ -286,22 +286,22 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
               <>
                 <button onClick={nextTurn}
                   className="px-4 py-1.5 bg-amber-800 hover:bg-amber-700 text-amber-100 font-serif text-sm transition-colors">
-                  Siguiente →
+                  {t('board.nextTurn')} →
                 </button>
                 <span className="text-xs text-stone-500 font-serif font-mono">
-                  Turno {currentTurn + 1}/{combatants.length}
+                  {t('board.turn', { current: currentTurn + 1, total: combatants.length })}
                 </span>
                 <div className="flex-1" />
                 <button onClick={endCombat}
                   className="px-3 py-1.5 border border-red-900/50 bg-red-950/60 text-red-200 hover:bg-red-900 hover:border-red-700 hover:text-red-100 font-serif text-xs transition-colors rounded shadow shadow-red-950/50">
-                  Fin Combate
+                  {t('board.endCombat')}
                 </button>
               </>
             ) : (
               <>
                 <button onClick={startCombat} disabled={characters.length === 0}
                   className="px-4 py-1.5 bg-amber-850 hover:bg-amber-800 border border-amber-700/50 text-amber-100 font-serif text-sm transition-colors flex items-center gap-1.5">
-                  ⚔ Iniciar combate
+                  ⚔ {t('board.startCombat')}
                 </button>
                 <div className="flex-1" />
               </>
@@ -311,28 +311,28 @@ export function DmTableroLayout({ campaignId, dmState }: DmTableroLayoutProps) {
             <button
               onClick={() => setShowMapSelector(true)}
               className="px-3 py-1.5 font-serif text-xs border border-stone-700 text-stone-400 hover:border-stone-500 hover:text-stone-200 transition-colors"
-              title="Biblioteca de mapas"
+              title={t('board.mapLibrary')}
             >
-              🗺 Mapas
+              🗺 {t('board.maps')}
             </button>
 
             <button
               onClick={() => { setShowNpcBar(v => !v); setShowBestiary(false); setShowNpcForm(false); setShowCampaignNpcs(false) }}
               className={`px-3 py-1.5 font-serif text-xs transition-colors border ${showNpcBar ? 'border-amber-700 bg-amber-950/40 text-amber-300' : 'border-stone-700 text-stone-400 hover:border-stone-500 hover:text-stone-200'}`}
             >
-              + NPC
+              {t('board.addNpc')}
             </button>
 
             {showLongRestConfirm ? (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-stone-400 font-serif">¿Descanso largo?</span>
+                <span className="text-xs text-stone-400 font-serif">{t('board.longRestConfirm')}</span>
                 <button onClick={partyLongRest} className="text-xs px-2 py-1 bg-amber-800 hover:bg-amber-700 text-amber-100 font-serif">{t('common.confirm')}</button>
                 <button onClick={() => setShowLongRestConfirm(false)} className="text-xs text-stone-500 hover:text-stone-300">✕</button>
               </div>
             ) : (
               <button onClick={() => setShowLongRestConfirm(true)} disabled={characters.length === 0}
                 className="px-3 py-1.5 border border-stone-700 text-stone-400 hover:border-amber-700 hover:text-amber-400 disabled:opacity-40 font-serif text-xs transition-colors">
-                ☀ Descanso
+                ☀ {t('board.rest')}
               </button>
             )}
           </div>

@@ -6,6 +6,7 @@ import { InfoModal } from '../character-sheet/sheet-badges'
 import { CONDITIONS, getSpellSlots } from '../../lib/dnd-constants'
 import { SLOT_LABELS } from '../../lib/equip-slots'
 import type { SheetJson, InfoModalData } from '../character-sheet/types'
+import { useT } from '../../i18n'
 
 type Tab = 'stats' | 'inventario' | 'conjuros' | 'notas'
 
@@ -31,6 +32,7 @@ interface Props {
 }
 
 export function PlayerBoardPanel({ characterId, campaignId, userId }: Props) {
+  const t = useT()
   const [open, setOpen] = useState(false)
   const [tab, setTab] = useState<Tab>('stats')
   const [modal, setModal] = useState<InfoModalData | null>(null)
@@ -71,7 +73,7 @@ export function PlayerBoardPanel({ characterId, campaignId, userId }: Props) {
           onClick={() => setOpen(true)}
           className="absolute right-0 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center justify-center gap-1 py-3 px-1.5 rounded-l-lg transition-all hover:px-2"
           style={{ background: 'rgba(10,5,2,0.88)', border: '1px solid rgba(80,50,20,0.5)', borderRight: 'none', boxShadow: '-4px 0 16px rgba(0,0,0,0.5)' }}
-          title="Abrir panel de personaje"
+          title={t('board.openCharacterPanel')}
         >
           {character.portrait_url
             ? <img src={character.portrait_url} alt="" className="w-8 h-8 rounded-full object-cover object-top border border-amber-900/60" />
@@ -129,7 +131,7 @@ export function PlayerBoardPanel({ characterId, campaignId, userId }: Props) {
             <div className="p-4 space-y-4">
               {/* HP */}
               <div>
-                <p className="text-[9px] text-stone-500 uppercase tracking-widest font-serif mb-2">Puntos de Vida</p>
+                <p className="text-[9px] text-stone-500 uppercase tracking-widest font-serif mb-2">{t('board.hitPoints')}</p>
                 <div className="h-2 rounded-full overflow-hidden mb-2" style={{ background: 'rgba(40,20,10,0.8)' }}>
                   <div className="h-full rounded-full transition-all duration-500" style={{ width: `${hpPct}%`, backgroundColor: hpColor }} />
                 </div>
@@ -169,7 +171,7 @@ export function PlayerBoardPanel({ characterId, campaignId, userId }: Props) {
 
               {/* Conditions */}
               <div>
-                <p className="text-[9px] text-stone-500 uppercase tracking-widest font-serif mb-2">Condiciones</p>
+                <p className="text-[9px] text-stone-500 uppercase tracking-widest font-serif mb-2">{t('board.conditions')}</p>
                 <div className="flex flex-wrap gap-1">
                   {CONDITIONS.map(cond => {
                     const active = conditions.includes(cond)
@@ -186,7 +188,7 @@ export function PlayerBoardPanel({ characterId, campaignId, userId }: Props) {
               {/* Equipped items summary */}
               {Object.keys(equippedSlots).length > 0 && (
                 <div>
-                  <p className="text-[9px] text-stone-500 uppercase tracking-widest font-serif mb-2">Equipado</p>
+                  <p className="text-[9px] text-stone-500 uppercase tracking-widest font-serif mb-2">{t('board.equipped')}</p>
                   <div className="space-y-1">
                     {Object.entries(equippedSlots).map(([slot, itemId]) => {
                       const item = inventory.find(i => i.id === itemId)
@@ -246,9 +248,9 @@ export function PlayerBoardPanel({ characterId, campaignId, userId }: Props) {
             <div className="p-4 space-y-3">
               {/* Add note form */}
               <div className="space-y-2">
-                <input value={noteTitle} onChange={e => setNoteTitle(e.target.value)} placeholder="Título..."
+                <input value={noteTitle} onChange={e => setNoteTitle(e.target.value)} placeholder={t('board.noteTitlePlaceholder')}
                   className="w-full px-2 py-1.5 text-xs font-serif bg-stone-900 border border-stone-700 text-stone-200 rounded focus:outline-none focus:border-amber-700 placeholder-stone-600" />
-                <textarea value={noteBody} onChange={e => setNoteBody(e.target.value)} placeholder="Nota..."
+                <textarea value={noteBody} onChange={e => setNoteBody(e.target.value)} placeholder={t('board.notePlaceholder')}
                   rows={3}
                   className="w-full px-2 py-1.5 text-xs font-serif bg-stone-900 border border-stone-700 text-stone-200 rounded focus:outline-none focus:border-amber-700 placeholder-stone-600 resize-none" />
                 <button
@@ -261,13 +263,13 @@ export function PlayerBoardPanel({ characterId, campaignId, userId }: Props) {
               </div>
 
               <div style={{ borderTop: '1px solid rgba(80,50,20,0.3)' }} className="pt-3 space-y-2">
-                {notes.length === 0 && <p className="text-stone-600 text-xs font-serif italic text-center py-4">Sin notas de campaña.</p>}
+                {notes.length === 0 && <p className="text-stone-600 text-xs font-serif italic text-center py-4">{t('board.noCampaignNotes')}</p>}
                 {notes.map(note => (
                   <div key={note.id} className="rounded p-2.5 space-y-1"
                     style={{ background: 'rgba(20,10,5,0.6)', border: '1px solid rgba(60,35,15,0.4)' }}>
                     <div className="flex items-start justify-between gap-2">
                       <p className="text-xs font-semibold text-amber-200 font-serif leading-tight">{note.title}</p>
-                      {note.is_private && <span className="text-[8px] text-stone-600 font-serif italic shrink-0">privada</span>}
+                      {note.is_private && <span className="text-[8px] text-stone-600 font-serif italic shrink-0">{t('board.privateNote')}</span>}
                     </div>
                     {note.body && <p className="text-[10px] text-stone-400 font-serif leading-relaxed whitespace-pre-wrap">{note.body}</p>}
                     <p className="text-[8px] text-stone-700 font-mono">{new Date(note.created_at).toLocaleDateString('es-AR')}</p>

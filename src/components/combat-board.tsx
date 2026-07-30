@@ -3,6 +3,7 @@ import { TOKEN_SIZE } from './combat/combat-helpers'
 import { CombatToken } from './combat/combat-token'
 import { CombatPopup } from './combat/combat-popup'
 import { useCombatBoard } from './combat/use-combat-board'
+import { useT } from '../i18n'
 
 export type { TokenData, AttackEntity, BoardCharacter }
 
@@ -67,6 +68,7 @@ export function CombatBoard({
   hoveredGroupId?: string | null
   onHoverToken?: (id: string | null) => void
 }) {
+  const t = useT()
   const {
     boardRef,
     positions,
@@ -320,15 +322,15 @@ export function CombatBoard({
             color: '#d5b88a', fontSize: 10, padding: '3px 8px', borderRadius: 3, cursor: 'pointer', outline: 'none'
           }}
         >
-          {showGrid ? 'Ocultar Rejilla' : 'Mostrar Rejilla'}
+          {showGrid ? t('board.hideGrid') : t('board.showGrid')}
         </button>
 
         {showGrid && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ fontSize: 9, opacity: 0.7 }}>Celda:</span>
+            <span style={{ fontSize: 9, opacity: 0.7 }}>{t('board.cell')}</span>
             <input
               type="number" value={gridSize}
-              aria-label="Tamaño de celda de la grilla en píxeles"
+              aria-label={t('board.cellSizeLabel')}
               onChange={e => setGridSize(Math.max(20, Math.min(200, parseInt(e.target.value) || 60)))}
               style={{ width: 38, background: 'rgba(0,0,0,0.6)', border: '1px solid #3c2414', color: '#d5b88a', fontSize: 10, textAlign: 'center', fontFamily: 'monospace', outline: 'none', padding: '2px 0' }}
             />

@@ -5,6 +5,7 @@ import { DIFFICULTY_LABELS, ROLE_COL_HEADER, DND_IMG_BASE } from './encounter-co
 import { getEnvironmentIconSvg, getArchetypeIcon, ROLE_ICONS, SkullIcon } from './encounter-icons'
 import { CountStepper, XpGauge, MonsterSearchAdd } from './encounter-sub-components'
 import { MonsterCard, MonsterRowEditorModal } from './monster-card'
+import { useT } from '../../i18n'
 
 const DIFFICULTY_ACTIVE: Record<Difficulty, string> = {
   easy: 'border-emerald-700 bg-emerald-950/60 text-emerald-300 shadow-[inset_0_1px_3px_rgba(0,0,0,0.6)]',
@@ -15,6 +16,7 @@ const DIFFICULTY_ACTIVE: Record<Difficulty, string> = {
 const INACTIVE = 'border-[#3c2414] bg-[#1a0f07]/50 text-stone-400 hover:border-[#8a6b3e] hover:text-[#d5b88a]'
 
 export function EncounterGeneratorPanel({ encounterGen }: { encounterGen: ReturnType<typeof useEncounterGenerator> }) {
+  const t = useT()
   const {
     selectedEnv, setSelectedEnv,
     selectedArchetypeIds, setSelectedArchetypeIds,
@@ -61,7 +63,7 @@ export function EncounterGeneratorPanel({ encounterGen }: { encounterGen: Return
         <div className="grid grid-cols-[1.2fr_2fr] gap-4">
           <div className="space-y-1 relative" ref={envRef}>
             <div className="flex items-center justify-between h-5">
-              <label className="text-xs text-[#8a6b3e] font-serif uppercase tracking-wider leading-none">Zona</label>
+              <label className="text-xs text-[#8a6b3e] font-serif uppercase tracking-wider leading-none">{t('encounter.zone')}</label>
             </div>
             <div className="relative">
               <button
@@ -133,14 +135,14 @@ export function EncounterGeneratorPanel({ encounterGen }: { encounterGen: Return
 
           <div className="space-y-1 relative" ref={archetypeRef}>
             <div className="flex items-center justify-between h-5">
-              <label className="text-xs text-[#8a6b3e] font-serif uppercase tracking-wider leading-none">Arquetipo</label>
+              <label className="text-xs text-[#8a6b3e] font-serif uppercase tracking-wider leading-none">{t('encounter.archetype')}</label>
               {selectedArchetypeIds.length > 0 && (
                 <span className="text-[10px] text-[#8a6b3e]/70 font-serif leading-none">{selectedArchetypeIds.length} seleccionado{selectedArchetypeIds.length !== 1 ? 's' : ''}</span>
               )}
             </div>
             <div className="flex flex-wrap items-center gap-1 min-h-[38px] px-2 py-1 border border-[#3c2414] bg-black/30 rounded-sm w-full relative">
               {selectedArchetypeIds.length === 0 && (
-                <span className="text-xs text-stone-600 font-serif italic pl-1">Seleccionar arquetipos...</span>
+                <span className="text-xs text-stone-600 font-serif italic pl-1">{t('encounter.selectArchetypes')}</span>
               )}
               {selectedArchetypeIds.map(id => {
                 const arch = archetypeList.find(a => a.id === id) ?? availableArchetypes.find(a => a.id === id)
@@ -163,7 +165,7 @@ export function EncounterGeneratorPanel({ encounterGen }: { encounterGen: Return
             {archetypeDropdownOpen && (
               <div className="border border-[#5a3c1e] bg-[#1a0f07] max-h-56 overflow-y-auto custom-scrollbar rounded-sm absolute left-0 right-0 z-30 shadow-2xl mt-1.5 p-1 space-y-0.5">
                 {archetypeList.filter(a => !selectedArchetypeIds.includes(a.id)).length === 0 ? (
-                  <p className="text-xs text-[#8a6b3e] font-serif italic px-3 py-2 text-center">Todos seleccionados</p>
+                  <p className="text-xs text-[#8a6b3e] font-serif italic px-3 py-2 text-center">{t('encounter.allSelected')}</p>
                 ) : archetypeList.filter(a => !selectedArchetypeIds.includes(a.id)).map(a => (
                   <button key={a.id}
                     onClick={() => { setSelectedArchetypeIds([...selectedArchetypeIds, a.id]); setArchetypeDropdownOpen(false) }}
@@ -184,7 +186,7 @@ export function EncounterGeneratorPanel({ encounterGen }: { encounterGen: Return
 
         {/* Difficulty + generate */}
         <div className="space-y-1">
-          <label className="text-xs text-[#8a6b3e] font-serif uppercase tracking-wider">Dificultad</label>
+          <label className="text-xs text-[#8a6b3e] font-serif uppercase tracking-wider">{t('encounter.difficulty')}</label>
           <div className="flex">
             <div className="flex flex-1">
               {(Object.keys(DIFFICULTY_LABELS) as Difficulty[]).map((d, i) => {
@@ -230,7 +232,7 @@ export function EncounterGeneratorPanel({ encounterGen }: { encounterGen: Return
             <div className="flex items-center justify-between">
               <span className="text-xs font-serif" style={{ color: '#8a6b3e' }}>
                 Composición{units.length > 0 ? ` · ${units.length} criatura${units.length !== 1 ? 's' : ''}` : ''}
-                {loadingDetails && <span className="ml-2 text-[#bc9434] italic animate-pulse">cargando stats…</span>}
+                {loadingDetails && <span className="ml-2 text-[#bc9434] italic animate-pulse">{t('encounter.loadingStats')}</span>}
               </span>
               {hasRows && (
                 <button onClick={generateNew} className="text-[10px] text-[#bc9434] hover:text-[#d5b88a] font-serif transition-colors cursor-pointer">
@@ -242,8 +244,8 @@ export function EncounterGeneratorPanel({ encounterGen }: { encounterGen: Return
               <table className="w-full text-xs">
                 <thead>
                   <tr className="border-b border-[#3c2414] bg-black/30">
-                    <th className="text-left text-[#8a6b3e] font-normal font-serif py-2 pl-3 pr-2">Criatura</th>
-                    <th className="text-center text-[#8a6b3e] font-normal font-serif py-2 px-2 text-[10px]">Niv.</th>
+                    <th className="text-left text-[#8a6b3e] font-normal font-serif py-2 pl-3 pr-2">{t('encounter.creature')}</th>
+                    <th className="text-center text-[#8a6b3e] font-normal font-serif py-2 px-2 text-[10px]">{t('encounter.levelShort')}</th>
                     {(['melee', 'ranged', 'magic', 'support'] as const).map(role => (
                       <th key={role} className="text-center font-normal px-2 py-2">
                         <div className="flex items-center justify-center gap-1 text-[10px]">
@@ -338,7 +340,7 @@ export function EncounterGeneratorPanel({ encounterGen }: { encounterGen: Return
                     <svg className="w-4 h-4 text-[#bc9434]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
-                    <span className="text-xs font-serif" style={{ color: '#8a6b3e' }}>Botín</span>
+                    <span className="text-xs font-serif" style={{ color: '#8a6b3e' }}>{t('encounter.loot')}</span>
                   </div>
                   <button onClick={regenerateLoot} className="text-[10px] text-[#bc9434] hover:text-[#d5b88a] font-serif transition-colors cursor-pointer">
                     Regenerar botín

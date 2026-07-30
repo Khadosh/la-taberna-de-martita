@@ -6,6 +6,7 @@ import { type NpcItem } from './tablero-types'
 import { formatModInline } from './tablero-types'
 import { type useEncounterGenerator } from './use-encounter-generator'
 import { EncounterModal } from './encounter-modal'
+import { useT } from '../../i18n'
 
 interface DmNpcFormProps {
   campaignId: string
@@ -117,6 +118,7 @@ export function DmNpcForm({
   encounterGen,
 }: DmNpcFormProps) {
   const [spellSearch, setSpellSearch] = useState('')
+  const t = useT()
   const { data: allSpellsData } = useQuery({
     queryKey: dndKeys.allSpells,
     queryFn: dndApi.allSpells,
@@ -134,47 +136,47 @@ export function DmNpcForm({
           value={npcInput}
           onChange={e => setNpcInput(e.target.value)}
           onKeyDown={e => e.key === 'Enter' && npcInput.trim() && addNpc()}
-          placeholder='Nombre [hp]  ej: Goblin 7'
+          placeholder={t('board.npcQuickPlaceholder')}
           className="flex-1 px-3 py-2 bg-stone-950 border border-stone-700 text-stone-300 text-sm font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500"
         />
         <button onClick={addNpc} disabled={!npcInput.trim()}
           className="px-3 py-2 bg-stone-800 hover:bg-stone-700 disabled:opacity-30 text-stone-300 font-serif text-sm transition-colors">
-          + NPC
+          {t('board.addNpc')}
         </button>
         <button
           onClick={() => { setShowCampaignNpcs(b => !b); setCampaignNpcSearch(''); setShowBestiary(false); setShowNpcForm(false) }}
           className={`px-3 py-2 font-serif text-sm transition-colors border ${showCampaignNpcs ? 'border-amber-700 bg-amber-950/40 text-amber-300' : 'border-stone-700 bg-stone-950 text-stone-400 hover:border-stone-500 hover:text-stone-200'}`}
         >
-          PNJ campaña
+          {t('board.campaignNpcs')}
         </button>
         <button
           onClick={() => { setShowBestiary(b => !b); setBestiarySearch(''); setShowNpcForm(false); setShowCampaignNpcs(false) }}
           className={`px-3 py-2 font-serif text-sm transition-colors border ${showBestiary ? 'border-amber-700 bg-amber-950/40 text-amber-300' : 'border-stone-700 bg-stone-950 text-stone-400 hover:border-stone-500 hover:text-stone-200'}`}
         >
-          Bestiario
+          {t('board.bestiary')}
         </button>
         <button
           onClick={() => { setShowNpcForm(b => !b); setShowBestiary(false); setShowCampaignNpcs(false); encounterGen.closeEncounterGenerator() }}
           className={`px-3 py-2 font-serif text-sm transition-colors border ${showNpcForm ? 'border-amber-700 bg-amber-950/40 text-amber-300' : 'border-stone-700 bg-stone-950 text-stone-400 hover:border-stone-500 hover:text-stone-200'}`}
         >
-          Personalizado
+          {t('board.custom')}
         </button>
         <button
           onClick={() => { encounterGen.showEncounterGenerator ? encounterGen.closeEncounterGenerator() : encounterGen.openEncounterGenerator(); setShowBestiary(false); setShowCampaignNpcs(false); setShowNpcForm(false) }}
           className={`px-3 py-2 font-serif text-sm transition-colors border ${encounterGen.showEncounterGenerator ? 'border-amber-700 bg-amber-950/40 text-amber-300' : 'border-stone-700 bg-stone-950 text-stone-400 hover:border-stone-500 hover:text-stone-200'}`}
         >
-          Encuentro
+          {t('board.encounter')}
         </button>
       </div>
 
       {showCampaignNpcs && (
         <div className="bg-stone-950 border border-stone-700 p-3 space-y-2">
           <input autoFocus value={campaignNpcSearch} onChange={e => setCampaignNpcSearch(e.target.value)}
-            placeholder="Buscar PNJ de campaña..."
+            placeholder={t('board.searchCampaignNpc')}
             className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-300 text-sm font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500" />
           {filteredCampaignNpcs.length === 0 ? (
             <p className="text-xs text-stone-600 font-serif italic px-1 py-2">
-              No hay PNJs matching o creados. <Link to="/campaigns/$campaignId/pnj" params={{ campaignId }} className="text-amber-500 underline">Crear uno →</Link>
+              {t('board.noCampaignNpcs')} <Link to="/campaigns/$campaignId/pnj" params={{ campaignId }} className="text-amber-500 underline">{t('board.createOne')}</Link>
             </p>
           ) : (
             <ul className="max-h-48 overflow-y-auto divide-y divide-stone-800">
@@ -192,7 +194,7 @@ export function DmNpcForm({
                       </div>
                       <div className="flex items-center gap-3 text-xs font-mono text-stone-500 shrink-0">
                         {n.max_hp != null && <span>{n.max_hp} PG</span>}
-                        {n.armor_class != null && <span>CA {n.armor_class}</span>}
+                        {n.armor_class != null && <span>{t('sheet.armorClass')} {n.armor_class}</span>}
                         <span>Ini {formatModInline(dexMod)}</span>
                       </div>
                     </button>
@@ -208,7 +210,7 @@ export function DmNpcForm({
         <div className="bg-stone-950 border border-stone-700 p-3 space-y-2">
           <div className="flex items-center gap-2">
             <input autoFocus value={bestiarySearch} onChange={e => setBestiarySearch(e.target.value)}
-              placeholder="Buscar monstruo..."
+              placeholder={t('board.searchMonster')}
               className="flex-1 px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-300 text-sm font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500" />
             <div className="flex items-center gap-1 shrink-0">
               <span className="text-xs text-stone-500 font-serif">×</span>
@@ -218,7 +220,7 @@ export function DmNpcForm({
             </div>
           </div>
           {bestiarySearch.trim().length === 0 && (
-            <p className="text-xs text-stone-600 font-serif italic px-1">Escribí el nombre del monstruo para buscar.</p>
+            <p className="text-xs text-stone-600 font-serif italic px-1">{t('board.typeMonsterName')}</p>
           )}
           {filteredMonsters.length > 0 && (
             <ul className="max-h-44 overflow-y-auto divide-y divide-stone-800">
@@ -234,23 +236,23 @@ export function DmNpcForm({
             </ul>
           )}
           {bestiarySearch.trim().length > 0 && filteredMonsters.length === 0 && (
-            <p className="text-xs text-stone-600 font-serif italic px-1">Sin resultados.</p>
+            <p className="text-xs text-stone-600 font-serif italic px-1">{t('board.noResults')}</p>
           )}
         </div>
       )}
 
       {showNpcForm && (
         <div className="bg-stone-950 border border-stone-700 p-4 space-y-4">
-          <p className="text-xs tracking-widest text-stone-500 uppercase font-serif">Crear NPC personalizado</p>
+          <p className="text-xs tracking-widest text-stone-500 uppercase font-serif">{t('board.createCustomNpc')}</p>
           <div>
-            <label className="block text-xs text-stone-600 font-serif mb-1">Nombre *</label>
+            <label className="block text-xs text-stone-600 font-serif mb-1">{t('board.npcName')}</label>
             <input autoFocus value={npcFormName} onChange={e => setNpcFormName(e.target.value)}
-              placeholder="Ej: Capitán Grigor"
+              placeholder={t('board.npcNamePlaceholder')}
               className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500" />
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div>
-              <label className="block text-xs text-stone-600 font-serif mb-1">HP máx *</label>
+              <label className="block text-xs text-stone-600 font-serif mb-1">{t('board.npcMaxHp')}</label>
               <input type="number" min={1} value={npcFormHp} onChange={e => setNpcFormHp(parseInt(e.target.value) || 1)}
                 className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-mono text-center focus:outline-none focus:border-stone-500" />
             </div>
@@ -260,7 +262,7 @@ export function DmNpcForm({
                 className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-mono text-center focus:outline-none focus:border-stone-500" />
             </div>
             <div>
-              <label className="block text-xs text-stone-600 font-serif mb-1">Tipo</label>
+              <label className="block text-xs text-stone-600 font-serif mb-1">{t('board.npcType')}</label>
               <input list="npc-types" value={npcFormType} onChange={e => setNpcFormType(e.target.value)}
                 className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-serif focus:outline-none focus:border-stone-500" />
               <datalist id="npc-types">
@@ -272,7 +274,7 @@ export function DmNpcForm({
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="block text-xs text-stone-600 font-serif mb-1">Bono de ataque</label>
+              <label className="block text-xs text-stone-600 font-serif mb-1">{t('board.npcAttackBonus')}</label>
               <div className="flex items-center">
                 <span className="px-2 py-1.5 bg-stone-800 border border-r-0 border-stone-700 text-stone-500 text-sm font-mono">+</span>
                 <input type="number" value={npcFormAttack} onChange={e => setNpcFormAttack(parseInt(e.target.value) || 0)}
@@ -280,9 +282,9 @@ export function DmNpcForm({
               </div>
             </div>
             <div>
-              <label className="block text-xs text-stone-600 font-serif mb-1">Daño</label>
+              <label className="block text-xs text-stone-600 font-serif mb-1">{t('board.npcDamage')}</label>
               <input value={npcFormDamage} onChange={e => setNpcFormDamage(e.target.value)}
-                placeholder="ej: 1d8+3 cortante"
+                placeholder={t('board.npcDamagePlaceholder')}
                 className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-mono placeholder-stone-700 focus:outline-none focus:border-stone-500" />
             </div>
           </div>
@@ -290,7 +292,7 @@ export function DmNpcForm({
           {/* Weapons */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs text-stone-600 font-serif">Armas y Ataques</label>
+              <label className="text-xs text-stone-600 font-serif">{t('board.npcWeapons')}</label>
               <button type="button" onClick={addFormWeapon} className="text-xs px-2 py-0.5 border border-stone-700 text-stone-500 hover:border-stone-500 hover:text-stone-300 font-serif transition-colors cursor-pointer">
                 + Agregar Arma
               </button>
@@ -301,13 +303,13 @@ export function DmNpcForm({
                   <input
                     value={w.name}
                     onChange={e => updateFormWeapon(w.id, { name: e.target.value })}
-                    placeholder="Nombre del Arma (ej: Espada Larga)"
+                    placeholder={t('board.npcWeaponNamePlaceholder')}
                     className="flex-1 px-2 py-1 bg-stone-900 border border-stone-700 text-stone-300 text-xs font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500"
                   />
                   <input
                     value={w.damage}
                     onChange={e => updateFormWeapon(w.id, { damage: e.target.value })}
-                    placeholder="Daño (ej: 1d8+2)"
+                    placeholder={t('board.npcWeaponDamagePlaceholder')}
                     className="w-24 px-2 py-1 bg-stone-900 border border-stone-700 text-stone-300 text-xs font-mono text-center focus:outline-none focus:border-stone-500"
                   />
                   <button
@@ -324,12 +326,12 @@ export function DmNpcForm({
 
           {/* Spells */}
           <div>
-            <label className="block text-xs text-stone-600 font-serif mb-1">Libro de Hechizos</label>
+            <label className="block text-xs text-stone-600 font-serif mb-1">{t('board.npcSpellbook')}</label>
             <div className="relative">
               <input
                 value={spellSearch}
                 onChange={e => setSpellSearch(e.target.value)}
-                placeholder="Buscar y agregar conjuro..."
+                placeholder={t('board.npcSpellSearch')}
                 className="w-full px-3 py-1.5 bg-stone-900 border border-stone-700 text-stone-200 text-sm font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500"
               />
               {spellSearch.trim().length > 1 && (
@@ -376,21 +378,21 @@ export function DmNpcForm({
 
           {/* Equipment Notes */}
           <div>
-            <label className="block text-xs text-stone-600 font-serif mb-1">Equipamiento y Pertrechos</label>
+            <label className="block text-xs text-stone-600 font-serif mb-1">{t('board.npcEquipment')}</label>
             <textarea
               value={npcFormEquipment}
               onChange={e => setNpcFormEquipment(e.target.value)}
               rows={2}
-              placeholder="Cota de malla, escudo, 15 flechas..."
+              placeholder={t('board.npcEquipmentPlaceholder')}
               className="w-full p-2.5 bg-stone-900 border border-stone-700 text-stone-200 text-xs font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500 resize-none"
             />
           </div>
 
           <div>
             <div className="flex items-center justify-between mb-2">
-              <label className="text-xs text-stone-600 font-serif">Botín</label>
+              <label className="text-xs text-stone-600 font-serif">{t('board.npcLoot')}</label>
               <button onClick={addLootItem} className="text-xs px-2 py-0.5 border border-stone-700 text-stone-500 hover:border-stone-500 hover:text-stone-300 font-serif transition-colors">
-                + Agregar
+                + {t('board.npcAdd')}
               </button>
             </div>
             <div className="space-y-1.5">
@@ -402,10 +404,10 @@ export function DmNpcForm({
             </div>
           </div>
           <div className="flex items-center justify-between pt-1 border-t border-stone-800">
-            <button onClick={() => setShowNpcForm(false)} className="text-xs text-stone-600 hover:text-stone-400 font-serif transition-colors">Cancelar</button>
+            <button onClick={() => setShowNpcForm(false)} className="text-xs text-stone-600 hover:text-stone-400 font-serif transition-colors">{t('common.cancel')}</button>
             <button onClick={createCustomNpc} disabled={!npcFormName.trim() || npcFormHp < 1}
               className="px-4 py-1.5 bg-amber-800 hover:bg-amber-700 disabled:opacity-30 text-amber-100 font-serif text-sm transition-colors">
-              Agregar al combate
+              {t('board.addToCombat')}
             </button>
           </div>
         </div>
@@ -424,10 +426,11 @@ function NpcLootItemRow({ item, onUpdate, onRemove }: {
   onUpdate: (patch: Partial<NpcItem>) => void
   onRemove: () => void
 }) {
+  const t = useT()
   return (
     <div className="flex items-center gap-2">
       <input value={item.name} onChange={e => onUpdate({ name: e.target.value })}
-        placeholder="Nombre del objeto"
+        placeholder={t('board.npcItemNamePlaceholder')}
         className="flex-1 px-2 py-1 bg-stone-900 border border-stone-700 text-stone-300 text-xs font-serif placeholder-stone-700 focus:outline-none focus:border-stone-500" />
       <span className="text-xs text-stone-600 shrink-0">×</span>
       <input type="number" min={1} value={item.qty} onChange={e => onUpdate({ qty: parseInt(e.target.value) || 1 })}

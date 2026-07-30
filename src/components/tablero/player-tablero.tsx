@@ -11,10 +11,12 @@ import {
   currentHpFor,
   acFor,
 } from './tablero-types'
+import { useT } from '../../i18n'
 
 const db = supabase as any
 
 export function PlayerTablero({ campaignId, session }: { campaignId: string; session: Session }) {
+  const t = useT()
   const queryClient = useQueryClient()
   const [activeMapUrl, setActiveMapUrl] = useState<string | null>(null)
   const [boardTokens, setBoardTokens] = useState<BoardToken[]>([])
@@ -227,7 +229,7 @@ export function PlayerTablero({ campaignId, session }: { campaignId: string; ses
   if (!activeMapUrl) {
     return (
       <div className="bg-stone-950 flex flex-col items-center justify-center animate-fade-in" style={{ minHeight: 'calc(100vh - 100px)' }}>
-        <p className="text-stone-500 font-serif text-sm">Esperando que el DM cargue un mapa...</p>
+        <p className="text-stone-500 font-serif text-sm">{t('board.waitingForMap')}</p>
       </div>
     )
   }
@@ -271,10 +273,10 @@ export function PlayerTablero({ campaignId, session }: { campaignId: string; ses
           </span>
           <div className="w-px h-4 bg-stone-750" />
           <span className="text-xs text-stone-300 font-serif">
-            Turno actual: <strong className="text-amber-200">{currentCombatantName}</strong>
+            {t('board.currentTurn')}: <strong className="text-amber-200">{currentCombatantName}</strong>
           </span>
           <span className="text-xs text-stone-500 font-mono">
-            (Turno {currentTurn + 1}/{combatants.length})
+            ({t('board.turn', { current: currentTurn + 1, total: combatants.length })})
           </span>
         </div>
       )}

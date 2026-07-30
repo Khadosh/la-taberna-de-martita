@@ -6,12 +6,14 @@ import { ABILITY_KEYS, type AbilityKey, DND_IMG_BASE, ROLE_BADGE, ROLE_COL_HEADE
 import { ROLE_ICONS } from './encounter-icons'
 import { CountStepper, SpecialAbilityTag } from './encounter-sub-components'
 import { getMonsterSpells } from '../../data/monster-spells'
+import { useT } from '../../i18n'
 
 function SpellEditor({ defaultSpells, value, onChange }: {
   defaultSpells: string[]
   value: string[] | undefined
   onChange: (v: string[] | undefined) => void
 }) {
+  const t = useT()
   const active = value ?? defaultSpells
   const [input, setInput] = useState('')
 
@@ -39,11 +41,11 @@ function SpellEditor({ defaultSpells, value, onChange }: {
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <label className="text-xs text-[#8a6b3e] font-serif">Hechizos al spawnear</label>
+        <label className="text-xs text-[#8a6b3e] font-serif">{t('encounter.spellsOnSpawn')}</label>
         {!isDefault && defaultSpells.length > 0 && (
           <button type="button" onClick={() => onChange(undefined)}
             className="text-[8px] text-[#8a6b3e] hover:text-[#bc9434] transition-colors cursor-pointer font-mono"
-          >reset</button>
+          >{t('encounter.reset')}</button>
         )}
       </div>
       <div className="flex flex-wrap gap-1 min-h-[22px]">
@@ -59,7 +61,7 @@ function SpellEditor({ defaultSpells, value, onChange }: {
           </span>
         ))}
         {active.length === 0 && (
-          <span className="text-[9px] text-[#8a6b3e]/60 font-mono italic">ninguno</span>
+          <span className="text-[9px] text-[#8a6b3e]/60 font-mono italic">{t('encounter.none')}</span>
         )}
       </div>
       <input
@@ -67,7 +69,7 @@ function SpellEditor({ defaultSpells, value, onChange }: {
         onChange={e => setInput(e.target.value)}
         onKeyDown={handleKey}
         onBlur={() => { if (input.trim()) { addSpell(input); setInput('') } }}
-        placeholder="fireball, shield... (Enter para añadir)"
+        placeholder={t('encounter.spellsPlaceholder')}
         className="w-full px-2 py-1 bg-black/40 border border-[#3c2414] text-[#d5b88a] text-[10px] font-mono focus:outline-none focus:border-[#bc9434] rounded-sm placeholder:text-[#8a6b3e]/50"
       />
     </div>
@@ -79,6 +81,7 @@ export function MonsterRowEditorModal({ row, onClose, onUpdate }: {
   onClose: () => void
   onUpdate: (patch: Partial<CreatureRow>) => void
 }) {
+  const t = useT()
   const [local, setLocal] = useState<CreatureRow>({ ...row })
   const level = local.level ?? 1
   const effectiveHp = local.hp !== undefined ? hpAtLevel(local.hp, level) : undefined
@@ -108,7 +111,7 @@ export function MonsterRowEditorModal({ row, onClose, onUpdate }: {
         </div>
 
         <div className="flex items-center gap-3">
-          <label className="text-xs text-[#8a6b3e] font-serif w-14 shrink-0">Nivel</label>
+          <label className="text-xs text-[#8a6b3e] font-serif w-14 shrink-0">{t('encounter.level')}</label>
           <CountStepper value={level} onChange={v => set({ level: Math.max(1, Math.min(20, v)) })} />
           <span className="text-[10px] font-mono text-[#d5b88a]/70">
             {effectiveHp !== undefined && `PG ${effectiveHp} · `}{effectiveXp} XP
@@ -116,7 +119,7 @@ export function MonsterRowEditorModal({ row, onClose, onUpdate }: {
         </div>
 
         <div className="space-y-1.5">
-          <label className="text-xs text-[#8a6b3e] font-serif">Estadísticas</label>
+          <label className="text-xs text-[#8a6b3e] font-serif">{t('encounter.stats')}</label>
           <div className="grid grid-cols-6 gap-1">
             {ABILITY_KEYS.map(stat => (
               <div key={stat} className="flex flex-col items-center gap-0.5">
@@ -136,7 +139,7 @@ export function MonsterRowEditorModal({ row, onClose, onUpdate }: {
         </div>
 
         <div className="flex items-center gap-3">
-          <label className="text-xs text-[#8a6b3e] font-serif w-14 shrink-0">Velocidad</label>
+          <label className="text-xs text-[#8a6b3e] font-serif w-14 shrink-0">{t('encounter.speed')}</label>
           <input
             value={local.speed ?? ''}
             onChange={e => set({ speed: e.target.value })}
@@ -146,7 +149,7 @@ export function MonsterRowEditorModal({ row, onClose, onUpdate }: {
 
         {local.specialAbilities && local.specialAbilities.length > 0 && (
           <div className="space-y-1.5">
-            <label className="text-xs text-[#8a6b3e] font-serif">Habilidades especiales</label>
+            <label className="text-xs text-[#8a6b3e] font-serif">{t('encounter.specialAbilities')}</label>
             <div className="space-y-1.5 max-h-32 overflow-y-auto custom-scrollbar">
               {local.specialAbilities.map(sa => (
                 <div key={sa.name} className="bg-black/30 border border-[#3c2414] px-2 py-1.5 rounded-sm">
@@ -193,6 +196,7 @@ export function MonsterCard({ row, role, index, unitLevel, onEdit, onLevelChange
   onEdit: () => void
   onLevelChange: (delta: number) => void
 }) {
+  const t = useT()
   const imgUrl = `${DND_IMG_BASE}/api/2014/images/monsters/${row.monsterIndex}.png`
   const [imgOk, setImgOk] = useState(true)
   const effectiveHp = row.hp !== undefined ? hpAtLevel(row.hp, unitLevel) : undefined
@@ -247,7 +251,7 @@ export function MonsterCard({ row, role, index, unitLevel, onEdit, onLevelChange
               : <span className="text-stone-400 animate-pulse">…</span>}
           </div>
           <div className="flex justify-between pl-1">
-            <span>Dmg</span>
+            <span>{t('encounter.damage')}</span>
             {row.damageStr !== undefined
               ? <strong className="text-[#1c0d02]">{row.damageStr}</strong>
               : <span className="text-stone-400 animate-pulse">…</span>}
@@ -297,7 +301,7 @@ export function MonsterCard({ row, role, index, unitLevel, onEdit, onLevelChange
         })()}
 
         <div className="flex items-center gap-1 border-t border-[#b8a983]/40 pt-1 mt-0.5" onClick={e => e.stopPropagation()}>
-          <span className="text-[8px] text-[#5c4322] font-serif flex-1 font-semibold">Nivel</span>
+          <span className="text-[8px] text-[#5c4322] font-serif flex-1 font-semibold">{t('encounter.level')}</span>
           <button onClick={() => onLevelChange(-1)}
             className="w-4 h-4 text-[#8a6b3e] hover:text-[#1c0d02] text-xs leading-none flex items-center justify-center transition-colors cursor-pointer font-bold select-none">−</button>
           <span className="text-[9px] font-mono text-[#1c0d02] w-4 text-center font-bold">{unitLevel}</span>

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Combatant, Npc, BoardToken } from './tablero-types'
 import { getDeterministicColor } from './tablero-types'
+import { useT } from '../../i18n'
 
 function EyeIcon({ hidden }: { hidden: boolean }) {
   if (hidden) return (
@@ -39,6 +40,7 @@ function BoardNpcCard({ bt, isHovered, onEnter, onLeave, toggleNpcHidden, remove
   removeNpc: (id: string) => void
   adjustBoardNpcHp: (id: string, hp: number) => void
 }) {
+  const t = useT()
   const curHp = bt.current_hp ?? 0
   const maxHp = bt.max_hp ?? 1
   const hpPct = Math.max(0, Math.min((curHp / maxHp) * 100, 100))
@@ -55,7 +57,7 @@ function BoardNpcCard({ bt, isHovered, onEnter, onLeave, toggleNpcHidden, remove
         <p className="text-xs font-semibold text-stone-200 flex-1 truncate">{bt.label}</p>
         <button onClick={() => toggleNpcHidden(bt.entity_id)}
           className={`shrink-0 transition-colors ${bt.hidden ? 'text-amber-500 hover:text-amber-300' : 'text-stone-500 hover:text-stone-200'}`}
-          title={bt.hidden ? 'Mostrar a jugadores' : 'Ocultar a jugadores'}>
+          title={bt.hidden ? t('board.showToPlayers') : t('board.hideFromPlayers')}>
           <EyeIcon hidden={bt.hidden ?? false} />
         </button>
         <button onClick={() => removeNpc(bt.entity_id)} className="text-stone-700 hover:text-red-500 transition-colors text-xs shrink-0">✕</button>
@@ -89,6 +91,7 @@ export function DmNpcSidebar({
   hoveredGroupId, setHoveredGroupId,
   toggleNpcHidden, setNpcHidden, updateNpc, removeNpc, adjustBoardNpcHp,
 }: DmNpcSidebarProps) {
+  const t = useT()
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
 
   const toggleCollapse = (groupId: string) =>
@@ -109,7 +112,7 @@ export function DmNpcSidebar({
     if (!bt.spawn_group) return acc
     const g = acc.find(x => x.groupId === bt.spawn_group)
     if (g) { g.tokens.push(bt); return acc }
-    acc.push({ label: bt.archetype_label ?? 'Encuentro', groupId: bt.spawn_group, tokens: [bt] })
+    acc.push({ label: bt.archetype_label ?? t('board.encounter'), groupId: bt.spawn_group, tokens: [bt] })
     return acc
   }, [])
   const ungrouped = npcTokens.filter(bt => !bt.spawn_group)
@@ -118,12 +121,12 @@ export function DmNpcSidebar({
     <>
       <div className="px-4 pt-4 pb-2 flex items-center gap-2">
         <p className="text-xs tracking-widest text-stone-500 uppercase font-serif flex-1">NPCs · {count}</p>
-        {!combatActive && <span className="text-[9px] text-stone-600 font-serif italic">fuera de combate</span>}
+        {!combatActive && <span className="text-[9px] text-stone-600 font-serif italic">{t('board.outOfCombat')}</span>}
       </div>
 
       {combatActive ? (
         npcCombatants.length === 0 ? (
-          <p className="text-stone-700 text-xs font-serif italic px-4 pt-1">Sin enemigos en combate.</p>
+          <p className="text-stone-700 text-xs font-serif italic px-4 pt-1">{t('board.noEnemies')}</p>
         ) : (
           <div className="px-3 pb-4 space-y-2">
             {npcCombatants.map(({ npc }) => {
@@ -147,17 +150,17 @@ export function DmNpcSidebar({
                       </div>
                     )}
                     <p className={`text-xs font-semibold flex-1 truncate ${isDead ? 'text-stone-500 line-through' : 'text-stone-200'}`}>{npc.name}</p>
-                    {isDead && <span className="text-[9px] px-1 py-0.5 rounded font-bold uppercase shrink-0 bg-stone-800 text-stone-500">Caído</span>}
+                    {isDead && <span className="text-[9px] px-1 py-0.5 rounded font-bold uppercase shrink-0 bg-stone-800 text-stone-500">{t('board.downed')}</span>}
                     {!isDead && npc.role && (
                       <span className={`text-[9px] px-1 py-0.5 rounded font-bold uppercase shrink-0 ${
                         npc.role === 'melee' ? 'bg-red-900/50 text-red-400' :
                         npc.role === 'ranged' ? 'bg-green-900/50 text-green-400' :
                         npc.role === 'magic' ? 'bg-purple-900/50 text-purple-400' :
                         'bg-yellow-900/50 text-yellow-400'
-                      }`}>{npc.role === 'melee' ? 'Mel' : npc.role === 'ranged' ? 'Dist' : npc.role === 'magic' ? 'Mag' : 'Sop'}</span>
+                      }`}>{npc.role === 'melee' ? 'Mel' : npc.role === 'ranged' ? t('board.roleRanged') : npc.role === 'magic' ? 'Mag' : 'Sop'}</span>
                     )}
                     {npc.level != null && <span className="text-[9px] font-mono text-blue-400/70 shrink-0">Nv{npc.level}</span>}
-                    {npc.ac != null && <span className="text-[10px] font-mono text-stone-500 shrink-0">CA {npc.ac}</span>}
+                    {npc.ac != null && <span className="text-[10px] font-mono text-stone-500 shrink-0">{t('sheet.armorClass')} {npc.ac}</span>}
                     <button onClick={() => toggleNpcHidden(npc.id)}
                       className={`shrink-0 transition-colors ${npc.isHidden ? 'text-amber-500 hover:text-amber-300' : 'text-stone-500 hover:text-stone-200'}`}>
                       <EyeIcon hidden={npc.isHidden ?? false} />
@@ -178,7 +181,7 @@ export function DmNpcSidebar({
         )
       ) : (
         npcTokens.length === 0 ? (
-          <p className="text-stone-700 text-xs font-serif italic px-4 pt-1">Sin NPCs en el tablero.</p>
+          <p className="text-stone-700 text-xs font-serif italic px-4 pt-1">{t('board.noNpcs')}</p>
         ) : (
           <div className="px-3 pb-4 space-y-3">
             {groups.map(group => {
@@ -192,7 +195,7 @@ export function DmNpcSidebar({
                     <button
                       onClick={() => toggleCollapse(group.groupId)}
                       className="shrink-0 text-stone-600 hover:text-stone-300 transition-colors"
-                      title={isCollapsed ? 'Expandir grupo' : 'Colapsar grupo'}
+                      title={isCollapsed ? t('board.expandGroup') : t('board.collapseGroup')}
                     >
                       <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"
                         style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition: 'transform 0.15s' }}>
@@ -213,7 +216,7 @@ export function DmNpcSidebar({
                     <button
                       onClick={() => toggleGroupVisibility(group.tokens)}
                       className={`shrink-0 transition-colors ${allHidden ? 'text-amber-500 hover:text-amber-300' : 'text-stone-500 hover:text-stone-200'}`}
-                      title={allHidden ? 'Mostrar grupo a jugadores' : 'Ocultar grupo a jugadores'}
+                      title={allHidden ? t('board.showGroupToPlayers') : t('board.hideGroupFromPlayers')}
                     >
                       <EyeIcon hidden={allHidden} />
                     </button>

@@ -1,4 +1,5 @@
 import { type CampaignMap } from './tablero-types'
+import { useT } from '../../i18n'
 
 interface DmMapSelectorProps {
   showMapSelector: boolean
@@ -25,6 +26,7 @@ export function DmMapSelector({
   activateMap,
   deleteMap,
 }: DmMapSelectorProps) {
+  const t = useT()
   if (!showMapSelector) return null
 
   return (
@@ -67,13 +69,13 @@ export function DmMapSelector({
             <span className="text-xs text-stone-300 font-serif">
               {mapUploading ? 'Subiendo mapa...' : 'Hacé clic para subir una imagen de mapa'}
             </span>
-            <span className="text-[10px] text-stone-500 font-mono">PNG, JPG, WEBP (Recomendado máx. 5MB)</span>
+            <span className="text-[10px] text-stone-500 font-mono">{t('board.uploadHint')}</span>
           </label>
         </div>
 
         {/* Maps List */}
         <div className="flex-1 overflow-y-auto space-y-2 pr-1 custom-scrollbar min-h-[200px]">
-          <p className="text-xs font-serif text-stone-500 uppercase tracking-widest px-1">Mapas subidos</p>
+          <p className="text-xs font-serif text-stone-500 uppercase tracking-widest px-1">{t('board.uploadedMaps')}</p>
 
           {loadingMaps ? (
             <div className="text-center py-8 text-stone-500 text-xs font-serif">
@@ -122,7 +124,7 @@ export function DmMapSelector({
                       <button
                         onClick={() => deleteMap(map)}
                         className="p-1 text-stone-600 hover:text-red-400 transition-colors text-xs"
-                        title="Eliminar mapa"
+                        title={t('board.deleteMap')}
                       >
                         ✕
                       </button>
