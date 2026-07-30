@@ -4,6 +4,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { type SlotKey, SLOT_LABELS, inferSlot } from '../../lib/equip-slots'
 import { getItemIconUrl } from '../../lib/item-icons'
 import { GameIcon } from '../icons/game-icon'
+import { useT } from '../../i18n'
 
 type InventoryItem = {
   id: string
@@ -298,6 +299,7 @@ function Slot({
 export function PaperDoll({
   equippedSlots, inventory, selectedItemId, ac, activeDrag, onSelectItem, onUnequip,
 }: PaperDollProps) {
+  const t = useT()
   const bySlot = (slot: SlotKey): InventoryItem | undefined => {
     const id = equippedSlots[slot]
     return id ? inventory.find(i => i.id === id) : undefined
@@ -370,7 +372,7 @@ export function PaperDoll({
             <path d="M8 8 L44 8 L44 36 Q44 50 26 54 Q8 50 8 36 Z" fill="#111" stroke="#4a2910" strokeWidth="0.8" />
           </svg>
           <div className="relative z-10 flex flex-col items-center -mt-1">
-            <span className="text-[8px] text-amber-700 uppercase tracking-widest font-serif leading-none">CA</span>
+            <span className="text-[8px] text-amber-700 uppercase tracking-widest font-serif leading-none">{t('sheet.armorClass')}</span>
             <span className="text-xl font-bold text-amber-400 font-serif leading-none">{ac}</span>
           </div>
         </div>

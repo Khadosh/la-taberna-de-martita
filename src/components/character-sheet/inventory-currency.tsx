@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useT } from '../../i18n'
 
 type CoinKey = 'gold' | 'silver' | 'copper'
 
@@ -10,17 +11,17 @@ interface CurrencyPlatesProps {
 
 const COIN_CONFIG = [
   {
-    key: 'gold' as CoinKey, label: 'MO',
+    key: 'gold' as CoinKey, labelKey: 'currency.gold' as const,
     hi: '#e8c548', mid: '#c89e28', base: '#a87c14', drk: '#7a5808', bdr: '#5a4008',
     text: '#fde68a', rivetHi: '#fef9c3',
   },
   {
-    key: 'silver' as CoinKey, label: 'MP',
+    key: 'silver' as CoinKey, labelKey: 'currency.silver' as const,
     hi: '#dcdce8', mid: '#b8b8c4', base: '#94949e', drk: '#707078', bdr: '#505058',
     text: '#f0f0f8', rivetHi: '#ffffff',
   },
   {
-    key: 'copper' as CoinKey, label: 'MC',
+    key: 'copper' as CoinKey, labelKey: 'currency.copper' as const,
     hi: '#d8905a', mid: '#b87038', base: '#96501e', drk: '#743010', bdr: '#542008',
     text: '#fcd5b0', rivetHi: '#fee8d0',
   },
@@ -34,12 +35,13 @@ const RIVET_POSITIONS = [
 ] as const
 
 export function CurrencyPlates({ currency, isOwner, patchCurrency }: CurrencyPlatesProps) {
+  const t = useT()
   const [editingCoin, setEditingCoin] = useState<CoinKey | null>(null)
   const [coinInput, setCoinInput] = useState('')
 
   return (
     <div className="px-3 py-2 flex gap-2 justify-center shrink-0" style={{ background: 'rgba(5,2,0,0.18)', borderTop: '1px solid rgba(0,0,0,0.35)' }}>
-      {COIN_CONFIG.map(({ key, label, hi, mid, base, drk, bdr, text, rivetHi }) => (
+      {COIN_CONFIG.map(({ key, labelKey, hi, mid, base, drk, bdr, text, rivetHi }) => (
         <div key={key}
           onClick={() => { if (isOwner) { setEditingCoin(key); setCoinInput('') } }}
           className="relative flex flex-col items-center justify-center select-none"
@@ -77,7 +79,7 @@ export function CurrencyPlates({ currency, isOwner, patchCurrency }: CurrencyPla
             />
           ) : (
             <span className="font-bold font-mono leading-tight" style={{ fontSize: 13, color: text, textShadow: '0 1px 3px rgba(0,0,0,0.55)' }}>
-              {currency[key]} <span className="font-bold uppercase tracking-widest" style={{ fontSize: 7, color: text, opacity: 0.72 }}>{label}</span>
+              {currency[key]} <span className="font-bold uppercase tracking-widest" style={{ fontSize: 7, color: text, opacity: 0.72 }}>{t(labelKey)}</span>
             </span>
           )}
         </div>

@@ -44,10 +44,22 @@ function detectLocale(): Locale {
   return nav === 'en' ? 'en' : 'es'
 }
 
+/**
+ * Texto de contenido traducido, declarado junto al dato que describe.
+ *
+ * El catálogo (`es.ts`) es para el chrome de la interfaz: etiquetas cortas y
+ * reutilizables. La prosa del juego —descripciones de bebidas, flavor de clases,
+ * trasfondos— vive con su dato porque no se reutiliza y porque mantener cientos
+ * de párrafos en un archivo plano vuelve imposible revisarlos contra su contexto.
+ */
+export type Localized = Record<Locale, string>
+
 type I18nContextValue = {
   locale: Locale
   setLocale: (l: Locale) => void
   t: (key: TranslationKey, values?: Values) => string
+  /** Resuelve un `Localized` al idioma activo. */
+  loc: (value: Localized) => string
 }
 
 const I18nContext = createContext<I18nContextValue | null>(null)
@@ -74,7 +86,9 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     [locale]
   )
 
-  const value = useMemo(() => ({ locale, setLocale, t }), [locale, setLocale, t])
+  const loc = useCallback((value: Localized) => value[locale], [locale])
+
+  const value = useMemo(() => ({ locale, setLocale, t, loc }), [locale, setLocale, t, loc])
 
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
 }
@@ -88,6 +102,11 @@ export function useI18n(): I18nContextValue {
 /** Atajo para el caso más común: solo traducir. */
 export function useT() {
   return useI18n().t
+}
+
+/** Atajo para resolver contenido `Localized`. */
+export function useLoc() {
+  return useI18n().loc
 }
 
 export type { TranslationKey }

@@ -101,6 +101,7 @@ export const en: Record<TranslationKey, string> = {
   'sheet.passivePerception': 'Pass. Perc.',
   'sheet.classFeatures': 'Class features',
   'sheet.racialTraits': 'Racial traits · {race}',
+  'sheet.racialTraitsPrefix': 'Racial traits',
   'sheet.aiPortrait': 'AI portrait',
   'sheet.pendingChoice': '{count} class choice pending',
   'sheet.pendingChoice_other': '{count} class choices pending',
@@ -117,6 +118,12 @@ export const en: Record<TranslationKey, string> = {
   'sheet.speedTitle': 'Speed per turn',
   'sheet.passivePerceptionTitle': 'Passive Perception',
   'sheet.proficiencyTitle': 'Proficiency bonus',
+  'sheet.attackBonus': 'ATK',
+  'sheet.nextLevel': 'Lv. {level} → {xp}',
+  'sheet.completeChoices': 'Complete class choices',
+  'currency.gold': 'GP',
+  'currency.silver': 'SP',
+  'currency.copper': 'CP',
 
   // ── Inventory ─────────────────────────────────────────────────────────────
   'inventory.filter': 'Filter pack...',
@@ -189,6 +196,10 @@ export const en: Record<TranslationKey, string> = {
   'trade.confirmSell': 'Yes, sell',
   'trade.quantity': 'Quantity: ×{count}',
   'trade.notEnoughMoney': "{name} doesn't have enough money (needs {cost}).",
+  'trade.acquired': '{item} bought for {name}! (−{cost})',
+  'trade.errorMoney': 'Could not deduct the money.',
+  'trade.errorInventory': 'Could not add to the inventory.',
+  'trade.sold': 'Sold: {item} for {cost} to {name}.',
 
   // ── Tavern ────────────────────────────────────────────────────────────────
   'tavern.eyebrow': 'House services',
@@ -208,6 +219,12 @@ export const en: Record<TranslationKey, string> = {
   'tavern.loadingStables': 'Loading stables...',
   'tavern.free': 'Free',
   'tavern.itemStats': 'Weight: {weight} lbs | Category: {category}',
+  'tavern.journalDrink': '🍺 Tavern order',
+  'tavern.journalStables': '🐴 Stables purchase',
+  'tavern.boughtMount': '🐴 {name} bought {item} for {cost} at the stables.',
+  'tavern.errorSheet': 'Could not update the character sheet.',
+  'tavern.errorMoney': 'Could not deduct the money.',
+  'tavern.errorInventory': 'Could not add to the inventory.',
   'tavern.stablesBlurb': 'Mounts, mules, carriages and stable gear for long journeys.',
   'tavern.mountsBlurb': 'Horses, mounts, mules and travel vehicles.',
 
@@ -240,4 +257,12 @@ export const en: Record<TranslationKey, string> = {
   'creation.background': 'Choose your background',
   'creation.previewTitle': 'Adventurer',
   'creation.previewSubtitle': 'Create your adventurer',
+  'creation.level': 'Level',
+  'creation.create': 'Create character',
+  'creation.subclass': 'Specialisation (Subclass)',
+  'creation.unlocksAt': 'Unlocks at level {level}',
+  'creation.bonusesFrom': '{background} bonuses',
+  'creation.tool': 'Tool:',
+  'creation.backgroundLabel': 'Background:',
+  'creation.viewDetailsOf': 'View details of {name}',
 }

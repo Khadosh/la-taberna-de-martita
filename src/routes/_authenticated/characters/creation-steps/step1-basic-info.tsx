@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { SUBCLASS_SELECTION_LEVELS } from '../../../../lib/class-choices'
-import { BACKGROUNDS, ABILITY_LABELS_ES, type Background } from '../../../../lib/dnd-backgrounds'
+import { BACKGROUNDS, ABILITY_ABBR, type Background } from '../../../../lib/dnd-backgrounds'
 import { cardStyle } from './primitives'
 import { CLASS_FLAVOR, RACE_FLAVOR } from './step1-constants'
 import { BACKGROUND_ICONS } from '../../../../lib/game-icons-map'
 import { GameIcon } from '../../../../components/icons/game-icon'
+import { useLoc, useT, useI18n } from '../../../../i18n'
 import { DetailModal } from './detail-modal'
 import { SelectionCard } from './selection-card'
 import type { Draft } from '../character-creation-steps'
@@ -23,6 +24,9 @@ interface Step1Props {
 export function Step1BasicInfo({
   draft, patch, races, classes, raceDetail, classDetail, classSubclasses, selectedBg
 }: Step1Props) {
+  const loc = useLoc()
+  const t = useT()
+  const { locale } = useI18n()
   const subclassReqLevel = SUBCLASS_SELECTION_LEVELS[draft.classIndex] ?? 1
   const showSubclass = draft.classIndex && draft.level >= subclassReqLevel
 
@@ -43,17 +47,17 @@ export function Step1BasicInfo({
         {/* Name and Level Inputs side-by-side */}
         <div className="grid grid-cols-4 gap-3">
           <div className="col-span-3 space-y-1.5">
-            <label className="text-xs text-stone-500 font-display tracking-widest uppercase">Nombre del Aventurero</label>
+            <label className="text-xs text-stone-500 font-display tracking-widest uppercase">{t('creation.adventurerName')}</label>
             <input
               type="text"
-              placeholder="Introduce el nombre..."
+              placeholder={t('creation.namePlaceholder')}
               value={draft.name}
               onChange={e => patch({ name: e.target.value })}
               className="w-full px-4 py-3 bg-[#e8d5a8] text-[#3f1a04] font-serif border border-[#6b4c24]/50 focus:border-[#6b4c24] focus:outline-none placeholder-[#6b4c24]/40 rounded-sm shadow-inner transition-colors"
             />
           </div>
           <div className="col-span-1 space-y-1.5">
-            <label className="text-xs text-stone-500 font-display tracking-widest uppercase block text-center">Nivel</label>
+            <label className="text-xs text-stone-500 font-display tracking-widest uppercase block text-center">{t('creation.level')}</label>
             <div className="relative w-full h-[46px] flex items-center justify-center bg-stone-900 border border-stone-850 rounded-sm shadow-md overflow-hidden">
               <div className="absolute top-0 left-0 w-1 h-1 border-t border-l border-tavern-gold/40"></div>
               <div className="absolute top-0 right-0 w-1 h-1 border-t border-r border-tavern-gold/40"></div>
@@ -61,7 +65,7 @@ export function Step1BasicInfo({
               <div className="absolute bottom-0 right-0 w-1 h-1 border-b border-r border-tavern-gold/40"></div>
               <input
                 type="number"
-                aria-label="Nivel del personaje"
+                aria-label={t('creation.level')}
                 min={1}
                 max={20}
                 value={draft.level}
@@ -76,11 +80,11 @@ export function Step1BasicInfo({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Race selection grid */}
           <div className="space-y-2">
-            <label className="text-xs text-stone-500 font-display tracking-widest uppercase block">Especie / Raza</label>
+            <label className="text-xs text-stone-500 font-display tracking-widest uppercase block">{t('creation.race')}</label>
             <div className="grid grid-cols-1 gap-2 max-h-80 overflow-y-auto pr-1">
               {races?.results.map((r: any) => {
                 const isSelected = draft.raceIndex === r.index
-                const flavor = RACE_FLAVOR[r.index] ?? { desc: 'Especie del multiverso.', traits: 'Rasgos comunes' }
+                const flavor = RACE_FLAVOR[r.index] ?? { desc: { es: 'Especie del multiverso.', en: 'A people of the multiverse.' }, traits: { es: 'Rasgos comunes', en: 'Common traits' } }
                 return (
                   <SelectionCard
                     key={r.index}
@@ -90,7 +94,7 @@ export function Step1BasicInfo({
                     onSelect={() => patch({ raceIndex: r.index })}
                     onInfo={() => setInfoModalData({ type: 'race', indexOrKey: r.index, name: r.name })}
                     label={r.name}
-                    infoLabel={`Ver detalles de ${r.name}`}
+                    infoLabel={t('creation.viewDetailsOf', { name: r.name })}
                     image={`/assets/images/races/${r.index}.jpg`}
                     tint={{ alpha: 0.5, stop: '35%' }}
                     className="h-[84px] flex items-center justify-between"
@@ -104,10 +108,10 @@ export function Step1BasicInfo({
                         />
                         <div className="flex flex-col">
                           <p className="text-xs font-display tracking-wide font-bold uppercase">{r.name}</p>
-                          <p className="text-[8px] text-amber-500/70 font-mono mt-1 uppercase tracking-wide truncate">{flavor.traits}</p>
+                          <p className="text-[8px] text-amber-500/70 font-mono mt-1 uppercase tracking-wide truncate">{loc(flavor.traits)}</p>
                         </div>
                       </div>
-                      <p className="text-[12px] text-stone-300 text-shadow-2 font-serif mt-1 ">{flavor.desc}</p>
+                      <p className="text-[12px] text-stone-300 text-shadow-2 font-serif mt-1 ">{loc(flavor.desc)}</p>
                     </div>
                   </SelectionCard>
                 )
@@ -117,11 +121,11 @@ export function Step1BasicInfo({
 
           {/* Class selection grid */}
           <div className="space-y-2">
-            <label className="text-xs text-stone-500 font-display tracking-widest uppercase block">Clase de Héroe</label>
+            <label className="text-xs text-stone-500 font-display tracking-widest uppercase block">{t('creation.class')}</label>
             <div className="grid grid-cols-1 gap-2 max-h-80 overflow-y-auto pr-1">
               {classes?.results.map((c: any) => {
                 const isSelected = draft.classIndex === c.index
-                const flavor = CLASS_FLAVOR[c.index] ?? { desc: 'Una clase de héroe.', tags: [] }
+                const flavor = CLASS_FLAVOR[c.index] ?? { desc: { es: 'Una clase de héroe.', en: 'A hero class.' }, tags: [] }
                 return (
                   <SelectionCard
                     key={c.index}
@@ -131,7 +135,7 @@ export function Step1BasicInfo({
                     onSelect={() => patch({ classIndex: c.index, subclassIndex: '', spells: [], skillProficiencies: [], expertise: [] })}
                     onInfo={() => setInfoModalData({ type: 'class', indexOrKey: c.index, name: c.name })}
                     label={c.name}
-                    infoLabel={`Ver detalles de ${c.name}`}
+                    infoLabel={t('creation.viewDetailsOf', { name: c.name })}
                     image={`/assets/images/classes/${c.index}.jpg`}
                     className="h-[84px] flex items-center justify-between"
                   >
@@ -144,14 +148,14 @@ export function Step1BasicInfo({
                         />
                         <p className="text-xs font-display tracking-wide font-bold uppercase">{c.name}</p>
                       </div>
-                      <p className="text-[12px] text-stone-300 font-serif mt-1">{flavor.desc}</p>
+                      <p className="text-[12px] text-stone-300 font-serif mt-1">{loc(flavor.desc)}</p>
                     </div>
 
                     {/* Attribute tags */}
                     <div className="absolute right-2 top-2.5 z-10">
-                      {flavor.tags.slice(0, 1).map(t => (
-                        <span key={t} className="text-[8px] px-1.5 py-0.5 bg-stone-950/75 border border-stone-850 text-amber-500/70 rounded-sm font-mono tracking-wider uppercase">
-                          {t}
+                      {flavor.tags.slice(0, 1).map(tag => (
+                        <span key={loc(tag)} className="text-[8px] px-1.5 py-0.5 bg-stone-950/75 border border-stone-850 text-amber-500/70 rounded-sm font-mono tracking-wider uppercase">
+                          {loc(tag)}
                         </span>
                       ))}
                     </div>
@@ -165,7 +169,7 @@ export function Step1BasicInfo({
         {/* Subclass option if high level enough */}
         {showSubclass && classSubclasses && classSubclasses.results.length > 0 && (
           <div className="space-y-2 border-t border-stone-850/60 pt-4 mt-2">
-            <label className="text-xs text-stone-500 font-display tracking-widest uppercase block">Especialización (Subclase)</label>
+            <label className="text-xs text-stone-500 font-display tracking-widest uppercase block">{t('creation.subclass')}</label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {classSubclasses.results.map((s: any) => {
                 const isSelected = draft.subclassIndex === s.index
@@ -178,7 +182,7 @@ export function Step1BasicInfo({
                     onSelect={() => patch({ subclassIndex: s.index })}
                     onInfo={() => setInfoModalData({ type: 'subclass', indexOrKey: s.index, name: s.name })}
                     label={s.name}
-                    infoLabel={`Ver detalles de ${s.name}`}
+                    infoLabel={t('creation.viewDetailsOf', { name: s.name })}
                     className={`pr-10 ${isSelected
                       ? 'border-amber-600/90 text-amber-100 bg-amber-950/20 shadow-sm'
                       : 'border-stone-800 text-stone-400 hover:border-amber-800/40 hover:text-stone-200'
@@ -188,7 +192,7 @@ export function Step1BasicInfo({
                     <div>
                       <p className="text-sm font-display tracking-wide font-semibold">{s.name}</p>
                       <p className="text-[10px] text-stone-600 font-serif mt-0.5 italic">
-                        Se desbloquea al Nivel {subclassReqLevel}
+                        {t('creation.unlocksAt', { level: subclassReqLevel })}
                       </p>
                     </div>
                   </SelectionCard>
@@ -200,7 +204,7 @@ export function Step1BasicInfo({
 
         {/* Background selection grid */}
         <div className="space-y-2 border-t border-stone-850/60 pt-4">
-          <label className="text-xs text-stone-500 font-display tracking-widest uppercase block">Selecciona tu Trasfondo (Background)</label>
+          <label className="text-xs text-stone-500 font-display tracking-widest uppercase block">{t('creation.background')}</label>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-52 overflow-y-auto pr-1">
             {Object.entries(BACKGROUNDS).map(([key, bg]) => {
               const isSelected = draft.backgroundKey === key
@@ -211,9 +215,9 @@ export function Step1BasicInfo({
                   value={key}
                   selected={isSelected}
                   onSelect={() => patch({ backgroundKey: key, bgBonus2: '', bgBonus1: '' })}
-                  onInfo={() => setInfoModalData({ type: 'background', indexOrKey: key, name: bg.name })}
-                  label={bg.name}
-                  infoLabel={`Ver detalles de ${bg.name}`}
+                  onInfo={() => setInfoModalData({ type: 'background', indexOrKey: key, name: loc(bg.name) })}
+                  label={loc(bg.name)}
+                  infoLabel={t('creation.viewDetailsOf', { name: loc(bg.name) })}
                   image={`/assets/images/backgrounds/${key}.jpg`}
                   className="h-[84px] flex items-start gap-2.5 pr-10"
                 >
@@ -222,14 +226,14 @@ export function Step1BasicInfo({
                   </span>
                   <div className="z-10 flex-1 min-w-0 pr-2">
                     <div className="flex justify-between items-baseline gap-1">
-                      <p className="text-xs font-display tracking-wide font-bold uppercase truncate">{bg.name}</p>
+                      <p className="text-xs font-display tracking-wide font-bold uppercase truncate">{loc(bg.name)}</p>
                       <div className="flex gap-1">
                         {bg.abilities.map(a =>
-                          <span key={a} className="w-fit px-1 py-0.5 rounded text-[8px] font-mono text-amber-500/70 uppercase tracking-wide truncate mr-1 border border-amber-500/70 bg-amber-950/20">{ABILITY_LABELS_ES[a]}</span>
+                          <span key={a} className="w-fit px-1 py-0.5 rounded text-[8px] font-mono text-amber-500/70 uppercase tracking-wide truncate mr-1 border border-amber-500/70 bg-amber-950/20">{ABILITY_ABBR[locale][a]}</span>
                         )}
                       </div>
                     </div>
-                    <p className="text-[12px] text-stone-300 font-serif mt-1 leading-snug line-clamp-2">{bg.desc}</p>
+                    <p className="text-[12px] text-stone-300 font-serif mt-1 leading-snug line-clamp-2">{loc(bg.desc)}</p>
                   </div>
                 </SelectionCard>
               )
@@ -241,7 +245,7 @@ export function Step1BasicInfo({
         {selectedBg && (
           <div style={cardStyle} className="p-4 space-y-4 bg-stone-900/40 border border-stone-800/80 rounded-sm">
             <div>
-              <p className="text-xs text-amber-500/70 font-display tracking-widest uppercase mb-1">Bonos de {selectedBg.name}</p>
+              <p className="text-xs text-amber-500/70 font-display tracking-widest uppercase mb-1">{t('creation.bonusesFrom', { background: loc(selectedBg.name) })}</p>
               <p className="text-[11px] text-stone-400 font-serif leading-snug">
                 Elige dos de las tres características asociadas para aplicar tus modificadores (+2 y +1):
               </p>
@@ -264,7 +268,7 @@ export function Step1BasicInfo({
                           }`}
                         style={isSelected ? { background: 'rgba(120,60,10,0.15)', border: '1px solid rgba(180,100,20,0.7)' } : cardStyle}
                       >
-                        {ABILITY_LABELS_ES[a]}
+                        {ABILITY_ABBR[locale][a]}
                       </button>
                     )
                   })}
@@ -291,7 +295,7 @@ export function Step1BasicInfo({
                           }`}
                         style={!isUsedFor2 && isSelected ? { background: 'rgba(120,60,10,0.15)', border: '1px solid rgba(180,100,20,0.7)' } : cardStyle}
                       >
-                        {ABILITY_LABELS_ES[a]}
+                        {ABILITY_ABBR[locale][a]}
                       </button>
                     )
                   })}
@@ -302,7 +306,7 @@ export function Step1BasicInfo({
             {draft.bgBonus2 && draft.bgBonus1 && (
               <div className="flex gap-2 flex-wrap pt-2 border-t border-stone-850/60 items-center text-xs font-serif text-stone-400">
                 <span>Pericias: <span className="font-semibold text-stone-300">{selectedBg.skills.join(', ')}</span></span>
-                {selectedBg.tool && <span className="ml-3">Herramienta: <span className="font-semibold text-stone-300">{selectedBg.tool}</span></span>}
+                {selectedBg.tool && <span className="ml-3">{t('creation.tool')} <span className="font-semibold text-stone-300">{loc(selectedBg.tool)}</span></span>}
               </div>
             )}
           </div>
@@ -370,7 +374,7 @@ export function Step1BasicInfo({
           {/* Text overlays with Integrated Summary */}
           <div className="relative z-20 px-6 pb-5 text-center space-y-2 mt-auto bg-gradient-to-t from-stone-950/85 via-stone-950/45 to-transparent pt-8 backdrop-blur-[1px]">
             <h3 className="font-display text-lg font-bold tracking-wider text-stone-100 uppercase truncate h-6" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.95)' }}>
-              {draft.name.trim() || 'Aventurero'}
+              {draft.name.trim() || t('creation.previewTitle')}
             </h3>
 
             <p className="font-display text-xs tracking-widest text-amber-500/80 uppercase font-semibold h-4 flex items-center justify-center gap-1.5" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.95)' }}>
@@ -388,12 +392,12 @@ export function Step1BasicInfo({
                   </span>
                 </>
               ) : (
-                'Crea tu Aventurero'
+                t('creation.previewSubtitle')
               )}
             </p>
 
             <div className="text-[11px] font-mono text-stone-400" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.95)' }}>
-              Nivel: <span className="text-stone-300 font-bold">{draft.level}</span>
+              {t('creation.level')}: <span className="text-stone-300 font-bold">{draft.level}</span>
             </div>
 
             {/* INTEGRATED SUMMARY SPECS */}
@@ -411,8 +415,8 @@ export function Step1BasicInfo({
                 )}
                 {selectedBg && (
                   <p className="truncate">
-                    <span className="font-sans uppercase text-[8px] tracking-wider text-stone-500 font-bold">Trasfondo:</span> {selectedBg.name}
-                    {draft.bgBonus2 && draft.bgBonus1 && ` (+2 ${ABILITY_LABELS_ES[draft.bgBonus2]}, +1 ${ABILITY_LABELS_ES[draft.bgBonus1]})`}
+                    <span className="font-sans uppercase text-[8px] tracking-wider text-stone-500 font-bold">{t('creation.backgroundLabel')}</span> {loc(selectedBg.name)}
+                    {draft.bgBonus2 && draft.bgBonus1 && ` (+2 ${ABILITY_ABBR[locale][draft.bgBonus2]}, +1 ${ABILITY_ABBR[locale][draft.bgBonus1]})`}
                   </p>
                 )}
               </div>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLoc } from '../../i18n'
 import { ABILITY_LABELS } from '../../lib/dnd-api'
 import { SheetLabel, SheetRow } from './sheet-primitives'
 import type { InfoModalData } from './types'
@@ -56,6 +57,7 @@ function fmtMod(m: number) { return m >= 0 ? `+${m}` : String(m) }
 export function TabPericias({
   stats, skillProficiencies, expertise, weaponProficiencies, profBonus, backgroundKey
 }: TabPericiasProps) {
+  const loc = useLoc()
   const [openProf, setOpenProf] = useState<string | null>(null)
   
   const bgDetail = backgroundKey ? BACKGROUNDS[backgroundKey] : null
@@ -175,13 +177,13 @@ export function TabPericias({
                   </span>
                 </div>
               )}
-              {bgTool && (!isRogue || !bgTool.toLowerCase().includes('ladrón')) && (
+              {bgTool && (!isRogue || !loc(bgTool).toLowerCase().includes('ladrón')) && (
                 <div className="flex items-center gap-2 px-2 py-1 bg-stone-100/20 border-l-2 border-stone-400">
                   <svg width="8" height="8" viewBox="0 0 8 8" fill="#57534e" className="shrink-0">
                     <path d="M4 0L8 4L4 8L0 4Z"/>
                   </svg>
                   <span className="text-xs font-serif flex-1 text-stone-600">
-                    {bgTool} <span className="text-[10px] text-stone-500 font-sans italic">(Trasfondo)</span>
+                    {loc(bgTool)} <span className="text-[10px] text-stone-500 font-sans italic">(Trasfondo)</span>
                   </span>
                   <span className="text-xs font-mono font-bold text-stone-500">
                     {fmtMod(profBonus)}

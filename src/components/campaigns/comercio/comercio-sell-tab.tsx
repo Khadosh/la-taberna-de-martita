@@ -1,6 +1,6 @@
-import { type CostUnit, UNIT_LABEL, getResaleValue } from '../../../lib/currency'
+import { type CostUnit, UNIT_LABEL_BY_LOCALE, getResaleValue } from '../../../lib/currency'
 import { currencyOf, type InventoryRow, type useComercio } from './use-comercio'
-import { useT } from '../../../i18n'
+import { useT, useI18n } from '../../../i18n'
 
 type Props = { c: ReturnType<typeof useComercio> }
 
@@ -16,6 +16,7 @@ function estimateBaseCost(itemName: string): { qty: number; unit: CostUnit } {
 
 export function ComercioSellTab({ c }: Props) {
   const t = useT()
+  const { locale } = useI18n()
   return (
     <div className="space-y-6">
       <div className="bg-amber-100/40 border border-stone-300 p-4 rounded text-xs font-serif italic text-stone-700">
@@ -39,7 +40,7 @@ export function ComercioSellTab({ c }: Props) {
               >
                 {char.name}
                 <span className={`ml-2 font-mono text-[10px] ${isSelected ? 'text-amber-300' : 'text-parchment-sienna'}`}>
-                  {currencyOf(char).gold} MO
+                  {currencyOf(char).gold} {UNIT_LABEL_BY_LOCALE[locale].gp}
                 </span>
               </button>
             )
@@ -68,6 +69,7 @@ export function ComercioSellTab({ c }: Props) {
 
 function SellItemCard({ c, item }: Props & { item: InventoryRow }) {
   const t = useT()
+  const { locale } = useI18n()
   const isConfirming = c.sellConfirm?.id === item.id
 
   const startSale = () => {
@@ -95,7 +97,7 @@ function SellItemCard({ c, item }: Props & { item: InventoryRow }) {
         {isConfirming && c.sellConfirm ? (
           <div className="flex gap-2 items-center w-full justify-between">
             <span className="text-[10px] font-mono text-amber-700">
-              +{c.sellConfirm.resaleQty} {UNIT_LABEL[c.sellConfirm.resaleUnit]}
+              +{c.sellConfirm.resaleQty} {UNIT_LABEL_BY_LOCALE[locale][c.sellConfirm.resaleUnit]}
             </span>
             <div className="flex gap-1.5">
               <button onClick={() => c.setSellConfirm(null)} className="text-xs text-stone-500 hover:text-stone-850 font-serif cursor-pointer">{t('common.no')}</button>

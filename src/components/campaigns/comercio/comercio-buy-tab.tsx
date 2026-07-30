@@ -1,6 +1,6 @@
 import { getItemIconUrl } from '../../../lib/item-icons'
 import { GameIcon } from '../../icons/game-icon'
-import { useT } from '../../../i18n'
+import { useT, useLoc, useI18n } from '../../../i18n'
 import { SHOPS } from '../../../lib/shops-data'
 import { type CostUnit, toCp, formatCost } from '../../../lib/currency'
 import { currencyOf, totalCp, type useComercio } from './use-comercio'
@@ -9,6 +9,7 @@ type Props = { c: ReturnType<typeof useComercio> }
 
 export function ComercioBuyTab({ c }: Props) {
   const t = useT()
+  const loc = useLoc()
   return (
     <div className="space-y-6">
       {/* tiendas temáticas */}
@@ -26,21 +27,21 @@ export function ComercioBuyTab({ c }: Props) {
               }`}
             >
               <span className="text-xl mb-1.5">{shop.icon}</span>
-              <span className="text-xs font-serif font-semibold">{shop.label}</span>
+              <span className="text-xs font-serif font-semibold">{loc(shop.label)}</span>
             </button>
           )
         })}
       </div>
 
       <div className="bg-amber-100/40 border border-stone-300 p-4 rounded text-xs font-serif italic text-stone-700">
-        {c.activeShop.flavor}
+        {loc(c.activeShop.flavor)}
       </div>
 
       <div className="space-y-4">
         <input
           value={c.search}
           onChange={e => { c.setSearch(e.target.value); c.setSelected(null) }}
-          placeholder={t('trade.searchIn', { shop: c.activeShop.label })}
+          placeholder={t('trade.searchIn', { shop: loc(c.activeShop.label) })}
           className="w-full px-3 py-2 text-xs font-serif bg-amber-50/40 border border-stone-300 text-stone-900 placeholder:text-stone-500 rounded focus:outline-none focus:border-parchment-sienna/60 focus:bg-white"
         />
 
@@ -97,6 +98,7 @@ export function ComercioBuyTab({ c }: Props) {
 
 function BuyDetailSidebar({ c }: Props) {
   const t = useT()
+  const { locale } = useI18n()
   const { itemDetail } = c
 
   return (
@@ -126,7 +128,7 @@ function BuyDetailSidebar({ c }: Props) {
 
             <div className="flex gap-4 text-xs font-mono text-parchment-chocolate bg-amber-900/10 px-3 py-1.5 border border-amber-800/20 rounded">
               {itemDetail.cost?.quantity > 0 ? (
-                <span className="text-parchment-sienna font-bold">{formatCost(itemDetail.cost.quantity, itemDetail.cost.unit)}</span>
+                <span className="text-parchment-sienna font-bold">{formatCost(itemDetail.cost.quantity, itemDetail.cost.unit, locale)}</span>
               ) : (
                 <span className="text-stone-500 italic">{t('trade.noValue')}</span>
               )}
@@ -176,7 +178,7 @@ function BuyDetailSidebar({ c }: Props) {
                   disabled={c.loading || !c.buyCharId}
                   className="w-full py-2 font-serif text-xs border border-[#6B2C06] bg-gradient-to-b from-[#9B4A10] to-[#7B3408] text-[#f5d9a8] rounded-sm transition-colors uppercase tracking-wider font-semibold hover:brightness-110 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
-                  {c.loading ? t('trade.buying') : t('trade.acquire', { cost: formatCost(itemDetail.cost.quantity, itemDetail.cost.unit) })}
+                  {c.loading ? t('trade.buying') : t('trade.acquire', { cost: formatCost(itemDetail.cost.quantity, itemDetail.cost.unit, locale) })}
                 </button>
               </div>
             )}

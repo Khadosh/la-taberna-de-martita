@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useT } from '../../i18n'
 import { useQuery, useQueries } from '@tanstack/react-query'
 import { dndApi, dndKeys } from '../../lib/dnd-api'
 import { parchmentStyle } from './sheet-primitives'
@@ -37,6 +38,7 @@ export function ClassChoicesPanel({
   isOwner: boolean
   patchSheet: (p: Partial<SheetJson>) => Promise<void>
 }) {
+  const t = useT()
   const [open, setOpen] = useState(false)
   const [fightingStyle, setFightingStyle] = useState('')
   const [favoredEnemy, setFavoredEnemy] = useState('')
@@ -193,8 +195,8 @@ export function ClassChoicesPanel({
             <circle cx="7" cy="7" r="6"/><line x1="7" y1="5" x2="7" y2="7.5"/><circle cx="7" cy="10" r="0.6" fill="#b45309" stroke="none"/>
           </svg>
           <span className="text-xs font-serif text-amber-800">
-            {pendingCount === 1 ? 'Hay 1 elección de clase pendiente' : `Hay ${pendingCount} elecciones de clase pendientes`}
-            <span className="ml-1.5 underline">Completar</span>
+            {t('sheet.pendingChoice', { count: pendingCount })}
+            <span className="ml-1.5 underline">{t('sheet.complete')}</span>
           </span>
         </button>
       )}
@@ -206,7 +208,7 @@ export function ClassChoicesPanel({
           style={{ ...parchmentStyle, border: '1px solid rgba(180,100,20,0.4)', boxShadow: '0 2px 12px rgba(0,0,0,0.1)' }}
         >
           <div className="flex items-center justify-between border-b border-stone-400 pb-3">
-            <p className="text-sm font-semibold font-serif text-stone-800 font-serif">Completar elecciones de clase</p>
+            <p className="text-sm font-semibold font-serif text-stone-800 font-serif">{t('sheet.completeChoices')}</p>
             <button onClick={() => setOpen(false)} className="text-stone-400 hover:text-stone-600 text-xs font-serif cursor-pointer">cerrar</button>
           </div>
 

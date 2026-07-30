@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { useLoc } from '../../../../i18n'
 import { dndApi, dndKeys } from '../../../../lib/dnd-api'
 import { BACKGROUNDS, ABILITY_LABELS_ES } from '../../../../lib/dnd-backgrounds'
 
@@ -10,6 +11,7 @@ interface DetailModalProps {
 }
 
 export function DetailModal({ type, indexOrKey, name, onClose }: DetailModalProps) {
+  const loc = useLoc()
   const { data: raceInfo, isLoading: loadingRace } = useQuery({
     queryKey: dndKeys.race(indexOrKey),
     queryFn: () => dndApi.race(indexOrKey),
@@ -132,7 +134,7 @@ export function DetailModal({ type, indexOrKey, name, onClose }: DetailModalProp
 
               {type === 'background' && bgInfo && (
                 <div className="space-y-3">
-                  <p>{bgInfo.desc}</p>
+                  <p>{loc(bgInfo.desc)}</p>
                   <div className="grid grid-cols-2 gap-2 text-xs font-sans text-stone-400 bg-stone-950/40 p-2.5 border border-[#6b4c24]/10 rounded-sm">
                     <p className="col-span-2">
                       <span className="text-amber-500/80 font-semibold">Características asociadas (elige +2 y +1):</span>{' '}
@@ -144,7 +146,7 @@ export function DetailModal({ type, indexOrKey, name, onClose }: DetailModalProp
                     </p>
                     {bgInfo.tool && (
                       <p className="col-span-2">
-                        <span className="text-amber-500/80 font-semibold">Herramientas:</span> {bgInfo.tool}
+                        <span className="text-amber-500/80 font-semibold">Herramientas:</span> {loc(bgInfo.tool)}
                       </p>
                     )}
                   </div>

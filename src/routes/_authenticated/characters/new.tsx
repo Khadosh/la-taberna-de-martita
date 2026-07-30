@@ -1,4 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useT } from '../../../i18n'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Session } from '@supabase/supabase-js'
 import type { CSSProperties } from 'react'
@@ -23,6 +24,7 @@ export const Route = createFileRoute('/_authenticated/characters/new')({
 })
 
 function NewCharacter() {
+  const t = useT()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { session } = Route.useRouteContext() as { session: Session }
@@ -158,8 +160,8 @@ function NewCharacter() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <p className="font-display text-amber-500/70 text-xs tracking-widest uppercase hidden sm:block">Nuevo personaje</p>
-          <span className="text-xs text-stone-600 font-serif">Paso {step} de {totalSteps}</span>
+          <p className="font-display text-amber-500/70 text-xs tracking-widest uppercase hidden sm:block">{t('creation.title')}</p>
+          <span className="text-xs text-stone-600 font-serif">{t('creation.step', { current: step, total: totalSteps })}</span>
         </div>
       </header>
 
@@ -209,7 +211,7 @@ function NewCharacter() {
             onClick={() => step > 1 ? setStep(s => s - 1) : navigate({ to: '/' })}
             className="flex-1 py-2.5 border border-stone-700 hover:border-stone-500 text-stone-400 hover:text-stone-200 transition-colors text-sm font-serif"
           >
-            {step === 1 ? 'Cancelar' : '← Atrás'}
+            {step === 1 ? t('common.cancel') : `← ${t('common.previous')}`}
           </button>
           {step < totalSteps ? (
             <button
@@ -218,12 +220,12 @@ function NewCharacter() {
               style={canProceed() ? btnStyle : {}}
               className={`flex-1 py-2.5 text-sm font-display tracking-wider transition-all ${!canProceed() ? 'border border-stone-800 text-stone-700 cursor-not-allowed' : ''}`}
             >
-              Siguiente →
+              {t('common.next')} →
             </button>
           ) : (
             <button onClick={handleSave} style={btnStyle}
               className="flex-1 py-2.5 font-display text-sm tracking-wider transition-all">
-              Crear personaje
+              {t('creation.create')}
             </button>
           )}
         </div>

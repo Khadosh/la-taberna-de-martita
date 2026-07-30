@@ -130,10 +130,10 @@ export function TabResumen(props: TabResumenProps) {
       {/* Quick stats */}
       <SheetRow className="border-t border-stone-500/30">
         <div className="flex-1 px-4 py-2.5 flex flex-wrap gap-x-4 gap-y-1.5" style={{ background: 'rgba(160,125,60,0.08)' }}>
-          <QuickPill label="Ini." value={fmtMod(dexMod)} title={t('sheet.initiativeTitle')} />
-          <QuickPill label="Vel." value={`${raceDetailSpeed ?? 30} ft`} title={t('sheet.speedTitle')} />
+          <QuickPill label={t('sheet.initiative')} value={fmtMod(dexMod)} title={t('sheet.initiativeTitle')} />
+          <QuickPill label={t('sheet.speed')} value={`${raceDetailSpeed ?? 30} ft`} title={t('sheet.speedTitle')} />
           <QuickPill
-            label="GACO"
+            label={t('sheet.attackBonus')}
             value={gacoResult ? fmtMod(gacoResult.bonus) : fmtMod(profBonus + Math.max(strMod, dexMod))}
             variant={gacoResult && !gacoResult.proficient ? 'warn' : undefined}
             title={
@@ -142,8 +142,8 @@ export function TabResumen(props: TabResumenProps) {
                 : 'Bono de ataque estimado (sin arma equipada)'
             }
           />
-          <QuickPill label="Perc. pas." value={String(passivePerception)} title={t('sheet.passivePerceptionTitle')} />
-          <QuickPill label="Prof." value={`+${profBonus}`} title={t('sheet.proficiencyTitle')} />
+          <QuickPill label={t('sheet.passivePerception')} value={String(passivePerception)} title={t('sheet.passivePerceptionTitle')} />
+          <QuickPill label={t('sheet.proficiency')} value={`+${profBonus}`} title={t('sheet.proficiencyTitle')} />
         </div>
       </SheetRow>
 
@@ -210,7 +210,7 @@ export function TabResumen(props: TabResumenProps) {
       <SheetRow className="border-t border-stone-500/30">
         <div className="flex-1 p-4">
           <SheetLabel>
-            Habilidades de clase
+            {t('sheet.classFeatures')}
             {subclassDetail && <span className="font-serif normal-case tracking-normal ml-1 text-amber-700">· {subclassDetail.name}</span>}
           </SheetLabel>
 
@@ -226,7 +226,7 @@ export function TabResumen(props: TabResumenProps) {
                     : { background: 'transparent', color: '#4e4c4cff', border: '1px solid rgba(56, 48, 36, 0.4)' }
                   }
                 >
-                  Nv. {lvl}{lvl === level ? ' ★' : ''}
+                  {t('common.levelShort')} {lvl}{lvl === level ? ' ★' : ''}
                 </button>
               ))}
               {hasSubclass && (
@@ -268,7 +268,7 @@ export function TabResumen(props: TabResumenProps) {
       {raceDetail && raceDetail.traits.length > 0 && (
         <SheetRow className="border-t border-stone-500/30">
           <div className="flex-1 p-4 space-y-3">
-            <SheetLabel>Rasgos raciales · <span className="capitalize">{character.race}</span></SheetLabel>
+            <SheetLabel>{t('sheet.racialTraitsPrefix')} · <span className="capitalize">{character.race}</span></SheetLabel>
             <div className="flex flex-wrap gap-1.5">
               {raceDetail.traits.map(t => (
                 <TraitBadge key={t.index} index={t.index} name={t.name}

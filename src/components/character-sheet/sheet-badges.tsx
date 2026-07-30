@@ -6,6 +6,7 @@ import type { InfoModalData } from './types'
 import { parchmentStyle } from './sheet-primitives'
 import { getSpellIconUrl } from '../../lib/item-icons'
 import { GameIcon } from '../icons/game-icon'
+import { useT } from '../../i18n'
 
 // ── Info Modal ────────────────────────────────────────────────────────────────
 
@@ -173,6 +174,7 @@ function featureActionTag(desc: string): string | null {
 export function FeatureCard({ index, name, isNew, onInfo, compact, maxLevel }: {
   index: string; name: string; isNew: boolean; onInfo: (f: FeatureDetail) => void; compact?: boolean; maxLevel?: number
 }) {
+  const t = useT()
   const [expanded, setExpanded] = useState(false)
   const { data: feature } = useQuery({
     queryKey: dndKeys.feature(index),
@@ -199,7 +201,7 @@ export function FeatureCard({ index, name, isNew, onInfo, compact, maxLevel }: {
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-1.5 flex-wrap">
-          {isNew && <span className="text-[9px] px-1.5 py-px bg-amber-700 text-amber-100 font-serif uppercase tracking-wide leading-tight">Nuevo</span>}
+          {isNew && <span className="text-[9px] px-1.5 py-px bg-amber-700 text-amber-100 font-serif uppercase tracking-wide leading-tight">{t('sheet.new')}</span>}
           {actionTag && <span className="text-[9px] px-1.5 py-px border border-blue-400/50 text-blue-700 font-serif leading-tight">{actionTag}</span>}
           <p className="text-sm font-semibold text-stone-800 font-serif">{name}</p>
         </div>

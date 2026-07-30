@@ -1,4 +1,5 @@
 import { SheetLabel, SheetRow } from './sheet-primitives'
+import { useT } from '../../i18n'
 
 interface HpAcXpRowProps {
   isOwner: boolean
@@ -55,11 +56,12 @@ export function HpAcXpRow({
   editingXp, xpInput, setXpInput, setEditingXp, saveXp,
   setShowLevelUpModal, setLevelUpHpInput,
 }: HpAcXpRowProps) {
+  const t = useT()
   return (
     <SheetRow className="border-t border-stone-500/30">
       {/* HP */}
       <div className="flex-1 p-4" style={{ borderRight: '1px solid rgba(109,85,48,0.3)' }}>
-        <SheetLabel>Puntos de Vida</SheetLabel>
+        <SheetLabel>{t('sheet.hitPoints')}</SheetLabel>
         <div className="mt-3 space-y-2">
           <div className="h-3 border border-stone-500/60 overflow-hidden bg-stone-200/40">
             <div className={`h-full transition-all ${hpColor}`} style={{ width: `${hpPct}%` }} />
@@ -113,9 +115,9 @@ export function HpAcXpRow({
                 <line x1="6" y1="5" x2="6" y2="7.5" />
                 <circle cx="6" cy="9" r="0.65" fill="currentColor" stroke="none" />
               </svg>
-              CA
+              {t('sheet.armorClass')}
             </span>
-            : 'CA'
+            : t('sheet.armorClass')
           }
         </SheetLabel>
         <div className="mt-3">
@@ -129,13 +131,13 @@ export function HpAcXpRow({
               {ac}
             </button>
           )}
-          <p className="text-[10px] text-stone-600 font-serif mt-1">Armadura</p>
+          <p className="text-[10px] text-stone-600 font-serif mt-1">{t('sheet.armor')}</p>
         </div>
       </div>
 
       {/* XP */}
       <div className="flex-1 p-4">
-        <SheetLabel>Experiencia</SheetLabel>
+        <SheetLabel>{t('sheet.experience')}</SheetLabel>
         <div className="mt-3 space-y-1.5">
           <div className="h-3 border border-stone-500/60 overflow-hidden bg-stone-200/40">
             <div className="h-full bg-amber-700 transition-all" style={{ width: `${xpPct}%` }} />
@@ -150,7 +152,7 @@ export function HpAcXpRow({
                 </button>
               )}
             </div>
-            {xpForNext && <span className="text-[10px] text-stone-700 font-serif">Nv. {level + 1} → {xpForNext.toLocaleString()}</span>}
+            {xpForNext && <span className="text-[10px] text-stone-700 font-serif">{t('sheet.nextLevel', { level: level + 1, xp: xpForNext.toLocaleString() })}</span>}
           </div>
           {(isGm && editingXp) && (
             <div className="flex items-center gap-1 w-full">

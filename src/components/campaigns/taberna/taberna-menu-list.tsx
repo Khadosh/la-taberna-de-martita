@@ -1,6 +1,6 @@
 import { formatCost } from '../../../lib/currency'
 import type { useTaberna } from './use-taberna'
-import { useT } from '../../../i18n'
+import { useT, useLoc, useI18n } from '../../../i18n'
 
 type Props = { t: ReturnType<typeof useTaberna> }
 
@@ -14,6 +14,8 @@ const GLYPH_OFF = 'bg-amber-100/60 border-stone-300 text-stone-900'
 
 export function TabernaMenuList({ t: tv }: Props) {
   const t = useT()
+  const loc = useLoc()
+  const { locale } = useI18n()
   if (tv.activeCategory === 'stables') {
     if (tv.loadingStables) {
       return <p className="text-stone-600 italic font-serif">{t('tavern.loadingStables')}</p>
@@ -58,17 +60,17 @@ export function TabernaMenuList({ t: tv }: Props) {
             <div className="flex-1 min-w-0 space-y-1">
               <div className="flex items-center justify-between gap-2">
                 <span className={`font-semibold text-sm truncate font-display ${on ? 'text-amber-100' : 'text-stone-900'}`}>
-                  {serv.name}
+                  {loc(serv.name)}
                 </span>
                 <span className={`font-mono text-xs font-bold shrink-0 ${on ? 'text-amber-300' : 'text-parchment-sienna'}`}>
-                  {formatCost(serv.cost, serv.unit)}
+                  {formatCost(serv.cost, serv.unit, locale)}
                 </span>
               </div>
               <p className={`text-xs font-serif leading-relaxed line-clamp-2 ${on ? 'text-amber-200/90' : 'text-stone-600'}`}>
-                {serv.description}
+                {loc(serv.description)}
               </p>
               <p className={`text-[10px] font-serif italic ${on ? 'text-amber-300' : 'text-parchment-sienna'}`}>
-                {serv.benefit}
+                {loc(serv.benefit)}
               </p>
             </div>
           </button>

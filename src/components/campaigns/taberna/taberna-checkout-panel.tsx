@@ -1,11 +1,13 @@
-import { toCp, formatCost } from '../../../lib/currency'
+import { toCp, formatCost, UNIT_LABEL_BY_LOCALE } from '../../../lib/currency'
 import { currencyOf, maxHpFor, totalCp, type useTaberna } from './use-taberna'
-import { useT } from '../../../i18n'
+import { useT, useLoc, useI18n } from '../../../i18n'
 
 type Props = { t: ReturnType<typeof useTaberna> }
 
 export function TabernaCheckoutPanel({ t: tv }: Props) {
   const t = useT()
+  const loc = useLoc()
+  const { locale } = useI18n()
   const isStables = tv.activeCategory === 'stables'
 
   if (isStables && tv.loadingStablesDetail) {
@@ -34,7 +36,7 @@ export function TabernaCheckoutPanel({ t: tv }: Props) {
               icon="🐴"
               title={tv.stablesItemDetail.name}
               price={tv.stablesItemDetail.cost
-                ? formatCost(tv.stablesItemDetail.cost.quantity, tv.stablesItemDetail.cost.unit)
+                ? formatCost(tv.stablesItemDetail.cost.quantity, tv.stablesItemDetail.cost.unit, locale)
                 : t('tavern.free')}
             />
             <p className="text-xs font-serif text-stone-600 leading-relaxed border-t border-b border-stone-300/40 py-3">
@@ -53,13 +55,13 @@ export function TabernaCheckoutPanel({ t: tv }: Props) {
           <>
             <PanelHeader
               icon={tv.selectedService.icon}
-              title={tv.selectedService.name}
-              price={formatCost(tv.selectedService.cost, tv.selectedService.unit)}
+              title={loc(tv.selectedService.name)}
+              price={formatCost(tv.selectedService.cost, tv.selectedService.unit, locale)}
             />
             <p className="text-xs font-serif text-stone-600 leading-relaxed border-t border-b border-stone-300/40 py-3">
-              {tv.selectedService.description}
+              {loc(tv.selectedService.description)}
             </p>
-            <PanelCallout label={t('tavern.effect')}>{tv.selectedService.benefit}</PanelCallout>
+            <PanelCallout label={t('tavern.effect')}>{loc(tv.selectedService.benefit)}</PanelCallout>
           </>
         ) : null}
 
@@ -95,7 +97,7 @@ export function TabernaCheckoutPanel({ t: tv }: Props) {
                       </span>
                     </div>
                     <span className={`font-mono text-[10px] shrink-0 ${on ? 'text-amber-300' : canAfford ? 'text-parchment-sienna' : 'text-red-700'}`}>
-                      {cur.gold} MO {cur.silver > 0 ? `${cur.silver} MP` : ''}
+                      {cur.gold} {UNIT_LABEL_BY_LOCALE[locale].gp} {cur.silver > 0 ? `${cur.silver} ${UNIT_LABEL_BY_LOCALE[locale].sp}` : ''}
                     </span>
                   </label>
                 )

@@ -5,6 +5,7 @@ import { supabase } from '../../../lib/supabase'
 import { dndApi } from '../../../lib/dnd-api'
 import { type Currency, type CostUnit, UNIT_MAP, toCp, formatCost } from '../../../lib/currency'
 import { type ServiceItem, DRINKS, FOODS, LODGINGS } from '../../../lib/tavern-services-data'
+import { useI18n } from '../../../i18n'
 
 export type TabernaCategory = 'drinks' | 'foods' | 'lodging' | 'stables'
 
@@ -55,6 +56,7 @@ const SERVICES_BY_CATEGORY: Record<Exclude<TabernaCategory, 'stables'>, ServiceI
 
 export function useTaberna(campaignId: string, session: Session) {
   const queryClient = useQueryClient()
+  const { t, loc, locale } = useI18n()
 
   const [activeCategory, setActiveCategory] = useState<TabernaCategory>('drinks')
   const [selectedService, setSelectedService] = useState<ServiceItem | null>(null)
@@ -158,7 +160,7 @@ export function useTaberna(campaignId: string, session: Session) {
 
     const currency = currencyOf(char)
     if (totalCp(currency) < toCp(selectedService.cost, selectedService.unit)) {
-      setError(`${char.name} no tiene suficientes fondos (necesita ${formatCost(selectedService.cost, selectedService.unit)}).`)
+      setError(t('trade.notEnoughMoney', { name: char.name, cost: formatCost(selectedService.cost, selectedService.unit, locale) }))
       return
     }
 
@@ -189,14 +191,14 @@ export function useTaberna(campaignId: string, session: Session) {
       .update({ current_hp: finalHp, sheet_json: nextSheetJson as any })
       .eq('id', consumeCharId)
 
-    if (dbErr) { setError('Error al actualizar la ficha del personaje.'); setLoading(false); return }
+    if (dbErr) { setError(t('tavern.errorSheet')); setLoading(false); return }
 
-    await logToJournal('🍺 Consumo en Taberna', effect.logMsg)
+    await logToJournal(t('tavern.journalDrink'), loc(effect.logMsg))
 
     queryClient.invalidateQueries({ queryKey: ['campaign-characters', campaignId] })
     queryClient.invalidateQueries({ queryKey: ['character', consumeCharId] })
 
-    setSuccessMsg(effect.logMsg)
+    setSuccessMsg(loc(effect.logMsg))
     setSelectedService(null)
     setLoading(false)
   }
@@ -214,7 +216,7 @@ export function useTaberna(campaignId: string, session: Session) {
     const currency = currencyOf(char)
 
     if (totalCp(currency) < toCp(cost.quantity, unit)) {
-      setError(`${char.name} no tiene suficiente dinero (necesita ${formatCost(cost.quantity, unit)}).`)
+      setError(t('trade.notEnoughMoney', { name: char.name, cost: formatCost(cost.quantity, unit, locale) }))
       return
     }
 
@@ -227,7 +229,7 @@ export function useTaberna(campaignId: string, session: Session) {
       .update({ sheet_json: { ...(char.sheet_json as object), currency: newCurrency } as never })
       .eq('id', consumeCharId)
 
-    if (sheetErr) { setError('Error al descontar el dinero.'); setLoading(false); return }
+    if (sheetErr) { setError(t('tavern.errorMoney')); setLoading(false); return }
 
     const { error: invErr } = await supabase.from('character_inventory').insert({
       character_id: consumeCharId,
@@ -237,10 +239,10 @@ export function useTaberna(campaignId: string, session: Session) {
       notes: stablesItemDetail.desc?.[0] ?? 'Comprado en los Establos de la Taberna.',
     })
 
-    if (invErr) { setError('Error al agregar al inventario.'); setLoading(false); return }
+    if (invErr) { setError(t('tavern.errorInventory')); setLoading(false); return }
 
-    const logMsg = `🐴 ${char.name} compró ${stablesItemDetail.name} por ${formatCost(cost.quantity, unit)} en los establos.`
-    await logToJournal('🐴 Compra en Establo', logMsg)
+    const logMsg = t('tavern.boughtMount', { name: char.name, item: stablesItemDetail.name, cost: formatCost(cost.quantity, unit, locale) })
+    await logToJournal(t('tavern.journalStables'), logMsg)
 
     queryClient.invalidateQueries({ queryKey: ['campaign-characters', campaignId] })
     queryClient.invalidateQueries({ queryKey: ['inventory', consumeCharId] })

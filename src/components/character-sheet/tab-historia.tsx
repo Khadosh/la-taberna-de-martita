@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLoc } from '../../i18n'
 import { useQuery } from '@tanstack/react-query'
 import { BACKGROUNDS } from '../../lib/dnd-backgrounds'
 import { SheetLabel, SheetRow } from './sheet-primitives'
@@ -18,6 +19,7 @@ interface TabHistoriaProps {
 }
 
 export function TabHistoria({ backstory, sheet, isOwner, characterClass, characterLevel, confirmDelete, setConfirmDelete, onDelete, patchSheet }: TabHistoriaProps) {
+  const loc = useLoc()
   const [pickingBackground, setPickingBackground] = useState(false)
   const [pickingSubclass, setPickingSubclass] = useState(false)
 
@@ -142,7 +144,7 @@ export function TabHistoria({ backstory, sheet, isOwner, characterClass, charact
                   onMouseEnter={e => { if (sheet.background !== key) e.currentTarget.style.background = 'rgba(109,85,48,0.06)' }}
                   onMouseLeave={e => { if (sheet.background !== key) e.currentTarget.style.background = '' }}
                 >
-                  <span className="text-sm font-semibold font-serif">{bg.name}</span>
+                  <span className="text-sm font-semibold font-serif">{loc(bg.name)}</span>
                   <span className="text-xs font-serif ml-2" style={{ color: '#9a7540' }}>
                     {bg.skills.join(', ')}
                   </span>
@@ -154,10 +156,10 @@ export function TabHistoria({ backstory, sheet, isOwner, characterClass, charact
           {/* Current background display */}
           {!pickingBackground && bgData && (
             <div className="space-y-3">
-              <h4 className="font-serif font-bold text-base" style={{ color: '#3d2510' }}>{bgData.name}</h4>
+              <h4 className="font-serif font-bold text-base" style={{ color: '#3d2510' }}>{loc(bgData.name)}</h4>
 
               <p className="text-xs font-serif italic leading-relaxed" style={{ color: '#5c3d18' }}>
-                {bgData.desc}
+                {loc(bgData.desc)}
               </p>
 
               <div>
@@ -178,7 +180,7 @@ export function TabHistoria({ backstory, sheet, isOwner, characterClass, charact
                 <p className="text-[10px] uppercase tracking-widest font-semibold font-serif mb-1" style={{ color: '#9a7540' }}>
                   Herramienta / Instrumento
                 </p>
-                <p className="text-xs font-serif" style={{ color: '#5c3d18' }}>{bgData.tool}</p>
+                <p className="text-xs font-serif" style={{ color: '#5c3d18' }}>{loc(bgData.tool)}</p>
               </div>
             </div>
           )}

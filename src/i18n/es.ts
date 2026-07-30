@@ -102,6 +102,7 @@ export const es = {
   'sheet.passivePerception': 'Perc. pas.',
   'sheet.classFeatures': 'Habilidades de clase',
   'sheet.racialTraits': 'Rasgos raciales · {race}',
+  'sheet.racialTraitsPrefix': 'Rasgos raciales',
   'sheet.aiPortrait': 'Retrato IA',
   'sheet.pendingChoice': 'Hay {count} elección de clase pendiente',
   'sheet.pendingChoice_other': 'Hay {count} elecciones de clase pendientes',
@@ -118,6 +119,12 @@ export const es = {
   'sheet.speedTitle': 'Velocidad por turno',
   'sheet.passivePerceptionTitle': 'Percepción pasiva',
   'sheet.proficiencyTitle': 'Bono de competencia',
+  'sheet.attackBonus': 'GACO',
+  'sheet.nextLevel': 'Nv. {level} → {xp}',
+  'sheet.completeChoices': 'Completar elecciones de clase',
+  'currency.gold': 'MO',
+  'currency.silver': 'MP',
+  'currency.copper': 'MC',
 
   // ── Inventario ────────────────────────────────────────────────────────────
   'inventory.filter': 'Filtrar morral...',
@@ -190,6 +197,10 @@ export const es = {
   'trade.confirmSell': 'Sí, vender',
   'trade.quantity': 'Cantidad: ×{count}',
   'trade.notEnoughMoney': '{name} no tiene suficiente dinero (necesita {cost}).',
+  'trade.acquired': '¡{item} adquirido por {name}! (−{cost})',
+  'trade.errorMoney': 'Error al descontar el dinero.',
+  'trade.errorInventory': 'Error al agregar al inventario.',
+  'trade.sold': 'Vendido: {item} por {cost} para {name}.',
 
   // ── Taberna ───────────────────────────────────────────────────────────────
   'tavern.eyebrow': 'Servicios del establecimiento',
@@ -209,6 +220,12 @@ export const es = {
   'tavern.loadingStables': 'Cargando establos...',
   'tavern.free': 'Gratis',
   'tavern.itemStats': 'Peso: {weight} lbs | Categoría: {category}',
+  'tavern.journalDrink': '🍺 Consumo en Taberna',
+  'tavern.journalStables': '🐴 Compra en Establo',
+  'tavern.boughtMount': '🐴 {name} compró {item} por {cost} en los establos.',
+  'tavern.errorSheet': 'Error al actualizar la ficha del personaje.',
+  'tavern.errorMoney': 'Error al descontar el dinero.',
+  'tavern.errorInventory': 'Error al agregar al inventario.',
   'tavern.stablesBlurb': 'Monturas, mulas, carruajes y pertrechos de establo para viajes de larga distancia.',
   'tavern.mountsBlurb': 'Caballos, monturas, mulas y vehículos de viaje.',
 
@@ -241,6 +258,14 @@ export const es = {
   'creation.background': 'Selecciona tu trasfondo (background)',
   'creation.previewTitle': 'Aventurero',
   'creation.previewSubtitle': 'Crea tu aventurero',
+  'creation.level': 'Nivel',
+  'creation.create': 'Crear personaje',
+  'creation.subclass': 'Especialización (Subclase)',
+  'creation.unlocksAt': 'Se desbloquea al Nivel {level}',
+  'creation.bonusesFrom': 'Bonos de {background}',
+  'creation.tool': 'Herramienta:',
+  'creation.backgroundLabel': 'Trasfondo:',
+  'creation.viewDetailsOf': 'Ver detalles de {name}',
 } as const
 
 export type TranslationKey = keyof typeof es

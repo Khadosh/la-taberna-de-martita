@@ -5,6 +5,7 @@ import { supabase } from '../../../lib/supabase'
 import { dndApi } from '../../../lib/dnd-api'
 import { SHOPS, type ShopId } from '../../../lib/shops-data'
 import { type CostUnit, type Currency, UNIT_MAP, toCp, formatCost } from '../../../lib/currency'
+import { useI18n } from '../../../i18n'
 
 export type Character = {
   id: string
@@ -45,6 +46,7 @@ export function currencyOf(char: Pick<Character, 'sheet_json'>): Currency {
 
 export function useComercio(campaignId: string, session: Session) {
   const queryClient = useQueryClient()
+  const { t, locale } = useI18n()
 
   const [activeShopId, setActiveShopId] = useState<ShopId>('armeria')
   const [tabMode, setTabMode] = useState<TabMode>('comprar')
@@ -162,7 +164,7 @@ export function useComercio(campaignId: string, session: Session) {
     const currency = currencyOf(char)
 
     if (totalCp(currency) < toCp(cost.quantity, unit)) {
-      setError(`${char.name} no tiene suficiente dinero (necesita ${formatCost(cost.quantity, unit)}).`)
+      setError(t('trade.notEnoughMoney', { name: char.name, cost: formatCost(cost.quantity, unit, locale) }))
       return
     }
 
@@ -175,7 +177,7 @@ export function useComercio(campaignId: string, session: Session) {
       .update({ sheet_json: { ...(char.sheet_json as object), currency: newCurrency } as never })
       .eq('id', buyCharId)
 
-    if (sheetErr) { setError('Error al descontar el dinero.'); setLoading(false); return }
+    if (sheetErr) { setError(t('trade.errorMoney')); setLoading(false); return }
 
     const { error: invErr } = await supabase.from('character_inventory').insert({
       character_id: buyCharId,
@@ -185,10 +187,10 @@ export function useComercio(campaignId: string, session: Session) {
       notes: buildItemNotes(itemDetail),
     })
 
-    if (invErr) { setError('Error al agregar al inventario.'); setLoading(false); return }
+    if (invErr) { setError(t('trade.errorInventory')); setLoading(false); return }
 
     invalidateTrade(buyCharId)
-    setSuccessMsg(`¡${itemDetail.name} adquirido por ${char.name}! (−${formatCost(cost.quantity, unit)})`)
+    setSuccessMsg(t('trade.acquired', { item: itemDetail.name, name: char.name, cost: formatCost(cost.quantity, unit, locale) }))
     setLoading(false)
     setSelected(null)
   }
@@ -217,7 +219,7 @@ export function useComercio(campaignId: string, session: Session) {
       .eq('id', sellConfirm.charId)
 
     invalidateTrade(sellConfirm.charId)
-    setSuccessMsg(`Vendido: ${sellConfirm.name} por ${formatCost(sellConfirm.resaleQty, sellConfirm.resaleUnit)} para ${char.name}.`)
+    setSuccessMsg(t('trade.sold', { item: sellConfirm.name, cost: formatCost(sellConfirm.resaleQty, sellConfirm.resaleUnit, locale), name: char.name }))
     setSellConfirm(null)
     setLoading(false)
   }
