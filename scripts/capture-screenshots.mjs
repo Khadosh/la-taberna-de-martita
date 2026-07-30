@@ -42,12 +42,14 @@ const UI = {
     skills: /pericias/i, story: /historia/i, spells: /hechizos/i,
     startCombat: /iniciar combate/i, levelUp: /^subir al nivel/i,
     spellMode: /^conjuro$/i, bowMode: /^arco$/i, projectAoe: /proyectar área/i,
+    firstNote: /hollowstone pass/i,
   },
   en: {
     email: 'Email', password: 'Password', signIn: /enter/i,
     skills: /skills/i, story: /story/i, spells: /spells/i,
     startCombat: /start combat/i, levelUp: /^level up to/i,
     spellMode: /^spell$/i, bowMode: /^bow$/i, projectAoe: /project area/i,
+    firstNote: /hollowstone pass/i,
   },
 }[LOCALE]
 
@@ -247,7 +249,10 @@ const run = async () => {
   await page.goto(`${BASE}/campaigns/${CAMPAIGN}/taberna`, { waitUntil: 'domcontentloaded' })
   await shot(page, '11-taberna')
 
+  // Sin abrir una nota el panel derecho es solo un cartel de "elegí una"; el
+  // valor de la pantalla es la bitácora en sí.
   await page.goto(`${BASE}/campaigns/${CAMPAIGN}/notas`, { waitUntil: 'domcontentloaded' })
+  await click(page, page.getByRole('button', { name: UI.firstNote }))
   await shot(page, '12-notas')
 
   // ── Compendios y wizard ────────────────────────────────────────────────────

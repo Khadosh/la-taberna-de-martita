@@ -4,6 +4,7 @@ import { useState } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from '../../../lib/supabase'
 import type { Tables } from '../../../lib/database.types'
+import { useI18n } from '../../../i18n'
 
 export const Route = createFileRoute('/_authenticated/campaigns/$campaignId/notas')({
   component: SessionNotesTab,
@@ -16,6 +17,7 @@ type SessionNote = Tables<'session_notes'> & {
 }
 
 function SessionNotesTab() {
+  const { t, locale } = useI18n()
   const { campaignId } = Route.useParams()
   const { session } = Route.useRouteContext() as { session: Session }
   const queryClient = useQueryClient()
@@ -131,8 +133,8 @@ function SessionNotesTab() {
   }
 
   const formatDate = (dateString?: string | null) => {
-    if (!dateString) return 'Fecha desconocida'
-    return new Date(dateString).toLocaleDateString('es-ES', {
+    if (!dateString) return t('notes.unknownDate')
+    return new Date(dateString).toLocaleDateString(locale === 'en' ? 'en-GB' : 'es-AR', {
       day: 'numeric',
       month: 'long',
       year: 'numeric',
@@ -144,20 +146,20 @@ function SessionNotesTab() {
       {/* Sidebar: Notes List */}
       <div className="w-full md:w-80 border-r-2 border-stone-900 bg-stone-950 flex flex-col shrink-0 overflow-y-auto max-h-[40vh] md:max-h-none">
         <div className="p-4 border-b border-stone-850 flex items-center justify-between sticky top-0 bg-stone-950 z-10">
-          <h2 className="text-sm font-display tracking-widest text-amber-100 uppercase">Diario de Sesión</h2>
+          <h2 className="text-sm font-display tracking-widest text-amber-100 uppercase">{t('notes.journal')}</h2>
           <button
             onClick={startCreate}
             className="px-3 py-1 text-xs font-serif bg-amber-900/40 hover:bg-amber-800/60 text-amber-200 border border-amber-700/40 rounded transition-colors"
           >
-            + Nueva Nota
+            {t('notes.new')}
           </button>
         </div>
 
         <div className="flex-1 divide-y divide-stone-900">
           {isLoading ? (
-            <p className="p-4 text-xs italic text-stone-500 font-serif">Cargando notas...</p>
+            <p className="p-4 text-xs italic text-stone-500 font-serif">{t('notes.loading')}</p>
           ) : notes.length === 0 ? (
-            <p className="p-4 text-xs italic text-stone-500 font-serif">Aún no hay notas escritas.</p>
+            <p className="p-4 text-xs italic text-stone-500 font-serif">{t('notes.empty')}</p>
           ) : (
             notes.map(note => {
               const isSelected = note.id === selectedNoteId && !isFormActive
@@ -178,14 +180,14 @@ function SessionNotesTab() {
                     </span>
                     {note.is_private && (
                       <span className="shrink-0 text-[9px] px-1.5 py-0.5 bg-red-950/60 border border-red-800/30 text-red-400 font-mono tracking-wider uppercase rounded">
-                        Oculta
+                        {t('notes.hidden')}
                       </span>
                     )}
                   </div>
                   <div className="flex items-center justify-between text-[10px] text-stone-500 font-serif">
                     <span>{formatDate(note.session_date)}</span>
                     <span className="italic max-w-[120px] truncate">
-                      por {note.author?.username || 'Viajero'}
+                      {t('notes.by', { author: note.author?.username || t('notes.traveller') })}
                     </span>
                   </div>
                 </button>
@@ -209,24 +211,24 @@ function SessionNotesTab() {
             <span className="absolute -bottom-[3px] -right-[3px] w-3 h-3 border-b-2 border-r-2 border-stone-900" />
 
             <h3 className="text-lg font-display tracking-wider text-stone-950 font-bold border-b border-stone-400/30 pb-2">
-              {isEditing ? 'Editar Entrada de Diario' : 'Nueva Entrada de Diario'}
+              {isEditing ? t('notes.editEntry') : t('notes.newEntry')}
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-serif font-bold text-stone-700">Título de la Sesión *</label>
+                <label className="text-xs font-serif font-bold text-stone-700">{t('notes.sessionTitle')}</label>
                 <input
                   type="text"
                   required
                   value={title}
                   onChange={e => setTitle(e.target.value)}
-                  placeholder="Ej: Sesión 12: Las minas de Phandelver"
+                  placeholder={t('notes.titlePlaceholder')}
                   className="w-full bg-amber-50/50 border border-stone-400/60 rounded px-3 py-1.5 text-sm focus:outline-none focus:border-stone-800"
                 />
               </div>
 
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-serif font-bold text-stone-700">Fecha de la Aventura</label>
+                <label className="text-xs font-serif font-bold text-stone-700">{t('notes.adventureDate')}</label>
                 <input
                   type="date"
                   required
@@ -238,13 +240,13 @@ function SessionNotesTab() {
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-serif font-bold text-stone-700">Detalles / Resumen de la Bitácora *</label>
+              <label className="text-xs font-serif font-bold text-stone-700">{t('notes.body')}</label>
               <textarea
                 required
                 rows={12}
                 value={body}
                 onChange={e => setBody(e.target.value)}
-                placeholder="El grupo exploró el pasadizo oeste. Nos emboscaron 3 trasgos..."
+                placeholder={t('notes.bodyPlaceholder')}
                 className="w-full bg-amber-50/50 border border-stone-400/60 rounded p-3 text-sm focus:outline-none focus:border-stone-800 font-serif leading-relaxed"
               />
             </div>
@@ -258,7 +260,7 @@ function SessionNotesTab() {
                   className="w-4 h-4 rounded text-amber-850 focus:ring-0 cursor-pointer"
                 />
                 <span className="text-xs font-serif text-stone-700 font-semibold">
-                  Privado (Ocultar a los jugadores, visible solo para ti y el DM)
+                  {t('notes.privateLabel')}
                 </span>
               </label>
 
@@ -275,7 +277,7 @@ function SessionNotesTab() {
                   disabled={saving}
                   className="px-4 py-1.5 text-xs font-serif bg-stone-900 text-amber-100 hover:bg-stone-800 rounded transition-colors disabled:opacity-40"
                 >
-                  {saving ? 'Guardando...' : 'Guardar Entrada'}
+                  {saving ? t('common.saving') : t('notes.saveEntry')}
                 </button>
               </div>
             </div>
@@ -294,13 +296,13 @@ function SessionNotesTab() {
                   {selectedNote.title}
                 </h3>
                 <p className="text-xs font-serif italic text-stone-650 mt-1">
-                  Fecha de sesión: {formatDate(selectedNote.session_date)}
+                  {t('notes.sessionDate', { date: formatDate(selectedNote.session_date) })}
                 </p>
               </div>
 
               {selectedNote.is_private && (
                 <span className="text-[10px] px-2 py-0.5 bg-red-900/10 border border-red-800/40 text-red-950 uppercase tracking-widest font-mono rounded">
-                  Oculta
+                  {t('notes.hidden')}
                 </span>
               )}
             </div>
@@ -312,7 +314,7 @@ function SessionNotesTab() {
 
             {/* Author + Actions */}
             <div className="border-t border-stone-400/30 pt-4 flex items-center justify-between text-xs font-serif italic text-stone-600">
-              <span>Registrado por: {selectedNote.author?.username || 'Viajero'}</span>
+              <span>{t('notes.recordedBy', { author: selectedNote.author?.username || t('notes.traveller') })}</span>
 
               {selectedNote.author_id === session.user.id && (
                 <div className="flex gap-3">
@@ -320,13 +322,13 @@ function SessionNotesTab() {
                     onClick={() => startEdit(selectedNote)}
                     className="text-stone-600 hover:text-stone-950 underline transition-colors"
                   >
-                    Editar
+                    {t('common.edit')}
                   </button>
                   <button
                     onClick={() => handleDelete(selectedNote.id)}
                     className="text-red-700 hover:text-red-900 underline transition-colors"
                   >
-                    Eliminar
+                    {t('common.delete')}
                   </button>
                 </div>
               )}
@@ -336,7 +338,7 @@ function SessionNotesTab() {
           /* Empty State */
           <div className="text-center bg-stone-900/10 border border-stone-800/20 rounded p-12 max-w-sm">
             <span className="text-4xl block mb-3">📖</span>
-            <p className="text-stone-400 font-serif italic">Selecciona una entrada de diario de la lista lateral o redacta una nueva.</p>
+            <p className="text-stone-400 font-serif italic">{t('notes.selectPrompt')}</p>
           </div>
         )}
       </div>

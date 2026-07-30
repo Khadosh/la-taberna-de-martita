@@ -38,9 +38,18 @@ function Taberna() {
         <span className="absolute -bottom-[3px] -right-[3px] w-4 h-4 border-b-2 border-r-2 border-stone-900" />
 
         <div className="relative h-56 sm:h-64 w-full mb-8 overflow-hidden rounded-lg border border-stone-850 shadow-2xl bg-stone-950">
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_var(--tw-gradient-stops))] from-amber-900/30 via-stone-950 to-stone-950" />
+          {/* La ilustración va de fondo con un degradado encima: sin él, el texto
+              claro queda ilegible sobre el fuego del hogar. */}
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage:
+                "linear-gradient(100deg, rgba(12,10,9,0.92) 20%, rgba(12,10,9,0.66) 46%, rgba(12,10,9,0.25) 100%), url('/assets/images/taberna_bg.jpg')",
+              backgroundSize: 'cover',
+              backgroundPosition: 'center 58%',
+            }}
+          />
           <div className="absolute inset-0 bg-[linear-gradient(rgba(120,90,40,0.03)_1px,_transparent_1px)_0_0_/_20px_20px]" />
-          <div className="absolute right-0 bottom-0 top-0 w-1/2 bg-[radial-gradient(circle_at_bottom_right,_var(--tw-gradient-stops))] from-orange-950/40 via-transparent to-transparent opacity-60 pointer-events-none" />
 
           <div className="absolute bottom-6 left-6 z-10 space-y-1">
             <span className="text-[10px] tracking-widest text-amber-500 font-serif uppercase font-bold">{t('tavern.eyebrow')}</span>

@@ -169,6 +169,11 @@ características, razas, clases— viven en `src/lib/dnd-terms.ts` como contenid
 no en el catálogo. Las capturas de `docs/screenshots/` se generan en los dos idiomas, que
 es la prueba de que no quedó texto pegado.
 
+El contenido del seed está en inglés porque el documento con capturas apunta a un
+lector angloparlante. Es una decisión con costo: las capturas en español muestran
+nombres y bitácoras en inglés. La alternativa —seed por idioma— no vale la
+complejidad mientras el entregable sea un solo documento.
+
 **Lo que falta es el segundo eje**, el que este documento identificó como el trade-off
 interesante: hoy hay un solo `locale`. El contenido que viene por API —descripciones de
 rasgos, nombres de conjuros y monstruos— llega siempre en inglés porque la API solo sirve
