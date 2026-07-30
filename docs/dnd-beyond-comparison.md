@@ -8,6 +8,11 @@ Contexto: entre `[fecha]` y `[fecha]` la mesa migró a D&D Beyond para usarlo en
 sesiones reales y contrastarlo contra esta app. Este documento registra qué
 resolvió mejor cada uno y por qué.
 
+Parte de los hallazgos vienen del DM de la mesa, que usó las dos herramientas para
+dirigir. Están marcados como tales: es observación de segunda mano y hay que
+verificarla antes de publicarla, pero también es la única perspectiva de alguien
+que dirigió con ambas.
+
 ---
 
 ## La tesis
@@ -126,11 +131,20 @@ Se elige un arquetipo temático y el generador arma el encuentro entero: escala 
 monstruos al nivel de la party, les asigna roles tácticos y los coloca sobre la
 grilla. Lo que en la mesa es "pará, dejame armar esto" pasa a ser un click.
 
+**La diferencia concreta, según el DM de la mesa** *(julio 2026, contrastado en
+sesión)*: en D&D Beyond los monstruos se agregan **de a uno**. No hay generación de
+encuentros — hay un catálogo del que vas sacando criaturas una por una. Armar una
+emboscada de seis goblins son seis operaciones; acá es una.
+
+Y lo procedural no quita control: el generador produce el encuentro y después cada
+monstruo sigue siendo editable —HP, rol, nivel, conjuros—. Genera el 90% y te deja
+ajustar el 10% que importa, en vez de pedirte el 100%.
+
 | | |
 |---|---|
-| Qué se intentó en la mesa | _(pendiente)_ |
-| Dónde frenó D&D Beyond | _(pendiente — **verificar**)_ |
-| Cómo lo resuelve esta app | 30 arquetipos (`src/data/encounter-archetypes.ts`), escalado por nivel de party, cuatro roles tácticos —cuerpo a cuerpo, distancia, magia y apoyo—, y botín tirado por bioma con 8 perfiles |
+| Qué se intentó en la mesa | _(pendiente: la anécdota concreta del DM)_ |
+| Dónde frenó D&D Beyond | Los monstruos se agregan de a uno; no hay generación de encuentros _(**confirmado por el DM en sesión; verificar antes de publicar**)_ |
+| Cómo lo resuelve esta app | 30 arquetipos (`src/data/encounter-archetypes.ts`), escalado por nivel de party, cuatro roles tácticos —cuerpo a cuerpo, distancia, magia y apoyo—, botín tirado por bioma con 8 perfiles, y cada monstruo editable después de generarse |
 | Dónde vive | `src/components/tablero/use-encounter-generator.ts` · `src/loot/` |
 
 #### Revelar y ocultar un grupo entero

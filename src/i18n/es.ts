@@ -248,6 +248,20 @@ export const es = {
   'board.history': 'Historial',
   'board.miss': 'fallo',
 
+  // ── Subida de nivel ───────────────────────────────────────────────────────
+  'levelUp.title': 'Subir al nivel {level}',
+  'levelUp.confirm': 'Confirmar nivel {level}',
+  'levelUp.newFeatures': 'Nuevas características',
+  'levelUp.pickSubclass': 'Elegí tu especialidad',
+  'levelUp.fightingStyle': 'Estilo de combate',
+  'levelUp.fightingStyleHint': 'Elegí un estilo que define tu manera de pelear.',
+  'levelUp.hitPoints': 'Puntos de golpe',
+  'levelUp.hpHint': 'Tirá 1d{die} {conMod} CON = entre {min} y {max} PG. Promedio: {avg}.',
+  'levelUp.useAverage': 'Promedio ({avg})',
+  'levelUp.loadingSpells': 'Cargando conjuros...',
+  'levelUp.noSpells': 'No se encontraron conjuros.',
+  'levelUp.chosen': 'elegido',
+
   // ── Creación de personaje ─────────────────────────────────────────────────
   'creation.title': 'Nuevo personaje',
   'creation.step': 'Paso {current} de {total}',

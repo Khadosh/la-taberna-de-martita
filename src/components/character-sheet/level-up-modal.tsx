@@ -4,6 +4,7 @@ import { dndApi, dndKeys } from '../../lib/dnd-api'
 import { parchmentStyle } from './sheet-primitives'
 import { FIGHTING_STYLES_BY_CLASS, FAVORED_ENEMIES, SUBCLASS_SELECTION_LEVELS, getExpertiseCount } from '../../lib/class-choices'
 import type { SheetJson } from './types'
+import { useT } from '../../i18n'
 
 const STAT_LABELS_FULL: Record<string, string> = {
   str: 'Fuerza', dex: 'Destreza', con: 'Constitución',
@@ -70,6 +71,7 @@ export function LevelUpModal({
   onConfirm: () => void
   onCancel: () => void
 }) {
+  const t = useT()
   const nextLevel = level + 1
   const classIndex = character.class.toLowerCase()
   const [spellSearch, setSpellSearch] = useState('')
@@ -207,14 +209,14 @@ export function LevelUpModal({
             <svg width="16" height="16" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <line x1="5" y1="8.5" x2="5" y2="1.5"/><polyline points="2,4.5 5,1.5 8,4.5"/>
             </svg>
-            Subir al nivel {nextLevel}
+            {t('levelUp.title', { level: nextLevel })}
           </h3>
           <p className="text-sm text-stone-500 font-serif italic mt-1">{character.name} · {character.class} · d{hitDie}</p>
         </div>
 
         {features.length > 0 && (
           <div className="space-y-2">
-            <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">Nuevas características</p>
+            <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">{t('levelUp.newFeatures')}</p>
             {featureResults.map((q, i) => (
               <div key={features[i].index} className="border border-stone-400 p-3" style={{ background: 'rgba(200,170,110,0.15)' }}>
                 <p className="text-sm font-semibold text-stone-800 font-serif">{features[i].name}</p>
@@ -226,7 +228,7 @@ export function LevelUpModal({
 
         {needsSubclass && subclasses && (
           <div className="space-y-2">
-            <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">Elegí tu especialidad</p>
+            <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">{t('levelUp.pickSubclass')}</p>
             <p className="text-xs text-stone-500 font-serif italic">Al llegar a nivel {nextLevel}, elegís tu camino de especialización.</p>
             <div className="grid gap-2">
               {subclasses.results.map(sc => (
@@ -238,8 +240,8 @@ export function LevelUpModal({
 
         {hasFightingStyleFeature && (
           <div className="space-y-2">
-            <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">Estilo de combate</p>
-            <p className="text-xs text-stone-500 font-serif italic">Elegí un estilo que define tu manera de pelear.</p>
+            <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">{t('levelUp.fightingStyle')}</p>
+            <p className="text-xs text-stone-500 font-serif italic">{t('levelUp.fightingStyleHint')}</p>
             <div className="grid gap-2">
               {fightingStyles.map(fs => (
                 <button
@@ -325,17 +327,17 @@ export function LevelUpModal({
             )}
             <input
               type="text"
-              placeholder="Buscar conjuro..."
+              placeholder={t('compendium.searchSpell')}
               value={spellSearch}
               onChange={e => setSpellSearch(e.target.value)}
               className="w-full px-3 py-1.5 text-sm border border-stone-400 bg-amber-50/80 focus:outline-none focus:border-amber-700 font-serif"
             />
             <div className="max-h-52 overflow-y-auto space-y-1 pr-1">
               {filteredSpells.length === 0 && spellsLoadedPct < 100 && (
-                <p className="text-xs text-stone-400 font-serif italic text-center py-2">Cargando conjuros...</p>
+                <p className="text-xs text-stone-400 font-serif italic text-center py-2">{t('levelUp.loadingSpells')}</p>
               )}
               {filteredSpells.length === 0 && spellsLoadedPct === 100 && (
-                <p className="text-xs text-stone-400 font-serif italic text-center py-2">No se encontraron conjuros.</p>
+                <p className="text-xs text-stone-400 font-serif italic text-center py-2">{t('levelUp.noSpells')}</p>
               )}
               {filteredSpells.map(spell => {
                 const selected = newSpells.includes(spell!.index)
@@ -355,7 +357,7 @@ export function LevelUpModal({
                     <span className="text-xs font-semibold text-stone-800 font-serif">{spell!.name}</span>
                     <span className="text-[10px] text-stone-400 font-serif ml-2">Nv.{spell!.level} · {spell!.school?.name ?? ''}</span>
                     {selected && (
-                      <span className="float-right text-[10px] text-amber-700 font-semibold">elegido</span>
+                      <span className="float-right text-[10px] text-amber-700 font-semibold">{t('levelUp.chosen')}</span>
                     )}
                   </button>
                 )
@@ -395,9 +397,15 @@ export function LevelUpModal({
         )}
 
         <div className="space-y-2">
-          <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">Puntos de golpe</p>
+          <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">{t('levelUp.hitPoints')}</p>
           <p className="text-xs text-stone-500 font-serif italic">
-            Tirá 1d{hitDie} + {conMod >= 0 ? `+${conMod}` : conMod} CON = entre {Math.max(1, 1 + conMod)} y {hitDie + conMod} PG. Promedio: {avgHp}.
+            {t('levelUp.hpHint', {
+              die: hitDie,
+              conMod: conMod >= 0 ? `+${conMod}` : String(conMod),
+              min: Math.max(1, 1 + conMod),
+              max: hitDie + conMod,
+              avg: avgHp,
+            })}
           </p>
           <div className="flex items-center gap-2">
             <input
@@ -411,7 +419,7 @@ export function LevelUpModal({
             />
             <button onClick={() => setHpInput(String(avgHp))}
               className="px-3 py-2 text-xs border border-stone-400 text-stone-600 hover:bg-stone-200/50 font-serif transition-colors cursor-pointer">
-              Promedio ({avgHp})
+              {t('levelUp.useAverage', { avg: avgHp })}
             </button>
           </div>
         </div>
@@ -419,14 +427,14 @@ export function LevelUpModal({
         <div className="flex gap-2 pt-2 border-t border-stone-400">
           <button onClick={onCancel}
             className="flex-1 px-3 py-2 text-sm border border-stone-400 text-stone-500 hover:bg-stone-200/50 font-serif transition-colors cursor-pointer">
-            Cancelar
+            {t('common.cancel')}
           </button>
           <button onClick={onConfirm} disabled={!canConfirm}
             className="flex-1 px-3 py-2 text-sm bg-amber-800 hover:bg-amber-700 disabled:opacity-40 text-amber-100 font-serif transition-colors font-semibold cursor-pointer">
             <svg width="13" height="13" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="inline-block mr-1">
               <line x1="5" y1="8.5" x2="5" y2="1.5"/><polyline points="2,4.5 5,1.5 8,4.5"/>
             </svg>
-            Confirmar nivel {nextLevel}
+            {t('levelUp.confirm', { level: nextLevel })}
           </button>
         </div>
       </div>

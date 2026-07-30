@@ -247,6 +247,20 @@ export const en: Record<TranslationKey, string> = {
   'board.history': 'Log',
   'board.miss': 'miss',
 
+  // ── Level up ──────────────────────────────────────────────────────────────
+  'levelUp.title': 'Level up to {level}',
+  'levelUp.confirm': 'Confirm level {level}',
+  'levelUp.newFeatures': 'New features',
+  'levelUp.pickSubclass': 'Choose your specialisation',
+  'levelUp.fightingStyle': 'Fighting style',
+  'levelUp.fightingStyleHint': 'Pick a style that defines how you fight.',
+  'levelUp.hitPoints': 'Hit points',
+  'levelUp.hpHint': 'Roll 1d{die} {conMod} CON = between {min} and {max} HP. Average: {avg}.',
+  'levelUp.useAverage': 'Average ({avg})',
+  'levelUp.loadingSpells': 'Loading spells...',
+  'levelUp.noSpells': 'No spells found.',
+  'levelUp.chosen': 'chosen',
+
   // ── Character creation ────────────────────────────────────────────────────
   'creation.title': 'New character',
   'creation.step': 'Step {current} of {total}',
