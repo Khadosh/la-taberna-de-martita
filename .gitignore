@@ -14,6 +14,5 @@ todos.json
 src/routeTree.gen.ts
 .claude/settings.local.json
 
-# Documento generado — se rearma con scripts/build-tour-html.mjs
-docs/product-tour.html
+# Directorio temporal de scripts/build-tour-html.mjs
 .tour-build/
