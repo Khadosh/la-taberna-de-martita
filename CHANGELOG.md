@@ -30,7 +30,7 @@ Todos los cambios notables ordenados cronológicamente, reflejando la evolución
 
 ### chore
 - **Optimización de `public/`: 94 MB → 14 MB.**
-  - Eliminados 15 MB de assets huérfanos sin ninguna referencia en el código: 10 sprite sheets de íconos (`armor.png`, `jewelry.png`, `weapons.png` y 7 más), `races/miniaturas.png`, `pnj_bg.png`, `tavern_bg.png`, `comercio_bg.png` y `Fondo DM.png`.
+  - Eliminados 15 MB de assets huérfanos sin ninguna referencia en el código: 10 sprite sheets de íconos (`armor.png`, `jewelry.png`, `weapons.png` y 7 más), `races/miniaturas.png`, `pnj_bg.png` y `Fondo DM.png`. (`tavern_bg.png` y `comercio_bg.png` entraron en esa lista por error: no estaban referenciados porque las secciones todavía usaban degradados CSS, no porque sobraran. Los dos volvieron como JPEG.)
   - Las 29 ilustraciones sin canal alfa se recomprimieron a JPEG (26 MB → 12 MB) vía `scripts/optimize-images.mjs`. Eran arte generado guardado como PNG, que para imagen fotográfica pesa ~1 byte por píxel. Las 26 que tienen transparencia se conservan como PNG.
   - `wax seal (1).png` renombrado a `wax-seal.png`: los espacios y paréntesis obligaban a escapar la URL en cada uso.
 
