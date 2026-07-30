@@ -4,23 +4,9 @@ import { dndApi, dndKeys } from '../../lib/dnd-api'
 import { parchmentStyle } from './sheet-primitives'
 import { FIGHTING_STYLES_BY_CLASS, FAVORED_ENEMIES, SUBCLASS_SELECTION_LEVELS, getExpertiseCount } from '../../lib/class-choices'
 import type { SheetJson } from './types'
-import { useT } from '../../i18n'
-
-const STAT_LABELS_FULL: Record<string, string> = {
-  str: 'Fuerza', dex: 'Destreza', con: 'Constitución',
-  int: 'Inteligencia', wis: 'Sabiduría', cha: 'Carisma',
-}
-
-const SKILL_NAMES_ES: Record<string, string> = {
-  acrobatics: 'Acrobacias', 'animal-handling': 'Trato con animales',
-  arcana: 'Conocimiento arcano', athletics: 'Atletismo',
-  deception: 'Engaño', history: 'Historia', insight: 'Perspicacia',
-  intimidation: 'Intimidación', investigation: 'Investigación',
-  medicine: 'Medicina', nature: 'Naturaleza', perception: 'Percepción',
-  performance: 'Actuación', persuasion: 'Persuasión', religion: 'Religión',
-  'sleight-of-hand': 'Juego de manos', stealth: 'Sigilo', survival: 'Supervivencia',
-  'thieves-tools': 'Herramientas de ladrón',
-}
+import { useLoc, useT } from '../../i18n'
+import { ABILITY_NAMES, SKILL_NAMES } from '../../lib/dnd-terms'
+import type { StatKey } from '../../lib/dnd-backgrounds'
 
 function maxCastableLevel(spellcasting?: { [key: string]: number | undefined }): number {
   if (!spellcasting) return 0
@@ -72,6 +58,7 @@ export function LevelUpModal({
   onCancel: () => void
 }) {
   const t = useT()
+  const loc = useLoc()
   const nextLevel = level + 1
   const classIndex = character.class.toLowerCase()
   const [spellSearch, setSpellSearch] = useState('')
@@ -296,7 +283,7 @@ export function LevelUpModal({
             <div className="grid grid-cols-2 gap-1.5">
               {uniqueEligibles.map(idx => {
                 const selected = expertise.includes(idx)
-                const name = SKILL_NAMES_ES[idx] ?? idx.replace('-', ' ')
+                const name = SKILL_NAMES[idx] ? loc(SKILL_NAMES[idx]) : idx.replace('-', ' ')
                 const maxed = !selected && expertise.length >= expertiseToLearn
                 return (
                   <button key={idx} disabled={maxed} onClick={() => toggleExpertise(idx)}
@@ -355,7 +342,7 @@ export function LevelUpModal({
                     }`}
                   >
                     <span className="text-xs font-semibold text-stone-800 font-serif">{spell!.name}</span>
-                    <span className="text-[10px] text-stone-400 font-serif ml-2">Nv.{spell!.level} · {spell!.school?.name ?? ''}</span>
+                    <span className="text-[10px] text-stone-400 font-serif ml-2">{t('common.levelShort')}{spell!.level} · {spell!.school?.name ?? ''}</span>
                     {selected && (
                       <span className="float-right text-[10px] text-amber-700 font-semibold">{t('levelUp.chosen')}</span>
                     )}
@@ -369,9 +356,9 @@ export function LevelUpModal({
         {hasAsi && (
           <div className="space-y-2">
             <p className="text-xs text-stone-500 uppercase tracking-widest font-serif font-semibold">
-              Mejora de características ({totalAsiPoints}/{maxAsiPoints} puntos)
+              {t('levelUp.asi', { used: totalAsiPoints, max: maxAsiPoints })}
             </p>
-            <p className="text-xs text-stone-500 font-serif italic">Repartí {maxAsiPoints} puntos entre tus características (máx 20).</p>
+            <p className="text-xs text-stone-500 font-serif italic">{t('levelUp.asiHint', { max: maxAsiPoints })}</p>
             <div className="grid grid-cols-3 gap-2">
               {(['str', 'dex', 'con', 'int', 'wis', 'cha'] as const).map(k => {
                 const current = stats[k] ?? 10
@@ -379,7 +366,7 @@ export function LevelUpModal({
                 const canAdd = totalAsiPoints < maxAsiPoints && current + bonus < 20
                 return (
                   <div key={k} className="border border-stone-400 p-2 text-center" style={{ background: bonus > 0 ? 'rgba(200,140,40,0.15)' : 'rgba(200,170,110,0.08)' }}>
-                    <p className="text-[10px] text-stone-500 uppercase tracking-widest">{STAT_LABELS_FULL[k]}</p>
+                    <p className="text-[10px] text-stone-500 uppercase tracking-widest">{loc(ABILITY_NAMES[k as StatKey])}</p>
                     <p className="text-lg font-bold font-mono text-stone-800">
                       {current}{bonus > 0 && <span className="text-amber-700 text-sm ml-0.5">+{bonus}</span>}
                     </p>

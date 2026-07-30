@@ -22,10 +22,7 @@ export type NpcForm = {
 
 export const STAT_KEYS = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const
 
-export const STAT_LABELS: Record<typeof STAT_KEYS[number], string> = {
-  str: 'Fuerza', dex: 'Destreza', con: 'Constitución',
-  int: 'Inteligencia', wis: 'Sabiduría', cha: 'Carisma',
-}
+export { ABILITY_NAMES as STAT_LABELS } from '../../../lib/dnd-terms'
 
 export const ROLES = [
   { value: 'antagonist' as const, label: 'Antagonista', color: 'bg-red-900/30 border-red-800/40 text-red-900' },

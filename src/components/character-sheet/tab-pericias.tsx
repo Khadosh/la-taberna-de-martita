@@ -1,9 +1,10 @@
 import { useState } from 'react'
-import { useLoc } from '../../i18n'
+import { useLoc, useT } from '../../i18n'
 import { ABILITY_LABELS } from '../../lib/dnd-api'
 import { SheetLabel, SheetRow } from './sheet-primitives'
 import type { InfoModalData } from './types'
 import { BACKGROUNDS } from '../../lib/dnd-backgrounds'
+import { SKILL_NAMES } from '../../lib/dnd-terms'
 
 const SKILL_TO_ABILITY: Record<string, string> = {
   acrobatics: 'dex', 'animal-handling': 'wis', arcana: 'int',
@@ -12,16 +13,6 @@ const SKILL_TO_ABILITY: Record<string, string> = {
   medicine: 'wis', nature: 'int', perception: 'wis',
   performance: 'cha', persuasion: 'cha', religion: 'int',
   'sleight-of-hand': 'dex', stealth: 'dex', survival: 'wis',
-}
-
-const SKILL_NAMES_ES: Record<string, string> = {
-  acrobatics: 'Acrobacias', 'animal-handling': 'Trato con animales',
-  arcana: 'Conocimiento arcano', athletics: 'Atletismo',
-  deception: 'Engaño', history: 'Historia', insight: 'Perspicacia',
-  intimidation: 'Intimidación', investigation: 'Investigación',
-  medicine: 'Medicina', nature: 'Naturaleza', perception: 'Percepción',
-  performance: 'Actuación', persuasion: 'Persuasión', religion: 'Religión',
-  'sleight-of-hand': 'Juego de manos', stealth: 'Sigilo', survival: 'Supervivencia',
 }
 
 const ABILITY_ORDER = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const
@@ -58,6 +49,7 @@ export function TabPericias({
   stats, skillProficiencies, expertise, weaponProficiencies, profBonus, backgroundKey
 }: TabPericiasProps) {
   const loc = useLoc()
+  const t = useT()
   const [openProf, setOpenProf] = useState<string | null>(null)
   
   const bgDetail = backgroundKey ? BACKGROUNDS[backgroundKey] : null
@@ -100,7 +92,7 @@ export function TabPericias({
       {/* Skills by ability */}
       <SheetRow>
         <div className="flex-1 p-4">
-          <SheetLabel>Pericias</SheetLabel>
+          <SheetLabel>{t('sheet.tab.skills')}</SheetLabel>
           <div className="mt-3 space-y-4">
             {byAbility.map(({ ability, score, skills }) => (
               <div key={ability}>
@@ -130,7 +122,7 @@ export function TabPericias({
                         </svg>
                       )}
                       <span className="text-xs font-serif flex-1" style={{ color: hasExpertise ? '#3f1a04' : hasProficiency ? '#4a2e0c' : '#57534e' }}>
-                        {SKILL_NAMES_ES[skillIndex] ?? skillIndex}
+                        {SKILL_NAMES[skillIndex] ? loc(SKILL_NAMES[skillIndex]) : skillIndex}
                         {hasExpertise && <span className="text-[9px] font-sans font-semibold text-amber-700 ml-1.5 uppercase tracking-wide">Especialista</span>}
                       </span>
                       <span className="text-xs font-mono font-bold" style={{ color: hasExpertise ? '#b45309' : hasProficiency ? '#92400e' : '#78716c' }}>
@@ -149,7 +141,7 @@ export function TabPericias({
       {(isRogue || bgTool) && (
         <SheetRow className="border-t border-stone-500/30">
           <div className="flex-1 p-4">
-            <SheetLabel>Competencia con Herramientas</SheetLabel>
+            <SheetLabel>{t('sheet.toolProficiencies')}</SheetLabel>
             <div className="mt-3 space-y-2">
               {isRogue && (
                 <div className="flex items-center gap-2 px-2 py-1"
@@ -199,7 +191,7 @@ export function TabPericias({
       {weaponProfsFiltered.length > 0 && (
         <SheetRow className="border-t border-stone-500/30">
           <div className="flex-1 p-4">
-            <SheetLabel>Competencias con armas</SheetLabel>
+            <SheetLabel>{t('sheet.weaponProficiencies')}</SheetLabel>
             <div className="flex flex-wrap gap-1.5 mt-3">
               {weaponProfsFiltered.map(p => {
                 const weapons = PROF_WEAPONS[p]

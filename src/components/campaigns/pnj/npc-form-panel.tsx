@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { dndApi, dndKeys } from '../../../lib/dnd-api'
 import { Frame, Block, Field, inputClass } from './pnj-primitives'
 import { type NpcForm, type Stats, STAT_KEYS, STAT_LABELS, ROLES, abilityMod, formatMod, rollAllStats } from './pnj-types'
+import { useLoc } from '../../../i18n'
 
 const TRANSLATED_RACES: Record<string, string> = {
   'human': 'Humano',
@@ -34,6 +35,7 @@ interface NpcFormPanelProps {
 }
 
 export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm, submit, saving, races, classes }: NpcFormPanelProps) {
+  const loc = useLoc()
   const { data: allSpellsData } = useQuery({
     queryKey: dndKeys.allSpells,
     queryFn: dndApi.allSpells,
@@ -222,13 +224,13 @@ export function NpcFormPanel({ form, patchForm, patchStat, editingId, resetForm,
                 <p className="text-[9px] font-display tracking-wider text-stone-700 uppercase" aria-hidden>{k}</p>
                 <input
                   type="number" min={1} max={30}
-                  aria-label={STAT_LABELS[k]}
+                  aria-label={loc(STAT_LABELS[k])}
                   value={form.stats[k]}
                   onChange={e => patchStat(k, Math.max(1, parseInt(e.target.value) || 10))}
                   className="w-12 text-center bg-transparent text-lg font-bold text-stone-900 focus:outline-none focus:bg-amber-200/60"
                 />
                 <p className="text-[10px] font-mono text-stone-700">{formatMod(abilityMod(form.stats[k]))}</p>
-                <p className="text-[8px] italic text-stone-500 mt-0.5 leading-none">{STAT_LABELS[k]}</p>
+                <p className="text-[8px] italic text-stone-500 mt-0.5 leading-none">{loc(STAT_LABELS[k])}</p>
               </div>
             ))}
           </div>

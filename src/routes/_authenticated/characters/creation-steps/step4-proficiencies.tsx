@@ -1,18 +1,8 @@
 import { StepTitle, cardStyle } from './primitives'
 import type { Draft } from '../character-creation-steps'
 import { getExpertiseCount } from '../../../../lib/class-choices'
-
-// D&D 5e skill index translation
-const SKILL_NAMES_ES: Record<string, string> = {
-  acrobatics: 'Acrobacias', 'animal-handling': 'Trato con animales',
-  arcana: 'Conocimiento arcano', athletics: 'Atletismo',
-  deception: 'Engaño', history: 'Historia', insight: 'Perspicacia',
-  intimidation: 'Intimidación', investigation: 'Investigación',
-  medicine: 'Medicina', nature: 'Naturaleza', perception: 'Percepción',
-  performance: 'Actuación', persuasion: 'Persuasión', religion: 'Religión',
-  'sleight-of-hand': 'Juego de manos', stealth: 'Sigilo', survival: 'Supervivencia',
-  'thieves-tools': 'Herramientas de ladrón',
-}
+import { useLoc } from '../../../../i18n'
+import { SKILL_NAMES } from '../../../../lib/dnd-terms'
 
 interface Step4Props {
   draft: Draft
@@ -22,6 +12,7 @@ interface Step4Props {
 }
 
 export function Step4Proficiencies({ draft, patch, classDetail, selectedBg }: Step4Props) {
+  const loc = useLoc()
   // Normalize background skills to lowercase
   const bgSkills = selectedBg?.skills?.map((s: string) => s.toLowerCase().replace(/\s+/g, '-')) ?? []
   
@@ -116,7 +107,7 @@ export function Step4Proficiencies({ draft, patch, classDetail, selectedBg }: St
                   }`}
                 >
                   <span className="flex items-center justify-between gap-1">
-                    <span>{SKILL_NAMES_ES[idx] ?? name}</span>
+                    <span>{SKILL_NAMES[idx] ? loc(SKILL_NAMES[idx]) : name}</span>
                     {isBgSkill && (
                       <span className="text-[8px] uppercase tracking-widest text-amber-500/60 font-mono font-bold bg-amber-950/30 px-1 border border-amber-900/20">
                         Trasfondo
@@ -146,7 +137,7 @@ export function Step4Proficiencies({ draft, patch, classDetail, selectedBg }: St
             {uniqueEligibles.map(idx => {
               const selected = (draft.expertise ?? []).includes(idx)
               const maxed = !selected && (draft.expertise ?? []).length >= expertiseCount
-              const name = SKILL_NAMES_ES[idx] ?? idx.replace('-', ' ')
+              const name = SKILL_NAMES[idx] ? loc(SKILL_NAMES[idx]) : idx.replace('-', ' ')
               return (
                 <button key={idx} disabled={maxed}
                   onClick={() => toggleExpertise(idx)}

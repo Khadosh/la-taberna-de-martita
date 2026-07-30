@@ -30,8 +30,16 @@ const OUT = join(ROOT, 'docs/screenshots', LOCALE)
 
 /** Etiquetas de los controles que el script necesita accionar, por idioma. */
 const UI = {
-  es: { email: 'Email', password: 'Contraseña', signIn: /entrar/i, skills: /pericias/i, story: /historia/i, spells: /hechizos/i, startCombat: /iniciar combate/i },
-  en: { email: 'Email', password: 'Password', signIn: /enter/i, skills: /skills/i, story: /story/i, spells: /spells/i, startCombat: /start combat/i },
+  es: {
+    email: 'Email', password: 'Contraseña', signIn: /entrar/i,
+    skills: /pericias/i, story: /historia/i, spells: /hechizos/i,
+    startCombat: /iniciar combate/i, levelUp: /^subir al nivel/i,
+  },
+  en: {
+    email: 'Email', password: 'Password', signIn: /enter/i,
+    skills: /skills/i, story: /story/i, spells: /spells/i,
+    startCombat: /start combat/i, levelUp: /^level up to/i,
+  },
 }[LOCALE]
 
 const CAMPAIGN = 'aaaaaaaa-0000-0000-0000-000000000001'
@@ -44,6 +52,9 @@ const ACCOUNTS = {
   maga: 'lyra@taberna.test',
 }
 const PASSWORD = 'taberna123'
+
+/** Lo justo para que Thorin (900 PX, nivel 3) cruce el umbral de nivel 4. */
+const XP_GRANT = 1800
 
 /** Las rutas cargan datos del SRD por red; conviene esperar a que la red calme. */
 async function settle(page, ms = 1200) {
@@ -178,6 +189,31 @@ const run = async () => {
   await page.goto(`${BASE}/characters/new`, { waitUntil: 'domcontentloaded' })
   await settle(page, 2500)
   await shot(page, '15-wizard-creacion')
+
+  // ── Subida de nivel: dos actores ───────────────────────────────────────────
+  // El DM otorga la experiencia y el jugador decide qué gana con ella. Son dos
+  // sesiones distintas sobre la misma ficha, así que van al final para no
+  // interrumpir el resto del recorrido.
+  console.log('\nSubida de nivel · DM → jugador')
+
+  // El DM ya está logueado. `+ XP` solo aparece para él: el jugador no puede
+  // darse experiencia a sí mismo.
+  await page.goto(`${BASE}/characters/${THORIN}`, { waitUntil: 'domcontentloaded' })
+  await settle(page)
+  await click(page, page.getByRole('button', { name: '+ XP' }))
+  await page.locator('input[placeholder="0"]').fill(String(XP_GRANT)).catch(() => {})
+  await shot(page, '16-dm-otorga-xp')
+  await click(page, page.getByRole('button', { name: 'OK' }))
+
+  // El umbral de nivel 4 son 2.700 PX; con el otorgamiento anterior Thorin
+  // queda encima y le aparece el botón a él, no al DM.
+  await login(page, ACCOUNTS.guerrero)
+  await page.goto(`${BASE}/characters/${THORIN}`, { waitUntil: 'domcontentloaded' })
+  await settle(page)
+  await click(page, page.getByRole('button', { name: UI.levelUp }))
+  await shot(page, '17-subida-de-nivel')
+  // No se confirma a propósito: dejar el nivel sin subir mantiene el seed
+  // estable y permite volver a correr el script sin resetear la base.
 
   await browser.close()
   console.log(`\n✅ capturas (${LOCALE}) en ${OUT}\n`)

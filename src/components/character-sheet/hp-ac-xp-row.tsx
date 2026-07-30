@@ -68,7 +68,7 @@ export function HpAcXpRow({
           </div>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1">
-              {isOwner && <button onClick={() => adjustHp(-5)} className="w-7 h-6 text-xs border border-red-700/60 text-red-700 hover:bg-red-100/30 leading-none font-mono" title="−5 daño">-5</button>}
+              {isOwner && <button onClick={() => adjustHp(-5)} className="w-7 h-6 text-xs border border-red-700/60 text-red-700 hover:bg-red-100/30 leading-none font-mono" title={t('sheet.damage5')}>-5</button>}
               {isOwner && <button onClick={() => adjustHp(-1)} className="w-6 h-6 text-sm border border-stone-500 text-stone-600 hover:bg-stone-200/50 leading-none font-mono">−</button>}
             </div>
             <div className="flex items-baseline gap-1">
@@ -91,7 +91,7 @@ export function HpAcXpRow({
                 <button
                   onClick={() => { if (isOwner) { setEditingMaxHp(true); setMaxHpInput(String(maxHp)) } }}
                   className={`text-sm font-mono text-stone-500 leading-none ${isOwner ? 'hover:text-amber-700 transition-colors' : ''}`}
-                  title={isOwner ? 'Click para editar PV máximos' : undefined}
+                  title={isOwner ? t('sheet.editMaxHp') : undefined}
                 >
                   {maxHp}
                 </button>
@@ -99,7 +99,7 @@ export function HpAcXpRow({
             </div>
             <div className="flex items-center gap-1">
               {isOwner && <button onClick={() => adjustHp(1)} className="w-6 h-6 text-sm border border-stone-500 text-stone-600 hover:bg-stone-200/50 leading-none font-mono">+</button>}
-              {isOwner && <button onClick={() => adjustHp(5)} className="w-7 h-6 text-xs border border-green-700/60 text-green-700 hover:bg-green-100/30 leading-none font-mono" title="+5 curar">+5</button>}
+              {isOwner && <button onClick={() => adjustHp(5)} className="w-7 h-6 text-xs border border-green-700/60 text-green-700 hover:bg-green-100/30 leading-none font-mono" title={t('sheet.heal5')}>+5</button>}
             </div>
           </div>
         </div>
@@ -109,7 +109,7 @@ export function HpAcXpRow({
       <div className="sm:w-28 p-4 text-center" style={{ borderRight: '1px solid rgba(109,85,48,0.3)' }}>
         <SheetLabel>
           {(!armorProficient || !shieldProfOk)
-            ? <span className="inline-flex items-center gap-1" title={`Sin competencia con ${!armorProficient ? 'este tipo de armadura' : 'el escudo'} — desventaja en tiradas de ataque y salvaciones de FUE/DES, no puede lanzar hechizos`}>
+            ? <span className="inline-flex items-center gap-1" title={t('sheet.noProficiency', { what: t(armorProficient ? 'sheet.noProficiencyShield' : 'sheet.noProficiencyArmor') })}>
               <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M6 1L11 10.5H1Z" />
                 <line x1="6" y1="5" x2="6" y2="7.5" />
@@ -148,7 +148,7 @@ export function HpAcXpRow({
               {(isGm && !editingXp) && (
                 <button onClick={() => { setEditingXp(true); setXpInput('') }}
                   className="text-[10px] px-1.5 py-0.5 border border-stone-500 hover:border-amber-700 text-stone-500 hover:text-amber-700 font-serif transition-colors leading-none">
-                  + XP
+                  {t('sheet.addXp')}
                 </button>
               )}
             </div>
@@ -174,7 +174,7 @@ export function HpAcXpRow({
               <svg width="11" height="11" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" className="inline-block mr-1">
                 <line x1="5" y1="8" x2="5" y2="2" /><polyline points="2,5 5,2 8,5" />
               </svg>
-              Subir al nivel {level + 1}
+              {t('levelUp.title', { level: level + 1 })}
             </button>
           )}
         </div>

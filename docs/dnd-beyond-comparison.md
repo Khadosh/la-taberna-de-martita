@@ -114,6 +114,15 @@ vacío, muestra la decisión completa —*"Tirá 1d10 +3 CON = entre 4 y 13 PG.
 Promedio: 9"*—. El SRD te deja elegir entre tirar y tomar el promedio; la app te da
 los dos números para que elijas, en vez de que tengas que calcularlos.
 
+**Son dos actores, y el permiso lo dice.** El botón `+ XP` solo existe para el DM:
+un jugador no puede darse experiencia a sí mismo. El de subir de nivel es al revés
+—aparece en la ficha del jugador—, porque qué gana con esa experiencia lo decide
+él. La regla social de la mesa está en el código, no en un acuerdo verbal.
+
+![El DM otorga experiencia](screenshots/es/16-dm-otorga-xp.jpg)
+
+![El jugador sube de nivel](screenshots/es/17-subida-de-nivel.jpg)
+
 | | |
 |---|---|
 | Qué se intentó en la mesa | _(pendiente)_ |

@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { useT } from '../../i18n'
+import { useLoc, useT } from '../../i18n'
+import { SKILL_NAMES } from '../../lib/dnd-terms'
 import { useQuery, useQueries } from '@tanstack/react-query'
 import { dndApi, dndKeys } from '../../lib/dnd-api'
 import { parchmentStyle } from './sheet-primitives'
@@ -9,17 +10,6 @@ import {
   FIGHTING_STYLE_MIN_LEVEL, CLASSES_WITH_FAVORED_ENEMY,
   SUBCLASS_SELECTION_LEVELS, getExpertiseCount
 } from '../../lib/class-choices'
-
-const SKILL_NAMES_ES: Record<string, string> = {
-  acrobatics: 'Acrobacias', 'animal-handling': 'Trato con animales',
-  arcana: 'Conocimiento arcano', athletics: 'Atletismo',
-  deception: 'Engaño', history: 'Historia', insight: 'Perspicacia',
-  intimidation: 'Intimidación', investigation: 'Investigación',
-  medicine: 'Medicina', nature: 'Naturaleza', perception: 'Percepción',
-  performance: 'Actuación', persuasion: 'Persuasión', religion: 'Religión',
-  'sleight-of-hand': 'Juego de manos', stealth: 'Sigilo', survival: 'Supervivencia',
-  'thieves-tools': 'Herramientas de ladrón',
-}
 
 function maxCastableLevel(spellcasting?: Record<string, number | undefined>): number {
   if (!spellcasting) return 0
@@ -39,6 +29,7 @@ export function ClassChoicesPanel({
   patchSheet: (p: Partial<SheetJson>) => Promise<void>
 }) {
   const t = useT()
+  const loc = useLoc()
   const [open, setOpen] = useState(false)
   const [fightingStyle, setFightingStyle] = useState('')
   const [favoredEnemy, setFavoredEnemy] = useState('')
@@ -269,7 +260,7 @@ export function ClassChoicesPanel({
               <div className="grid grid-cols-2 gap-1.5">
                 {uniqueEligibles.map(idx => {
                   const selected = selectedExpertises.includes(idx)
-                  const name = SKILL_NAMES_ES[idx] ?? idx.replace('-', ' ')
+                  const name = SKILL_NAMES[idx] ? loc(SKILL_NAMES[idx]) : idx.replace('-', ' ')
                   const maxed = !selected && selectedExpertises.length >= expertiseToLearn
                   return (
                     <button key={idx} disabled={maxed} onClick={() => toggleExpertise(idx)}
