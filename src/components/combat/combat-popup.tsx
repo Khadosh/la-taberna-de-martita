@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react'
 import { useQuery, useQueries } from '@tanstack/react-query'
 import { dndApi, dndKeys } from '../../lib/dnd-api'
+import { useT } from '../../i18n'
 import {
   D20Icon,
   StylizedArrow,
@@ -122,6 +123,7 @@ export function CombatPopup({
   targetsInAoE, tokens,
   onClose, onAttackConfirm, rangeConfig,
 }: CombatPopupProps) {
+  const t = useT()
   const effAttackFromId = calcResult.attackerId ?? ''
   const effAttackToId = calcResult.defenderId ?? ''
 
@@ -353,9 +355,9 @@ export function CombatPopup({
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <p style={{ fontSize: 9, color: 'rgba(180,140,60,0.6)', textTransform: 'uppercase', letterSpacing: '0.25em', fontWeight: 'bold', margin: 0 }}>
-            Cálculo de Combate
+            {t('combat.title')}
           </p>
-          <span style={{ fontSize: 9, color: '#fca5a5', fontFamily: 'monospace' }}>Dist: {distanceFtGrid} ft</span>
+          <span style={{ fontSize: 9, color: '#fca5a5', fontFamily: 'monospace' }}>{t('combat.distance', { ft: distanceFtGrid })}</span>
         </div>
         {!isExternalActive && (
           <button onClick={onClose}
@@ -384,7 +386,7 @@ export function CombatPopup({
             }
           </p>
           {rangeConfig.label && (
-            <p style={{ margin: 0, fontSize: 10, color: '#d4d4d8' }}>Detalle: <strong style={{ color: '#d5b88a' }}>{rangeConfig.label}</strong></p>
+            <p style={{ margin: 0, fontSize: 10, color: '#d4d4d8' }}>{t('combat.detail')} <strong style={{ color: '#d5b88a' }}>{rangeConfig.label}</strong></p>
           )}
           {aoeActive && (
             <p style={{ margin: 0, fontSize: 10, color: '#ef4444', fontWeight: 'bold' }}>
@@ -420,7 +422,7 @@ export function CombatPopup({
         <span style={{ color: '#d5b88a', fontWeight: 700 }}>{calcResult.attackerName}</span>
         <StylizedArrow />
         <span style={{ color: '#fca5a5', fontWeight: 600 }}>
-          {aoeActive && targetsInAoE.length > 0 ? `Área (${targetsInAoE.length})` : calcResult.defenderName}
+          {aoeActive && targetsInAoE.length > 0 ? t('combat.areaTarget', { count: targetsInAoE.length }) : calcResult.defenderName}
         </span>
       </div>
 
@@ -439,12 +441,12 @@ export function CombatPopup({
             )}
           </div>
           <span style={{ fontSize: 8, color: 'rgba(180,140,60,0.6)', textTransform: 'uppercase', letterSpacing: '0.15em', marginTop: 4, fontWeight: 600 }}>
-            {calcResult.isHealing ? 'Curación' : (calcResult.saveAbility ? 'CD Salva' : 'D20 Necesita')}
+            {calcResult.isHealing ? t('combat.healing') : (calcResult.saveAbility ? t('combat.saveDc') : t('combat.d20Needed'))}
           </span>
         </div>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
           {calcResult.isHealing ? (
-            <span style={{ fontSize: 12, color: '#86efac' }}>El hechizo recupera puntos de golpe de forma automática.</span>
+            <span style={{ fontSize: 12, color: '#86efac' }}>{t('combat.autoHealing')}</span>
           ) : calcResult.saveAbility ? (
             <span style={{ fontSize: 12, color: '#fca5a5' }}>
               Objetivo debe salvar <strong style={{ color: '#d5b88a' }}>{calcResult.saveAbility}</strong> contra CD {isPlayer ? <strong>?</strong> : <strong>{calcResult.spellSaveDc}</strong>}
@@ -452,7 +454,7 @@ export function CombatPopup({
           ) : (
             <>
               <span style={{ fontSize: 12, color: '#d4d4d8' }}>
-                {calcResult.attackBonus >= 0 ? `+${calcResult.attackBonus}` : calcResult.attackBonus} vs CA {isPlayer ? '?' : calcResult.defAc}
+                {calcResult.attackBonus >= 0 ? `+${calcResult.attackBonus}` : calcResult.attackBonus} {t('combat.vsAc')} {isPlayer ? '?' : calcResult.defAc}
               </span>
               {!isPlayer && <DecorativeProgressBar percentage={calcResult.hitChance} />}
               {isPlayer && (

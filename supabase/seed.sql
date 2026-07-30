@@ -208,12 +208,17 @@ INSERT INTO public.npcs (
 -- fuera de la pantalla.
 
 INSERT INTO public.board_tokens (campaign_id, entity_id, kind, label, current_hp, max_hp, x, y) VALUES
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000001', 'player', 'Thorin', 28, 28, 0.28, 0.44),
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000002', 'player', 'Lyra',   17, 17, 0.16, 0.60),
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000003', 'player', 'Pip',    21, 21, 0.30, 0.69),
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'cccccccc-0000-0000-0000-000000000001', 'npc', 'Grishnak',  45, 45, 0.66, 0.48),
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'cccccccc-0000-0000-0000-000000000003', 'npc', 'Goblin A',   7,  7, 0.78, 0.31),
-  ('aaaaaaaa-0000-0000-0000-000000000001', 'goblin-b',                             'npc', 'Goblin B',   7,  7, 0.80, 0.64);
+  -- El centro del lienzo se deja libre a propósito: el popup de combate nace ahí
+  -- y taparía justo a las fichas del ataque que las capturas tienen que mostrar.
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000001', 'player', 'Thorin', 28, 28, 0.13, 0.28),
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000002', 'player', 'Lyra',   17, 17, 0.08, 0.55),
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'bbbbbbbb-0000-0000-0000-000000000003', 'player', 'Pip',    21, 21, 0.17, 0.74),
+  -- Goblin A queda pegado a Thorin: a una celda de distancia el cálculo de
+  -- ataque cuerpo a cuerpo da un resultado válido en vez del aviso de fuera de
+  -- alcance. Los otros dos quedan atrás, que es la forma real de un encuentro.
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'cccccccc-0000-0000-0000-000000000003', 'npc', 'Goblin A',   7,  7, 0.18, 0.29),
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'cccccccc-0000-0000-0000-000000000001', 'npc', 'Grishnak',  45, 45, 0.74, 0.40),
+  ('aaaaaaaa-0000-0000-0000-000000000001', 'goblin-b',                             'npc', 'Goblin B',   7,  7, 0.86, 0.70);
 
 -- ─── Objeto de campaña ───────────────────────────────────────────────────────
 

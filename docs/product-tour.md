@@ -105,15 +105,33 @@ multiplied by the board width a second time, and the tokens landed roughly
 300,000px off-screen — present in the DOM, invisible on the map. Worth mentioning
 because the screenshot pipeline is what caught it.)
 
-Combat tools that live on this screen:
+### Attack resolution
 
-- **Attack resolution.** Pick attacker and target and it answers with the d20 you
-  need, the hit probability as a percentage, and the damage — including the edge
-  rules, natural 1 always missing and `nat20Always` where it applies.
-- **Area templates.** Spheres, cubes, cones, and lines projected onto the grid
-  with automatic detection of which tokens are caught.
-- **Spell slots** deducted from the caster's sheet when the spell is cast, not
-  tracked separately on a piece of paper.
+![Attack resolution](screenshots/en/08c-resolucion-de-ataque.jpg)
+
+Select an attacker, then a target. That is the whole interaction, and the answer
+comes back as one number: **you need a 5 or better, 80%**.
+
+Compare that to what a reference tool gives you — their AC is 10, your bonus is
++5 — and the subtraction you then do in your head while four people wait. The app
+also knows the shortbow's 80/320 ft bands and the 50 ft between these two tokens,
+so it applies long-range disadvantage without being asked. Natural 1 always
+misses; `nat20Always` applies where the rule says it does.
+
+### Area templates
+
+![Spell area of effect](screenshots/en/08d-area-de-efecto.jpg)
+
+Spheres, cubes, cones, and lines projected onto the grid, with automatic
+detection of who is inside — *Caught: 1 Grishnak*, right there in the panel.
+
+This is the clearest instance of the whole thesis. "20-foot radius" in a
+description is data you have to interpret against a map. A circle on the map with
+the names of who it catches is the answer. Same rule, different amount of work
+for the person running the game.
+
+Spell slots are deducted from the caster's sheet when the spell goes off, rather
+than tracked separately on paper and forgotten by turn three.
 
 ### Procedural encounters
 

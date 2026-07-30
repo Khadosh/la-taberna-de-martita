@@ -5,6 +5,7 @@ import type { TokenData, AttackEntity, BoardCharacter, Pos } from './combat-type
 import { TOKEN_SIZE, distToSegment, getSpellcastingAbility } from './combat-helpers'
 import { useBoardInteraction } from './use-board-interaction'
 import { useCombatSpell } from './use-combat-spell'
+import { useT } from '../../i18n'
 
 export function useCombatBoard({
   tokens,
@@ -50,6 +51,7 @@ export function useCombatBoard({
     groundTargetPos: Pos | null
   }) => void
 }) {
+  const t = useT()
   // Combat targeting state
   const [attackFrom, setAttackFrom] = useState<string | null>(null)
   const [attackTo, setAttackTo] = useState<string | null>(null)
@@ -230,7 +232,7 @@ export function useCombatBoard({
         }
       }
       const token = tokens.find(t => t.id === effAttackFrom)
-      return { label: token?.name ? `Ataque de ${token.name}` : 'Cuerpo a Cuerpo', normal: 5, long: 5, status: distanceFtGrid <= 5 ? 'ok' as const : 'too_far' as const }
+      return { label: token?.name ? t('combat.attackOf', { name: token.name }) : t('combat.defaultMelee'), normal: 5, long: 5, status: distanceFtGrid <= 5 ? 'ok' as const : 'too_far' as const }
     }
 
     if (effSelectedMode === 'melee') {
@@ -240,7 +242,7 @@ export function useCombatBoard({
       const hasReach = ['lanza', 'alabarda', 'látigo', 'halberd', 'glaive', 'pike', 'whip', 'reach', 'alcance'].some(w => wName.includes(w))
       const reach = hasReach ? 10 : 5
       const status = distanceFtGrid <= reach ? 'ok' as const : 'too_far' as const
-      return { label: weapon?.name ?? 'Cuerpo a Cuerpo', normal: reach, long: reach, status }
+      return { label: weapon?.name ?? t('combat.defaultMelee'), normal: reach, long: reach, status }
     }
 
     if (effSelectedMode === 'ranged') {
@@ -259,7 +261,7 @@ export function useCombatBoard({
       const isThreatened = tokens.some(t => t.id !== effAttackFrom && t.kind === 'npc' && positions[t.id] &&
         Math.max(Math.round(Math.abs(positions[t.id].x - fromPos!.x) / gridSize), Math.round(Math.abs(positions[t.id].y - fromPos!.y) / gridSize)) * 5 <= 5
       )
-      return { label: weapon?.name ?? 'Arco Corto', normal, long, status, disadvantageThreat: isThreatened }
+      return { label: weapon?.name ?? t('combat.defaultBow'), normal, long, status, disadvantageThreat: isThreatened }
     }
 
     if (effSelectedMode === 'thrown') {
@@ -271,7 +273,7 @@ export function useCombatBoard({
       let status: 'ok' | 'disadvantage_long' | 'too_far' = 'ok'
       if (distanceFtGrid > long) status = 'too_far'
       else if (distanceFtGrid > normal) status = 'disadvantage_long'
-      return { label: item?.name ?? 'Lanzamiento Genérico', normal, long, status }
+      return { label: item?.name ?? t('combat.defaultThrown'), normal, long, status }
     }
 
     if (effSelectedMode === 'spell') {
@@ -283,11 +285,11 @@ export function useCombatBoard({
       else if (spellRangeText.includes('touch') || spellRangeText.includes('toque')) normal = 5
       if (spellRangeText.includes('self') || spellRangeText.includes('sí mismo')) normal = 0
       if (normal > 0 && distanceFtGrid > normal) status = 'too_far'
-      return { label: spellDetail?.name ?? 'Conjuro', normal, long: normal, status }
+      return { label: spellDetail?.name ?? t('combat.defaultSpell'), normal, long: normal, status }
     }
 
-    return { label: 'Generic', normal: 0, long: 0, status: 'ok' as const }
-  }, [effSelectedMode, attackerChar, attackerInventory, selectedWeaponId, spellDetail, distanceFtGrid, tokens, positions, effAttackFrom, fromPos, gridSize])
+    return { label: t('combat.generic'), normal: 0, long: 0, status: 'ok' as const }
+  }, [effSelectedMode, attackerChar, attackerInventory, selectedWeaponId, spellDetail, distanceFtGrid, tokens, positions, effAttackFrom, fromPos, gridSize, t])
 
   const calcResult = useMemo(() => {
     if (!effAttackFrom || !effAttackTo) return null

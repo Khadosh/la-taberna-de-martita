@@ -6,6 +6,7 @@ import {
   TOKEN_SIZE,
 } from './combat-helpers'
 import type { TokenData, Pos } from './combat-types'
+import { useT } from '../../i18n'
 
 type RangeConfig = {
   label: string
@@ -44,10 +45,10 @@ interface CombatModePanelProps {
 }
 
 const MODES = [
-  { id: 'melee' as const,  label: 'Melee',   icon: <CrossedSwordsIcon /> },
-  { id: 'ranged' as const, label: 'Arco',    icon: <BowIcon /> },
-  { id: 'thrown' as const, label: 'Lanzar',  icon: <ThrownIcon /> },
-  { id: 'spell' as const,  label: 'Conjuro', icon: <SpellIcon /> },
+  { id: 'melee' as const,  labelKey: 'combat.modeMelee' as const,  icon: <CrossedSwordsIcon /> },
+  { id: 'ranged' as const, labelKey: 'combat.modeRanged' as const, icon: <BowIcon /> },
+  { id: 'thrown' as const, labelKey: 'combat.modeThrown' as const, icon: <ThrownIcon /> },
+  { id: 'spell' as const,  labelKey: 'combat.modeSpell' as const,  icon: <SpellIcon /> },
 ]
 
 export function CombatModePanel({
@@ -64,6 +65,7 @@ export function CombatModePanel({
   aoePosition, setAoePosition,
   targetsInAoE, tokens, toPos,
 }: CombatModePanelProps) {
+  const t = useT()
   return (
     <>
       {/* Mode selector icons */}
@@ -81,10 +83,10 @@ export function CombatModePanel({
                 boxShadow: isSel ? '0 0 8px rgba(213,184,138,0.2)' : 'none',
                 transition: 'all 0.15s',
               }}
-              title={m.label}
+              title={t(m.labelKey)}
             >
               {m.icon}
-              <span style={{ fontSize: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{m.label}</span>
+              <span style={{ fontSize: 8, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{t(m.labelKey)}</span>
             </button>
           )
         })}
@@ -93,14 +95,14 @@ export function CombatModePanel({
       {/* Mode config panel */}
       <div style={{ background: 'rgba(0,0,0,0.4)', borderRadius: 4, padding: '8px 10px', marginBottom: 12, border: '1px solid #3c2414' }}>
         <p style={{ margin: '0 0 6px 0', fontSize: 10, color: '#a8a29e', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          Configuración de Acción
+          {t('combat.actionConfig')}
         </p>
 
         {selectedMode === 'melee' && (
           <div style={{ fontSize: 11, color: '#e7e5e4' }}>
             {attackerToken?.kind === 'npc' && attackerToken.weapons && attackerToken.weapons.length > 0 && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '2px 0 6px 0' }}>
-                <span style={{ fontSize: 11 }}>Arma NPC:</span>
+                <span style={{ fontSize: 11 }}>{t('combat.npcWeapon')}</span>
                 <select value={selectedWeaponId ?? ''}
                   onChange={e => setSelectedWeaponId(e.target.value || null)}
                   style={{ flex: 1, background: '#1c1208', border: '1px solid #5a3c1e', color: '#d5b88a', padding: '2px 4px', fontSize: 11, borderRadius: 3, outline: 'none' }}
@@ -112,11 +114,11 @@ export function CombatModePanel({
                 </select>
               </div>
             )}
-            <p style={{ margin: '4px 0' }}>⚔️ Arma: <strong style={{ color: '#d5b88a' }}>{rangeConfig.label}</strong></p>
-            <p style={{ margin: '4px 0' }}>📏 Alcance: <strong>{rangeConfig.normal} ft</strong></p>
+            <p style={{ margin: '4px 0' }}>⚔️ {t('combat.weapon')} <strong style={{ color: '#d5b88a' }}>{rangeConfig.label}</strong></p>
+            <p style={{ margin: '4px 0' }}>📏 {t('combat.range')} <strong>{rangeConfig.normal} ft</strong></p>
             {rangeConfig.status === 'too_far' && (
               <p style={{ margin: '6px 0 0 0', color: '#f87171', fontSize: 10, fontWeight: 'bold' }}>
-                ⚠️ Objetivo fuera del alcance de cuerpo a cuerpo ({distanceFtGrid} ft &gt; {rangeConfig.normal} ft)
+                ⚠️ {t('combat.outOfMeleeRange', { distance: distanceFtGrid, range: rangeConfig.normal })}
               </p>
             )}
           </div>
@@ -126,7 +128,7 @@ export function CombatModePanel({
           <div style={{ fontSize: 11, color: '#e7e5e4' }}>
             {attackerToken?.kind === 'npc' && attackerToken.weapons && attackerToken.weapons.length > 0 && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '2px 0 6px 0' }}>
-                <span style={{ fontSize: 11 }}>Arma NPC:</span>
+                <span style={{ fontSize: 11 }}>{t('combat.npcWeapon')}</span>
                 <select value={selectedWeaponId ?? ''}
                   onChange={e => setSelectedWeaponId(e.target.value || null)}
                   style={{ flex: 1, background: '#1c1208', border: '1px solid #5a3c1e', color: '#d5b88a', padding: '2px 4px', fontSize: 11, borderRadius: 3, outline: 'none' }}
@@ -138,8 +140,8 @@ export function CombatModePanel({
                 </select>
               </div>
             )}
-            <p style={{ margin: '4px 0' }}>🏹 Arma: <strong style={{ color: '#d5b88a' }}>{rangeConfig.label}</strong></p>
-            <p style={{ margin: '4px 0' }}>📏 Rango de tiro: <strong>{rangeConfig.normal}/{rangeConfig.long} ft</strong></p>
+            <p style={{ margin: '4px 0' }}>🏹 {t('combat.weapon')} <strong style={{ color: '#d5b88a' }}>{rangeConfig.label}</strong></p>
+            <p style={{ margin: '4px 0' }}>📏 {t('combat.shotRange')} <strong>{rangeConfig.normal}/{rangeConfig.long} ft</strong></p>
             {rangeConfig.status === 'too_far' && (
               <p style={{ margin: '6px 0 0 0', color: '#f87171', fontSize: 10, fontWeight: 'bold' }}>
                 ❌ Fuera de rango máximo ({distanceFtGrid} ft &gt; {rangeConfig.long} ft)
@@ -161,7 +163,7 @@ export function CombatModePanel({
         {selectedMode === 'thrown' && (
           <div style={{ fontSize: 11, color: '#e7e5e4' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, margin: '2px 0 6px 0' }}>
-              <span style={{ fontSize: 11 }}>Objeto:</span>
+              <span style={{ fontSize: 11 }}>{t('combat.item')}</span>
               {attackerChar ? (
                 <select value={selectedWeaponId ?? ''}
                   onChange={e => setSelectedWeaponId(e.target.value || null)}
@@ -173,10 +175,10 @@ export function CombatModePanel({
                   ))}
                 </select>
               ) : (
-                <span style={{ color: '#a8a29e' }}>Cualquier objeto arrojadizo</span>
+                <span style={{ color: '#a8a29e' }}>{t('combat.anyThrowable')}</span>
               )}
             </div>
-            <p style={{ margin: '4px 0' }}>📏 Rango arrojadizo: <strong>{rangeConfig.normal}/{rangeConfig.long} ft</strong></p>
+            <p style={{ margin: '4px 0' }}>📏 {t('combat.throwRange')} <strong>{rangeConfig.normal}/{rangeConfig.long} ft</strong></p>
             {rangeConfig.status === 'too_far' && (
               <p style={{ margin: '6px 0 0 0', color: '#f87171', fontSize: 10, fontWeight: 'bold' }}>
                 ❌ Fuera de rango máximo ({distanceFtGrid} ft &gt; {rangeConfig.long} ft)
@@ -193,13 +195,13 @@ export function CombatModePanel({
         {selectedMode === 'spell' && (
           <div style={{ fontSize: 11, color: '#e7e5e4', display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-              <span>Conjuro:</span>
+              <span>{t('combat.spell')}</span>
               {(attackerChar || (attackerNpcSpells?.length ?? 0) > 0) ? (
                 <select value={selectedSpellIndex ?? ''}
                   onChange={e => { setSelectedSpellIndex(e.target.value || null); setAoeActive(false); setAoePosition(null) }}
                   style={{ flex: 1, background: '#1c1208', border: '1px solid #5a3c1e', color: '#d5b88a', padding: '2px 4px', fontSize: 11, borderRadius: 3, outline: 'none' }}
                 >
-                  <option value="">-- Seleccionar Hechizo --</option>
+                  <option value="">{t('combat.selectSpell')}</option>
                   {Object.keys(groupedAttackerSpells).length > 0 ? (
                     Object.keys(groupedAttackerSpells).map(Number).sort((a, b) => a - b).map(lvl => (
                       <optgroup key={lvl}
@@ -218,19 +220,19 @@ export function CombatModePanel({
                   )}
                 </select>
               ) : (
-                <span style={{ color: '#a8a29e' }}>Ataque mágico genérico</span>
+                <span style={{ color: '#a8a29e' }}>{t('combat.genericSpellAttack')}</span>
               )}
             </div>
 
             {spellDetail && (
               <div style={{ background: 'rgba(0,0,0,0.3)', padding: 6, borderRadius: 3, fontSize: 10, border: '1px dashed #5a3c1e' }}>
-                <p style={{ margin: '2px 0' }}>📏 Rango del Hechizo: <strong>{spellDetail.range}</strong></p>
+                <p style={{ margin: '2px 0' }}>📏 {t('combat.spellRange')} <strong>{spellDetail.range}</strong></p>
                 <p style={{ margin: '2px 0', color: '#fbbf24' }}>
-                  ⌛ Ejecución: <strong>{spellDetail.casting_time}</strong> | Duración: <strong>{spellDetail.duration}</strong>
+                  ⌛ {t('combat.castingTime')} <strong>{spellDetail.casting_time}</strong> | {t('combat.duration')} <strong>{spellDetail.duration}</strong>
                 </p>
                 {rangeConfig.status === 'too_far' && (
                   <p style={{ margin: '4px 0 0 0', color: '#f87171', fontWeight: 'bold' }}>
-                    ❌ Objetivo fuera de rango ({distanceFtGrid} ft &gt; {rangeConfig.normal} ft)
+                    ❌ {t('combat.outOfRange', { distance: distanceFtGrid, range: rangeConfig.normal })}
                   </p>
                 )}
               </div>
@@ -252,16 +254,16 @@ export function CombatModePanel({
                   padding: '3px 8px', borderRadius: 3, fontSize: 9, cursor: 'pointer', fontWeight: 'bold',
                 }}
               >
-                {aoeActive ? 'Área: Activa 🎯' : 'Proyectar Área (AoE)'}
+                {aoeActive ? t('combat.aoeActive') : t('combat.projectAoe')}
               </button>
               {aoeActive && (
                 <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
                   <select value={aoeType} onChange={e => setAoeType(e.target.value as any)}
                     style={{ background: '#1c1208', border: '1px solid #5a3c1e', color: '#d5b88a', fontSize: 9, padding: '2px 3px', borderRadius: 3 }}
                   >
-                    <option value="circle">Esfera</option>
-                    <option value="cube">Cubo</option>
-                    <option value="line">Línea</option>
+                    <option value="circle">{t('combat.sphere')}</option>
+                    <option value="cube">{t('combat.cube')}</option>
+                    <option value="line">{t('combat.line')}</option>
                   </select>
                   <input type="number" value={aoeRadius} step={5} min={5} max={120}
                     onChange={e => setAoeRadius(Math.max(5, Math.min(120, parseInt(e.target.value) || 20)))}
@@ -274,12 +276,12 @@ export function CombatModePanel({
 
             {aoeActive && (
               <p style={{ margin: '2px 0 0 0', fontSize: 8, color: '#fbbf24', fontStyle: 'italic' }}>
-                * Haz clic en el tablero para reposicionar el área del hechizo.
+                {t('combat.clickToReposition')}
               </p>
             )}
             {aoeActive && targetsInAoE.length > 0 && (
               <p style={{ margin: '4px 0 0 0', fontSize: 10, color: '#ef4444', fontWeight: 'bold' }}>
-                🎯 Blancos en área: {targetsInAoE.map(tid => tokens.find(t => t.id === tid)?.name).join(', ')}
+                🎯 {t('combat.aoeTargets', { count: targetsInAoE.length })} {targetsInAoE.map(tid => tokens.find(t => t.id === tid)?.name).join(', ')}
               </p>
             )}
           </div>

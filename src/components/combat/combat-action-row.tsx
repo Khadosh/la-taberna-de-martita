@@ -1,3 +1,4 @@
+import { useT } from '../../i18n'
 interface CombatActionRowProps {
   isExternalActive: boolean
   hit: boolean | null
@@ -23,6 +24,7 @@ export function CombatActionRow({
   onRollDamage,
   rollDetail,
 }: CombatActionRowProps) {
+  const t = useT()
   if (isExternalActive) {
     return (
       <div style={{
@@ -66,7 +68,7 @@ export function CombatActionRow({
                 : { background: 'linear-gradient(180deg, #27272a 0%, #09090b 100%)', border: '1px solid #3c2414', color: '#d5b88a' })
             }}
           >
-            ✔ Acierto
+            ✔ {t('combat.hit')}
           </button>
           <button
             onClick={() => setHit(false)}
@@ -83,7 +85,7 @@ export function CombatActionRow({
                 : { background: 'linear-gradient(180deg, #27272a 0%, #09090b 100%)', border: '1px solid #3c2414', color: '#d5b88a' })
             }}
           >
-            ✕ Fallo
+            ✕ {t('combat.miss')}
           </button>
         </>
       )}
@@ -93,7 +95,7 @@ export function CombatActionRow({
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <input
               type="number"
-              placeholder={calcResult.isHealing ? 'Cura' : 'Daño'}
+              placeholder={calcResult.isHealing ? t('combat.heal') : t('combat.damage')}
               value={damageInput}
               onChange={e => setDamageInput(e.target.value)}
               className="no-spinners"

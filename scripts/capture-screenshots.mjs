@@ -41,11 +41,13 @@ const UI = {
     email: 'Email', password: 'Contraseña', signIn: /entrar/i,
     skills: /pericias/i, story: /historia/i, spells: /hechizos/i,
     startCombat: /iniciar combate/i, levelUp: /^subir al nivel/i,
+    spellMode: /^conjuro$/i, bowMode: /^arco$/i, projectAoe: /proyectar área/i,
   },
   en: {
     email: 'Email', password: 'Password', signIn: /enter/i,
     skills: /skills/i, story: /story/i, spells: /spells/i,
     startCombat: /start combat/i, levelUp: /^level up to/i,
+    spellMode: /^spell$/i, bowMode: /^bow$/i, projectAoe: /project area/i,
   },
 }[LOCALE]
 
@@ -101,6 +103,36 @@ async function click(page, locator) {
   } catch {
     console.log(`    (no se pudo interactuar, se captura el estado por defecto)`)
   }
+}
+
+/**
+ * Clickea una ficha del tablero por su etiqueta.
+ *
+ * No se puede usar un locator de Playwright sobre el nombre: la etiqueta tiene
+ * `pointerEvents: 'none'` para no robarle el arrastre a la ficha. Hay que ubicar
+ * el círculo y clickear su centro con el mouse. Un click con menos de 5 px de
+ * desplazamiento cuenta como tap; más que eso el tablero lo toma como arrastre.
+ */
+async function clickToken(page, label) {
+  const point = await page.evaluate(name => {
+    // Se busca el círculo y desde ahí la etiqueta, no al revés: el panel de
+    // party de la izquierda repite los nombres de los personajes, así que
+    // arrancar por el texto encuentra la tarjeta lateral en vez de la ficha.
+    const circle = [...document.querySelectorAll('div')]
+      .filter(d => {
+        const st = getComputedStyle(d)
+        const w = parseInt(st.width)
+        return st.position === 'absolute' && st.borderRadius.includes('%') && w > 40 && w < 120
+      })
+      .find(c => c.parentElement?.parentElement?.querySelector('p')?.textContent?.trim().startsWith(name))
+    if (!circle) return null
+    const r = circle.getBoundingClientRect()
+    return { x: r.x + r.width / 2, y: r.y + r.height / 2 }
+  }, label)
+  if (!point) { console.log(`    (no se encontró la ficha ${label})`); return false }
+  await page.mouse.click(point.x, point.y)
+  await page.waitForTimeout(800)
+  return true
 }
 
 /** Lee la experiencia que muestra la ficha abierta. Devuelve 0 si no la encuentra. */
@@ -173,6 +205,33 @@ const run = async () => {
   // Con el combate iniciado aparecen la iniciativa y las fichas sobre la grilla.
   await click(page, page.getByRole('button', { name: UI.startCombat }))
   await shot(page, '08b-tablero-combate')
+
+  // Atacante y objetivo: la resolución sale de elegir el par, así que la captura
+  // necesita las dos selecciones hechas. Con el tablero en reposo no se ve nada
+  // de lo que hace distinta a esta pantalla.
+  // Se elige un par lejano —Pip con el arco corto contra Grishnak— en vez de un
+  // cuerpo a cuerpo: el popup se ancla en el punto medio entre atacante y
+  // objetivo, así que con las fichas separadas queda en el hueco del medio y se
+  // ven las dos. Un par pegado lo deja justo encima de ellas.
+  await clickToken(page, 'Pip')
+  await clickToken(page, 'Grishnak')
+  await click(page, page.getByRole('button', { name: UI.bowMode }))
+  await shot(page, '08c-resolucion-de-ataque')
+
+  // Plantilla de área: Lyra apunta a Grishnak y proyecta la esfera. Es el
+  // ejemplo más claro de la tesis — el hechizo es una figura sobre el mapa con
+  // los nombres de quién queda adentro, no "20 pies de radio" en una
+  // descripción.
+  // Se recarga la ruta en vez de deseleccionar a mano: el popup quedó encima de
+  // las fichas y cualquier click de limpieza le pega a él.
+  await page.goto(`${BASE}/campaigns/${CAMPAIGN}/tablero`, { waitUntil: 'domcontentloaded' })
+  await settle(page)
+  await click(page, page.getByRole('button', { name: UI.startCombat }))
+  await clickToken(page, 'Lyra')
+  await clickToken(page, 'Grishnak')
+  await click(page, page.getByRole('button', { name: UI.spellMode }))
+  await click(page, page.getByRole('button', { name: UI.projectAoe }))
+  await shot(page, '08d-area-de-efecto')
 
   // El formulario de PNJ ocupa el alto completo; las fichas sembradas van debajo.
   await page.goto(`${BASE}/campaigns/${CAMPAIGN}/pnj`, { waitUntil: 'domcontentloaded' })
