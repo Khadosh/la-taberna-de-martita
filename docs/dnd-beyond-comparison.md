@@ -23,6 +23,10 @@ para que hagas la resta.
 El patrón: **donde D&D Beyond te da los datos, esta app te da la respuesta.** En
 una mesa en vivo, esa diferencia es el ritmo de la partida.
 
+Lo mismo vale para los procesos, no solo para los números: subir de nivel es una
+tanda de decisiones acopladas, y la diferencia entre un gestor donde hay que ir a
+buscarlas y un flujo que te las presenta en orden.
+
 Y un segundo patrón, que aparece en las herramientas del DM: **la app asume que el
 DM está dirigiendo ahora, no preparando después.** El generador de encuentros y el
 mostrar/ocultar por grupo existen porque en la mesa no hay tiempo para abrir otra
@@ -91,6 +95,30 @@ número.
 > Nota para la Fase 1: este cálculo hoy vive dentro de un hook, mezclado con estado
 > de React. Es un candidato claro a mudarse al motor de reglas — y de los que mejor
 > quedan como test contra el SRD.
+
+#### Subida de nivel como flujo guiado
+
+Subir de nivel en 5e no es un botón: es una tanda de decisiones acopladas —puntos
+de golpe, subclase, mejora de característica o dote, conjuros nuevos, estilo de
+combate, enemigo predilecto—. D&D Beyond las tiene, repartidas en un gestor de
+personaje donde hay que ir a buscarlas. Acá aparecen todas juntas, en orden, en un
+solo modal: **subís de nivel, ponés el HP y elegís lo que hay que elegir.**
+
+El detalle que mejor lo muestra: al pedir los puntos de golpe no muestra un campo
+vacío, muestra la decisión completa —*"Tirá 1d10 +3 CON = entre 4 y 13 PG.
+Promedio: 9"*—. El SRD te deja elegir entre tirar y tomar el promedio; la app te da
+los dos números para que elijas, en vez de que tengas que calcularlos.
+
+| | |
+|---|---|
+| Qué se intentó en la mesa | _(pendiente)_ |
+| Dónde frenó D&D Beyond | _(pendiente — **verificar en su gestor de personaje**)_ |
+| Cómo lo resuelve esta app | Un modal que recorre las seis decisiones del nivel y no deja seguir hasta resolverlas, con el rango y el promedio de PG calculados |
+| Dónde vive | `src/components/character-sheet/level-up-modal.tsx` |
+
+> El aviso *"Hay N elecciones de clase pendientes"* de la hoja es la otra mitad de
+> lo mismo: si quedó algo sin elegir, la ficha lo dice en vez de dejarlo pasar en
+> silencio.
 
 #### Generador procedural de encuentros
 
