@@ -5,6 +5,8 @@ import { CLASS_ICONS } from '../../lib/class-meta'
 import type { Tables } from '../../lib/database.types'
 import { Frame, Divider, BlockHeader, StatBox, InfoBox } from './hub-primitives'
 import { BACKGROUNDS } from '../../lib/dnd-backgrounds'
+import { useI18n } from '../../i18n'
+import { CLASS_BASE_FEATURES, CLASS_NAMES, RACE_NAMES, localizedTerm } from '../../lib/dnd-terms'
 
 export type Character = {
   id: string
@@ -30,25 +32,10 @@ export type Character = {
 
 const STAT_KEYS = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const
 
-const CLASS_BASE_FEATURES: Record<string, string[]> = {
-  barbarian: ['Rabia', 'Defensa sin armadura'],
-  bard: ['Inspiración bárdica', 'Magia bárdica'],
-  cleric: ['Magia divina', 'Dominio divino'],
-  druid: ['Magia druídica', 'Druídico'],
-  fighter: ['Estilo de combate', 'Recuperación'],
-  monk: ['Defensa sin armadura', 'Artes marciales'],
-  paladin: ['Sentido divino', 'Imposición de manos'],
-  ranger: ['Favored Enemy', 'Natural Explorer'],
-  rogue: ['Ataque furtivo 1d6', 'Acción astuta'],
-  sorcerer: ['Hechicería', 'Magia espontánea'],
-  warlock: ['Magia de pacto', 'Patrón otherworldly'],
-  wizard: ['Recuperación arcana', 'Magia arcana'],
-}
-
-const ROLE_STYLES: Record<string, { label: string; chip: string }> = {
-  antagonist: { label: 'Antagonista', chip: 'bg-red-900/30 border-red-800/40 text-red-900' },
-  ally: { label: 'Aliado', chip: 'bg-green-900/20 border-green-800/40 text-green-900' },
-  neutral: { label: 'Neutral', chip: 'bg-stone-200 border-stone-400 text-stone-700' },
+const ROLE_STYLES: Record<string, { labelKey: 'npc.roleAntagonist' | 'npc.roleAlly' | 'npc.roleNeutral'; chip: string }> = {
+  antagonist: { labelKey: 'npc.roleAntagonist', chip: 'bg-red-900/30 border-red-800/40 text-red-900' },
+  ally: { labelKey: 'npc.roleAlly', chip: 'bg-green-900/20 border-green-800/40 text-green-900' },
+  neutral: { labelKey: 'npc.roleNeutral', chip: 'bg-stone-200 border-stone-400 text-stone-700' },
 }
 
 const abilityMod = (score: number) => Math.floor((score - 10) / 2)
@@ -56,6 +43,7 @@ const formatMod = (mod: number) => (mod >= 0 ? `+${mod}` : `${mod}`)
 const profBonusForLevel = (level: number) => Math.floor((level - 1) / 4) + 2
 
 export function PartyMemberCard({ character }: { character: Character }) {
+  const { t, locale } = useI18n()
   const { stats, level, class: cls, sheet_json: sheet } = character
   const conMod = Math.floor(((stats.con ?? 10) - 10) / 2)
   const hitDie = sheet.hit_die ?? 8
@@ -69,7 +57,7 @@ export function PartyMemberCard({ character }: { character: Character }) {
         <div className="flex items-center justify-between gap-2">
           <div>
             <h3 className="text-base font-display font-bold text-stone-900 leading-tight">{character.name}</h3>
-            <p className="text-xs italic text-stone-600 capitalize">{character.race} · {cls} · Nv. {level}</p>
+            <p className="text-xs italic text-stone-600 capitalize">{localizedTerm(RACE_NAMES, character.race, locale)} · {localizedTerm(CLASS_NAMES, cls, locale)} · {t('common.levelShort')} {level}</p>
           </div>
           <p className="text-[11px] text-stone-500 italic shrink-0">{character.profiles?.username ?? 'Jugador'}</p>
         </div>
@@ -88,6 +76,7 @@ export function PartyMemberCard({ character }: { character: Character }) {
 }
 
 export function NpcLandingCard({ npc, campaignId }: { npc: Tables<'npcs'>; campaignId: string }) {
+  const { t, locale } = useI18n()
   const stats = npc.stats as Record<string, number> | null
   const role = ROLE_STYLES[npc.role] ?? ROLE_STYLES.neutral
   const icon = npc.class ? CLASS_ICONS[npc.class] ?? '👤' : '👤'
@@ -102,7 +91,7 @@ export function NpcLandingCard({ npc, campaignId }: { npc: Tables<'npcs'>; campa
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <span className={`inline-block text-[10px] font-serif tracking-wide px-2 py-0.5 border ${role.chip} mb-1`}>
-                {role.label}
+                {t(role.labelKey)}
               </span>
               {npc.is_hidden && (
                 <span className="ml-1 inline-block text-[10px] font-serif tracking-wide px-2 py-0.5 border border-stone-700 text-stone-700 bg-stone-200 mb-1">
@@ -112,7 +101,7 @@ export function NpcLandingCard({ npc, campaignId }: { npc: Tables<'npcs'>; campa
               <h3 className="text-lg font-display font-bold text-stone-900 leading-tight truncate">{npc.name}</h3>
               {(npc.race || npc.class) && (
                 <p className="text-xs italic text-stone-600 capitalize">
-                  {[npc.race, npc.class, `Nv. ${npc.level}`].filter(Boolean).join(' · ')}
+                  {[localizedTerm(RACE_NAMES, npc.race, locale), localizedTerm(CLASS_NAMES, npc.class, locale), `${t('common.levelShort')} ${npc.level}`].filter(Boolean).join(' · ')}
                 </p>
               )}
             </div>
@@ -165,6 +154,7 @@ export function NpcLandingCard({ npc, campaignId }: { npc: Tables<'npcs'>; campa
 }
 
 export function CharacterCard({ character, isOwn }: { character: Character; isOwn: boolean }) {
+  const { t, loc, locale } = useI18n()
   const { stats, sheet_json: sheet, level, class: cls } = character
 
   const dexMod = abilityMod(stats.dex ?? 10)
@@ -221,14 +211,14 @@ export function CharacterCard({ character, isOwn }: { character: Character; isOw
             <div className="min-w-0">
               <h3 className="text-lg font-display font-bold text-stone-900 leading-tight truncate">{character.name}</h3>
               <p className="text-xs italic text-stone-600 capitalize mt-0.5">
-                {character.race} · {cls} · Nv. {level}
+                {localizedTerm(RACE_NAMES, character.race, locale)} · {localizedTerm(CLASS_NAMES, cls, locale)} · {t('common.levelShort')} {level}
               </p>
             </div>
             <div className="flex flex-col items-center shrink-0">
               <div className="w-9 h-9 rounded-full bg-stone-900 text-amber-100 flex items-center justify-center text-[10px] font-bold tracking-wider">
                 {initials}
               </div>
-              <p className="text-[10px] text-stone-600 mt-1 italic">{isOwn ? 'tu PJ' : playerName ?? 'Jugador'}</p>
+              <p className="text-[10px] text-stone-600 mt-1 italic">{isOwn ? t('party.yourCharacter') : playerName ?? t('party.player')}</p>
             </div>
           </div>
 
@@ -236,10 +226,10 @@ export function CharacterCard({ character, isOwn }: { character: Character; isOw
 
           <div>
             <div className="flex items-baseline justify-between mb-1.5">
-              <p className="text-[10px] font-display tracking-widest text-stone-600 uppercase">Puntos de Golpe</p>
+              <p className="text-[10px] font-display tracking-widest text-stone-600 uppercase">{t('party.hitPoints')}</p>
               <p className="text-sm font-mono">
                 <span className="text-base font-bold text-stone-900">{currentHp}</span>
-                <span className="text-stone-600"> / {maxHp} máx.</span>
+                <span className="text-stone-600"> / {maxHp} {t('party.max')}</span>
               </p>
             </div>
             <div className="h-2 bg-stone-300/60 rounded-sm overflow-hidden border border-stone-400/40">
@@ -251,12 +241,12 @@ export function CharacterCard({ character, isOwn }: { character: Character; isOw
           </div>
 
           <div className="grid grid-cols-3 gap-2">
-            <StatBox label="CA" value={ac} caption="Ataques enemi." />
-            <StatBox label="Iniciativa" value={formatMod(dexMod)} caption="Orden de turnos" />
-            <StatBox label="Perc. Pasiva" value={passivePerception} caption="Sin tirada" />
+            <StatBox label={t('party.ac')} value={ac} caption={t('party.acCaption')} />
+            <StatBox label={t('party.initiative')} value={formatMod(dexMod)} caption={t('party.initiativeCaption')} />
+            <StatBox label={t('party.passivePerception')} value={passivePerception} caption={t('party.passiveCaption')} />
           </div>
 
-          <BlockHeader>Características</BlockHeader>
+          <BlockHeader>{t('party.abilities')}</BlockHeader>
           <div className="grid grid-cols-6 gap-1">
             {STAT_KEYS.map(k => {
               const score = stats[k] ?? 10
@@ -271,41 +261,41 @@ export function CharacterCard({ character, isOwn }: { character: Character; isOw
             })}
           </div>
 
-          <BlockHeader>Combate y competencia</BlockHeader>
+          <BlockHeader>{t('party.combatAndProficiency')}</BlockHeader>
           <div className="grid grid-cols-2 gap-2">
-            <InfoBox label="Bon. Competencia" value={formatMod(prof)} caption="Pruebas y ataques" />
-            <InfoBox label="GACO" value={formatMod(gaco)} caption="Ataque con arma" />
+            <InfoBox label={t('party.proficiencyBonus')} value={formatMod(prof)} caption={t('party.proficiencyCaption')} />
+            <InfoBox label={t('party.attackBonus')} value={formatMod(gaco)} caption={t('party.attackCaption')} />
           </div>
 
-          <BlockHeader>Salvaciones y clase</BlockHeader>
+          <BlockHeader>{t('party.savesAndClass')}</BlockHeader>
           <div className="grid grid-cols-2 gap-2">
-            <InfoBox label="Salvaciones" value={savings || '—'} caption="Conjuros y trampas" compact />
+            <InfoBox label={t('party.saves')} value={savings || '—'} caption={t('party.savesCaption')} compact />
             <InfoBox
-              label="Rasgos de Clase"
+              label={t('party.classFeatures')}
               value={
                 <div className="space-y-0.5">
                   {classFeatures.map(f => (
-                    <p key={f} className="text-[11px] leading-tight text-stone-800">{f}</p>
+                    <p key={f.en} className="text-[11px] leading-tight text-stone-800">{loc(f)}</p>
                   ))}
-                  <p className="text-[10px] italic text-stone-500 leading-tight">Improvisar situaciones</p>
+                  <p className="text-[10px] italic text-stone-500 leading-tight">{t('party.improvise')}</p>
                 </div>
               }
               compact
             />
           </div>
 
-          <BlockHeader>Espacios de Conjuro</BlockHeader>
+          <BlockHeader>{t('party.spellSlots')}</BlockHeader>
           {firstSlotLevel === -1 ? (
             <p className="text-[11px] italic text-stone-600 bg-amber-100/50 border border-stone-400/40 px-2 py-1.5">
-              Sin acceso{cls.toLowerCase() === 'rogue' ? ' — disponible desde Nv. 3 (Arcane Trickster)' : ''}
-              {cls.toLowerCase() === 'fighter' ? ' — disponible desde Nv. 3 (Eldritch Knight)' : ''}
+              {t('party.noSlots')}{cls.toLowerCase() === 'rogue' ? t('party.unlocksAt', { subclass: 'Arcane Trickster' }) : ''}
+              {cls.toLowerCase() === 'fighter' ? t('party.unlocksAt', { subclass: 'Eldritch Knight' }) : ''}
             </p>
           ) : (
             <div className="flex flex-wrap gap-1 bg-amber-100/50 border border-stone-400/40 px-2 py-1.5">
               {slots.map((count, idx) =>
                 count > 0 ? (
                   <span key={idx} className="text-[11px] font-mono text-stone-800">
-                    Nv {idx + 1}: <span className="font-bold">{count}</span>
+                    {t('party.slotLevel', { level: idx + 1 })} <span className="font-bold">{count}</span>
                   </span>
                 ) : null
               )}

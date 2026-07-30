@@ -65,6 +65,22 @@ export const CLASS_NAMES: Record<string, Localized> = {
   wizard: { es: 'Mago', en: 'Wizard' },
 }
 
+/** Los dos rasgos de nivel 1 de cada clase, para la vista rápida de party. */
+export const CLASS_BASE_FEATURES: Record<string, Localized[]> = {
+  barbarian: [{ es: 'Furia', en: 'Rage' }, { es: 'Defensa sin armadura', en: 'Unarmored Defense' }],
+  bard: [{ es: 'Inspiración bárdica', en: 'Bardic Inspiration' }, { es: 'Magia bárdica', en: 'Spellcasting' }],
+  cleric: [{ es: 'Magia divina', en: 'Spellcasting' }, { es: 'Dominio divino', en: 'Divine Domain' }],
+  druid: [{ es: 'Magia druídica', en: 'Spellcasting' }, { es: 'Druídico', en: 'Druidic' }],
+  fighter: [{ es: 'Estilo de combate', en: 'Fighting Style' }, { es: 'Recuperación', en: 'Second Wind' }],
+  monk: [{ es: 'Defensa sin armadura', en: 'Unarmored Defense' }, { es: 'Artes marciales', en: 'Martial Arts' }],
+  paladin: [{ es: 'Sentido divino', en: 'Divine Sense' }, { es: 'Imposición de manos', en: 'Lay on Hands' }],
+  ranger: [{ es: 'Enemigo predilecto', en: 'Favored Enemy' }, { es: 'Explorador natural', en: 'Natural Explorer' }],
+  rogue: [{ es: 'Ataque furtivo 1d6', en: 'Sneak Attack 1d6' }, { es: 'Acción astuta', en: 'Cunning Action' }],
+  sorcerer: [{ es: 'Hechicería', en: 'Spellcasting' }, { es: 'Origen de hechicería', en: 'Sorcerous Origin' }],
+  warlock: [{ es: 'Magia de pacto', en: 'Pact Magic' }, { es: 'Patrón de otro mundo', en: 'Otherworldly Patron' }],
+  wizard: [{ es: 'Recuperación arcana', en: 'Arcane Recovery' }, { es: 'Magia arcana', en: 'Spellcasting' }],
+}
+
 /**
  * Resuelve un nombre de raza o clase que puede venir como índice del SRD
  * (`half-orc`), como nombre ya formateado (`Half-Orc`) o como algo que no está
